@@ -14,6 +14,10 @@ import {
   FileSpreadsheet,
   CheckSquare,
   CalendarDays,
+  Home,
+  PlusSquare,
+  Search as SearchIcon,
+  UserCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -41,6 +45,13 @@ const mainNav = [
   { title: "Forecast", icon: TrendingUp, to: "/forecast" },
   { title: "Reports", icon: BarChart3, to: "/reports" },
   { title: "Import/Export", icon: FileSpreadsheet, to: "/data" },
+];
+
+const inmoNav = [
+  { title: "Feed", icon: Home, to: "/inmo" },
+  { title: "Publicar", icon: PlusSquare, to: "/inmo/publicar" },
+  { title: "Buscador", icon: SearchIcon, to: "/inmo/buscar" },
+  { title: "Mi perfil", icon: UserCircle, to: "/inmo/perfil" },
 ];
 
 export function AppSidebar() {
@@ -75,6 +86,32 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.to}
+                      className={({ isActive }) =>
+                        isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
+                      }
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
+            Inmobiliaria Lincoln
+          </div>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {inmoNav.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink
+                      to={item.to}
+                      end={item.to === "/inmo"}
                       className={({ isActive }) =>
                         isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
                       }

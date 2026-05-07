@@ -62,6 +62,114 @@ export type Database = {
           },
         ]
       }
+      barrios: {
+        Row: {
+          ciudad_id: string
+          created_at: string
+          id: string
+          nombre: string
+          zona: string | null
+        }
+        Insert: {
+          ciudad_id: string
+          created_at?: string
+          id?: string
+          nombre: string
+          zona?: string | null
+        }
+        Update: {
+          ciudad_id?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+          zona?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "barrios_ciudad_id_fkey"
+            columns: ["ciudad_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ciudades: {
+        Row: {
+          activa: boolean
+          created_at: string
+          id: string
+          nombre: string
+          pais: string
+          provincia: string
+        }
+        Insert: {
+          activa?: boolean
+          created_at?: string
+          id?: string
+          nombre: string
+          pais?: string
+          provincia?: string
+        }
+        Update: {
+          activa?: boolean
+          created_at?: string
+          id?: string
+          nombre?: string
+          pais?: string
+          provincia?: string
+        }
+        Relationships: []
+      }
+      comentarios: {
+        Row: {
+          contenido: string
+          created_at: string
+          id: string
+          perfil_id: string
+          publicacion_id: string
+          respuesta_a: string | null
+        }
+        Insert: {
+          contenido: string
+          created_at?: string
+          id?: string
+          perfil_id: string
+          publicacion_id: string
+          respuesta_a?: string | null
+        }
+        Update: {
+          contenido?: string
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          publicacion_id?: string
+          respuesta_a?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comentarios_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles_inmo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comentarios_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comentarios_respuesta_a_fkey"
+            columns: ["respuesta_a"]
+            isOneToOne: false
+            referencedRelation: "comentarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
           created_at: string
@@ -91,6 +199,48 @@ export type Database = {
           website?: string | null
         }
         Relationships: []
+      }
+      consultas: {
+        Row: {
+          created_at: string
+          de_perfil_id: string
+          id: string
+          leida: boolean
+          mensaje: string
+          publicacion_id: string
+        }
+        Insert: {
+          created_at?: string
+          de_perfil_id: string
+          id?: string
+          leida?: boolean
+          mensaje: string
+          publicacion_id: string
+        }
+        Update: {
+          created_at?: string
+          de_perfil_id?: string
+          id?: string
+          leida?: boolean
+          mensaje?: string
+          publicacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultas_de_perfil_id_fkey"
+            columns: ["de_perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles_inmo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "consultas_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       contacts: {
         Row: {
@@ -252,6 +402,80 @@ export type Database = {
         }
         Relationships: []
       }
+      favoritos: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          publicacion_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          publicacion_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          publicacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "favoritos_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles_inmo"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favoritos_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      imagenes_publicacion: {
+        Row: {
+          created_at: string
+          es_portada: boolean
+          id: string
+          orden: number
+          publicacion_id: string
+          tipo: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          es_portada?: boolean
+          id?: string
+          orden?: number
+          publicacion_id: string
+          tipo?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          es_portada?: boolean
+          id?: string
+          orden?: number
+          publicacion_id?: string
+          tipo?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "imagenes_publicacion_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
@@ -287,6 +511,71 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      perfiles_inmo: {
+        Row: {
+          activo: boolean
+          avatar_url: string | null
+          ciudad_id: string | null
+          created_at: string
+          descripcion: string | null
+          facebook: string | null
+          id: string
+          instagram: string | null
+          nombre: string
+          portada_url: string | null
+          sitio_web: string | null
+          slug: string | null
+          tipo: Database["public"]["Enums"]["tipo_usuario_inmo"]
+          updated_at: string
+          verificado: boolean
+          whatsapp: string | null
+        }
+        Insert: {
+          activo?: boolean
+          avatar_url?: string | null
+          ciudad_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          facebook?: string | null
+          id: string
+          instagram?: string | null
+          nombre: string
+          portada_url?: string | null
+          sitio_web?: string | null
+          slug?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_usuario_inmo"]
+          updated_at?: string
+          verificado?: boolean
+          whatsapp?: string | null
+        }
+        Update: {
+          activo?: boolean
+          avatar_url?: string | null
+          ciudad_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          facebook?: string | null
+          id?: string
+          instagram?: string | null
+          nombre?: string
+          portada_url?: string | null
+          sitio_web?: string | null
+          slug?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_usuario_inmo"]
+          updated_at?: string
+          verificado?: boolean
+          whatsapp?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "perfiles_inmo_ciudad_id_fkey"
+            columns: ["ciudad_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipeline_stages: {
         Row: {
@@ -387,6 +676,148 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      publicaciones: {
+        Row: {
+          acceso_pavimento: boolean
+          agua_corriente: boolean
+          ambientes: number | null
+          banos: number | null
+          barrio_id: string | null
+          ciudad_id: string
+          cloaca: boolean
+          cochera: boolean
+          created_at: string
+          descripcion: string | null
+          destacada: boolean
+          destacada_hasta: string | null
+          direccion: string | null
+          dormitorios: number | null
+          estado: Database["public"]["Enums"]["estado_publicacion"]
+          expensas: number | null
+          gas_natural: boolean
+          hectareas: number | null
+          id: string
+          internet: boolean
+          luz: boolean
+          moneda: string
+          mostrar_direccion: boolean
+          perfil_id: string
+          precio: number | null
+          precio_negociable: boolean
+          referencia: string | null
+          superficie_cubierta: number | null
+          superficie_total: number | null
+          tiene_casa_campo: boolean
+          tiene_galpon: boolean
+          tipo_operacion: Database["public"]["Enums"]["tipo_operacion"]
+          tipo_propiedad: Database["public"]["Enums"]["tipo_propiedad"]
+          tipo_suelo: string | null
+          titulo: string
+          updated_at: string
+          vistas: number
+        }
+        Insert: {
+          acceso_pavimento?: boolean
+          agua_corriente?: boolean
+          ambientes?: number | null
+          banos?: number | null
+          barrio_id?: string | null
+          ciudad_id: string
+          cloaca?: boolean
+          cochera?: boolean
+          created_at?: string
+          descripcion?: string | null
+          destacada?: boolean
+          destacada_hasta?: string | null
+          direccion?: string | null
+          dormitorios?: number | null
+          estado?: Database["public"]["Enums"]["estado_publicacion"]
+          expensas?: number | null
+          gas_natural?: boolean
+          hectareas?: number | null
+          id?: string
+          internet?: boolean
+          luz?: boolean
+          moneda?: string
+          mostrar_direccion?: boolean
+          perfil_id: string
+          precio?: number | null
+          precio_negociable?: boolean
+          referencia?: string | null
+          superficie_cubierta?: number | null
+          superficie_total?: number | null
+          tiene_casa_campo?: boolean
+          tiene_galpon?: boolean
+          tipo_operacion: Database["public"]["Enums"]["tipo_operacion"]
+          tipo_propiedad: Database["public"]["Enums"]["tipo_propiedad"]
+          tipo_suelo?: string | null
+          titulo: string
+          updated_at?: string
+          vistas?: number
+        }
+        Update: {
+          acceso_pavimento?: boolean
+          agua_corriente?: boolean
+          ambientes?: number | null
+          banos?: number | null
+          barrio_id?: string | null
+          ciudad_id?: string
+          cloaca?: boolean
+          cochera?: boolean
+          created_at?: string
+          descripcion?: string | null
+          destacada?: boolean
+          destacada_hasta?: string | null
+          direccion?: string | null
+          dormitorios?: number | null
+          estado?: Database["public"]["Enums"]["estado_publicacion"]
+          expensas?: number | null
+          gas_natural?: boolean
+          hectareas?: number | null
+          id?: string
+          internet?: boolean
+          luz?: boolean
+          moneda?: string
+          mostrar_direccion?: boolean
+          perfil_id?: string
+          precio?: number | null
+          precio_negociable?: boolean
+          referencia?: string | null
+          superficie_cubierta?: number | null
+          superficie_total?: number | null
+          tiene_casa_campo?: boolean
+          tiene_galpon?: boolean
+          tipo_operacion?: Database["public"]["Enums"]["tipo_operacion"]
+          tipo_propiedad?: Database["public"]["Enums"]["tipo_propiedad"]
+          tipo_suelo?: string | null
+          titulo?: string
+          updated_at?: string
+          vistas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "publicaciones_barrio_id_fkey"
+            columns: ["barrio_id"]
+            isOneToOne: false
+            referencedRelation: "barrios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publicaciones_ciudad_id_fkey"
+            columns: ["ciudad_id"]
+            isOneToOne: false
+            referencedRelation: "ciudades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "publicaciones_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles_inmo"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -528,6 +959,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      incrementar_vistas: {
+        Args: { p_publicacion_id: string }
+        Returns: undefined
+      }
       is_team_member: {
         Args: { _target_user_id: string; _user_id: string }
         Returns: boolean
@@ -537,6 +972,35 @@ export type Database = {
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
       app_role: "admin" | "manager" | "rep"
+      estado_publicacion:
+        | "activa"
+        | "pausada"
+        | "vendida"
+        | "alquilada"
+        | "eliminada"
+      tipo_operacion:
+        | "venta"
+        | "alquiler"
+        | "alquiler_temporario"
+        | "local_comercial"
+        | "oficina"
+        | "campo_rural"
+      tipo_propiedad:
+        | "casa"
+        | "departamento"
+        | "ph"
+        | "local"
+        | "oficina"
+        | "galpon"
+        | "terreno"
+        | "campo"
+        | "chacra"
+        | "quinta"
+        | "otro"
+      tipo_usuario_inmo:
+        | "dueno_directo"
+        | "inmobiliaria"
+        | "agente_independiente"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -666,6 +1130,39 @@ export const Constants = {
     Enums: {
       activity_type: ["call", "email", "meeting", "note"],
       app_role: ["admin", "manager", "rep"],
+      estado_publicacion: [
+        "activa",
+        "pausada",
+        "vendida",
+        "alquilada",
+        "eliminada",
+      ],
+      tipo_operacion: [
+        "venta",
+        "alquiler",
+        "alquiler_temporario",
+        "local_comercial",
+        "oficina",
+        "campo_rural",
+      ],
+      tipo_propiedad: [
+        "casa",
+        "departamento",
+        "ph",
+        "local",
+        "oficina",
+        "galpon",
+        "terreno",
+        "campo",
+        "chacra",
+        "quinta",
+        "otro",
+      ],
+      tipo_usuario_inmo: [
+        "dueno_directo",
+        "inmobiliaria",
+        "agente_independiente",
+      ],
     },
   },
 } as const

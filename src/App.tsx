@@ -20,6 +20,11 @@ import Settings from "./pages/Settings";
 import DataImportExport from "./pages/DataImportExport";
 import Tasks from "./pages/Tasks";
 import CalendarView from "./pages/CalendarView";
+import InmoFeed from "./pages/inmo/Feed";
+import InmoPublicar from "./pages/inmo/Publicar";
+import InmoPerfil from "./pages/inmo/Perfil";
+import InmoBuscador from "./pages/inmo/Buscador";
+import InmoPublicacionDetalle from "./pages/inmo/PublicacionDetalle";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -47,6 +52,12 @@ const App = () => (
                 <Route path="/data" element={<DataImportExport />} />
                 <Route path="/tasks" element={<Tasks />} />
                 <Route path="/calendar" element={<CalendarView />} />
+                <Route path="/inmo" element={<InmoFeed />} />
+                <Route path="/inmo/publicar" element={<InmoPublicar />} />
+                <Route path="/inmo/buscar" element={<InmoBuscador />} />
+                <Route path="/inmo/perfil" element={<InmoPerfil />} />
+                <Route path="/inmo/perfil/:slug" element={<InmoPerfil />} />
+                <Route path="/inmo/publicacion/:id" element={<InmoPublicacionDetalle />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
