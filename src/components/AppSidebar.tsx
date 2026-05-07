@@ -14,6 +14,10 @@ import {
   FileSpreadsheet,
   CheckSquare,
   CalendarDays,
+  Home,
+  PlusSquare,
+  Search as SearchIcon,
+  UserCircle,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -41,6 +45,13 @@ const mainNav = [
   { title: "Forecast", icon: TrendingUp, to: "/forecast" },
   { title: "Reports", icon: BarChart3, to: "/reports" },
   { title: "Import/Export", icon: FileSpreadsheet, to: "/data" },
+];
+
+const inmoNav = [
+  { title: "Feed", icon: Home, to: "/inmo" },
+  { title: "Publicar", icon: PlusSquare, to: "/inmo/publicar" },
+  { title: "Buscador", icon: SearchIcon, to: "/inmo/buscar" },
+  { title: "Mi perfil", icon: UserCircle, to: "/inmo/perfil" },
 ];
 
 export function AppSidebar() {
