@@ -126,6 +126,7 @@ export type Database = {
           contenido: string
           created_at: string
           id: string
+          menciones: string[] | null
           perfil_id: string
           publicacion_id: string
           respuesta_a: string | null
@@ -134,6 +135,7 @@ export type Database = {
           contenido: string
           created_at?: string
           id?: string
+          menciones?: string[] | null
           perfil_id: string
           publicacion_id: string
           respuesta_a?: string | null
@@ -142,6 +144,7 @@ export type Database = {
           contenido?: string
           created_at?: string
           id?: string
+          menciones?: string[] | null
           perfil_id?: string
           publicacion_id?: string
           respuesta_a?: string | null
@@ -151,7 +154,7 @@ export type Database = {
             foreignKeyName: "comentarios_perfil_id_fkey"
             columns: ["perfil_id"]
             isOneToOne: false
-            referencedRelation: "perfiles_inmo"
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
           {
@@ -230,7 +233,7 @@ export type Database = {
             foreignKeyName: "consultas_de_perfil_id_fkey"
             columns: ["de_perfil_id"]
             isOneToOne: false
-            referencedRelation: "perfiles_inmo"
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
           {
@@ -288,6 +291,54 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversaciones: {
+        Row: {
+          created_at: string
+          id: string
+          no_leidos_a: number
+          no_leidos_b: number
+          perfil_a_id: string
+          perfil_b_id: string
+          ultimo_mensaje: string | null
+          ultimo_mensaje_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          no_leidos_a?: number
+          no_leidos_b?: number
+          perfil_a_id: string
+          perfil_b_id: string
+          ultimo_mensaje?: string | null
+          ultimo_mensaje_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          no_leidos_a?: number
+          no_leidos_b?: number
+          perfil_a_id?: string
+          perfil_b_id?: string
+          ultimo_mensaje?: string | null
+          ultimo_mensaje_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversaciones_perfil_a_id_fkey"
+            columns: ["perfil_a_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversaciones_perfil_b_id_fkey"
+            columns: ["perfil_b_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
@@ -402,6 +453,44 @@ export type Database = {
         }
         Relationships: []
       }
+      estadisticas_publicacion: {
+        Row: {
+          comentarios: number
+          consultas: number
+          fecha: string
+          id: string
+          likes: number
+          publicacion_id: string
+          vistas: number
+        }
+        Insert: {
+          comentarios?: number
+          consultas?: number
+          fecha?: string
+          id?: string
+          likes?: number
+          publicacion_id: string
+          vistas?: number
+        }
+        Update: {
+          comentarios?: number
+          consultas?: number
+          fecha?: string
+          id?: string
+          likes?: number
+          publicacion_id?: string
+          vistas?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estadisticas_publicacion_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       favoritos: {
         Row: {
           created_at: string
@@ -426,7 +515,7 @@ export type Database = {
             foreignKeyName: "favoritos_perfil_id_fkey"
             columns: ["perfil_id"]
             isOneToOne: false
-            referencedRelation: "perfiles_inmo"
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
           {
@@ -438,7 +527,116 @@ export type Database = {
           },
         ]
       }
-      imagenes_publicacion: {
+      highlight_items: {
+        Row: {
+          created_at: string
+          highlight_id: string
+          id: string
+          imagen_url: string | null
+          orden: number
+          publicacion_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          highlight_id: string
+          id?: string
+          imagen_url?: string | null
+          orden?: number
+          publicacion_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          highlight_id?: string
+          id?: string
+          imagen_url?: string | null
+          orden?: number
+          publicacion_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "highlight_items_highlight_id_fkey"
+            columns: ["highlight_id"]
+            isOneToOne: false
+            referencedRelation: "highlights"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      highlights: {
+        Row: {
+          color_fondo: string | null
+          created_at: string
+          icono: string | null
+          id: string
+          orden: number
+          perfil_id: string
+          titulo: string
+        }
+        Insert: {
+          color_fondo?: string | null
+          created_at?: string
+          icono?: string | null
+          id?: string
+          orden?: number
+          perfil_id: string
+          titulo: string
+        }
+        Update: {
+          color_fondo?: string | null
+          created_at?: string
+          icono?: string | null
+          id?: string
+          orden?: number
+          perfil_id?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "highlights_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      likes: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          publicacion_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          publicacion_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          publicacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "likes_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      media_publicacion: {
         Row: {
           created_at: string
           es_portada: boolean
@@ -468,7 +666,130 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "imagenes_publicacion_publicacion_id_fkey"
+            foreignKeyName: "media_publicacion_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mensajes: {
+        Row: {
+          contenido: string
+          conversacion_id: string
+          created_at: string
+          id: string
+          imagen_url: string | null
+          leido: boolean
+          leido_at: string | null
+          publicacion_id: string | null
+          remitente_id: string
+        }
+        Insert: {
+          contenido: string
+          conversacion_id: string
+          created_at?: string
+          id?: string
+          imagen_url?: string | null
+          leido?: boolean
+          leido_at?: string | null
+          publicacion_id?: string | null
+          remitente_id: string
+        }
+        Update: {
+          contenido?: string
+          conversacion_id?: string
+          created_at?: string
+          id?: string
+          imagen_url?: string | null
+          leido?: boolean
+          leido_at?: string | null
+          publicacion_id?: string | null
+          remitente_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensajes_conversacion_id_fkey"
+            columns: ["conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "conversaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_remitente_id_fkey"
+            columns: ["remitente_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notificaciones: {
+        Row: {
+          comentario_id: string | null
+          created_at: string
+          id: string
+          leida: boolean
+          origen_id: string | null
+          perfil_id: string
+          publicacion_id: string | null
+          texto: string | null
+          tipo: Database["public"]["Enums"]["tipo_notificacion"]
+        }
+        Insert: {
+          comentario_id?: string | null
+          created_at?: string
+          id?: string
+          leida?: boolean
+          origen_id?: string | null
+          perfil_id: string
+          publicacion_id?: string | null
+          texto?: string | null
+          tipo: Database["public"]["Enums"]["tipo_notificacion"]
+        }
+        Update: {
+          comentario_id?: string | null
+          created_at?: string
+          id?: string
+          leida?: boolean
+          origen_id?: string | null
+          perfil_id?: string
+          publicacion_id?: string | null
+          texto?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_notificacion"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notificaciones_comentario_id_fkey"
+            columns: ["comentario_id"]
+            isOneToOne: false
+            referencedRelation: "comentarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_origen_id_fkey"
+            columns: ["origen_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_publicacion_id_fkey"
             columns: ["publicacion_id"]
             isOneToOne: false
             referencedRelation: "publicaciones"
@@ -512,7 +833,7 @@ export type Database = {
         }
         Relationships: []
       }
-      perfiles_inmo: {
+      perfiles: {
         Row: {
           activo: boolean
           avatar_url: string | null
@@ -520,13 +841,20 @@ export type Database = {
           created_at: string
           descripcion: string | null
           facebook: string | null
+          horario: string | null
           id: string
           instagram: string | null
+          mensajes_privados: boolean
+          mostrar_telefono: boolean
           nombre: string
           portada_url: string | null
           sitio_web: string | null
           slug: string | null
-          tipo: Database["public"]["Enums"]["tipo_usuario_inmo"]
+          telefono: string | null
+          tipo: Database["public"]["Enums"]["tipo_usuario"]
+          total_publicaciones: number
+          total_seguidores: number
+          total_siguiendo: number
           updated_at: string
           verificado: boolean
           whatsapp: string | null
@@ -538,13 +866,20 @@ export type Database = {
           created_at?: string
           descripcion?: string | null
           facebook?: string | null
+          horario?: string | null
           id: string
           instagram?: string | null
+          mensajes_privados?: boolean
+          mostrar_telefono?: boolean
           nombre: string
           portada_url?: string | null
           sitio_web?: string | null
           slug?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_usuario_inmo"]
+          telefono?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_usuario"]
+          total_publicaciones?: number
+          total_seguidores?: number
+          total_siguiendo?: number
           updated_at?: string
           verificado?: boolean
           whatsapp?: string | null
@@ -556,20 +891,27 @@ export type Database = {
           created_at?: string
           descripcion?: string | null
           facebook?: string | null
+          horario?: string | null
           id?: string
           instagram?: string | null
+          mensajes_privados?: boolean
+          mostrar_telefono?: boolean
           nombre?: string
           portada_url?: string | null
           sitio_web?: string | null
           slug?: string | null
-          tipo?: Database["public"]["Enums"]["tipo_usuario_inmo"]
+          telefono?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_usuario"]
+          total_publicaciones?: number
+          total_seguidores?: number
+          total_siguiendo?: number
           updated_at?: string
           verificado?: boolean
           whatsapp?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "perfiles_inmo_ciudad_id_fkey"
+            foreignKeyName: "perfiles_ciudad_id_fkey"
             columns: ["ciudad_id"]
             isOneToOne: false
             referencedRelation: "ciudades"
@@ -695,25 +1037,34 @@ export type Database = {
           dormitorios: number | null
           estado: Database["public"]["Enums"]["estado_publicacion"]
           expensas: number | null
+          fecha_evento: string | null
           gas_natural: boolean
           hectareas: number | null
           id: string
           internet: boolean
+          lugar_evento: string | null
           luz: boolean
+          modalidad_empleo: string | null
           moneda: string
           mostrar_direccion: boolean
           perfil_id: string
           precio: number | null
           precio_negociable: boolean
           referencia: string | null
+          rubro: string | null
           superficie_cubierta: number | null
           superficie_total: number | null
+          tags: string[] | null
           tiene_casa_campo: boolean
           tiene_galpon: boolean
-          tipo_operacion: Database["public"]["Enums"]["tipo_operacion"]
-          tipo_propiedad: Database["public"]["Enums"]["tipo_propiedad"]
+          tipo: Database["public"]["Enums"]["tipo_publicacion"]
+          tipo_operacion: Database["public"]["Enums"]["tipo_operacion"] | null
+          tipo_propiedad: Database["public"]["Enums"]["tipo_propiedad"] | null
           tipo_suelo: string | null
           titulo: string
+          total_comentarios: number
+          total_likes: number
+          total_repostes: number
           updated_at: string
           vistas: number
         }
@@ -734,25 +1085,34 @@ export type Database = {
           dormitorios?: number | null
           estado?: Database["public"]["Enums"]["estado_publicacion"]
           expensas?: number | null
+          fecha_evento?: string | null
           gas_natural?: boolean
           hectareas?: number | null
           id?: string
           internet?: boolean
+          lugar_evento?: string | null
           luz?: boolean
+          modalidad_empleo?: string | null
           moneda?: string
           mostrar_direccion?: boolean
           perfil_id: string
           precio?: number | null
           precio_negociable?: boolean
           referencia?: string | null
+          rubro?: string | null
           superficie_cubierta?: number | null
           superficie_total?: number | null
+          tags?: string[] | null
           tiene_casa_campo?: boolean
           tiene_galpon?: boolean
-          tipo_operacion: Database["public"]["Enums"]["tipo_operacion"]
-          tipo_propiedad: Database["public"]["Enums"]["tipo_propiedad"]
+          tipo?: Database["public"]["Enums"]["tipo_publicacion"]
+          tipo_operacion?: Database["public"]["Enums"]["tipo_operacion"] | null
+          tipo_propiedad?: Database["public"]["Enums"]["tipo_propiedad"] | null
           tipo_suelo?: string | null
           titulo: string
+          total_comentarios?: number
+          total_likes?: number
+          total_repostes?: number
           updated_at?: string
           vistas?: number
         }
@@ -773,25 +1133,34 @@ export type Database = {
           dormitorios?: number | null
           estado?: Database["public"]["Enums"]["estado_publicacion"]
           expensas?: number | null
+          fecha_evento?: string | null
           gas_natural?: boolean
           hectareas?: number | null
           id?: string
           internet?: boolean
+          lugar_evento?: string | null
           luz?: boolean
+          modalidad_empleo?: string | null
           moneda?: string
           mostrar_direccion?: boolean
           perfil_id?: string
           precio?: number | null
           precio_negociable?: boolean
           referencia?: string | null
+          rubro?: string | null
           superficie_cubierta?: number | null
           superficie_total?: number | null
+          tags?: string[] | null
           tiene_casa_campo?: boolean
           tiene_galpon?: boolean
-          tipo_operacion?: Database["public"]["Enums"]["tipo_operacion"]
-          tipo_propiedad?: Database["public"]["Enums"]["tipo_propiedad"]
+          tipo?: Database["public"]["Enums"]["tipo_publicacion"]
+          tipo_operacion?: Database["public"]["Enums"]["tipo_operacion"] | null
+          tipo_propiedad?: Database["public"]["Enums"]["tipo_propiedad"] | null
           tipo_suelo?: string | null
           titulo?: string
+          total_comentarios?: number
+          total_likes?: number
+          total_repostes?: number
           updated_at?: string
           vistas?: number
         }
@@ -814,7 +1183,124 @@ export type Database = {
             foreignKeyName: "publicaciones_perfil_id_fkey"
             columns: ["perfil_id"]
             isOneToOne: false
-            referencedRelation: "perfiles_inmo"
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      repostes: {
+        Row: {
+          comentario: string | null
+          created_at: string
+          id: string
+          perfil_id: string
+          publicacion_id: string
+        }
+        Insert: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          perfil_id: string
+          publicacion_id: string
+        }
+        Update: {
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          publicacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repostes_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repostes_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resenas: {
+        Row: {
+          autor_id: string
+          comentario: string | null
+          created_at: string
+          id: string
+          perfil_id: string
+          puntuacion: number
+        }
+        Insert: {
+          autor_id: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          perfil_id: string
+          puntuacion: number
+        }
+        Update: {
+          autor_id?: string
+          comentario?: string | null
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          puntuacion?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resenas_autor_id_fkey"
+            columns: ["autor_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resenas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seguidos: {
+        Row: {
+          created_at: string
+          id: string
+          seguido_id: string
+          seguidor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          seguido_id: string
+          seguidor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          seguido_id?: string
+          seguidor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seguidos_seguido_id_fkey"
+            columns: ["seguido_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seguidos_seguidor_id_fkey"
+            columns: ["seguidor_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
@@ -952,6 +1438,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_or_create_conversacion: {
+        Args: { user_a: string; user_b: string }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -967,7 +1457,13 @@ export type Database = {
         Args: { _target_user_id: string; _user_id: string }
         Returns: boolean
       }
+      registrar_vista: {
+        Args: { p_publicacion_id: string }
+        Returns: undefined
+      }
       seed_default_pipeline: { Args: { p_user_id: string }; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
@@ -977,7 +1473,17 @@ export type Database = {
         | "pausada"
         | "vendida"
         | "alquilada"
+        | "finalizada"
         | "eliminada"
+      tipo_notificacion:
+        | "nuevo_seguidor"
+        | "like_publicacion"
+        | "comentario_publicacion"
+        | "respuesta_comentario"
+        | "reposteo"
+        | "mencion"
+        | "nuevo_mensaje"
+        | "publicacion_destacada"
       tipo_operacion:
         | "venta"
         | "alquiler"
@@ -997,10 +1503,24 @@ export type Database = {
         | "chacra"
         | "quinta"
         | "otro"
-      tipo_usuario_inmo:
+      tipo_publicacion:
+        | "propiedad"
+        | "empleo"
+        | "servicio"
+        | "evento"
+        | "venta_objeto"
+        | "agro"
+        | "novedad_local"
+        | "busqueda"
+        | "general"
+      tipo_usuario:
+        | "vecino"
         | "dueno_directo"
         | "inmobiliaria"
         | "agente_independiente"
+        | "negocio"
+        | "profesional"
+        | "institucion"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1135,7 +1655,18 @@ export const Constants = {
         "pausada",
         "vendida",
         "alquilada",
+        "finalizada",
         "eliminada",
+      ],
+      tipo_notificacion: [
+        "nuevo_seguidor",
+        "like_publicacion",
+        "comentario_publicacion",
+        "respuesta_comentario",
+        "reposteo",
+        "mencion",
+        "nuevo_mensaje",
+        "publicacion_destacada",
       ],
       tipo_operacion: [
         "venta",
@@ -1158,10 +1689,25 @@ export const Constants = {
         "quinta",
         "otro",
       ],
-      tipo_usuario_inmo: [
+      tipo_publicacion: [
+        "propiedad",
+        "empleo",
+        "servicio",
+        "evento",
+        "venta_objeto",
+        "agro",
+        "novedad_local",
+        "busqueda",
+        "general",
+      ],
+      tipo_usuario: [
+        "vecino",
         "dueno_directo",
         "inmobiliaria",
         "agente_independiente",
+        "negocio",
+        "profesional",
+        "institucion",
       ],
     },
   },
