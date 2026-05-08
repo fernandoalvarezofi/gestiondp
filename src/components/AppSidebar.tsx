@@ -18,6 +18,10 @@ import {
   PlusSquare,
   Search as SearchIcon,
   UserCircle,
+  MessageCircle,
+  Bell,
+  Bookmark,
+  LineChart,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -47,11 +51,15 @@ const mainNav = [
   { title: "Import/Export", icon: FileSpreadsheet, to: "/data" },
 ];
 
-const inmoNav = [
-  { title: "Feed", icon: Home, to: "/inmo" },
-  { title: "Publicar", icon: PlusSquare, to: "/inmo/publicar" },
-  { title: "Buscador", icon: SearchIcon, to: "/inmo/buscar" },
-  { title: "Mi perfil", icon: UserCircle, to: "/inmo/perfil" },
+const linNav = [
+  { title: "Feed", icon: Home, to: "/lin" },
+  { title: "Publicar", icon: PlusSquare, to: "/lin/publicar" },
+  { title: "Buscar", icon: SearchIcon, to: "/lin/buscar" },
+  { title: "Mensajes", icon: MessageCircle, to: "/lin/mensajes" },
+  { title: "Notificaciones", icon: Bell, to: "/lin/notificaciones" },
+  { title: "Favoritos", icon: Bookmark, to: "/lin/favoritos" },
+  { title: "Mi panel", icon: LineChart, to: "/lin/panel" },
+  { title: "Mi perfil", icon: UserCircle, to: "/lin/perfil" },
 ];
 
 export function AppSidebar() {
@@ -102,16 +110,16 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
-            Inmobiliaria Lincoln
+            Linqueño · Lincoln
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {inmoNav.map((item) => (
+              {linNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.to}
-                      end={item.to === "/inmo"}
+                      end={item.to === "/lin"}
                       className={({ isActive }) =>
                         isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
                       }
