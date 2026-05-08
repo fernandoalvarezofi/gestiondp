@@ -51,11 +51,15 @@ const mainNav = [
   { title: "Import/Export", icon: FileSpreadsheet, to: "/data" },
 ];
 
-const inmoNav = [
-  { title: "Feed", icon: Home, to: "/inmo" },
-  { title: "Publicar", icon: PlusSquare, to: "/inmo/publicar" },
-  { title: "Buscador", icon: SearchIcon, to: "/inmo/buscar" },
-  { title: "Mi perfil", icon: UserCircle, to: "/inmo/perfil" },
+const linNav = [
+  { title: "Feed", icon: Home, to: "/lin" },
+  { title: "Publicar", icon: PlusSquare, to: "/lin/publicar" },
+  { title: "Buscar", icon: SearchIcon, to: "/lin/buscar" },
+  { title: "Mensajes", icon: MessageCircle, to: "/lin/mensajes" },
+  { title: "Notificaciones", icon: Bell, to: "/lin/notificaciones" },
+  { title: "Favoritos", icon: Bookmark, to: "/lin/favoritos" },
+  { title: "Mi panel", icon: LineChart, to: "/lin/panel" },
+  { title: "Mi perfil", icon: UserCircle, to: "/lin/perfil" },
 ];
 
 export function AppSidebar() {
