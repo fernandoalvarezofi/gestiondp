@@ -18,6 +18,10 @@ import {
   PlusSquare,
   Search as SearchIcon,
   UserCircle,
+  MessageCircle,
+  Bell,
+  Bookmark,
+  LineChart,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
