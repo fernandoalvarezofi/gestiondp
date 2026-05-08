@@ -110,16 +110,16 @@ export function AppSidebar() {
 
         <SidebarGroup>
           <div className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wide text-sidebar-foreground/60">
-            Inmobiliaria Lincoln
+            Linqueño · Lincoln
           </div>
           <SidebarGroupContent>
             <SidebarMenu>
-              {inmoNav.map((item) => (
+              {linNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.to}
-                      end={item.to === "/inmo"}
+                      end={item.to === "/lin"}
                       className={({ isActive }) =>
                         isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""
                       }
