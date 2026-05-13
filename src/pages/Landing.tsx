@@ -138,7 +138,7 @@ export default function Landing() {
       </nav>
 
       {/* ─── Hero ─── */}
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-hidden min-h-[600px] md:min-h-[700px]">
         {/* Collage background */}
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
           <img
