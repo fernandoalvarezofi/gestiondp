@@ -9,17 +9,6 @@ import { ThemeProvider } from "next-themes";
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
 import Landing from "./pages/Landing";
-import Index from "./pages/Index";
-import Pipeline from "./pages/Pipeline";
-import Contacts from "./pages/Contacts";
-import Companies from "./pages/Companies";
-import Activities from "./pages/Activities";
-import Forecast from "./pages/Forecast";
-import Reports from "./pages/Reports";
-import Settings from "./pages/Settings";
-import DataImportExport from "./pages/DataImportExport";
-import Tasks from "./pages/Tasks";
-import CalendarView from "./pages/CalendarView";
 import LinFeed from "./pages/lin/Feed";
 import LinPublicar from "./pages/lin/Publicar";
 import LinPerfil from "./pages/lin/Perfil";
@@ -46,17 +35,6 @@ const App = () => (
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<Auth />} />
               <Route element={<AppLayout />}>
-                <Route path="/dashboard" element={<Index />} />
-                <Route path="/pipeline" element={<Pipeline />} />
-                <Route path="/contacts" element={<Contacts />} />
-                <Route path="/companies" element={<Companies />} />
-                <Route path="/activities" element={<Activities />} />
-                <Route path="/forecast" element={<Forecast />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/data" element={<DataImportExport />} />
-                <Route path="/tasks" element={<Tasks />} />
-                <Route path="/calendar" element={<CalendarView />} />
                 <Route path="/lin" element={<LinFeed />} />
                 <Route path="/lin/publicar" element={<LinPublicar />} />
                 <Route path="/lin/buscar" element={<LinBuscador />} />
