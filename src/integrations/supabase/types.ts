@@ -62,65 +62,6 @@ export type Database = {
           },
         ]
       }
-      barrios: {
-        Row: {
-          ciudad_id: string
-          created_at: string
-          id: string
-          nombre: string
-          zona: string | null
-        }
-        Insert: {
-          ciudad_id: string
-          created_at?: string
-          id?: string
-          nombre: string
-          zona?: string | null
-        }
-        Update: {
-          ciudad_id?: string
-          created_at?: string
-          id?: string
-          nombre?: string
-          zona?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "barrios_ciudad_id_fkey"
-            columns: ["ciudad_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      ciudades: {
-        Row: {
-          activa: boolean
-          created_at: string
-          id: string
-          nombre: string
-          pais: string
-          provincia: string
-        }
-        Insert: {
-          activa?: boolean
-          created_at?: string
-          id?: string
-          nombre: string
-          pais?: string
-          provincia?: string
-        }
-        Update: {
-          activa?: boolean
-          created_at?: string
-          id?: string
-          nombre?: string
-          pais?: string
-          provincia?: string
-        }
-        Relationships: []
-      }
       comentarios: {
         Row: {
           contenido: string
@@ -130,6 +71,7 @@ export type Database = {
           perfil_id: string
           publicacion_id: string
           respuesta_a: string | null
+          total_likes: number
         }
         Insert: {
           contenido: string
@@ -139,6 +81,7 @@ export type Database = {
           perfil_id: string
           publicacion_id: string
           respuesta_a?: string | null
+          total_likes?: number
         }
         Update: {
           contenido?: string
@@ -148,6 +91,7 @@ export type Database = {
           perfil_id?: string
           publicacion_id?: string
           respuesta_a?: string | null
+          total_likes?: number
         }
         Relationships: [
           {
@@ -155,6 +99,13 @@ export type Database = {
             columns: ["perfil_id"]
             isOneToOne: false
             referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comentarios_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
             referencedColumns: ["id"]
           },
           {
@@ -203,44 +154,196 @@ export type Database = {
         }
         Relationships: []
       }
-      consultas: {
+      comunidad_canales: {
         Row: {
+          comunidad_id: string
           created_at: string
-          de_perfil_id: string
+          descripcion: string | null
           id: string
-          leida: boolean
-          mensaje: string
-          publicacion_id: string
+          nombre: string
+          orden: number
+          tipo: string
         }
         Insert: {
+          comunidad_id: string
           created_at?: string
-          de_perfil_id: string
+          descripcion?: string | null
           id?: string
-          leida?: boolean
-          mensaje: string
-          publicacion_id: string
+          nombre: string
+          orden?: number
+          tipo?: string
         }
         Update: {
+          comunidad_id?: string
           created_at?: string
-          de_perfil_id?: string
+          descripcion?: string | null
           id?: string
-          leida?: boolean
-          mensaje?: string
-          publicacion_id?: string
+          nombre?: string
+          orden?: number
+          tipo?: string
         }
         Relationships: [
           {
-            foreignKeyName: "consultas_de_perfil_id_fkey"
-            columns: ["de_perfil_id"]
+            foreignKeyName: "comunidad_canales_comunidad_id_fkey"
+            columns: ["comunidad_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comunidad_miembros: {
+        Row: {
+          comunidad_id: string
+          created_at: string
+          id: string
+          perfil_id: string
+          rol: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+        }
+        Insert: {
+          comunidad_id: string
+          created_at?: string
+          id?: string
+          perfil_id: string
+          rol?: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+        }
+        Update: {
+          comunidad_id?: string
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          rol?: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comunidad_miembros_comunidad_id_fkey"
+            columns: ["comunidad_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comunidad_miembros_perfil_id_fkey"
+            columns: ["perfil_id"]
             isOneToOne: false
             referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      comunidad_posts: {
+        Row: {
+          canal_id: string | null
+          comunidad_id: string
+          contenido: string
+          created_at: string
+          id: string
+          imagen_url: string | null
+          perfil_id: string
+          titulo: string | null
+          total_likes: number
+          total_respuestas: number
+        }
+        Insert: {
+          canal_id?: string | null
+          comunidad_id: string
+          contenido: string
+          created_at?: string
+          id?: string
+          imagen_url?: string | null
+          perfil_id: string
+          titulo?: string | null
+          total_likes?: number
+          total_respuestas?: number
+        }
+        Update: {
+          canal_id?: string | null
+          comunidad_id?: string
+          contenido?: string
+          created_at?: string
+          id?: string
+          imagen_url?: string | null
+          perfil_id?: string
+          titulo?: string | null
+          total_likes?: number
+          total_respuestas?: number
+        }
+        Relationships: [
           {
-            foreignKeyName: "consultas_publicacion_id_fkey"
-            columns: ["publicacion_id"]
+            foreignKeyName: "comunidad_posts_canal_id_fkey"
+            columns: ["canal_id"]
             isOneToOne: false
-            referencedRelation: "publicaciones"
+            referencedRelation: "comunidad_canales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comunidad_posts_comunidad_id_fkey"
+            columns: ["comunidad_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comunidad_posts_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comunidades: {
+        Row: {
+          avatar_url: string | null
+          creador_id: string
+          created_at: string
+          descripcion: string | null
+          id: string
+          nombre: string
+          portada_url: string | null
+          privada: boolean
+          slug: string
+          tags: string[] | null
+          tematica: string | null
+          total_miembros: number
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          creador_id: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre: string
+          portada_url?: string | null
+          privada?: boolean
+          slug: string
+          tags?: string[] | null
+          tematica?: string | null
+          total_miembros?: number
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          creador_id?: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          portada_url?: string | null
+          privada?: boolean
+          slug?: string
+          tags?: string[] | null
+          tematica?: string | null
+          total_miembros?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comunidades_creador_id_fkey"
+            columns: ["creador_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
@@ -453,10 +556,55 @@ export type Database = {
         }
         Relationships: []
       }
+      encuesta_votos: {
+        Row: {
+          created_at: string
+          id: string
+          opcion_index: number
+          perfil_id: string
+          publicacion_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          opcion_index: number
+          perfil_id: string
+          publicacion_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          opcion_index?: number
+          perfil_id?: string
+          publicacion_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "encuesta_votos_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "encuesta_votos_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "encuesta_votos_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estadisticas_publicacion: {
         Row: {
           comentarios: number
-          consultas: number
           fecha: string
           id: string
           likes: number
@@ -465,7 +613,6 @@ export type Database = {
         }
         Insert: {
           comentarios?: number
-          consultas?: number
           fecha?: string
           id?: string
           likes?: number
@@ -474,7 +621,6 @@ export type Database = {
         }
         Update: {
           comentarios?: number
-          consultas?: number
           fecha?: string
           id?: string
           likes?: number
@@ -482,6 +628,13 @@ export type Database = {
           vistas?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "estadisticas_publicacion_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "estadisticas_publicacion_publicacion_id_fkey"
             columns: ["publicacion_id"]
@@ -496,19 +649,22 @@ export type Database = {
           created_at: string
           id: string
           perfil_id: string
-          publicacion_id: string
+          proyecto_id: string | null
+          publicacion_id: string | null
         }
         Insert: {
           created_at?: string
           id?: string
           perfil_id: string
-          publicacion_id: string
+          proyecto_id?: string | null
+          publicacion_id?: string | null
         }
         Update: {
           created_at?: string
           id?: string
           perfil_id?: string
-          publicacion_id?: string
+          proyecto_id?: string | null
+          publicacion_id?: string | null
         }
         Relationships: [
           {
@@ -519,10 +675,218 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "favoritos_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "favoritos_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "favoritos_publicacion_id_fkey"
             columns: ["publicacion_id"]
             isOneToOne: false
             referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foro_categorias: {
+        Row: {
+          color: string | null
+          descripcion: string | null
+          icono: string | null
+          id: string
+          nombre: string
+          orden: number
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          descripcion?: string | null
+          icono?: string | null
+          id?: string
+          nombre: string
+          orden?: number
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          descripcion?: string | null
+          icono?: string | null
+          id?: string
+          nombre?: string
+          orden?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      foro_likes: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          post_id: string | null
+          resp_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          post_id?: string | null
+          resp_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          post_id?: string | null
+          resp_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foro_likes_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foro_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "foro_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foro_likes_resp_id_fkey"
+            columns: ["resp_id"]
+            isOneToOne: false
+            referencedRelation: "foro_respuestas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foro_posts: {
+        Row: {
+          categoria_id: string
+          contenido: string
+          created_at: string
+          fijado: boolean
+          id: string
+          perfil_id: string
+          resuelto: boolean
+          tags: string[] | null
+          titulo: string
+          total_likes: number
+          total_respuestas: number
+          total_vistas: number
+          updated_at: string
+        }
+        Insert: {
+          categoria_id: string
+          contenido: string
+          created_at?: string
+          fijado?: boolean
+          id?: string
+          perfil_id: string
+          resuelto?: boolean
+          tags?: string[] | null
+          titulo: string
+          total_likes?: number
+          total_respuestas?: number
+          total_vistas?: number
+          updated_at?: string
+        }
+        Update: {
+          categoria_id?: string
+          contenido?: string
+          created_at?: string
+          fijado?: boolean
+          id?: string
+          perfil_id?: string
+          resuelto?: boolean
+          tags?: string[] | null
+          titulo?: string
+          total_likes?: number
+          total_respuestas?: number
+          total_vistas?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foro_posts_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "foro_categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foro_posts_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foro_respuestas: {
+        Row: {
+          contenido: string
+          created_at: string
+          es_solucion: boolean
+          id: string
+          perfil_id: string
+          post_id: string
+          respuesta_a: string | null
+          total_likes: number
+        }
+        Insert: {
+          contenido: string
+          created_at?: string
+          es_solucion?: boolean
+          id?: string
+          perfil_id: string
+          post_id: string
+          respuesta_a?: string | null
+          total_likes?: number
+        }
+        Update: {
+          contenido?: string
+          created_at?: string
+          es_solucion?: boolean
+          id?: string
+          perfil_id?: string
+          post_id?: string
+          respuesta_a?: string | null
+          total_likes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foro_respuestas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foro_respuestas_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "foro_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foro_respuestas_respuesta_a_fkey"
+            columns: ["respuesta_a"]
+            isOneToOne: false
+            referencedRelation: "foro_respuestas"
             referencedColumns: ["id"]
           },
         ]
@@ -602,24 +966,34 @@ export type Database = {
       }
       likes: {
         Row: {
+          comunidad_post_id: string | null
           created_at: string
           id: string
           perfil_id: string
-          publicacion_id: string
+          publicacion_id: string | null
         }
         Insert: {
+          comunidad_post_id?: string | null
           created_at?: string
           id?: string
           perfil_id: string
-          publicacion_id: string
+          publicacion_id?: string | null
         }
         Update: {
+          comunidad_post_id?: string | null
           created_at?: string
           id?: string
           perfil_id?: string
-          publicacion_id?: string
+          publicacion_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "likes_comunidad_post_id_fkey"
+            columns: ["comunidad_post_id"]
+            isOneToOne: false
+            referencedRelation: "comunidad_posts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "likes_perfil_id_fkey"
             columns: ["perfil_id"]
@@ -631,7 +1005,95 @@ export type Database = {
             foreignKeyName: "likes_publicacion_id_fkey"
             columns: ["publicacion_id"]
             isOneToOne: false
+            referencedRelation: "feed_woref"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "likes_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
             referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      match_acciones: {
+        Row: {
+          accion: string
+          created_at: string
+          id: string
+          objetivo_id: string
+          perfil_id: string
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          id?: string
+          objetivo_id: string
+          perfil_id: string
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          id?: string
+          objetivo_id?: string
+          perfil_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "match_acciones_objetivo_id_fkey"
+            columns: ["objetivo_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "match_acciones_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matches: {
+        Row: {
+          created_at: string
+          id: string
+          motivo: string[] | null
+          perfil_a_id: string
+          perfil_b_id: string
+          score: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          motivo?: string[] | null
+          perfil_a_id: string
+          perfil_b_id: string
+          score?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          motivo?: string[] | null
+          perfil_a_id?: string
+          perfil_b_id?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matches_perfil_a_id_fkey"
+            columns: ["perfil_a_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matches_perfil_b_id_fkey"
+            columns: ["perfil_b_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
@@ -669,6 +1131,13 @@ export type Database = {
             foreignKeyName: "media_publicacion_publicacion_id_fkey"
             columns: ["publicacion_id"]
             isOneToOne: false
+            referencedRelation: "feed_woref"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_publicacion_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
             referencedRelation: "publicaciones"
             referencedColumns: ["id"]
           },
@@ -683,6 +1152,7 @@ export type Database = {
           imagen_url: string | null
           leido: boolean
           leido_at: string | null
+          proyecto_id: string | null
           publicacion_id: string | null
           remitente_id: string
         }
@@ -694,6 +1164,7 @@ export type Database = {
           imagen_url?: string | null
           leido?: boolean
           leido_at?: string | null
+          proyecto_id?: string | null
           publicacion_id?: string | null
           remitente_id: string
         }
@@ -705,6 +1176,7 @@ export type Database = {
           imagen_url?: string | null
           leido?: boolean
           leido_at?: string | null
+          proyecto_id?: string | null
           publicacion_id?: string | null
           remitente_id?: string
         }
@@ -714,6 +1186,20 @@ export type Database = {
             columns: ["conversacion_id"]
             isOneToOne: false
             referencedRelation: "conversaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
             referencedColumns: ["id"]
           },
           {
@@ -735,33 +1221,39 @@ export type Database = {
       notificaciones: {
         Row: {
           comentario_id: string | null
+          comunidad_id: string | null
           created_at: string
           id: string
           leida: boolean
           origen_id: string | null
           perfil_id: string
+          proyecto_id: string | null
           publicacion_id: string | null
           texto: string | null
           tipo: Database["public"]["Enums"]["tipo_notificacion"]
         }
         Insert: {
           comentario_id?: string | null
+          comunidad_id?: string | null
           created_at?: string
           id?: string
           leida?: boolean
           origen_id?: string | null
           perfil_id: string
+          proyecto_id?: string | null
           publicacion_id?: string | null
           texto?: string | null
           tipo: Database["public"]["Enums"]["tipo_notificacion"]
         }
         Update: {
           comentario_id?: string | null
+          comunidad_id?: string | null
           created_at?: string
           id?: string
           leida?: boolean
           origen_id?: string | null
           perfil_id?: string
+          proyecto_id?: string | null
           publicacion_id?: string | null
           texto?: string | null
           tipo?: Database["public"]["Enums"]["tipo_notificacion"]
@@ -772,6 +1264,13 @@ export type Database = {
             columns: ["comentario_id"]
             isOneToOne: false
             referencedRelation: "comentarios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_comunidad_id_fkey"
+            columns: ["comunidad_id"]
+            isOneToOne: false
+            referencedRelation: "comunidades"
             referencedColumns: ["id"]
           },
           {
@@ -786,6 +1285,20 @@ export type Database = {
             columns: ["perfil_id"]
             isOneToOne: false
             referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notificaciones_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
             referencedColumns: ["id"]
           },
           {
@@ -836,88 +1349,98 @@ export type Database = {
       perfiles: {
         Row: {
           activo: boolean
+          actualmente: string | null
           avatar_url: string | null
-          ciudad_id: string | null
+          bio: string | null
           created_at: string
-          descripcion: string | null
-          facebook: string | null
-          horario: string | null
           id: string
+          industria: string | null
           instagram: string | null
+          intereses: string[] | null
+          linkedin: string | null
           mensajes_privados: boolean
-          mostrar_telefono: boolean
+          mostrar_ubicacion: boolean
           nombre: string
           portada_url: string | null
+          que_busca: string | null
+          que_ofrece: string | null
+          score: number
           sitio_web: string | null
-          slug: string | null
-          telefono: string | null
+          skills: string[] | null
           tipo: Database["public"]["Enums"]["tipo_usuario"]
           total_publicaciones: number
           total_seguidores: number
           total_siguiendo: number
+          twitter: string | null
+          ubicacion: string | null
           updated_at: string
+          username: string
           verificado: boolean
-          whatsapp: string | null
+          youtube: string | null
         }
         Insert: {
           activo?: boolean
+          actualmente?: string | null
           avatar_url?: string | null
-          ciudad_id?: string | null
+          bio?: string | null
           created_at?: string
-          descripcion?: string | null
-          facebook?: string | null
-          horario?: string | null
           id: string
+          industria?: string | null
           instagram?: string | null
+          intereses?: string[] | null
+          linkedin?: string | null
           mensajes_privados?: boolean
-          mostrar_telefono?: boolean
+          mostrar_ubicacion?: boolean
           nombre: string
           portada_url?: string | null
+          que_busca?: string | null
+          que_ofrece?: string | null
+          score?: number
           sitio_web?: string | null
-          slug?: string | null
-          telefono?: string | null
+          skills?: string[] | null
           tipo?: Database["public"]["Enums"]["tipo_usuario"]
           total_publicaciones?: number
           total_seguidores?: number
           total_siguiendo?: number
+          twitter?: string | null
+          ubicacion?: string | null
           updated_at?: string
+          username: string
           verificado?: boolean
-          whatsapp?: string | null
+          youtube?: string | null
         }
         Update: {
           activo?: boolean
+          actualmente?: string | null
           avatar_url?: string | null
-          ciudad_id?: string | null
+          bio?: string | null
           created_at?: string
-          descripcion?: string | null
-          facebook?: string | null
-          horario?: string | null
           id?: string
+          industria?: string | null
           instagram?: string | null
+          intereses?: string[] | null
+          linkedin?: string | null
           mensajes_privados?: boolean
-          mostrar_telefono?: boolean
+          mostrar_ubicacion?: boolean
           nombre?: string
           portada_url?: string | null
+          que_busca?: string | null
+          que_ofrece?: string | null
+          score?: number
           sitio_web?: string | null
-          slug?: string | null
-          telefono?: string | null
+          skills?: string[] | null
           tipo?: Database["public"]["Enums"]["tipo_usuario"]
           total_publicaciones?: number
           total_seguidores?: number
           total_siguiendo?: number
+          twitter?: string | null
+          ubicacion?: string | null
           updated_at?: string
+          username?: string
           verificado?: boolean
-          whatsapp?: string | null
+          youtube?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "perfiles_ciudad_id_fkey"
-            columns: ["ciudad_id"]
-            isOneToOne: false
-            referencedRelation: "ciudades"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       pipeline_stages: {
         Row: {
@@ -1019,166 +1542,292 @@ export type Database = {
         }
         Relationships: []
       }
-      publicaciones: {
+      proyecto_miembros: {
         Row: {
-          acceso_pavimento: boolean
-          agua_corriente: boolean
-          ambientes: number | null
-          banos: number | null
-          barrio_id: string | null
-          ciudad_id: string
-          cloaca: boolean
-          cochera: boolean
           created_at: string
-          descripcion: string | null
-          destacada: boolean
-          destacada_hasta: string | null
-          direccion: string | null
-          dormitorios: number | null
-          estado: Database["public"]["Enums"]["estado_publicacion"]
-          expensas: number | null
-          fecha_evento: string | null
-          gas_natural: boolean
-          hectareas: number | null
+          es_fundador: boolean
           id: string
-          internet: boolean
-          lugar_evento: string | null
-          luz: boolean
-          modalidad_empleo: string | null
-          moneda: string
-          mostrar_direccion: boolean
           perfil_id: string
-          precio: number | null
-          precio_negociable: boolean
-          referencia: string | null
-          rubro: string | null
-          superficie_cubierta: number | null
-          superficie_total: number | null
-          tags: string[] | null
-          tiene_casa_campo: boolean
-          tiene_galpon: boolean
-          tipo: Database["public"]["Enums"]["tipo_publicacion"]
-          tipo_operacion: Database["public"]["Enums"]["tipo_operacion"] | null
-          tipo_propiedad: Database["public"]["Enums"]["tipo_propiedad"] | null
-          tipo_suelo: string | null
-          titulo: string
-          total_comentarios: number
-          total_likes: number
-          total_repostes: number
-          updated_at: string
-          vistas: number
+          proyecto_id: string
+          rol: string
         }
         Insert: {
-          acceso_pavimento?: boolean
-          agua_corriente?: boolean
-          ambientes?: number | null
-          banos?: number | null
-          barrio_id?: string | null
-          ciudad_id: string
-          cloaca?: boolean
-          cochera?: boolean
           created_at?: string
-          descripcion?: string | null
-          destacada?: boolean
-          destacada_hasta?: string | null
-          direccion?: string | null
-          dormitorios?: number | null
-          estado?: Database["public"]["Enums"]["estado_publicacion"]
-          expensas?: number | null
-          fecha_evento?: string | null
-          gas_natural?: boolean
-          hectareas?: number | null
+          es_fundador?: boolean
           id?: string
-          internet?: boolean
-          lugar_evento?: string | null
-          luz?: boolean
-          modalidad_empleo?: string | null
-          moneda?: string
-          mostrar_direccion?: boolean
           perfil_id: string
-          precio?: number | null
-          precio_negociable?: boolean
-          referencia?: string | null
-          rubro?: string | null
-          superficie_cubierta?: number | null
-          superficie_total?: number | null
-          tags?: string[] | null
-          tiene_casa_campo?: boolean
-          tiene_galpon?: boolean
-          tipo?: Database["public"]["Enums"]["tipo_publicacion"]
-          tipo_operacion?: Database["public"]["Enums"]["tipo_operacion"] | null
-          tipo_propiedad?: Database["public"]["Enums"]["tipo_propiedad"] | null
-          tipo_suelo?: string | null
-          titulo: string
-          total_comentarios?: number
-          total_likes?: number
-          total_repostes?: number
-          updated_at?: string
-          vistas?: number
+          proyecto_id: string
+          rol?: string
         }
         Update: {
-          acceso_pavimento?: boolean
-          agua_corriente?: boolean
-          ambientes?: number | null
-          banos?: number | null
-          barrio_id?: string | null
-          ciudad_id?: string
-          cloaca?: boolean
-          cochera?: boolean
           created_at?: string
-          descripcion?: string | null
-          destacada?: boolean
-          destacada_hasta?: string | null
-          direccion?: string | null
-          dormitorios?: number | null
-          estado?: Database["public"]["Enums"]["estado_publicacion"]
-          expensas?: number | null
-          fecha_evento?: string | null
-          gas_natural?: boolean
-          hectareas?: number | null
+          es_fundador?: boolean
           id?: string
-          internet?: boolean
-          lugar_evento?: string | null
-          luz?: boolean
-          modalidad_empleo?: string | null
-          moneda?: string
-          mostrar_direccion?: boolean
           perfil_id?: string
-          precio?: number | null
-          precio_negociable?: boolean
-          referencia?: string | null
-          rubro?: string | null
-          superficie_cubierta?: number | null
-          superficie_total?: number | null
-          tags?: string[] | null
-          tiene_casa_campo?: boolean
-          tiene_galpon?: boolean
-          tipo?: Database["public"]["Enums"]["tipo_publicacion"]
-          tipo_operacion?: Database["public"]["Enums"]["tipo_operacion"] | null
-          tipo_propiedad?: Database["public"]["Enums"]["tipo_propiedad"] | null
-          tipo_suelo?: string | null
-          titulo?: string
-          total_comentarios?: number
-          total_likes?: number
-          total_repostes?: number
-          updated_at?: string
-          vistas?: number
+          proyecto_id?: string
+          rol?: string
         }
         Relationships: [
           {
-            foreignKeyName: "publicaciones_barrio_id_fkey"
-            columns: ["barrio_id"]
+            foreignKeyName: "proyecto_miembros_perfil_id_fkey"
+            columns: ["perfil_id"]
             isOneToOne: false
-            referencedRelation: "barrios"
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "publicaciones_ciudad_id_fkey"
-            columns: ["ciudad_id"]
+            foreignKeyName: "proyecto_miembros_proyecto_id_fkey"
+            columns: ["proyecto_id"]
             isOneToOne: false
-            referencedRelation: "ciudades"
+            referencedRelation: "proyectos"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      proyecto_seguidores: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          proyecto_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          proyecto_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          proyecto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_seguidores_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proyecto_seguidores_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proyecto_updates: {
+        Row: {
+          contenido: string | null
+          created_at: string
+          id: string
+          imagen_url: string | null
+          perfil_id: string
+          proyecto_id: string
+          titulo: string
+        }
+        Insert: {
+          contenido?: string | null
+          created_at?: string
+          id?: string
+          imagen_url?: string | null
+          perfil_id: string
+          proyecto_id: string
+          titulo: string
+        }
+        Update: {
+          contenido?: string | null
+          created_at?: string
+          id?: string
+          imagen_url?: string | null
+          perfil_id?: string
+          proyecto_id?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_updates_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proyecto_updates_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proyectos: {
+        Row: {
+          buscando: string[] | null
+          categoria: string | null
+          created_at: string
+          demo_url: string | null
+          descripcion: string | null
+          destacado: boolean
+          estado: Database["public"]["Enums"]["estado_proyecto"]
+          id: string
+          nombre: string
+          perfil_id: string
+          portada_url: string | null
+          progreso: number
+          repo_url: string | null
+          sitio_web: string | null
+          slug: string | null
+          tags: string[] | null
+          total_miembros: number
+          total_seguidores: number
+          updated_at: string
+        }
+        Insert: {
+          buscando?: string[] | null
+          categoria?: string | null
+          created_at?: string
+          demo_url?: string | null
+          descripcion?: string | null
+          destacado?: boolean
+          estado?: Database["public"]["Enums"]["estado_proyecto"]
+          id?: string
+          nombre: string
+          perfil_id: string
+          portada_url?: string | null
+          progreso?: number
+          repo_url?: string | null
+          sitio_web?: string | null
+          slug?: string | null
+          tags?: string[] | null
+          total_miembros?: number
+          total_seguidores?: number
+          updated_at?: string
+        }
+        Update: {
+          buscando?: string[] | null
+          categoria?: string | null
+          created_at?: string
+          demo_url?: string | null
+          descripcion?: string | null
+          destacado?: boolean
+          estado?: Database["public"]["Enums"]["estado_proyecto"]
+          id?: string
+          nombre?: string
+          perfil_id?: string
+          portada_url?: string | null
+          progreso?: number
+          repo_url?: string | null
+          sitio_web?: string | null
+          slug?: string | null
+          tags?: string[] | null
+          total_miembros?: number
+          total_seguidores?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyectos_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      publicaciones: {
+        Row: {
+          created_at: string
+          cuerpo: string | null
+          cuerpo_largo: string | null
+          destacada: boolean
+          encuesta_cierre: string | null
+          encuesta_opciones: string[] | null
+          estado: Database["public"]["Enums"]["estado_publicacion"]
+          formato: Database["public"]["Enums"]["formato_publicacion"]
+          id: string
+          imagen_url: string | null
+          industria_op: string | null
+          modalidad: string | null
+          pais: string | null
+          perfil_id: string
+          rol_buscado: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          tipo: Database["public"]["Enums"]["tipo_publicacion"]
+          titulo: string | null
+          total_comentarios: number
+          total_guardados: number
+          total_likes: number
+          total_repostes: number
+          updated_at: string
+          video_duracion: number | null
+          video_url: string | null
+          vistas: number
+        }
+        Insert: {
+          created_at?: string
+          cuerpo?: string | null
+          cuerpo_largo?: string | null
+          destacada?: boolean
+          encuesta_cierre?: string | null
+          encuesta_opciones?: string[] | null
+          estado?: Database["public"]["Enums"]["estado_publicacion"]
+          formato?: Database["public"]["Enums"]["formato_publicacion"]
+          id?: string
+          imagen_url?: string | null
+          industria_op?: string | null
+          modalidad?: string | null
+          pais?: string | null
+          perfil_id: string
+          rol_buscado?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_publicacion"]
+          titulo?: string | null
+          total_comentarios?: number
+          total_guardados?: number
+          total_likes?: number
+          total_repostes?: number
+          updated_at?: string
+          video_duracion?: number | null
+          video_url?: string | null
+          vistas?: number
+        }
+        Update: {
+          created_at?: string
+          cuerpo?: string | null
+          cuerpo_largo?: string | null
+          destacada?: boolean
+          encuesta_cierre?: string | null
+          encuesta_opciones?: string[] | null
+          estado?: Database["public"]["Enums"]["estado_publicacion"]
+          formato?: Database["public"]["Enums"]["formato_publicacion"]
+          id?: string
+          imagen_url?: string | null
+          industria_op?: string | null
+          modalidad?: string | null
+          pais?: string | null
+          perfil_id?: string
+          rol_buscado?: string | null
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          tipo?: Database["public"]["Enums"]["tipo_publicacion"]
+          titulo?: string | null
+          total_comentarios?: number
+          total_guardados?: number
+          total_likes?: number
+          total_repostes?: number
+          updated_at?: string
+          video_duracion?: number | null
+          video_url?: string | null
+          vistas?: number
+        }
+        Relationships: [
           {
             foreignKeyName: "publicaciones_perfil_id_fkey"
             columns: ["perfil_id"]
@@ -1216,6 +1865,13 @@ export type Database = {
             columns: ["perfil_id"]
             isOneToOne: false
             referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repostes_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
             referencedColumns: ["id"]
           },
           {
@@ -1435,7 +2091,38 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      feed_woref: {
+        Row: {
+          autor_avatar: string | null
+          autor_nombre: string | null
+          autor_score: number | null
+          autor_tipo: Database["public"]["Enums"]["tipo_usuario"] | null
+          autor_username: string | null
+          autor_verificado: boolean | null
+          created_at: string | null
+          cuerpo: string | null
+          cuerpo_largo: string | null
+          destacada: boolean | null
+          encuesta_opciones: string[] | null
+          formato: Database["public"]["Enums"]["formato_publicacion"] | null
+          id: string | null
+          imagen_url: string | null
+          modalidad: string | null
+          rol_buscado: string | null
+          tags: string[] | null
+          thumbnail_url: string | null
+          tipo: Database["public"]["Enums"]["tipo_publicacion"] | null
+          titulo: string | null
+          total_comentarios: number | null
+          total_guardados: number | null
+          total_likes: number | null
+          total_repostes: number | null
+          video_duracion: number | null
+          video_url: string | null
+          vistas: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_or_create_conversacion: {
@@ -1468,57 +2155,63 @@ export type Database = {
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
       app_role: "admin" | "manager" | "rep"
-      estado_publicacion:
-        | "activa"
-        | "pausada"
-        | "vendida"
-        | "alquilada"
-        | "finalizada"
-        | "eliminada"
+      estado_proyecto:
+        | "idea"
+        | "en_desarrollo"
+        | "lanzado"
+        | "pausado"
+        | "completado"
+        | "buscando_equipo"
+        | "buscando_inversion"
+      estado_publicacion: "activa" | "borrador" | "pausada" | "eliminada"
+      formato_publicacion:
+        | "texto"
+        | "imagen"
+        | "video_corto"
+        | "video_largo"
+        | "articulo"
+        | "proyecto"
+        | "encuesta"
+        | "recurso"
+      tipo_miembro_comunidad: "miembro" | "moderador" | "admin"
       tipo_notificacion:
         | "nuevo_seguidor"
-        | "like_publicacion"
-        | "comentario_publicacion"
+        | "like"
+        | "comentario"
         | "respuesta_comentario"
         | "reposteo"
         | "mencion"
         | "nuevo_mensaje"
-        | "publicacion_destacada"
-      tipo_operacion:
-        | "venta"
-        | "alquiler"
-        | "alquiler_temporario"
-        | "local_comercial"
-        | "oficina"
-        | "campo_rural"
-      tipo_propiedad:
-        | "casa"
-        | "departamento"
-        | "ph"
-        | "local"
-        | "oficina"
-        | "galpon"
-        | "terreno"
-        | "campo"
-        | "chacra"
-        | "quinta"
-        | "otro"
+        | "match"
+        | "invitacion_proyecto"
+        | "invitacion_comunidad"
+        | "oportunidad"
+        | "nuevo_miembro_proyecto"
       tipo_publicacion:
-        | "propiedad"
-        | "empleo"
-        | "servicio"
-        | "evento"
-        | "venta_objeto"
-        | "agro"
-        | "novedad_local"
-        | "busqueda"
+        | "update"
+        | "proyecto"
+        | "oportunidad"
+        | "recurso"
+        | "idea"
+        | "logro"
+        | "lanzamiento"
+        | "busco_socio"
+        | "busco_colaborador"
+        | "hiring"
+        | "contenido_corto"
+        | "contenido_largo"
+        | "video_corto"
+        | "video_largo"
+        | "encuesta"
         | "general"
       tipo_usuario:
-        | "vecino"
-        | "dueno_directo"
-        | "inmobiliaria"
-        | "agente_independiente"
-        | "negocio"
+        | "emprendedor"
+        | "empresa"
+        | "inversor"
+        | "marca"
+        | "freelancer"
+        | "atleta"
+        | "creador"
         | "profesional"
         | "institucion"
     }
@@ -1650,62 +2343,67 @@ export const Constants = {
     Enums: {
       activity_type: ["call", "email", "meeting", "note"],
       app_role: ["admin", "manager", "rep"],
-      estado_publicacion: [
-        "activa",
-        "pausada",
-        "vendida",
-        "alquilada",
-        "finalizada",
-        "eliminada",
+      estado_proyecto: [
+        "idea",
+        "en_desarrollo",
+        "lanzado",
+        "pausado",
+        "completado",
+        "buscando_equipo",
+        "buscando_inversion",
       ],
+      estado_publicacion: ["activa", "borrador", "pausada", "eliminada"],
+      formato_publicacion: [
+        "texto",
+        "imagen",
+        "video_corto",
+        "video_largo",
+        "articulo",
+        "proyecto",
+        "encuesta",
+        "recurso",
+      ],
+      tipo_miembro_comunidad: ["miembro", "moderador", "admin"],
       tipo_notificacion: [
         "nuevo_seguidor",
-        "like_publicacion",
-        "comentario_publicacion",
+        "like",
+        "comentario",
         "respuesta_comentario",
         "reposteo",
         "mencion",
         "nuevo_mensaje",
-        "publicacion_destacada",
-      ],
-      tipo_operacion: [
-        "venta",
-        "alquiler",
-        "alquiler_temporario",
-        "local_comercial",
-        "oficina",
-        "campo_rural",
-      ],
-      tipo_propiedad: [
-        "casa",
-        "departamento",
-        "ph",
-        "local",
-        "oficina",
-        "galpon",
-        "terreno",
-        "campo",
-        "chacra",
-        "quinta",
-        "otro",
+        "match",
+        "invitacion_proyecto",
+        "invitacion_comunidad",
+        "oportunidad",
+        "nuevo_miembro_proyecto",
       ],
       tipo_publicacion: [
-        "propiedad",
-        "empleo",
-        "servicio",
-        "evento",
-        "venta_objeto",
-        "agro",
-        "novedad_local",
-        "busqueda",
+        "update",
+        "proyecto",
+        "oportunidad",
+        "recurso",
+        "idea",
+        "logro",
+        "lanzamiento",
+        "busco_socio",
+        "busco_colaborador",
+        "hiring",
+        "contenido_corto",
+        "contenido_largo",
+        "video_corto",
+        "video_largo",
+        "encuesta",
         "general",
       ],
       tipo_usuario: [
-        "vecino",
-        "dueno_directo",
-        "inmobiliaria",
-        "agente_independiente",
-        "negocio",
+        "emprendedor",
+        "empresa",
+        "inversor",
+        "marca",
+        "freelancer",
+        "atleta",
+        "creador",
         "profesional",
         "institucion",
       ],
