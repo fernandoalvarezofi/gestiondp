@@ -1,41 +1,21 @@
-import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Heart, MessageCircle, Repeat2, Bookmark, MapPin, BadgeCheck, Eye, MoreHorizontal, Share2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { TIPO_PUBLICACION, TIPO_USUARIO, initials, formatTime, formatNumber } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import {
-  TIPO_PUBLICACION,
-  TIPO_OPERACION,
-  TIPO_PROPIEDAD,
-  formatPrecio,
-  timeAgo,
-  initials,
-  getFallbackImage,
-} from "@/lib/linquenoHelpers";
 
-type Pub = any;
-
-interface Props {
-  pub: Pub;
-  onUpdated?: () => void;
-}
-
-export function PostCard({ pub, onUpdated }: Props) {
+export function PostCard({ pub }: { pub: any }) {
   const { user } = useAuth();
   const [liked, setLiked] = useState(false);
-  const [favorito, setFavorito] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [reposted, setReposted] = useState(false);
-  const [counts, setCounts] = useState({
-    likes: pub.total_likes || 0,
-    comentarios: pub.total_comentarios || 0,
-    repostes: pub.total_repostes || 0,
-  });
+  const [counts, setCounts] = useState({ likes: pub.total_likes || 0, com: pub.total_comentarios || 0, rep: pub.total_repostes || 0 });
 
   useEffect(() => {
     if (!user) return;
@@ -45,176 +25,126 @@ export function PostCard({ pub, onUpdated }: Props) {
         (supabase as any).from("favoritos").select("id").eq("perfil_id", user.id).eq("publicacion_id", pub.id).maybeSingle(),
         (supabase as any).from("repostes").select("id").eq("perfil_id", user.id).eq("publicacion_id", pub.id).maybeSingle(),
       ]);
-      setLiked(!!l);
-      setFavorito(!!f);
-      setReposted(!!r);
+      setLiked(!!l); setSaved(!!f); setReposted(!!r);
     })();
   }, [user, pub.id]);
 
-  const portada =
-    pub.media?.find((m: any) => m.es_portada)?.url ||
-    pub.media?.[0]?.url ||
-    getFallbackImage(pub.tipo, pub.tipo_propiedad);
-
   const toggleLike = async () => {
-    if (!user) return toast.error("Iniciá sesión para dar me gusta");
+    if (!user) return toast.error("Iniciá sesión");
     if (liked) {
       await (supabase as any).from("likes").delete().eq("perfil_id", user.id).eq("publicacion_id", pub.id);
-      setLiked(false);
-      setCounts((c) => ({ ...c, likes: c.likes - 1 }));
+      setLiked(false); setCounts((c) => ({ ...c, likes: c.likes - 1 }));
     } else {
       await (supabase as any).from("likes").insert({ perfil_id: user.id, publicacion_id: pub.id });
-      setLiked(true);
-      setCounts((c) => ({ ...c, likes: c.likes + 1 }));
+      setLiked(true); setCounts((c) => ({ ...c, likes: c.likes + 1 }));
     }
   };
 
-  const toggleFav = async () => {
-    if (!user) return toast.error("Iniciá sesión para guardar");
-    if (favorito) {
+  const toggleSave = async () => {
+    if (!user) return toast.error("Iniciá sesión");
+    if (saved) {
       await (supabase as any).from("favoritos").delete().eq("perfil_id", user.id).eq("publicacion_id", pub.id);
-      setFavorito(false);
+      setSaved(false);
     } else {
       await (supabase as any).from("favoritos").insert({ perfil_id: user.id, publicacion_id: pub.id });
-      setFavorito(true);
-      toast.success("Guardado en favoritos");
+      setSaved(true); toast.success("Guardado");
     }
   };
 
   const toggleRepost = async () => {
-    if (!user) return toast.error("Iniciá sesión para repostear");
+    if (!user) return toast.error("Iniciá sesión");
     if (reposted) {
       await (supabase as any).from("repostes").delete().eq("perfil_id", user.id).eq("publicacion_id", pub.id);
-      setReposted(false);
-      setCounts((c) => ({ ...c, repostes: c.repostes - 1 }));
+      setReposted(false); setCounts((c) => ({ ...c, rep: c.rep - 1 }));
     } else {
       await (supabase as any).from("repostes").insert({ perfil_id: user.id, publicacion_id: pub.id });
-      setReposted(true);
-      setCounts((c) => ({ ...c, repostes: c.repostes + 1 }));
-      toast.success("Reposteado en tu perfil");
-    }
-  };
-
-  const compartir = async () => {
-    const url = `${window.location.origin}/lin/publicacion/${pub.id}`;
-    if (navigator.share) {
-      try { await navigator.share({ title: pub.titulo, url }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copiado");
+      setReposted(true); setCounts((c) => ({ ...c, rep: c.rep + 1 })); toast.success("Reposteado");
     }
   };
 
   const tipoMeta = TIPO_PUBLICACION[pub.tipo] || TIPO_PUBLICACION.general;
-  const showPropertyMeta = pub.tipo === "propiedad" || pub.tipo === "agro";
+  const portada = pub.media?.find((m: any) => m.es_portada)?.url || pub.media?.[0]?.url || pub.imagen_url;
+  const username = pub.perfil?.username;
 
   return (
     <Card className="overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3">
-        <Link to={`/lin/perfil/${pub.perfil?.slug}`} className="flex items-center gap-2.5 hover:opacity-80">
-          <Avatar className="h-9 w-9">
-            <AvatarImage src={pub.perfil?.avatar_url || ""} className="object-cover" />
-            <AvatarFallback className="text-xs">{initials(pub.perfil?.nombre)}</AvatarFallback>
-          </Avatar>
-          <div className="leading-tight">
-            <div className="flex items-center gap-1 text-sm font-semibold">
-              {pub.perfil?.nombre}
-              {pub.perfil?.verificado && <BadgeCheck className="h-3.5 w-3.5 text-primary" />}
+      <CardContent className="p-4 sm:p-5 space-y-3">
+        <div className="flex items-start justify-between gap-2">
+          <Link to={username ? `/lin/perfil/${username}` : "#"} className="flex items-center gap-3 min-w-0">
+            <Avatar className="h-10 w-10">
+              <AvatarImage src={pub.perfil?.avatar_url || ""} className="object-cover" />
+              <AvatarFallback>{initials(pub.perfil?.nombre)}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1">
+                <p className="truncate text-sm font-semibold">{pub.perfil?.nombre}</p>
+                {pub.perfil?.verificado && <BadgeCheck className="h-3.5 w-3.5 text-primary" />}
+              </div>
+              <p className="text-xs text-muted-foreground truncate">
+                @{username} · {TIPO_USUARIO[pub.perfil?.tipo] || ""} · {formatTime(pub.created_at)}
+              </p>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <span>{timeAgo(pub.created_at)}</span>
-              {pub.barrio?.nombre && (
-                <>
-                  <span>·</span>
-                  <span className="flex items-center gap-0.5"><MapPin className="h-3 w-3" />{pub.barrio.nombre}</span>
-                </>
-              )}
+          </Link>
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant="secondary" className="text-xs"><span className="mr-1">{tipoMeta.emoji}</span>{tipoMeta.label}</Badge>
+          {pub.destacada && <Badge className="text-xs">Destacado</Badge>}
+        </div>
+
+        <Link to={`/lin/publicacion/${pub.id}`} className="block space-y-2">
+          {pub.titulo && <h3 className="text-base font-semibold leading-snug">{pub.titulo}</h3>}
+          {pub.cuerpo && <p className="text-sm leading-relaxed text-foreground/90 whitespace-pre-wrap line-clamp-6">{pub.cuerpo}</p>}
+
+          {pub.tipo === "encuesta" && pub.encuesta_opciones?.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              {pub.encuesta_opciones.map((op: string, i: number) => (
+                <div key={i} className="rounded-md border bg-secondary/40 px-3 py-2 text-sm">{op}</div>
+              ))}
             </div>
-          </div>
+          )}
+
+          {(pub.tipo === "hiring" || pub.tipo === "oportunidad") && pub.rol_buscado && (
+            <div className="rounded-lg border bg-secondary/40 p-3 text-xs space-y-1">
+              <p><span className="font-semibold">Rol:</span> {pub.rol_buscado}</p>
+              {pub.modalidad && <p><span className="font-semibold">Modalidad:</span> {pub.modalidad}</p>}
+              {pub.pais && <p><span className="font-semibold">País:</span> {pub.pais}</p>}
+            </div>
+          )}
+
+          {portada && (
+            <div className="overflow-hidden rounded-lg border">
+              <img src={portada} alt={pub.titulo || ""} className="w-full max-h-[480px] object-cover" loading="lazy" />
+            </div>
+          )}
+          {pub.video_url && (
+            <video src={pub.video_url} controls className="w-full max-h-[480px] rounded-lg" />
+          )}
+
+          {pub.tags?.length > 0 && (
+            <div className="flex flex-wrap gap-1 pt-1">
+              {pub.tags.slice(0, 6).map((t: string) => <span key={t} className="text-xs text-primary">#{t}</span>)}
+            </div>
+          )}
         </Link>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
-        </Button>
-      </div>
 
-      {/* Tags */}
-      <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2">
-        <Badge variant="secondary" className="gap-1">
-          <span>{tipoMeta.emoji}</span>{tipoMeta.label}
-        </Badge>
-        {pub.tipo_operacion && <Badge variant="outline">{TIPO_OPERACION[pub.tipo_operacion]}</Badge>}
-        {pub.tipo_propiedad && <Badge variant="outline">{TIPO_PROPIEDAD[pub.tipo_propiedad]}</Badge>}
-        {pub.perfil?.tipo === "dueno_directo" && (
-          <Badge className="bg-primary/10 text-primary hover:bg-primary/20">Dueño directo</Badge>
-        )}
-      </div>
-
-      {/* Title + price */}
-      <div className="px-4 pb-3">
-        <Link to={`/lin/publicacion/${pub.id}`}>
-          <h3 className="text-base font-semibold leading-tight hover:text-primary">{pub.titulo}</h3>
-        </Link>
-        {pub.precio != null && (
-          <p className="mt-1 text-xl font-bold text-foreground">
-            {formatPrecio(pub.precio, pub.moneda)}
-            {pub.precio_negociable && <span className="ml-2 text-xs font-normal text-muted-foreground">Negociable</span>}
-          </p>
-        )}
-      </div>
-
-      {/* Image */}
-      <Link to={`/lin/publicacion/${pub.id}`} className="block">
-        <div className="aspect-[4/3] overflow-hidden bg-muted sm:aspect-[16/10]">
-          <img src={portada} alt={pub.titulo} loading="lazy" className="h-full w-full object-cover transition-transform hover:scale-[1.02]" />
+        <div className="flex items-center justify-between border-t pt-3 text-muted-foreground">
+          <button onClick={toggleLike} className={`flex items-center gap-1.5 text-xs transition-colors ${liked ? "text-rose-500" : "hover:text-rose-500"}`}>
+            <Heart className={`h-4 w-4 ${liked ? "fill-current" : ""}`} />{formatNumber(counts.likes)}
+          </button>
+          <Link to={`/lin/publicacion/${pub.id}`} className="flex items-center gap-1.5 text-xs hover:text-primary">
+            <MessageCircle className="h-4 w-4" />{formatNumber(counts.com)}
+          </Link>
+          <button onClick={toggleRepost} className={`flex items-center gap-1.5 text-xs transition-colors ${reposted ? "text-emerald-600" : "hover:text-emerald-600"}`}>
+            <Repeat2 className="h-4 w-4" />{formatNumber(counts.rep)}
+          </button>
+          <span className="flex items-center gap-1.5 text-xs"><BarChart3 className="h-4 w-4" />{formatNumber(pub.vistas)}</span>
+          <button onClick={toggleSave} className={`flex items-center gap-1.5 text-xs transition-colors ${saved ? "text-primary" : "hover:text-primary"}`}>
+            <Bookmark className={`h-4 w-4 ${saved ? "fill-current" : ""}`} />
+          </button>
         </div>
-      </Link>
-
-      {/* Property meta strip */}
-      {showPropertyMeta && (pub.ambientes || pub.dormitorios || pub.superficie_total || pub.hectareas) && (
-        <div className="flex flex-wrap items-center gap-3 border-b px-4 py-2 text-xs text-muted-foreground">
-          {pub.ambientes && <span>🏠 {pub.ambientes} amb</span>}
-          {pub.dormitorios && <span>🛏 {pub.dormitorios} dorm</span>}
-          {pub.banos && <span>🚿 {pub.banos} baño</span>}
-          {pub.cochera && <span>🚗 cochera</span>}
-          {pub.superficie_total && <span>📐 {pub.superficie_total} m²</span>}
-          {pub.hectareas && <span>🌾 {pub.hectareas} ha</span>}
-        </div>
-      )}
-
-      {/* Description */}
-      {pub.descripcion && (
-        <p className="line-clamp-2 px-4 py-3 text-sm text-foreground/80">{pub.descripcion}</p>
-      )}
-
-      {/* Actions */}
-      <div className="flex items-center justify-between border-t px-2 py-1.5">
-        <div className="flex items-center">
-          <Button variant="ghost" size="sm" onClick={toggleLike} className={cn("gap-1.5", liked && "text-primary")}>
-            <Heart className={cn("h-4 w-4", liked && "fill-current")} />
-            <span className="text-xs">{counts.likes}</span>
-          </Button>
-          <Button variant="ghost" size="sm" asChild className="gap-1.5">
-            <Link to={`/lin/publicacion/${pub.id}`}>
-              <MessageCircle className="h-4 w-4" />
-              <span className="text-xs">{counts.comentarios}</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={toggleRepost} className={cn("gap-1.5", reposted && "text-[hsl(var(--teal-data))]")}>
-            <Repeat2 className="h-4 w-4" />
-            <span className="text-xs">{counts.repostes}</span>
-          </Button>
-          <Button variant="ghost" size="sm" onClick={compartir} className="gap-1.5">
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="flex items-center gap-2 pr-2">
-          <span className="flex items-center gap-1 text-xs text-muted-foreground"><Eye className="h-3 w-3" />{pub.vistas || 0}</span>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleFav}>
-            <Bookmark className={cn("h-4 w-4", favorito && "fill-current text-primary")} />
-          </Button>
-        </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }
