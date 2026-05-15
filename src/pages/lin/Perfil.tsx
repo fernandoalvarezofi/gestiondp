@@ -7,17 +7,23 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Globe, Instagram, Facebook, Phone, BadgeCheck, MessageCircleMore, Settings, MapPin, Plus } from "lucide-react";
+import { Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin, Plus, Star } from "lucide-react";
 import { PostCard } from "@/components/lin/PostCard";
-import { TIPO_USUARIO, initials, getFallbackImage } from "@/lib/linquenoHelpers";
+import { TIPO_USUARIO, initials } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 
-export default function LinPerfil() {
+const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
+  vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
+  perfil:perfiles!perfil_id(id,nombre,username,avatar_url,tipo,verificado),
+  media:media_publicacion(url,es_portada,orden)`;
+
+export default function Perfil() {
   const { slug } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
+  const [resenas, setResenas] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
   const [tab, setTab] = useState("publicaciones");
 
@@ -25,31 +31,23 @@ export default function LinPerfil() {
     (async () => {
       let target = slug;
       if (!target && user) {
-        const { data: me } = await (supabase as any).from("perfiles").select("slug").eq("id", user.id).single();
-        target = me?.slug;
+        const { data: me } = await (supabase as any).from("perfiles").select("username").eq("id", user.id).single();
+        target = me?.username;
       }
       if (!target) return;
-
-      const { data: p } = await (supabase as any).from("perfiles").select("*").eq("slug", target).single();
+      const { data: p } = await (supabase as any).from("perfiles").select("*").eq("username", target).single();
       setPerfil(p);
       if (!p) return;
 
-      const { data: posts } = await (supabase as any)
-        .from("publicaciones")
-        .select(`id,tipo,titulo,descripcion,tipo_operacion,tipo_propiedad,precio,moneda,precio_negociable,
-          ambientes,dormitorios,banos,cochera,superficie_total,hectareas,
-          vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,referencia,
-          perfil:perfiles!perfil_id(id,nombre,slug,avatar_url,tipo,verificado,whatsapp),
-          barrio:barrios!barrio_id(nombre,zona),
-          media:media_publicacion(url,es_portada,orden)`)
-        .eq("perfil_id", p.id)
-        .eq("estado", "activa")
-        .order("created_at", { ascending: false });
+      const [{ data: posts }, { data: rs }] = await Promise.all([
+        (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
+        (supabase as any).from("resenas").select("*, autor:perfiles!autor_id(nombre,username,avatar_url)").eq("perfil_id", p.id).order("created_at", { ascending: false }),
+      ]);
       setPubs(posts || []);
+      setResenas(rs || []);
 
       if (user && user.id !== p.id) {
-        const { data: s } = await (supabase as any).from("seguidos")
-          .select("id").eq("seguidor_id", user.id).eq("seguido_id", p.id).maybeSingle();
+        const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", p.id).maybeSingle();
         setSiguiendo(!!s);
       }
     })();
@@ -59,12 +57,10 @@ export default function LinPerfil() {
     if (!user || !perfil) return toast.error("Iniciá sesión");
     if (siguiendo) {
       await (supabase as any).from("seguidos").delete().eq("seguidor_id", user.id).eq("seguido_id", perfil.id);
-      setSiguiendo(false);
-      setPerfil({ ...perfil, total_seguidores: perfil.total_seguidores - 1 });
+      setSiguiendo(false); setPerfil({ ...perfil, total_seguidores: perfil.total_seguidores - 1 });
     } else {
       await (supabase as any).from("seguidos").insert({ seguidor_id: user.id, seguido_id: perfil.id });
-      setSiguiendo(true);
-      setPerfil({ ...perfil, total_seguidores: perfil.total_seguidores + 1 });
+      setSiguiendo(true); setPerfil({ ...perfil, total_seguidores: perfil.total_seguidores + 1 });
       toast.success(`Ahora seguís a ${perfil.nombre}`);
     }
   };
@@ -75,19 +71,14 @@ export default function LinPerfil() {
     navigate(`/lin/mensajes/${data}`);
   };
 
-  if (!perfil) return <p className="text-sm text-muted-foreground">Cargando...</p>;
-
+  if (!perfil) return <p className="text-sm text-muted-foreground">Cargando…</p>;
   const isMine = user?.id === perfil.id;
-  const wa = perfil.whatsapp ? `https://wa.me/${String(perfil.whatsapp).replace(/\D/g, "")}` : null;
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
-      {/* Portada + avatar */}
       <div className="overflow-hidden rounded-2xl">
-        <div
-          className="h-40 w-full bg-gradient-to-br from-primary/20 to-secondary"
-          style={perfil.portada_url ? { backgroundImage: `url(${perfil.portada_url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}
-        />
+        <div className="h-40 w-full bg-gradient-to-br from-primary/20 to-secondary"
+          style={perfil.portada_url ? { backgroundImage: `url(${perfil.portada_url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
         <div className="relative bg-card px-5 pb-5 pt-0">
           <Avatar className="-mt-10 h-20 w-20 border-4 border-card">
             <AvatarImage src={perfil.avatar_url || ""} className="object-cover" />
@@ -100,44 +91,56 @@ export default function LinPerfil() {
                 <h1 className="text-2xl font-bold tracking-tight">{perfil.nombre}</h1>
                 {perfil.verificado && <BadgeCheck className="h-5 w-5 text-primary" />}
               </div>
+              <p className="text-sm text-muted-foreground">@{perfil.username}</p>
               <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <Badge variant="outline">{TIPO_USUARIO[perfil.tipo]}</Badge>
-                <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Lincoln</span>
+                {perfil.industria && <Badge variant="outline">{perfil.industria}</Badge>}
+                {perfil.ubicacion && perfil.mostrar_ubicacion && <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{perfil.ubicacion}</span>}
               </div>
             </div>
-
             <div className="flex gap-2">
               {isMine ? (
-                <Button asChild variant="outline" size="sm">
-                  <Link to="/lin/perfil/editar"><Settings className="h-4 w-4" /> Editar</Link>
-                </Button>
+                <Button asChild variant="outline" size="sm"><Link to="/lin/perfil/editar"><Settings className="h-4 w-4" />Editar</Link></Button>
               ) : (
                 <>
                   <Button onClick={toggleSeguir} variant={siguiendo ? "outline" : "default"} size="sm">
                     {siguiendo ? "Siguiendo" : <><Plus className="h-4 w-4" />Seguir</>}
                   </Button>
-                  <Button onClick={abrirChat} variant="outline" size="sm">
-                    <MessageCircleMore className="h-4 w-4" /> Mensaje
-                  </Button>
+                  <Button onClick={abrirChat} variant="outline" size="sm"><MessageCircleMore className="h-4 w-4" />Mensaje</Button>
                 </>
               )}
             </div>
           </div>
 
-          {perfil.descripcion && <p className="mt-3 text-sm leading-relaxed">{perfil.descripcion}</p>}
+          {perfil.bio && <p className="mt-3 text-sm leading-relaxed">{perfil.bio}</p>}
+          {perfil.actualmente && <p className="mt-2 text-sm"><span className="font-semibold">Actualmente:</span> {perfil.actualmente}</p>}
+
+          {(perfil.que_ofrece || perfil.que_busca) && (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {perfil.que_ofrece && <div className="rounded-md border bg-secondary/40 p-3 text-xs"><p className="font-semibold mb-1">Ofrece</p><p>{perfil.que_ofrece}</p></div>}
+              {perfil.que_busca && <div className="rounded-md border bg-secondary/40 p-3 text-xs"><p className="font-semibold mb-1">Busca</p><p>{perfil.que_busca}</p></div>}
+            </div>
+          )}
+
+          {perfil.skills?.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1">
+              {perfil.skills.map((s: string) => <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>)}
+            </div>
+          )}
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             {perfil.sitio_web && <a href={perfil.sitio_web} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary"><Globe className="h-3 w-3" />Sitio</a>}
             {perfil.instagram && <a href={`https://instagram.com/${perfil.instagram}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary"><Instagram className="h-3 w-3" />@{perfil.instagram}</a>}
-            {perfil.facebook && <a href={perfil.facebook} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary"><Facebook className="h-3 w-3" />Facebook</a>}
-            {perfil.mostrar_telefono && perfil.telefono && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{perfil.telefono}</span>}
-            {wa && <a href={wa} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary"><MessageCircleMore className="h-3 w-3" />WhatsApp</a>}
+            {perfil.twitter && <a href={`https://twitter.com/${perfil.twitter}`} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary"><Twitter className="h-3 w-3" />@{perfil.twitter}</a>}
+            {perfil.linkedin && <a href={perfil.linkedin} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary"><Linkedin className="h-3 w-3" />LinkedIn</a>}
+            {perfil.youtube && <a href={perfil.youtube} target="_blank" rel="noreferrer" className="flex items-center gap-1 hover:text-primary"><Youtube className="h-3 w-3" />YouTube</a>}
           </div>
 
           <div className="mt-4 flex gap-5 border-t pt-3 text-sm">
             <Stat n={perfil.total_publicaciones} label="Publicaciones" />
             <Stat n={perfil.total_seguidores} label="Seguidores" />
             <Stat n={perfil.total_siguiendo} label="Siguiendo" />
+            <Stat n={perfil.score} label="Score" />
           </div>
         </div>
       </div>
@@ -145,24 +148,26 @@ export default function LinPerfil() {
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="publicaciones">Publicaciones ({pubs.length})</TabsTrigger>
-          <TabsTrigger value="grilla">Grilla</TabsTrigger>
+          <TabsTrigger value="resenas">Reseñas ({resenas.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="publicaciones" className="mt-4 space-y-4">
-          {pubs.length === 0 ? (
-            <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Aún no tiene publicaciones.</CardContent></Card>
-          ) : pubs.map((p) => <PostCard key={p.id} pub={p} />)}
+          {pubs.length === 0 ? <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Aún no tiene publicaciones.</CardContent></Card>
+            : pubs.map((p) => <PostCard key={p.id} pub={p} />)}
         </TabsContent>
-        <TabsContent value="grilla" className="mt-4">
-          <div className="grid grid-cols-3 gap-1">
-            {pubs.map((p) => {
-              const img = p.media?.find((m: any) => m.es_portada)?.url || p.media?.[0]?.url || getFallbackImage(p.tipo, p.tipo_propiedad);
-              return (
-                <Link key={p.id} to={`/lin/publicacion/${p.id}`} className="aspect-square overflow-hidden bg-muted">
-                  <img src={img} alt={p.titulo} className="h-full w-full object-cover transition-transform hover:scale-105" />
-                </Link>
-              );
-            })}
-          </div>
+        <TabsContent value="resenas" className="mt-4 space-y-3">
+          {resenas.length === 0 ? <Card><CardContent className="py-10 text-center text-sm text-muted-foreground">Sin reseñas aún.</CardContent></Card>
+            : resenas.map((r) => (
+              <Card key={r.id}><CardContent className="p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Link to={`/lin/perfil/${r.autor.username}`} className="flex items-center gap-2">
+                    <Avatar className="h-7 w-7"><AvatarImage src={r.autor.avatar_url || ""} /><AvatarFallback>{initials(r.autor.nombre)}</AvatarFallback></Avatar>
+                    <span className="text-sm font-medium">{r.autor.nombre}</span>
+                  </Link>
+                  <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-4 w-4 ${i < r.puntuacion ? "fill-amber-400 text-amber-400" : "text-muted"}`} />)}</div>
+                </div>
+                {r.comentario && <p className="text-sm">{r.comentario}</p>}
+              </CardContent></Card>
+            ))}
         </TabsContent>
       </Tabs>
     </div>
@@ -170,10 +175,5 @@ export default function LinPerfil() {
 }
 
 function Stat({ n, label }: { n: number; label: string }) {
-  return (
-    <div>
-      <span className="font-semibold">{n}</span>{" "}
-      <span className="text-muted-foreground">{label}</span>
-    </div>
-  );
+  return <div><span className="font-semibold">{n}</span> <span className="text-muted-foreground">{label}</span></div>;
 }

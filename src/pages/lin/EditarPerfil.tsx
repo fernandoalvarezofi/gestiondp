@@ -3,119 +3,108 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { TIPO_USUARIO, initials } from "@/lib/linquenoHelpers";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TIPO_USUARIO } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 
-export default function LinEditarPerfil() {
+export default function EditarPerfil() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState<any>(null);
-  const [saving, setSaving] = useState(false);
+  const [p, setP] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     (async () => {
       const { data } = await (supabase as any).from("perfiles").select("*").eq("id", user.id).single();
-      setForm(data);
+      setP(data);
     })();
   }, [user]);
 
-  const upd = (k: string, v: any) => setForm((f: any) => ({ ...f, [k]: v }));
+  const upd = (k: string, v: any) => setP((s: any) => ({ ...s, [k]: v }));
 
-  const subirImg = async (bucket: string, file: File, campo: string) => {
+  const uploadFile = async (bucket: string, file: File) => {
     const path = `${user!.id}/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
-    if (error) return toast.error(error.message);
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    upd(campo, data.publicUrl);
+    const { error } = await (supabase as any).storage.from(bucket).upload(path, file, { upsert: true });
+    if (error) throw error;
+    return (supabase as any).storage.from(bucket).getPublicUrl(path).data.publicUrl;
   };
 
-  const guardar = async () => {
-    if (!form) return;
-    setSaving(true);
+  const onAvatar = async (f: File | null) => { if (!f) return; try { upd("avatar_url", await uploadFile("avatares", f)); } catch (e: any) { toast.error(e.message); } };
+  const onPortada = async (f: File | null) => { if (!f) return; try { upd("portada_url", await uploadFile("portadas", f)); } catch (e: any) { toast.error(e.message); } };
+
+  const save = async () => {
+    setLoading(true);
     const { error } = await (supabase as any).from("perfiles").update({
-      nombre: form.nombre,
-      descripcion: form.descripcion,
-      tipo: form.tipo,
-      whatsapp: form.whatsapp,
-      telefono: form.telefono,
-      instagram: form.instagram,
-      facebook: form.facebook,
-      sitio_web: form.sitio_web,
-      horario: form.horario,
-      avatar_url: form.avatar_url,
-      portada_url: form.portada_url,
-      mensajes_privados: form.mensajes_privados,
-      mostrar_telefono: form.mostrar_telefono,
+      nombre: p.nombre, username: p.username, bio: p.bio, actualmente: p.actualmente,
+      ubicacion: p.ubicacion, sitio_web: p.sitio_web, instagram: p.instagram, twitter: p.twitter,
+      linkedin: p.linkedin, youtube: p.youtube, tipo: p.tipo, industria: p.industria,
+      que_ofrece: p.que_ofrece, que_busca: p.que_busca,
+      skills: typeof p.skills === "string" ? p.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : p.skills,
+      intereses: typeof p.intereses === "string" ? p.intereses.split(",").map((s: string) => s.trim()).filter(Boolean) : p.intereses,
+      avatar_url: p.avatar_url, portada_url: p.portada_url,
+      mensajes_privados: p.mensajes_privados, mostrar_ubicacion: p.mostrar_ubicacion,
     }).eq("id", user!.id);
-    setSaving(false);
+    setLoading(false);
     if (error) return toast.error(error.message);
     toast.success("Perfil actualizado");
-    navigate(`/lin/perfil/${form.slug}`);
+    navigate(`/lin/perfil/${p.username}`);
   };
 
-  if (!form) return <p className="text-sm text-muted-foreground">Cargando...</p>;
+  if (!p) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <h1 className="text-2xl font-bold tracking-tight">Editar perfil</h1>
-
+    <div className="mx-auto max-w-2xl">
       <Card>
-        <CardHeader><CardTitle className="text-base">Imágenes</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Editar perfil</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="h-16 w-16"><AvatarImage src={form.avatar_url || ""} className="object-cover" /><AvatarFallback>{initials(form.nombre)}</AvatarFallback></Avatar>
-            <div>
-              <Label>Avatar</Label>
-              <Input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && subirImg("avatares", e.target.files[0], "avatar_url")} />
-            </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><Label>Avatar</Label><Input type="file" accept="image/*" onChange={(e) => onAvatar(e.target.files?.[0] || null)} /></div>
+            <div><Label>Portada</Label><Input type="file" accept="image/*" onChange={(e) => onPortada(e.target.files?.[0] || null)} /></div>
           </div>
-          <div>
-            <Label>Portada</Label>
-            <Input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && subirImg("portadas", e.target.files[0], "portada_url")} />
-            {form.portada_url && <img src={form.portada_url} alt="" className="mt-2 h-24 w-full rounded-md object-cover" />}
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><Label>Nombre</Label><Input value={p.nombre || ""} onChange={(e) => upd("nombre", e.target.value)} /></div>
+            <div><Label>Username</Label><Input value={p.username || ""} onChange={(e) => upd("username", e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ""))} /></div>
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="text-base">Información</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div><Label>Nombre / Razón social</Label><Input value={form.nombre || ""} onChange={(e) => upd("nombre", e.target.value)} /></div>
-          <div>
-            <Label>Tipo de cuenta</Label>
-            <Select value={form.tipo} onValueChange={(v) => upd("tipo", v)}>
+          <div className="space-y-2">
+            <Label>Tipo</Label>
+            <Select value={p.tipo} onValueChange={(v) => upd("tipo", v)}>
               <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(TIPO_USUARIO).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-              </SelectContent>
+              <SelectContent>{Object.entries(TIPO_USUARIO).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
             </Select>
           </div>
-          <div><Label>Bio</Label><Textarea rows={3} value={form.descripcion || ""} onChange={(e) => upd("descripcion", e.target.value)} /></div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div><Label>WhatsApp</Label><Input value={form.whatsapp || ""} onChange={(e) => upd("whatsapp", e.target.value)} placeholder="5492477123456" /></div>
-            <div><Label>Teléfono</Label><Input value={form.telefono || ""} onChange={(e) => upd("telefono", e.target.value)} /></div>
-            <div><Label>Instagram</Label><Input value={form.instagram || ""} onChange={(e) => upd("instagram", e.target.value)} placeholder="usuario" /></div>
-            <div><Label>Facebook</Label><Input value={form.facebook || ""} onChange={(e) => upd("facebook", e.target.value)} /></div>
-            <div><Label>Sitio web</Label><Input value={form.sitio_web || ""} onChange={(e) => upd("sitio_web", e.target.value)} /></div>
-            <div><Label>Horario</Label><Input value={form.horario || ""} onChange={(e) => upd("horario", e.target.value)} placeholder="Lun-Vie 9 a 18hs" /></div>
+          <div><Label>Bio</Label><Textarea rows={3} value={p.bio || ""} onChange={(e) => upd("bio", e.target.value)} /></div>
+          <div><Label>Actualmente</Label><Input value={p.actualmente || ""} onChange={(e) => upd("actualmente", e.target.value)} placeholder="Construyendo X / Disponible freelance" /></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><Label>Industria</Label><Input value={p.industria || ""} onChange={(e) => upd("industria", e.target.value)} /></div>
+            <div><Label>Ubicación</Label><Input value={p.ubicacion || ""} onChange={(e) => upd("ubicacion", e.target.value)} /></div>
           </div>
-          <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label className="m-0">Mostrar teléfono</Label><Switch checked={form.mostrar_telefono} onCheckedChange={(v) => upd("mostrar_telefono", v)} /></div>
-          <div className="flex items-center justify-between rounded-md border px-3 py-2"><Label className="m-0">Permitir mensajes privados</Label><Switch checked={form.mensajes_privados} onCheckedChange={(v) => upd("mensajes_privados", v)} /></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><Label>Qué ofrece</Label><Textarea rows={2} value={p.que_ofrece || ""} onChange={(e) => upd("que_ofrece", e.target.value)} /></div>
+            <div><Label>Qué busca</Label><Textarea rows={2} value={p.que_busca || ""} onChange={(e) => upd("que_busca", e.target.value)} /></div>
+          </div>
+          <div><Label>Skills (coma)</Label><Input value={Array.isArray(p.skills) ? p.skills.join(", ") : p.skills || ""} onChange={(e) => upd("skills", e.target.value)} /></div>
+          <div><Label>Intereses (coma)</Label><Input value={Array.isArray(p.intereses) ? p.intereses.join(", ") : p.intereses || ""} onChange={(e) => upd("intereses", e.target.value)} /></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div><Label>Sitio web</Label><Input value={p.sitio_web || ""} onChange={(e) => upd("sitio_web", e.target.value)} /></div>
+            <div><Label>Instagram</Label><Input value={p.instagram || ""} onChange={(e) => upd("instagram", e.target.value)} /></div>
+            <div><Label>Twitter / X</Label><Input value={p.twitter || ""} onChange={(e) => upd("twitter", e.target.value)} /></div>
+            <div><Label>LinkedIn (URL)</Label><Input value={p.linkedin || ""} onChange={(e) => upd("linkedin", e.target.value)} /></div>
+            <div><Label>YouTube (URL)</Label><Input value={p.youtube || ""} onChange={(e) => upd("youtube", e.target.value)} /></div>
+          </div>
+          <div className="flex items-center justify-between"><Label>Permitir mensajes privados</Label><Switch checked={p.mensajes_privados} onCheckedChange={(v) => upd("mensajes_privados", v)} /></div>
+          <div className="flex items-center justify-between"><Label>Mostrar ubicación</Label><Switch checked={p.mostrar_ubicacion} onCheckedChange={(v) => upd("mostrar_ubicacion", v)} /></div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
+            <Button onClick={save} disabled={loading}>{loading ? "Guardando…" : "Guardar"}</Button>
+          </div>
         </CardContent>
       </Card>
-
-      <div className="flex justify-end gap-2">
-        <Button variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
-        <Button onClick={guardar} disabled={saving}>{saving ? "Guardando..." : "Guardar"}</Button>
-      </div>
     </div>
   );
 }
