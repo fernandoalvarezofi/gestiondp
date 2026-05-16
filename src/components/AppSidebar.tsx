@@ -39,7 +39,7 @@ export function AppSidebar() {
   });
 
   return (
-    <Sidebar>
+    <Sidebar className="hidden md:flex">
       <SidebarHeader className="p-4">
         <NavLink to="/" className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-primary" />
