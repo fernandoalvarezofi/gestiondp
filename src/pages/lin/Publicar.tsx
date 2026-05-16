@@ -30,6 +30,9 @@ export default function Publicar() {
   const submit = async () => {
     if (!user) return toast.error("Iniciá sesión");
     if (!cuerpo && !titulo) return toast.error("Escribí algo");
+    const { data: miPerfil } = await (supabase as any)
+      .from("perfiles").select("id").eq("id", user.id).maybeSingle();
+    if (!miPerfil) return toast.error("Completá tu perfil antes de publicar");
     setLoading(true);
     try {
       let imagen_url: string | null = null;

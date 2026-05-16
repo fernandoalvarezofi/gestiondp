@@ -22,11 +22,15 @@ export default function Mensajes() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const { data } = await (supabase as any).from("conversaciones")
-        .select("*, a:perfiles!perfil_a_id(id,nombre,username,avatar_url), b:perfiles!perfil_b_id(id,nombre,username,avatar_url)")
-        .or(`perfil_a_id.eq.${user.id},perfil_b_id.eq.${user.id}`)
-        .order("ultimo_mensaje_at", { ascending: false, nullsFirst: false });
-      setConvs(data || []);
+      const { data } = await (supabase as any).rpc("get_mis_conversaciones", { user_id: user.id });
+      const convsConPerfiles = await Promise.all((data || []).map(async (c: any) => {
+        const [{ data: a }, { data: b }] = await Promise.all([
+          (supabase as any).from("perfiles").select("id,nombre,username,avatar_url").eq("id", c.perfil_a_id).single(),
+          (supabase as any).from("perfiles").select("id,nombre,username,avatar_url").eq("id", c.perfil_b_id).single(),
+        ]);
+        return { ...c, a, b };
+      }));
+      setConvs(convsConPerfiles);
     })();
   }, [user]);
 

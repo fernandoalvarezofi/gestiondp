@@ -2125,6 +2125,25 @@ export type Database = {
       }
     }
     Functions: {
+      get_mis_conversaciones: {
+        Args: { user_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          no_leidos_a: number
+          no_leidos_b: number
+          perfil_a_id: string
+          perfil_b_id: string
+          ultimo_mensaje: string | null
+          ultimo_mensaje_at: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "conversaciones"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_or_create_conversacion: {
         Args: { user_a: string; user_b: string }
         Returns: string
