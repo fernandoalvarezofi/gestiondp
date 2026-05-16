@@ -780,6 +780,7 @@ export type Database = {
           created_at: string
           fijado: boolean
           id: string
+          imagen_url: string | null
           perfil_id: string
           resuelto: boolean
           tags: string[] | null
@@ -795,6 +796,7 @@ export type Database = {
           created_at?: string
           fijado?: boolean
           id?: string
+          imagen_url?: string | null
           perfil_id: string
           resuelto?: boolean
           tags?: string[] | null
@@ -810,6 +812,7 @@ export type Database = {
           created_at?: string
           fijado?: boolean
           id?: string
+          imagen_url?: string | null
           perfil_id?: string
           resuelto?: boolean
           tags?: string[] | null
