@@ -34,10 +34,15 @@ export default function Perfil() {
         const { data: me } = await (supabase as any).from("perfiles").select("username").eq("id", user.id).single();
         target = me?.username;
       }
-      if (!target) return;
-      const { data: p } = await (supabase as any).from("perfiles").select("*").eq("username", target).single();
+      if (!target) { navigate("/lin"); return; }
+      const { data: p, error } = await (supabase as any)
+        .from("perfiles").select("*").eq("username", target).single();
+      if (error || !p) {
+        toast.error("Perfil no encontrado");
+        navigate("/lin");
+        return;
+      }
       setPerfil(p);
-      if (!p) return;
 
       const [{ data: posts }, { data: rs }] = await Promise.all([
         (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
