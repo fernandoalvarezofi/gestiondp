@@ -87,9 +87,8 @@ export default function Feed() {
 
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-1.5 pb-2">
-          <Chip active={filtroTipo === "all"} onClick={() => setFiltroTipo("all")}>Todo</Chip>
-          {Object.entries(TIPO_PUBLICACION).map(([k, v]) => (
-            <Chip key={k} active={filtroTipo === k} onClick={() => setFiltroTipo(k)}><span>{v.emoji}</span> {v.label}</Chip>
+          {FILTROS.map((f) => (
+            <Chip key={f.key} active={filtroTipo === f.key} onClick={() => setFiltroTipo(f.key)}>{f.label}</Chip>
           ))}
         </div>
         <ScrollBar orientation="horizontal" />
