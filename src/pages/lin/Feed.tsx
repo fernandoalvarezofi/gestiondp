@@ -9,7 +9,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PostCard } from "@/components/lin/PostCard";
-import { TIPO_PUBLICACION } from "@/lib/worefHelpers";
+
+const FILTROS = [
+  { key: "all", label: "Todo" },
+  { key: "update", label: "Updates" },
+  { key: "proyecto", label: "Proyectos" },
+  { key: "oportunidad", label: "Oportunidades" },
+  { key: "logro", label: "Logros" },
+  { key: "lanzamiento", label: "Lanzamientos" },
+  { key: "busco_socio", label: "Busco socio" },
+  { key: "recurso", label: "Recursos" },
+];
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,thumbnail_url,
   encuesta_opciones,rol_buscado,modalidad,pais,tags,
