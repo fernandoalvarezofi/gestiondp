@@ -1,14 +1,12 @@
 import { useState } from "react";
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
-import { GlobalSearch } from "./GlobalSearch";
 import { ThemeToggle } from "./ThemeToggle";
-import { NotificationCenter } from "./NotificationCenter";
-import { Loader2 } from "lucide-react";
+import { Loader2, Home, Search, Plus, MessageCircle, UserCircle } from "lucide-react";
 
 export function AppLayout() {
   const { session, loading } = useAuth();
@@ -29,16 +27,19 @@ export function AppLayout() {
     return <OnboardingWizard onComplete={() => setOnboardingDismissed(true)} />;
   }
 
+  const linkCls = ({ isActive }: { isActive: boolean }) =>
+    isActive
+      ? "flex flex-col items-center gap-0.5 text-primary"
+      : "flex flex-col items-center gap-0.5 text-muted-foreground";
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="flex items-center gap-2 px-4 py-3">
+        <main className="flex-1 overflow-auto pb-20 md:pb-0">
+          <div className="hidden items-center gap-2 px-4 py-3 md:flex">
             <SidebarTrigger />
             <div className="ml-auto flex items-center gap-2">
-              <GlobalSearch />
-              <NotificationCenter />
               <ThemeToggle />
             </div>
           </div>
@@ -46,6 +47,30 @@ export function AppLayout() {
             <Outlet />
           </div>
         </main>
+
+        <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t bg-background/95 backdrop-blur px-2 py-2 md:hidden">
+          <NavLink to="/lin" end className={linkCls}>
+            <Home className="h-6 w-6" />
+            <span className="text-[10px]">Inicio</span>
+          </NavLink>
+          <NavLink to="/lin/buscar" className={linkCls}>
+            <Search className="h-6 w-6" />
+            <span className="text-[10px]">Buscar</span>
+          </NavLink>
+          <NavLink to="/lin/publicar" className="flex flex-col items-center gap-0.5">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
+              <Plus className="h-5 w-5" />
+            </div>
+          </NavLink>
+          <NavLink to="/lin/mensajes" className={linkCls}>
+            <MessageCircle className="h-6 w-6" />
+            <span className="text-[10px]">Mensajes</span>
+          </NavLink>
+          <NavLink to="/lin/perfil" className={linkCls}>
+            <UserCircle className="h-6 w-6" />
+            <span className="text-[10px]">Perfil</span>
+          </NavLink>
+        </nav>
       </div>
     </SidebarProvider>
   );
