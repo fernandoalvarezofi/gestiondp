@@ -86,7 +86,37 @@ export function PostCard({ pub }: { pub: any }) {
               </p>
             </div>
           </Link>
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
+          {user?.id === pub.perfil?.id ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={async () => {
+                    await (supabase as any).from("publicaciones").update({ estado: pub.estado === "activa" ? "pausada" : "activa" }).eq("id", pub.id).eq("perfil_id", user.id);
+                    toast.success(pub.estado === "activa" ? "Publicación pausada" : "Publicación activada");
+                    window.location.reload();
+                  }}
+                >
+                  {pub.estado === "activa" ? <><Pause className="mr-2 h-4 w-4" /> Pausar</> : <><Play className="mr-2 h-4 w-4" /> Activar</>}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive"
+                  onClick={async () => {
+                    if (!confirm("¿Eliminar esta publicación?")) return;
+                    await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user.id);
+                    toast.success("Publicación eliminada");
+                    window.location.reload();
+                  }}
+                >
+                  <Trash2 className="mr-2 h-4 w-4" /> Eliminar
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0"><MoreHorizontal className="h-4 w-4" /></Button>
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5">
