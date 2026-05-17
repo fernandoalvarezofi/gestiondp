@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Eye, Heart, MessageCircle, Users } from "lucide-react";
+import { Eye, Heart, MessageCircle, Users, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Panel() {
   const { user } = useAuth();
@@ -37,14 +38,32 @@ export default function Panel() {
         <CardContent className="space-y-2">
           {pubs.length === 0 ? <p className="text-sm text-muted-foreground">Aún no publicaste nada.</p>
             : pubs.map((pub) => (
-              <Link key={pub.id} to={`/lin/publicacion/${pub.id}`} className="flex items-center justify-between rounded-md border px-3 py-2 hover:bg-secondary/40">
-                <div className="min-w-0 flex-1"><p className="truncate text-sm font-medium">{pub.titulo || pub.cuerpo?.slice(0, 60)}</p><p className="text-xs text-muted-foreground">{pub.estado}</p></div>
-                <div className="flex gap-3 text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{pub.vistas}</span>
-                  <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{pub.total_likes}</span>
-                  <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" />{pub.total_comentarios}</span>
-                </div>
-              </Link>
+              <div key={pub.id} className="flex items-center gap-2 rounded-md border px-3 py-2 hover:bg-secondary/40">
+                <Link to={`/lin/publicacion/${pub.id}`} className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">{pub.titulo || pub.cuerpo?.slice(0, 60)}</p>
+                    <p className="text-xs text-muted-foreground">{pub.estado}</p>
+                  </div>
+                  <div className="flex shrink-0 gap-3 text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{pub.vistas}</span>
+                    <span className="flex items-center gap-1"><Heart className="h-3 w-3" />{pub.total_likes}</span>
+                    <span className="flex items-center gap-1"><MessageCircle className="h-3 w-3" />{pub.total_comentarios}</span>
+                  </div>
+                </Link>
+                <button
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    if (!confirm("¿Seguro que querés eliminar esta publicación? Esta acción no se puede deshacer.")) return;
+                    await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user?.id);
+                    setPubs((prev) => prev.filter((p) => p.id !== pub.id));
+                    toast.success("Publicación eliminada");
+                  }}
+                  className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                  aria-label="Eliminar"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
             ))}
         </CardContent>
       </Card>
