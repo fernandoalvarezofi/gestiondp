@@ -63,11 +63,11 @@ export default function Feed() {
   }), [items, tab, seguidos, filtroTipo, q]);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
-      <div className="flex flex-col gap-3 rounded-2xl bg-secondary p-4 sm:p-5">
+    <div className="mx-auto max-w-2xl space-y-4 pb-20 md:pb-0 md:space-y-5">
+      <div className="flex flex-col gap-3 rounded-2xl bg-secondary p-3 sm:p-5">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">Feed</h1>
+            <h1 className="text-lg font-bold tracking-tight sm:text-2xl">Feed</h1>
             <p className="text-xs text-muted-foreground">{items.length} publicaciones de la red Woref</p>
           </div>
           <Button asChild size="sm"><Link to="/lin/publicar"><Plus className="h-4 w-4" />Publicar</Link></Button>
