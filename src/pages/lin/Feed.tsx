@@ -107,6 +107,6 @@ export default function Feed() {
 
 function Chip({ active, onClick, children }: any) {
   return (
-    <button onClick={onClick} className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-secondary"}`}>{children}</button>
+    <button onClick={onClick} className={`flex items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium transition-colors sm:px-3 sm:py-1.5 ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-secondary"}`}>{children}</button>
   );
 }
