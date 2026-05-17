@@ -1,17 +1,35 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate, Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AppSidebar } from "./AppSidebar";
 import { ThemeToggle } from "./ThemeToggle";
-import { Loader2, Home, Search, Plus, MessageCircle, UserCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Loader2, Home, Search, Plus, MessageCircle, UserCircle,
+  Menu, Rocket, Users, MessageSquare, Sparkles, Bookmark, BarChart3, Settings,
+} from "lucide-react";
 
 export function AppLayout() {
-  const { session, loading } = useAuth();
+  const { session, user, loading } = useAuth();
   const { data: onboardingStatus, isLoading: onboardingLoading } = useOnboardingStatus();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  const [noLeidos, setNoLeidos] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any).rpc("get_mis_conversaciones", { user_id: user.id });
+      const total = (data || []).reduce((acc: number, c: any) => {
+        return acc + (c.perfil_a_id === user.id ? (c.no_leidos_a || 0) : (c.no_leidos_b || 0));
+      }, 0);
+      setNoLeidos(total);
+    })();
+  }, [user]);
 
   if (loading || onboardingLoading) {
     return (
@@ -28,17 +46,54 @@ export function AppLayout() {
   }
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
-    isActive
-      ? "flex flex-col items-center gap-0.5 text-primary"
-      : "flex flex-col items-center gap-0.5 text-muted-foreground";
+    `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`;
+
+  const secondary = [
+    { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
+    { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
+    { to: "/lin/foro", icon: MessageSquare, label: "Foro" },
+    { to: "/lin/match", icon: Sparkles, label: "Match" },
+    { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
+    { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },
+    { to: "/lin/perfil/editar", icon: Settings, label: "Editar perfil" },
+  ];
 
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="hidden items-center gap-2 px-4 py-3 md:flex">
-            <SidebarTrigger />
+          <div className="flex items-center gap-2 border-b px-4 py-3 md:border-b-0">
+            <div className="hidden md:flex"><SidebarTrigger /></div>
+            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+              <SheetTrigger asChild>
+                <button className="rounded-md p-2 hover:bg-secondary md:hidden" aria-label="Menú">
+                  <Menu className="h-5 w-5" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="left" className="w-72">
+                <div className="mb-6 flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-primary" />
+                  <span className="text-lg font-bold tracking-tight">Woref</span>
+                </div>
+                <nav className="space-y-1">
+                  {secondary.map(({ to, icon: Icon, label }) => (
+                    <NavLink
+                      key={to}
+                      to={to}
+                      onClick={() => setMenuOpen(false)}
+                      className={({ isActive }) =>
+                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-secondary"}`
+                      }
+                    >
+                      <Icon className="h-5 w-5" />
+                      {label}
+                    </NavLink>
+                  ))}
+                </nav>
+              </SheetContent>
+            </Sheet>
+            <span className="font-semibold md:hidden">Woref</span>
             <div className="ml-auto flex items-center gap-2">
               <ThemeToggle />
             </div>
@@ -63,7 +118,14 @@ export function AppLayout() {
             </div>
           </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
-            <MessageCircle className="h-6 w-6" />
+            <div className="relative">
+              <MessageCircle className="h-6 w-6" />
+              {noLeidos > 0 && (
+                <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+                  {noLeidos > 9 ? "9+" : noLeidos}
+                </span>
+              )}
+            </div>
             <span className="text-[10px]">Mensajes</span>
           </NavLink>
           <NavLink to="/lin/perfil" className={linkCls}>
