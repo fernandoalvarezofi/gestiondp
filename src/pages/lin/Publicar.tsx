@@ -154,54 +154,57 @@ export default function Publicar() {
         <button onClick={() => setPaso(1)} className="rounded-full p-1.5 hover:bg-secondary" aria-label="Volver">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xl">{tipoActual.emoji}</span>
-          <span className="text-sm font-semibold">{tipoActual.label}</span>
-        </div>
-        <Button onClick={submit} disabled={loading} size="sm" className="ml-auto rounded-full px-5">
+        <button
+          onClick={() => setPaso(1)}
+          className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold transition-colors hover:bg-secondary/70"
+        >
+          <span className="text-base leading-none">{tipoActual.emoji}</span>
+          <span>{tipoActual.label}</span>
+        </button>
+        <Button onClick={submit} disabled={loading || (!cuerpo && !titulo)} size="sm" className="ml-auto h-9 rounded-full px-5 font-semibold">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publicar"}
         </Button>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-4 px-1">
         <div className="flex gap-3">
-          <Avatar className="h-10 w-10 shrink-0">
+          <Avatar className="h-11 w-11 shrink-0">
             <AvatarImage src={miPerfil?.avatar_url || ""} className="object-cover" />
             <AvatarFallback>{initials(miPerfil?.nombre)}</AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-3">
-            <Textarea
-              value={cuerpo}
-              onChange={(e) => setCuerpo(e.target.value)}
-              placeholder={placeholders[tipo] || "¿Qué querés compartir?"}
-              className="min-h-[120px] resize-none border-none bg-transparent p-0 text-base shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60"
-            />
             {["lanzamiento", "hiring", "oportunidad", "proyecto", "recurso", "contenido_largo"].includes(tipo) && (
               <Input
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
-                placeholder="Título (opcional)"
-                className="rounded-xl border-none bg-secondary/40 px-3"
+                placeholder="Título"
+                className="h-auto border-none bg-transparent px-0 text-lg font-semibold shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
               />
             )}
+            <Textarea
+              value={cuerpo}
+              onChange={(e) => setCuerpo(e.target.value)}
+              placeholder={placeholders[tipo] || "¿Qué querés compartir?"}
+              className="min-h-[140px] resize-none border-none bg-transparent p-0 text-[17px] leading-relaxed shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/50"
+            />
             {tipo === "contenido_largo" && (
               <Textarea
                 value={cuerpoLargo}
                 onChange={(e) => setCuerpoLargo(e.target.value)}
                 rows={8}
                 placeholder="Escribí tu artículo…"
-                className="rounded-xl border-none bg-secondary/40 px-3"
+                className="rounded-2xl border bg-background px-4 py-3 text-[15px] leading-relaxed"
               />
             )}
           </div>
         </div>
 
         {imagenPreview && (
-          <div className="relative overflow-hidden rounded-2xl border">
+          <div className="relative ml-14 overflow-hidden rounded-2xl border">
             <img src={imagenPreview} alt="preview" className="max-h-80 w-full object-cover" />
             <button
               onClick={() => { setImagen(null); setImagenPreview(null); }}
-              className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white"
+              className="absolute right-2 top-2 rounded-full bg-black/70 p-1.5 text-white transition-colors hover:bg-black"
               aria-label="Quitar imagen"
             >
               <X className="h-4 w-4" />
@@ -210,11 +213,11 @@ export default function Publicar() {
         )}
 
         {video && (
-          <div className="relative overflow-hidden rounded-2xl border">
+          <div className="relative ml-14 overflow-hidden rounded-2xl border bg-black">
             <video src={URL.createObjectURL(video)} controls className="max-h-80 w-full" />
             <button
               onClick={() => setVideo(null)}
-              className="absolute right-2 top-2 rounded-full bg-black/60 p-1 text-white"
+              className="absolute right-2 top-2 rounded-full bg-black/70 p-1.5 text-white transition-colors hover:bg-black"
               aria-label="Quitar video"
             >
               <X className="h-4 w-4" />
@@ -223,8 +226,8 @@ export default function Publicar() {
         )}
 
         {tipo === "encuesta" && (
-          <div className="space-y-2 rounded-2xl border bg-secondary/30 p-4">
-            <p className="text-sm font-medium text-muted-foreground">Opciones de encuesta</p>
+          <div className="ml-14 space-y-2 rounded-2xl border bg-secondary/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Opciones</p>
             {encuesta.map((op, i) => (
               <Input
                 key={i} value={op}
@@ -234,16 +237,16 @@ export default function Publicar() {
               />
             ))}
             {encuesta.length < 4 && (
-              <Button type="button" variant="ghost" size="sm" onClick={() => setEncuesta([...encuesta, ""])}>
-                <Plus className="mr-1 h-4 w-4" /> Agregar opción
+              <Button type="button" variant="ghost" size="sm" onClick={() => setEncuesta([...encuesta, ""])} className="text-primary">
+                <Plus className="h-4 w-4" /> Agregar opción
               </Button>
             )}
           </div>
         )}
 
         {(tipo === "hiring" || tipo === "oportunidad") && (
-          <div className="space-y-3 rounded-2xl border bg-secondary/30 p-4">
-            <p className="text-sm font-medium text-muted-foreground">Detalles</p>
+          <div className="ml-14 space-y-3 rounded-2xl border bg-secondary/30 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Detalles</p>
             <Input value={rolBuscado} onChange={(e) => setRolBuscado(e.target.value)} placeholder="Rol o perfil buscado" className="rounded-xl bg-background" />
             <div className="grid grid-cols-2 gap-2">
               <Input value={modalidad} onChange={(e) => setModalidad(e.target.value)} placeholder="Remoto / Híbrido" className="rounded-xl bg-background" />
@@ -252,29 +255,29 @@ export default function Publicar() {
           </div>
         )}
 
-        <div className="rounded-2xl border bg-secondary/30 px-4 py-3">
-          <Input
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-            placeholder="# Tags separados por coma: ia, fintech, marketing"
-            className="border-none bg-transparent p-0 shadow-none focus-visible:ring-0"
-          />
-        </div>
-
-        <div className="flex items-center gap-1 border-t pt-3">
-          <label className="cursor-pointer rounded-full p-2 transition-colors hover:bg-secondary" aria-label="Agregar imagen">
-            <ImageIcon className="h-5 w-5 text-primary" />
+        <div className="ml-14 flex items-center gap-1 border-t pt-3">
+          <label className="cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10" aria-label="Agregar imagen">
+            <ImageIcon className="h-5 w-5" />
             <input type="file" accept="image/*" className="hidden" onChange={(e) => {
               const f = e.target.files?.[0] || null;
               setImagen(f);
               setImagenPreview(f ? URL.createObjectURL(f) : null);
             }} />
           </label>
-          <label className="cursor-pointer rounded-full p-2 transition-colors hover:bg-secondary" aria-label="Agregar video">
-            <Video className="h-5 w-5 text-primary" />
+          <label className="cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10" aria-label="Agregar video">
+            <Video className="h-5 w-5" />
             <input type="file" accept="video/*" className="hidden" onChange={(e) => setVideo(e.target.files?.[0] || null)} />
           </label>
-          <span className="ml-auto text-xs text-muted-foreground">{cuerpo.length}/500</span>
+          <span className={`ml-auto text-xs ${cuerpo.length > 480 ? "text-amber-600" : "text-muted-foreground"}`}>{cuerpo.length}/500</span>
+        </div>
+
+        <div className="ml-14">
+          <Input
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            placeholder="Tags: ia, fintech, marketing"
+            className="h-9 rounded-full border-none bg-secondary/40 px-4 text-sm"
+          />
         </div>
       </div>
     </div>
