@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Send, ArrowLeft, Phone, Info, Pencil, ImageIcon } from "lucide-react";
+import { Send, ArrowLeft, Phone, Info, Pencil, ImageIcon, Loader2, X } from "lucide-react";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 
@@ -21,24 +21,36 @@ export default function Mensajes() {
   const [showChat, setShowChat] = useState(!!convId);
   const [escribiendo, setEscribiendo] = useState(false);
   const [reaccionMsg, setReaccionMsg] = useState<string | null>(null);
+  const [subiendoImg, setSubiendoImg] = useState(false);
+  const [enviando, setEnviando] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
   const presenceRef = useRef<any>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { setShowChat(!!convId); }, [convId]);
 
-  useEffect(() => {
+  // Cargar y suscribir a conversaciones
+  const cargarConvs = async () => {
     if (!user) return;
-    (async () => {
-      const { data } = await (supabase as any).rpc("get_mis_conversaciones", { user_id: user.id });
-      const convsConPerfiles = await Promise.all((data || []).map(async (c: any) => {
-        const [{ data: a }, { data: b }] = await Promise.all([
-          (supabase as any).from("perfiles").select("id,nombre,username,avatar_url").eq("id", c.perfil_a_id).single(),
-          (supabase as any).from("perfiles").select("id,nombre,username,avatar_url").eq("id", c.perfil_b_id).single(),
-        ]);
-        return { ...c, a, b };
-      }));
-      setConvs(convsConPerfiles);
-    })();
+    const { data } = await (supabase as any).rpc("get_mis_conversaciones", { user_id: user.id });
+    const ids = new Set<string>();
+    (data || []).forEach((c: any) => { ids.add(c.perfil_a_id); ids.add(c.perfil_b_id); });
+    const { data: perfiles } = await (supabase as any).from("perfiles")
+      .select("id,nombre,username,avatar_url").in("id", Array.from(ids));
+    const pMap = new Map((perfiles || []).map((p: any) => [p.id, p]));
+    const conPerfiles = (data || []).map((c: any) => ({ ...c, a: pMap.get(c.perfil_a_id), b: pMap.get(c.perfil_b_id) }));
+    conPerfiles.sort((a: any, b: any) =>
+      new Date(b.ultimo_mensaje_at || b.created_at).getTime() - new Date(a.ultimo_mensaje_at || a.created_at).getTime());
+    setConvs(conPerfiles);
+  };
+
+  useEffect(() => {
+    cargarConvs();
+    if (!user) return;
+    const ch = (supabase as any).channel("convs-list")
+      .on("postgres_changes", { event: "*", schema: "public", table: "conversaciones" }, () => cargarConvs())
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
   }, [user]);
 
   useEffect(() => {
@@ -49,17 +61,14 @@ export default function Mensajes() {
       const { data: c } = await (supabase as any).from("conversaciones")
         .select("*, a:perfiles!perfil_a_id(id,nombre,username,avatar_url), b:perfiles!perfil_b_id(id,nombre,username,avatar_url)").eq("id", convId).single();
       if (c) setOtro(c.perfil_a_id === user.id ? c.b : c.a);
-      // Marcar como leídos
       await (supabase as any).from("mensajes")
         .update({ leido: true, leido_at: new Date().toISOString() })
-        .eq("conversacion_id", convId)
-        .neq("remitente_id", user.id)
-        .eq("leido", false);
+        .eq("conversacion_id", convId).neq("remitente_id", user.id).eq("leido", false);
     })();
 
     const ch = (supabase as any).channel(`m-${convId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
-        (p: any) => setMsgs((s) => [...s, p.new]))
+        (p: any) => setMsgs((s) => s.some((x) => x.id === p.new.id) ? s : [...s, p.new]))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
         (p: any) => setMsgs((prev) => prev.map((m) => m.id === p.new.id ? { ...m, ...p.new } : m)))
       .subscribe();
@@ -84,12 +93,41 @@ export default function Mensajes() {
     presenceRef.current?.track({ typing: e.target.value.length > 0 });
   };
 
-  const enviar = async () => {
-    if (!txt.trim() || !user || !convId) return;
+  const enviar = async (imagen_url?: string) => {
+    if ((!txt.trim() && !imagen_url) || !user || !convId) return;
     presenceRef.current?.track({ typing: false });
-    const contenido = txt;
+    const contenido = imagen_url ? (txt.trim() || "📷 Imagen") : txt;
+    const tmpId = `tmp-${Date.now()}`;
+    const optimistic = { id: tmpId, conversacion_id: convId, remitente_id: user.id, contenido, imagen_url: imagen_url || null, created_at: new Date().toISOString(), leido: false };
+    setMsgs((s) => [...s, optimistic]);
     setTxt("");
-    await (supabase as any).from("mensajes").insert({ conversacion_id: convId, remitente_id: user.id, contenido });
+    setEnviando(true);
+    const { data, error } = await (supabase as any).from("mensajes")
+      .insert({ conversacion_id: convId, remitente_id: user.id, contenido, imagen_url: imagen_url || null }).select().single();
+    setEnviando(false);
+    if (error) {
+      setMsgs((s) => s.filter((m) => m.id !== tmpId));
+      toast.error("No se pudo enviar");
+    } else {
+      setMsgs((s) => s.map((m) => m.id === tmpId ? data : m));
+    }
+  };
+
+  const subirImagen = async (file: File) => {
+    if (!user || !convId) return;
+    setSubiendoImg(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${user.id}/${convId}/${Date.now()}.${ext}`;
+      const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, file);
+      if (error) throw error;
+      const { data } = (supabase as any).storage.from("mensajes-media").getPublicUrl(path);
+      await enviar(data.publicUrl);
+    } catch (e: any) {
+      toast.error(e.message || "Error subiendo imagen");
+    } finally {
+      setSubiendoImg(false);
+    }
   };
 
   const enviados = msgs.filter((x) => x.remitente_id === user?.id);
@@ -97,16 +135,15 @@ export default function Mensajes() {
 
   return (
     <div className="mx-auto grid h-[calc(100vh-8rem)] max-w-5xl gap-0 overflow-hidden rounded-2xl border md:grid-cols-[320px_1fr] md:gap-4 md:border-0">
-      {/* Lista de conversaciones */}
       <div className={`flex flex-col overflow-hidden border-r bg-background ${showChat ? "hidden md:flex" : "flex"}`}>
         <div className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-lg font-semibold">Mensajes</h2>
-          <button className="rounded-full p-2 hover:bg-secondary" aria-label="Nueva conversación">
+          <button onClick={() => navigate("/lin/buscar")} className="rounded-full p-2 hover:bg-secondary" aria-label="Nueva conversación">
             <Pencil className="h-4 w-4" />
           </button>
         </div>
         <div className="flex-1 overflow-y-auto">
-          {convs.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Sin conversaciones aún.</p>
+          {convs.length === 0 ? <p className="p-4 text-sm text-muted-foreground">Sin conversaciones aún. Buscá gente y mandales un mensaje.</p>
             : convs.map((c) => {
               const other = c.perfil_a_id === user?.id ? c.b : c.a;
               const noLeidos = c.perfil_a_id === user?.id ? c.no_leidos_a : c.no_leidos_b;
@@ -116,32 +153,38 @@ export default function Mensajes() {
                   onClick={() => { navigate(`/lin/mensajes/${c.id}`); setShowChat(true); }}
                   className={`flex w-full items-center gap-3 px-3 py-3 text-left transition-colors hover:bg-secondary/40 ${convId === c.id ? "bg-secondary/60" : ""}`}
                 >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={other?.avatar_url || ""} />
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={other?.avatar_url || ""} className="object-cover" />
                     <AvatarFallback>{initials(other?.nombre)}</AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="truncate text-sm font-semibold">{other?.nombre}</p>
+                      <p className={`truncate text-sm ${noLeidos > 0 ? "font-semibold" : "font-medium"}`}>{other?.nombre}</p>
                       {c.ultimo_mensaje_at && (
                         <span className="shrink-0 text-[10px] text-muted-foreground">{formatTime(c.ultimo_mensaje_at)}</span>
                       )}
                     </div>
                     <p className={`truncate text-xs ${noLeidos > 0 ? "font-medium text-foreground" : "text-muted-foreground"}`}>
-                      {c.ultimo_mensaje || "Iniciar chat"}
+                      {c.ultimo_mensaje || "Iniciá una conversación"}
                     </p>
                   </div>
-                  {noLeidos > 0 && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />}
+                  {noLeidos > 0 && (
+                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                      {noLeidos > 9 ? "9+" : noLeidos}
+                    </span>
+                  )}
                 </button>
               );
             })}
         </div>
       </div>
 
-      {/* Ventana de chat */}
       <div className={`flex flex-col overflow-hidden bg-background ${showChat ? "flex" : "hidden md:flex"}`}>
         {!convId ? (
-          <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">Elegí una conversación</div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-2 text-sm text-muted-foreground">
+            <div className="rounded-full bg-secondary p-4"><Send className="h-6 w-6" /></div>
+            <p>Elegí una conversación</p>
+          </div>
         ) : (
           <>
             {otro && (
@@ -168,6 +211,7 @@ export default function Mensajes() {
                 const mio = m.remitente_id === user?.id;
                 const prev = msgs[i - 1];
                 const consecutivo = prev && prev.remitente_id === m.remitente_id;
+                const esRespHistoria = m.contenido?.startsWith("↪️");
                 return (
                   <div key={m.id} className={`flex ${mio ? "justify-end" : "justify-start"} ${consecutivo ? "mt-0.5" : "mt-2"}`}>
                     <div
@@ -175,17 +219,18 @@ export default function Mensajes() {
                       onMouseEnter={() => setReaccionMsg(m.id)}
                       onMouseLeave={() => setReaccionMsg(null)}
                     >
-                      <div className={`px-3.5 py-2 text-sm ${mio ? "bg-primary text-primary-foreground rounded-[20px_20px_4px_20px]" : "bg-secondary rounded-[20px_20px_20px_4px]"}`}>
-                        <p className="whitespace-pre-wrap break-words">{m.contenido}</p>
-                      </div>
+                      {m.imagen_url && (
+                        <img src={m.imagen_url} className="mb-1 max-h-64 rounded-2xl object-cover" alt="" />
+                      )}
+                      {m.contenido && m.contenido !== "📷 Imagen" && (
+                        <div className={`px-3.5 py-2 text-sm ${esRespHistoria ? "border bg-secondary/50 italic" : mio ? "bg-primary text-primary-foreground" : "bg-secondary"} ${mio ? "rounded-[20px_20px_4px_20px]" : "rounded-[20px_20px_20px_4px]"}`}>
+                          <p className="whitespace-pre-wrap break-words">{m.contenido}</p>
+                        </div>
+                      )}
                       {reaccionMsg === m.id && (
                         <div className={`absolute -top-9 z-10 flex gap-0.5 rounded-full border bg-background p-1 shadow-md ${mio ? "right-0" : "left-0"}`}>
                           {EMOJIS.map((emoji) => (
-                            <button
-                              key={emoji}
-                              onClick={() => { toast.success(`Reaccionaste con ${emoji}`); setReaccionMsg(null); }}
-                              className="rounded-full px-1.5 text-base transition-transform hover:scale-125"
-                            >
+                            <button key={emoji} onClick={() => { toast.success(`Reaccionaste con ${emoji}`); setReaccionMsg(null); }} className="rounded-full px-1.5 text-base transition-transform hover:scale-125">
                               {emoji}
                             </button>
                           ))}
@@ -194,7 +239,7 @@ export default function Mensajes() {
                       <p className={`mt-0.5 text-[10px] text-muted-foreground ${mio ? "text-right" : "text-left"}`}>
                         {formatTime(m.created_at)}
                         {mio && m.id === ultimoEnviadoId && (
-                          <span className="ml-1.5">· {m.leido ? `Visto ${m.leido_at ? formatTime(m.leido_at) : ""}` : "Enviado"}</span>
+                          <span className="ml-1.5">· {String(m.id).startsWith("tmp-") ? "Enviando…" : m.leido ? "Visto" : "Enviado"}</span>
                         )}
                       </p>
                     </div>
@@ -217,9 +262,10 @@ export default function Mensajes() {
             </div>
 
             <div className="flex items-center gap-2 border-t px-3 py-2.5">
-              <button className="rounded-full p-2 hover:bg-secondary md:hidden" aria-label="Imagen">
-                <ImageIcon className="h-5 w-5 text-primary" />
+              <button onClick={() => fileRef.current?.click()} disabled={subiendoImg} className="rounded-full p-2 hover:bg-secondary disabled:opacity-50" aria-label="Imagen">
+                {subiendoImg ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <ImageIcon className="h-5 w-5 text-primary" />}
               </button>
+              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && subirImagen(e.target.files[0])} />
               <Input
                 value={txt}
                 onChange={handleTyping}
@@ -228,8 +274,8 @@ export default function Mensajes() {
                 className="rounded-full border-secondary bg-secondary/40 px-4 transition-all focus-visible:bg-background"
               />
               <button
-                onClick={enviar}
-                disabled={!txt.trim()}
+                onClick={() => enviar()}
+                disabled={!txt.trim() || enviando}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition-opacity disabled:opacity-40"
                 aria-label="Enviar"
               >

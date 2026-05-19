@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin, Plus, Star } from "lucide-react";
+import { Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin, Plus, Star, Grid3x3, BookOpen } from "lucide-react";
 import { PostCard } from "@/components/lin/PostCard";
 import { TIPO_USUARIO, initials } from "@/lib/worefHelpers";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ export default function Perfil() {
   const [resenas, setResenas] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
   const [tab, setTab] = useState("publicaciones");
+  const [tieneHistoria, setTieneHistoria] = useState(false);
+  const [vistaGrid, setVistaGrid] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -44,12 +46,14 @@ export default function Perfil() {
       }
       setPerfil(p);
 
-      const [{ data: posts }, { data: rs }] = await Promise.all([
+      const [{ data: posts }, { data: rs }, { data: hist }] = await Promise.all([
         (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
         (supabase as any).from("resenas").select("*, autor:perfiles!autor_id(nombre,username,avatar_url)").eq("perfil_id", p.id).order("created_at", { ascending: false }),
+        (supabase as any).from("historias").select("id").eq("perfil_id", p.id).gt("expira_at", new Date().toISOString()).limit(1),
       ]);
       setPubs(posts || []);
       setResenas(rs || []);
+      setTieneHistoria((hist || []).length > 0);
 
       if (user && user.id !== p.id) {
         const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", p.id).maybeSingle();
@@ -85,10 +89,21 @@ export default function Perfil() {
         <div className="h-40 w-full bg-gradient-to-br from-primary/20 to-secondary"
           style={perfil.portada_url ? { backgroundImage: `url(${perfil.portada_url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
         <div className="relative bg-card px-5 pb-5 pt-0">
-          <Avatar className="-mt-10 h-20 w-20 border-4 border-card">
-            <AvatarImage src={perfil.avatar_url || ""} className="object-cover" />
-            <AvatarFallback className="text-xl">{initials(perfil.nombre)}</AvatarFallback>
-          </Avatar>
+          {tieneHistoria ? (
+            <button onClick={() => navigate(`/lin/historias/${perfil.id}`)} className="-mt-10 inline-block rounded-full bg-gradient-to-tr from-primary via-pink-500 to-amber-400 p-[3px]">
+              <div className="rounded-full bg-card p-[2px]">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={perfil.avatar_url || ""} className="object-cover" />
+                  <AvatarFallback className="text-xl">{initials(perfil.nombre)}</AvatarFallback>
+                </Avatar>
+              </div>
+            </button>
+          ) : (
+            <Avatar className="-mt-10 h-20 w-20 border-4 border-card">
+              <AvatarImage src={perfil.avatar_url || ""} className="object-cover" />
+              <AvatarFallback className="text-xl">{initials(perfil.nombre)}</AvatarFallback>
+            </Avatar>
+          )}
 
           <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
             <div>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PostCard } from "@/components/lin/PostCard";
+import { HistoriasBar } from "@/components/lin/HistoriasBar";
 import { initials } from "@/lib/worefHelpers";
 
 const FILTROS = [
@@ -77,6 +78,9 @@ export default function Feed() {
           <TabBtn active={tab === "siguiendo"} onClick={() => setTab("siguiendo")} icon={Users}>Siguiendo</TabBtn>
         </div>
       </header>
+
+      {/* Historias */}
+      <HistoriasBar />
 
       {/* Compose inline */}
       {user && (

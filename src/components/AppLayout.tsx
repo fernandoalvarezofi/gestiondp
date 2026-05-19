@@ -18,17 +18,32 @@ export function AppLayout() {
   const { data: onboardingStatus, isLoading: onboardingLoading } = useOnboardingStatus();
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [noLeidos, setNoLeidos] = useState(0);
+  const [notifSinLeer, setNotifSinLeer] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const recalcNoLeidos = async () => {
+    if (!user) return;
+    const { data } = await (supabase as any).rpc("get_mis_conversaciones", { user_id: user.id });
+    const total = (data || []).reduce((acc: number, c: any) =>
+      acc + (c.perfil_a_id === user.id ? (c.no_leidos_a || 0) : (c.no_leidos_b || 0)), 0);
+    setNoLeidos(total);
+  };
+  const recalcNotif = async () => {
+    if (!user) return;
+    const { count } = await (supabase as any).from("notificaciones")
+      .select("id", { count: "exact", head: true }).eq("perfil_id", user.id).eq("leida", false);
+    setNotifSinLeer(count || 0);
+  };
 
   useEffect(() => {
     if (!user) return;
-    (async () => {
-      const { data } = await (supabase as any).rpc("get_mis_conversaciones", { user_id: user.id });
-      const total = (data || []).reduce((acc: number, c: any) => {
-        return acc + (c.perfil_a_id === user.id ? (c.no_leidos_a || 0) : (c.no_leidos_b || 0));
-      }, 0);
-      setNoLeidos(total);
-    })();
+    recalcNoLeidos();
+    recalcNotif();
+    const ch = (supabase as any).channel("layout-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "conversaciones" }, recalcNoLeidos)
+      .on("postgres_changes", { event: "*", schema: "public", table: "notificaciones", filter: `perfil_id=eq.${user.id}` }, recalcNotif)
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
   }, [user]);
 
   if (loading || onboardingLoading) {
