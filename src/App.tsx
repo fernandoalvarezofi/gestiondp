@@ -29,6 +29,8 @@ import Foro from "./pages/lin/Foro";
 import ForoPost from "./pages/lin/ForoPost";
 import NuevoForoPost from "./pages/lin/NuevoForoPost";
 import Match from "./pages/lin/Match";
+import NuevaHistoria from "./pages/lin/NuevaHistoria";
+import HistoriaViewer from "./pages/lin/HistoriaViewer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -67,6 +69,8 @@ const App = () => (
                 <Route path="/lin/foro" element={<Foro />} />
                 <Route path="/lin/foro/nuevo" element={<NuevoForoPost />} />
                 <Route path="/lin/foro/post/:id" element={<ForoPost />} />
+                <Route path="/lin/historias/nueva" element={<NuevaHistoria />} />
+                <Route path="/lin/historias/:perfilId" element={<HistoriaViewer />} />
               </Route>
               <Route path="*" element={<NotFound />} />
             </Routes>
