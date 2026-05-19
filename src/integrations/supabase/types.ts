@@ -967,6 +967,112 @@ export type Database = {
           },
         ]
       }
+      historia_respuestas: {
+        Row: {
+          contenido: string
+          created_at: string
+          historia_id: string
+          id: string
+          perfil_id: string
+        }
+        Insert: {
+          contenido: string
+          created_at?: string
+          historia_id: string
+          id?: string
+          perfil_id: string
+        }
+        Update: {
+          contenido?: string
+          created_at?: string
+          historia_id?: string
+          id?: string
+          perfil_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historia_respuestas_historia_id_fkey"
+            columns: ["historia_id"]
+            isOneToOne: false
+            referencedRelation: "historias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historia_vistas: {
+        Row: {
+          created_at: string
+          historia_id: string
+          id: string
+          perfil_id: string
+        }
+        Insert: {
+          created_at?: string
+          historia_id: string
+          id?: string
+          perfil_id: string
+        }
+        Update: {
+          created_at?: string
+          historia_id?: string
+          id?: string
+          perfil_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historia_vistas_historia_id_fkey"
+            columns: ["historia_id"]
+            isOneToOne: false
+            referencedRelation: "historias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      historias: {
+        Row: {
+          color_fondo: string | null
+          created_at: string
+          destacada_id: string | null
+          expira_at: string
+          id: string
+          media_url: string
+          perfil_id: string
+          stickers: Json | null
+          texto: string | null
+          thumbnail_url: string | null
+          tipo: string
+          total_vistas: number
+        }
+        Insert: {
+          color_fondo?: string | null
+          created_at?: string
+          destacada_id?: string | null
+          expira_at?: string
+          id?: string
+          media_url: string
+          perfil_id: string
+          stickers?: Json | null
+          texto?: string | null
+          thumbnail_url?: string | null
+          tipo?: string
+          total_vistas?: number
+        }
+        Update: {
+          color_fondo?: string | null
+          created_at?: string
+          destacada_id?: string | null
+          expira_at?: string
+          id?: string
+          media_url?: string
+          perfil_id?: string
+          stickers?: Json | null
+          texto?: string | null
+          thumbnail_url?: string | null
+          tipo?: string
+          total_vistas?: number
+        }
+        Relationships: []
+      }
       likes: {
         Row: {
           comunidad_post_id: string | null
