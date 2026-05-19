@@ -89,10 +89,21 @@ export default function Perfil() {
         <div className="h-40 w-full bg-gradient-to-br from-primary/20 to-secondary"
           style={perfil.portada_url ? { backgroundImage: `url(${perfil.portada_url})`, backgroundSize: "cover", backgroundPosition: "center" } : undefined} />
         <div className="relative bg-card px-5 pb-5 pt-0">
-          <Avatar className="-mt-10 h-20 w-20 border-4 border-card">
-            <AvatarImage src={perfil.avatar_url || ""} className="object-cover" />
-            <AvatarFallback className="text-xl">{initials(perfil.nombre)}</AvatarFallback>
-          </Avatar>
+          {tieneHistoria ? (
+            <button onClick={() => navigate(`/lin/historias/${perfil.id}`)} className="-mt-10 inline-block rounded-full bg-gradient-to-tr from-primary via-pink-500 to-amber-400 p-[3px]">
+              <div className="rounded-full bg-card p-[2px]">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={perfil.avatar_url || ""} className="object-cover" />
+                  <AvatarFallback className="text-xl">{initials(perfil.nombre)}</AvatarFallback>
+                </Avatar>
+              </div>
+            </button>
+          ) : (
+            <Avatar className="-mt-10 h-20 w-20 border-4 border-card">
+              <AvatarImage src={perfil.avatar_url || ""} className="object-cover" />
+              <AvatarFallback className="text-xl">{initials(perfil.nombre)}</AvatarFallback>
+            </Avatar>
+          )}
 
           <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
             <div>
