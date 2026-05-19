@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin, Plus, Star } from "lucide-react";
+import { Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin, Plus, Star, Grid3x3, BookOpen } from "lucide-react";
 import { PostCard } from "@/components/lin/PostCard";
 import { TIPO_USUARIO, initials } from "@/lib/worefHelpers";
 import { toast } from "sonner";
@@ -26,6 +26,8 @@ export default function Perfil() {
   const [resenas, setResenas] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
   const [tab, setTab] = useState("publicaciones");
+  const [tieneHistoria, setTieneHistoria] = useState(false);
+  const [vistaGrid, setVistaGrid] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -44,12 +46,14 @@ export default function Perfil() {
       }
       setPerfil(p);
 
-      const [{ data: posts }, { data: rs }] = await Promise.all([
+      const [{ data: posts }, { data: rs }, { data: hist }] = await Promise.all([
         (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
         (supabase as any).from("resenas").select("*, autor:perfiles!autor_id(nombre,username,avatar_url)").eq("perfil_id", p.id).order("created_at", { ascending: false }),
+        (supabase as any).from("historias").select("id").eq("perfil_id", p.id).gt("expira_at", new Date().toISOString()).limit(1),
       ]);
       setPubs(posts || []);
       setResenas(rs || []);
+      setTieneHistoria((hist || []).length > 0);
 
       if (user && user.id !== p.id) {
         const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", p.id).maybeSingle();
