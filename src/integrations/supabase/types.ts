@@ -697,6 +697,54 @@ export type Database = {
           },
         ]
       }
+      feed_eventos: {
+        Row: {
+          accion: string
+          autor_id: string | null
+          created_at: string
+          dwell_ms: number | null
+          id: string
+          perfil_id: string
+          peso: number
+          publicacion_id: string | null
+        }
+        Insert: {
+          accion: string
+          autor_id?: string | null
+          created_at?: string
+          dwell_ms?: number | null
+          id?: string
+          perfil_id: string
+          peso?: number
+          publicacion_id?: string | null
+        }
+        Update: {
+          accion?: string
+          autor_id?: string | null
+          created_at?: string
+          dwell_ms?: number | null
+          id?: string
+          perfil_id?: string
+          peso?: number
+          publicacion_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feed_eventos_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "feed_woref"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "feed_eventos_publicacion_id_fkey"
+            columns: ["publicacion_id"]
+            isOneToOne: false
+            referencedRelation: "publicaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       foro_categorias: {
         Row: {
           color: string | null
@@ -893,6 +941,77 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      grupo_miembros: {
+        Row: {
+          grupo_id: string
+          id: string
+          joined_at: string
+          no_leidos: number
+          perfil_id: string
+          rol: string
+          ultima_lectura_at: string | null
+        }
+        Insert: {
+          grupo_id: string
+          id?: string
+          joined_at?: string
+          no_leidos?: number
+          perfil_id: string
+          rol?: string
+          ultima_lectura_at?: string | null
+        }
+        Update: {
+          grupo_id?: string
+          id?: string
+          joined_at?: string
+          no_leidos?: number
+          perfil_id?: string
+          rol?: string
+          ultima_lectura_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grupo_miembros_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      grupos: {
+        Row: {
+          avatar_url: string | null
+          creador_id: string
+          created_at: string
+          descripcion: string | null
+          id: string
+          nombre: string
+          ultimo_mensaje: string | null
+          ultimo_mensaje_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          creador_id: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre: string
+          ultimo_mensaje?: string | null
+          ultimo_mensaje_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          creador_id?: string
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          nombre?: string
+          ultimo_mensaje?: string | null
+          ultimo_mensaje_at?: string | null
+        }
+        Relationships: []
       }
       highlight_items: {
         Row: {
@@ -1126,6 +1245,42 @@ export type Database = {
           },
         ]
       }
+      llamadas: {
+        Row: {
+          callee_id: string
+          caller_id: string
+          contestada_at: string | null
+          duracion: number | null
+          estado: string
+          finalizada_at: string | null
+          id: string
+          iniciada_at: string
+          tipo: string
+        }
+        Insert: {
+          callee_id: string
+          caller_id: string
+          contestada_at?: string | null
+          duracion?: number | null
+          estado?: string
+          finalizada_at?: string | null
+          id?: string
+          iniciada_at?: string
+          tipo?: string
+        }
+        Update: {
+          callee_id?: string
+          caller_id?: string
+          contestada_at?: string | null
+          duracion?: number | null
+          estado?: string
+          finalizada_at?: string | null
+          id?: string
+          iniciada_at?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       match_acciones: {
         Row: {
           accion: string
@@ -1252,42 +1407,95 @@ export type Database = {
           },
         ]
       }
+      mensaje_reacciones: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          mensaje_id: string
+          perfil_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          mensaje_id: string
+          perfil_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          mensaje_id?: string
+          perfil_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mensaje_reacciones_mensaje_id_fkey"
+            columns: ["mensaje_id"]
+            isOneToOne: false
+            referencedRelation: "mensajes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mensajes: {
         Row: {
+          audio_duracion: number | null
+          audio_url: string | null
           contenido: string
-          conversacion_id: string
+          conversacion_id: string | null
           created_at: string
+          eliminado: boolean
+          grupo_id: string | null
           id: string
           imagen_url: string | null
           leido: boolean
           leido_at: string | null
           proyecto_id: string | null
           publicacion_id: string | null
+          reenviado_de: string | null
           remitente_id: string
+          respuesta_a: string | null
+          tipo: string
         }
         Insert: {
+          audio_duracion?: number | null
+          audio_url?: string | null
           contenido: string
-          conversacion_id: string
+          conversacion_id?: string | null
           created_at?: string
+          eliminado?: boolean
+          grupo_id?: string | null
           id?: string
           imagen_url?: string | null
           leido?: boolean
           leido_at?: string | null
           proyecto_id?: string | null
           publicacion_id?: string | null
+          reenviado_de?: string | null
           remitente_id: string
+          respuesta_a?: string | null
+          tipo?: string
         }
         Update: {
+          audio_duracion?: number | null
+          audio_url?: string | null
           contenido?: string
-          conversacion_id?: string
+          conversacion_id?: string | null
           created_at?: string
+          eliminado?: boolean
+          grupo_id?: string | null
           id?: string
           imagen_url?: string | null
           leido?: boolean
           leido_at?: string | null
           proyecto_id?: string | null
           publicacion_id?: string | null
+          reenviado_de?: string | null
           remitente_id?: string
+          respuesta_a?: string | null
+          tipo?: string
         }
         Relationships: [
           {
@@ -1295,6 +1503,13 @@ export type Database = {
             columns: ["conversacion_id"]
             isOneToOne: false
             referencedRelation: "conversaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_grupo_id_fkey"
+            columns: ["grupo_id"]
+            isOneToOne: false
+            referencedRelation: "grupos"
             referencedColumns: ["id"]
           },
           {
@@ -1319,10 +1534,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "mensajes_reenviado_de_fkey"
+            columns: ["reenviado_de"]
+            isOneToOne: false
+            referencedRelation: "mensajes"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "mensajes_remitente_id_fkey"
             columns: ["remitente_id"]
             isOneToOne: false
             referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mensajes_respuesta_a_fkey"
+            columns: ["respuesta_a"]
+            isOneToOne: false
+            referencedRelation: "mensajes"
             referencedColumns: ["id"]
           },
         ]
@@ -1621,6 +1850,24 @@ export type Database = {
           },
         ]
       }
+      presencia: {
+        Row: {
+          online: boolean
+          perfil_id: string
+          ultimo_visto: string
+        }
+        Insert: {
+          online?: boolean
+          perfil_id: string
+          ultimo_visto?: string
+        }
+        Update: {
+          online?: boolean
+          perfil_id?: string
+          ultimo_visto?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1856,6 +2103,7 @@ export type Database = {
           destacada: boolean
           encuesta_cierre: string | null
           encuesta_opciones: string[] | null
+          es_reel: boolean
           estado: Database["public"]["Enums"]["estado_publicacion"]
           formato: Database["public"]["Enums"]["formato_publicacion"]
           id: string
@@ -1885,6 +2133,7 @@ export type Database = {
           destacada?: boolean
           encuesta_cierre?: string | null
           encuesta_opciones?: string[] | null
+          es_reel?: boolean
           estado?: Database["public"]["Enums"]["estado_publicacion"]
           formato?: Database["public"]["Enums"]["formato_publicacion"]
           id?: string
@@ -1914,6 +2163,7 @@ export type Database = {
           destacada?: boolean
           encuesta_cierre?: string | null
           encuesta_opciones?: string[] | null
+          es_reel?: boolean
           estado?: Database["public"]["Enums"]["estado_publicacion"]
           formato?: Database["public"]["Enums"]["formato_publicacion"]
           id?: string
@@ -2066,6 +2316,44 @@ export type Database = {
             columns: ["seguidor_id"]
             isOneToOne: false
             referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      senales_webrtc: {
+        Row: {
+          created_at: string
+          emisor_id: string
+          id: string
+          llamada_id: string
+          payload: Json
+          receptor_id: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string
+          emisor_id: string
+          id?: string
+          llamada_id: string
+          payload: Json
+          receptor_id: string
+          tipo: string
+        }
+        Update: {
+          created_at?: string
+          emisor_id?: string
+          id?: string
+          llamada_id?: string
+          payload?: Json
+          receptor_id?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "senales_webrtc_llamada_id_fkey"
+            columns: ["llamada_id"]
+            isOneToOne: false
+            referencedRelation: "llamadas"
             referencedColumns: ["id"]
           },
         ]
@@ -2234,6 +2522,10 @@ export type Database = {
       }
     }
     Functions: {
+      es_miembro_grupo: {
+        Args: { _grupo_id: string; _perfil_id: string }
+        Returns: boolean
+      }
       get_mis_conversaciones: {
         Args: { user_id: string }
         Returns: {
@@ -2268,9 +2560,25 @@ export type Database = {
         Args: { p_publicacion_id: string }
         Returns: undefined
       }
+      iniciar_llamada: {
+        Args: { p_callee_id: string; p_tipo: string }
+        Returns: string
+      }
       is_team_member: {
         Args: { _target_user_id: string; _user_id: string }
         Returns: boolean
+      }
+      marcar_conversacion_leida: {
+        Args: { p_conversacion_id: string }
+        Returns: undefined
+      }
+      marcar_grupo_leido: { Args: { p_grupo_id: string }; Returns: undefined }
+      obtener_feed_ranked: {
+        Args: { p_limit?: number; p_perfil_id: string }
+        Returns: {
+          id: string
+          score: number
+        }[]
       }
       registrar_vista: {
         Args: { p_publicacion_id: string }
