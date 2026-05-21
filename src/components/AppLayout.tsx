@@ -64,7 +64,7 @@ export function AppLayout() {
   }
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
-    `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`;
+    `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all ${isActive ? "text-foreground" : "text-muted-foreground"}`;
 
   const secondary = [
     { to: "/lin/mercado", icon: Store, label: "Mercado" },
@@ -140,34 +140,42 @@ export function AppLayout() {
           </div>
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t bg-background/95 backdrop-blur px-2 py-2 md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border/60 bg-background/90 backdrop-blur-xl px-2 py-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-pop md:hidden">
           <NavLink to="/lin" end className={linkCls}>
-            <Home className="h-6 w-6" />
-            <span className="text-[10px]">Inicio</span>
+            {({ isActive }) => (<>
+              <Home className={`h-6 w-6 ${isActive ? "fill-primary/10 stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Inicio</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/explorar" className={linkCls}>
-            <Search className="h-6 w-6" />
-            <span className="text-[10px]">Explorar</span>
+            {({ isActive }) => (<>
+              <Search className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Explorar</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/publicar" className="flex flex-col items-center gap-0.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-              <Plus className="h-5 w-5" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-ember text-primary-foreground shadow-ember ring-2 ring-background">
+              <Plus className="h-5 w-5" strokeWidth={2.5} />
             </div>
           </NavLink>
           <NavLink to="/lin/mercado" className={linkCls}>
-            <Store className="h-6 w-6" />
-            <span className="text-[10px]">Mercado</span>
+            {({ isActive }) => (<>
+              <Store className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Mercado</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
-            <div className="relative">
-              <MessageCircle className="h-6 w-6" />
-              {noLeidos > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-                  {noLeidos > 9 ? "9+" : noLeidos}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px]">Mensajes</span>
+            {({ isActive }) => (<>
+              <div className="relative">
+                <MessageCircle className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+                {noLeidos > 0 && (
+                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-ember px-1 text-[9px] font-bold text-primary-foreground ring-2 ring-background">
+                    {noLeidos > 9 ? "9+" : noLeidos}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Mensajes</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/perfil" className={linkCls}>
             <UserCircle className="h-6 w-6" />
