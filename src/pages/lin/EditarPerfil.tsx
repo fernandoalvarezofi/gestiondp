@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TIPO_USUARIO } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 export default function EditarPerfil() {
   const { user } = useAuth();
@@ -59,7 +60,9 @@ export default function EditarPerfil() {
   if (!p) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
+      <BackHeader title="Editar perfil" />
+      <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader><CardTitle>Editar perfil</CardTitle></CardHeader>
         <CardContent className="space-y-4">
@@ -106,5 +109,6 @@ export default function EditarPerfil() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

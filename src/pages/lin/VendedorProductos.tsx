@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus, Trash2, Pencil, Package, Eye, EyeOff, Settings2, Upload, X } from "lucide-react";
 import { PRODUCT_TYPES, slugify, formatPrice } from "@/lib/marketplace";
 import { toast } from "sonner";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 export default function VendedorProductos() {
   const { user } = useAuth();
@@ -48,7 +49,9 @@ export default function VendedorProductos() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6">
+    <>
+      <BackHeader title="Mis productos" />
+      <div className="mx-auto max-w-5xl px-4 py-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Mis productos</h1>
@@ -269,5 +272,6 @@ function ProductForm({ initial, cats, onSaved }: { initial: any; cats: any[]; on
 
       <Button onClick={save} disabled={saving} size="lg" className="w-full">{saving ? "Guardando…" : (initial ? "Guardar cambios" : "Publicar producto")}</Button>
     </div>
+    </>
   );
 }

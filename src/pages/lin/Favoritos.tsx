@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { PostCard } from "@/components/lin/PostCard";
 import { Card, CardContent } from "@/components/ui/card";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
@@ -24,10 +25,13 @@ export default function Favoritos() {
   }, [user]);
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
+    <>
+      <BackHeader title="Guardados" />
+      <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Guardados</h1>
       {items.length === 0 ? <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">Aún no guardaste nada.</CardContent></Card>
         : items.map((p) => <PostCard key={p.id} pub={p} />)}
     </div>
+    </>
   );
 }

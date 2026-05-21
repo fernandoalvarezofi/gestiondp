@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ESTADO_PROYECTO } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 export default function NuevoProyecto() {
   const { user } = useAuth();
@@ -32,7 +33,9 @@ export default function NuevoProyecto() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
+      <BackHeader title="Nuevo proyecto" />
+      <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader><CardTitle>Nuevo proyecto</CardTitle></CardHeader>
         <CardContent className="space-y-3">
@@ -48,5 +51,6 @@ export default function NuevoProyecto() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

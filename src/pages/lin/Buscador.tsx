@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { PostCard } from "@/components/lin/PostCard";
 import { initials, TIPO_USUARIO } from "@/lib/worefHelpers";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 const PUB_SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
@@ -37,7 +38,9 @@ export default function Buscador() {
   }, [q]);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
+    <>
+      <BackHeader title="Buscar" />
+      <div className="mx-auto max-w-3xl space-y-5">
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscá personas, publicaciones, proyectos, comunidades…" className="pl-9" />

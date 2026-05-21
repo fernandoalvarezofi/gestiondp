@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PostCard } from "@/components/lin/PostCard";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,cuerpo_largo,imagen_url,video_url,encuesta_opciones,
   rol_buscado,modalidad,pais,tags,vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
@@ -45,7 +46,9 @@ export default function PublicacionDetalle() {
   if (!pub) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5">
+    <>
+      <BackHeader title="Publicación" />
+      <div className="mx-auto max-w-2xl space-y-5">
       <PostCard pub={pub} />
       {pub.cuerpo_largo && <Card><CardContent className="prose prose-sm max-w-none whitespace-pre-wrap p-5">{pub.cuerpo_largo}</CardContent></Card>}
 
@@ -73,5 +76,6 @@ export default function PublicacionDetalle() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

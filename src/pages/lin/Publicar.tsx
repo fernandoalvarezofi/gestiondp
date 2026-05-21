@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+import { BackHeader } from "@/components/lin/BackHeader";
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, X, Plus, Image as ImageIcon, Video, Loader2 } from "lucide-react";
@@ -139,7 +140,9 @@ export default function Publicar() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
+      <BackHeader title="Crear publicación" />
+      <div className="mx-auto max-w-2xl">
       <div className="sticky top-0 z-10 -mx-4 mb-4 flex items-center gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
         <button onClick={() => navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary" aria-label="Volver">
           <ArrowLeft className="h-5 w-5" />
@@ -293,5 +296,6 @@ export default function Publicar() {
         </div>
       </div>
     </div>
+    </>
   );
 }
