@@ -273,6 +273,5 @@ function ProductForm({ initial, cats, onSaved }: { initial: any; cats: any[]; on
 
       <Button onClick={save} disabled={saving} size="lg" className="w-full">{saving ? "Guardando…" : (initial ? "Guardar cambios" : "Publicar producto")}</Button>
     </div>
-    </>
   );
 }
