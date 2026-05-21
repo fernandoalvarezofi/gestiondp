@@ -2185,19 +2185,31 @@ export type Database = {
           bio: string | null
           created_at: string
           id: string
+          idioma: string
           industria: string | null
           instagram: string | null
           intereses: string[] | null
           linkedin: string | null
           mensajes_privados: boolean
+          mostrar_actividad: boolean
           mostrar_ubicacion: boolean
           nombre: string
+          notif_comentarios: boolean
+          notif_email: boolean
+          notif_likes: boolean
+          notif_menciones: boolean
+          notif_mensajes: boolean
+          notif_push: boolean
+          notif_seguidores: boolean
+          perfil_privado: boolean
+          permitir_etiquetas: boolean
           portada_url: string | null
           que_busca: string | null
           que_ofrece: string | null
           score: number
           sitio_web: string | null
           skills: string[] | null
+          tema: string
           tipo: Database["public"]["Enums"]["tipo_usuario"]
           total_publicaciones: number
           total_seguidores: number
@@ -2216,19 +2228,31 @@ export type Database = {
           bio?: string | null
           created_at?: string
           id: string
+          idioma?: string
           industria?: string | null
           instagram?: string | null
           intereses?: string[] | null
           linkedin?: string | null
           mensajes_privados?: boolean
+          mostrar_actividad?: boolean
           mostrar_ubicacion?: boolean
           nombre: string
+          notif_comentarios?: boolean
+          notif_email?: boolean
+          notif_likes?: boolean
+          notif_menciones?: boolean
+          notif_mensajes?: boolean
+          notif_push?: boolean
+          notif_seguidores?: boolean
+          perfil_privado?: boolean
+          permitir_etiquetas?: boolean
           portada_url?: string | null
           que_busca?: string | null
           que_ofrece?: string | null
           score?: number
           sitio_web?: string | null
           skills?: string[] | null
+          tema?: string
           tipo?: Database["public"]["Enums"]["tipo_usuario"]
           total_publicaciones?: number
           total_seguidores?: number
@@ -2247,19 +2271,31 @@ export type Database = {
           bio?: string | null
           created_at?: string
           id?: string
+          idioma?: string
           industria?: string | null
           instagram?: string | null
           intereses?: string[] | null
           linkedin?: string | null
           mensajes_privados?: boolean
+          mostrar_actividad?: boolean
           mostrar_ubicacion?: boolean
           nombre?: string
+          notif_comentarios?: boolean
+          notif_email?: boolean
+          notif_likes?: boolean
+          notif_menciones?: boolean
+          notif_mensajes?: boolean
+          notif_push?: boolean
+          notif_seguidores?: boolean
+          perfil_privado?: boolean
+          permitir_etiquetas?: boolean
           portada_url?: string | null
           que_busca?: string | null
           que_ofrece?: string | null
           score?: number
           sitio_web?: string | null
           skills?: string[] | null
+          tema?: string
           tipo?: Database["public"]["Enums"]["tipo_usuario"]
           total_publicaciones?: number
           total_seguidores?: number
