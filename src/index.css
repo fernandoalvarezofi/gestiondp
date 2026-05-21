@@ -2,139 +2,161 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 170 15% 12%;
+    /* Ember Signature — cream surface, charcoal ink, orange spark, amber warmth */
+    --background: 36 38% 96%;          /* #FAF6F0 cream */
+    --foreground: 30 14% 5%;           /* #0F0E0C ink */
 
     --card: 0 0% 100%;
-    --card-foreground: 170 15% 12%;
+    --card-foreground: 30 14% 5%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 170 15% 12%;
+    --popover-foreground: 30 14% 5%;
 
-    --primary: 14 98% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 14 98% 60%;             /* #FD5F35 ember */
+    --primary-foreground: 36 38% 98%;
 
     --brand-orange: 14 98% 60%;
     --brand-orange-foreground: 0 0% 100%;
+    --brand-amber: 35 86% 67%;         /* #F4B860 */
+    --brand-ink: 30 14% 5%;
+    --brand-cream: 36 38% 96%;
 
-    --secondary: 170 22% 95%;
-    --secondary-foreground: 170 15% 12%;
+    --secondary: 36 28% 92%;           /* warm sand */
+    --secondary-foreground: 30 14% 12%;
 
-    --muted: 170 20% 95%;
-    --muted-foreground: 170 12% 46%;
+    --muted: 36 22% 93%;
+    --muted-foreground: 30 8% 38%;
 
-    --accent: 170 22% 95%;
-    --accent-foreground: 170 15% 12%;
+    --accent: 35 86% 67%;              /* amber accent */
+    --accent-foreground: 30 14% 5%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 170 10% 89%;
-    --input: 170 10% 89%;
+    --border: 32 18% 86%;
+    --input: 32 18% 86%;
     --ring: 14 98% 60%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    /* Landing page surface colors */
-    --surface-mint: 170 25% 94%;
-    --surface-mint-strong: 170 32% 82%;
-    --teal-data: 170 50% 45%;
-    --teal-dark: 170 15% 15%;
+    /* Surfaces & data palette (kept names for compat) */
+    --surface-mint: 36 28% 92%;
+    --surface-mint-strong: 35 86% 80%;
+    --teal-data: 14 98% 60%;
+    --teal-dark: 30 14% 10%;
 
-    /* Pipeline stage colors */
+    /* Pipeline stages — warm-tuned */
     --stage-prospect: 210 70% 55%;
     --stage-qualified: 262 60% 55%;
     --stage-proposal: 14 98% 60%;
-    --stage-negotiation: 40 85% 52%;
-    --stage-won: 170 50% 45%;
+    --stage-negotiation: 35 86% 60%;
+    --stage-won: 150 50% 42%;
     --stage-lost: 0 65% 50%;
 
-    /* Sidebar — mint surface with dark text */
-    --sidebar-background: 170 25% 94%;
-    --sidebar-foreground: 170 15% 12%;
+    /* Sidebar — deep charcoal premium rail (tri-column dashboard) */
+    --sidebar-background: 30 14% 7%;
+    --sidebar-foreground: 36 18% 88%;
     --sidebar-primary: 14 98% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 170 20% 88%;
-    --sidebar-accent-foreground: 170 15% 12%;
-    --sidebar-border: 170 15% 88%;
+    --sidebar-accent: 30 10% 14%;
+    --sidebar-accent-foreground: 36 28% 96%;
+    --sidebar-border: 30 8% 18%;
     --sidebar-ring: 14 98% 60%;
+
+    /* Signature gradients & shadows */
+    --gradient-ember: linear-gradient(135deg, hsl(14 98% 60%) 0%, hsl(35 86% 67%) 100%);
+    --gradient-ink: linear-gradient(180deg, hsl(30 14% 7%) 0%, hsl(30 14% 12%) 100%);
+    --gradient-cream: linear-gradient(180deg, hsl(36 38% 97%) 0%, hsl(36 28% 92%) 100%);
+    --shadow-ember: 0 10px 30px -12px hsl(14 98% 60% / 0.35);
+    --shadow-soft: 0 1px 2px hsl(30 14% 5% / 0.04), 0 8px 24px -12px hsl(30 14% 5% / 0.08);
+    --shadow-pop: 0 2px 4px hsl(30 14% 5% / 0.06), 0 20px 40px -16px hsl(30 14% 5% / 0.18);
   }
 
   .dark {
-    --background: 170 12% 7%;
-    --foreground: 170 10% 93%;
+    --background: 30 14% 5%;
+    --foreground: 36 18% 92%;
 
-    --card: 170 10% 11%;
-    --card-foreground: 170 10% 93%;
+    --card: 30 12% 9%;
+    --card-foreground: 36 18% 92%;
 
-    --popover: 170 10% 11%;
-    --popover-foreground: 170 10% 93%;
+    --popover: 30 12% 9%;
+    --popover-foreground: 36 18% 92%;
 
-    --primary: 14 98% 65%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 14 98% 62%;
+    --primary-foreground: 36 38% 98%;
 
-    --brand-orange: 14 98% 65%;
+    --brand-orange: 14 98% 62%;
     --brand-orange-foreground: 0 0% 100%;
+    --brand-amber: 35 86% 67%;
+    --brand-ink: 30 14% 5%;
+    --brand-cream: 36 38% 96%;
 
-    --secondary: 170 8% 16%;
-    --secondary-foreground: 170 10% 93%;
+    --secondary: 30 10% 14%;
+    --secondary-foreground: 36 18% 92%;
 
-    --muted: 170 8% 16%;
-    --muted-foreground: 170 6% 50%;
+    --muted: 30 10% 14%;
+    --muted-foreground: 30 8% 60%;
 
-    --accent: 170 8% 16%;
-    --accent-foreground: 170 10% 93%;
+    --accent: 35 60% 50%;
+    --accent-foreground: 30 14% 5%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 170 8% 18%;
-    --input: 170 8% 18%;
-    --ring: 14 98% 65%;
+    --border: 30 8% 18%;
+    --input: 30 8% 18%;
+    --ring: 14 98% 62%;
 
-    --surface-mint: 170 10% 14%;
-    --surface-mint-strong: 170 12% 20%;
-    --teal-data: 170 50% 50%;
-    --teal-dark: 170 15% 80%;
+    --surface-mint: 30 10% 14%;
+    --surface-mint-strong: 30 10% 20%;
+    --teal-data: 14 98% 62%;
+    --teal-dark: 36 18% 88%;
 
-    --sidebar-background: 170 10% 11%;
-    --sidebar-foreground: 170 8% 82%;
-    --sidebar-primary: 14 98% 65%;
+    --sidebar-background: 30 14% 4%;
+    --sidebar-foreground: 36 18% 88%;
+    --sidebar-primary: 14 98% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 170 10% 16%;
-    --sidebar-accent-foreground: 170 8% 82%;
-    --sidebar-border: 170 8% 16%;
-    --sidebar-ring: 14 98% 65%;
+    --sidebar-accent: 30 10% 12%;
+    --sidebar-accent-foreground: 36 28% 96%;
+    --sidebar-border: 30 8% 14%;
+    --sidebar-ring: 14 98% 62%;
+
+    --gradient-ember: linear-gradient(135deg, hsl(14 98% 62%) 0%, hsl(35 86% 60%) 100%);
+    --gradient-ink: linear-gradient(180deg, hsl(30 14% 4%) 0%, hsl(30 12% 9%) 100%);
+    --gradient-cream: linear-gradient(180deg, hsl(30 12% 9%) 0%, hsl(30 10% 14%) 100%);
+    --shadow-ember: 0 10px 30px -12px hsl(14 98% 60% / 0.5);
+    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.4), 0 8px 24px -12px hsl(0 0% 0% / 0.6);
+    --shadow-pop: 0 2px 4px hsl(0 0% 0% / 0.4), 0 20px 40px -16px hsl(0 0% 0% / 0.7);
   }
 }
 
 /* Force light theme on landing page regardless of dark mode */
 .force-light {
-  --background: 150 20% 95%;
-  --foreground: 180 10% 10%;
+  --background: 36 38% 96%;
+  --foreground: 30 14% 5%;
   --card: 0 0% 100%;
-  --card-foreground: 180 10% 10%;
+  --card-foreground: 30 14% 5%;
   --popover: 0 0% 100%;
-  --popover-foreground: 180 10% 10%;
+  --popover-foreground: 30 14% 5%;
   --primary: 14 98% 60%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 170 14% 90%;
-  --secondary-foreground: 170 15% 12%;
-  --muted: 170 12% 90%;
-  --muted-foreground: 170 8% 46%;
-  --accent: 170 14% 90%;
-  --accent-foreground: 170 15% 12%;
-  --border: 170 10% 86%;
-  --input: 170 10% 86%;
+  --secondary: 36 28% 92%;
+  --secondary-foreground: 30 14% 12%;
+  --muted: 36 22% 93%;
+  --muted-foreground: 30 8% 38%;
+  --accent: 35 86% 67%;
+  --accent-foreground: 30 14% 5%;
+  --border: 32 18% 86%;
+  --input: 32 18% 86%;
   --ring: 14 98% 60%;
-  --surface-mint: 170 25% 94%;
-  --surface-mint-strong: 170 32% 82%;
-  --teal-data: 170 50% 45%;
-  --teal-dark: 170 15% 15%;
+  --surface-mint: 36 28% 92%;
+  --surface-mint-strong: 35 86% 80%;
+  --teal-data: 14 98% 60%;
+  --teal-dark: 30 14% 10%;
 }
 
 @layer base {
@@ -144,13 +166,48 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Outfit', sans-serif;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'ss01', 'cv11';
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Outfit', sans-serif;
-    letter-spacing: -0.02em;
+  h1, h2, h3, h4, h5, h6, .font-display {
+    font-family: 'Syne', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.025em;
+    font-weight: 700;
+  }
+
+  /* Selection in brand orange */
+  ::selection {
+    background: hsl(14 98% 60% / 0.25);
+    color: hsl(30 14% 5%);
+  }
+}
+
+@layer utilities {
+  .bg-gradient-ember { background-image: var(--gradient-ember); }
+  .bg-gradient-ink { background-image: var(--gradient-ink); }
+  .bg-gradient-cream { background-image: var(--gradient-cream); }
+  .shadow-ember { box-shadow: var(--shadow-ember); }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-pop { box-shadow: var(--shadow-pop); }
+
+  .text-ember {
+    background: var(--gradient-ember);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Premium noise overlay */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Focus ring premium */
+  .focus-ember:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px hsl(var(--background)), 0 0 0 4px hsl(var(--primary));
   }
 }

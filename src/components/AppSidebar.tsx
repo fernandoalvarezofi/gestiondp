@@ -73,11 +73,16 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="hidden md:flex">
-      <SidebarHeader className="p-4">
-        <NavLink to="/" className="flex items-center gap-2">
-          <div className="h-2 w-2 rounded-full bg-primary" />
-          <span className="text-lg font-bold tracking-tight text-sidebar-foreground">Woref</span>
+    <Sidebar className="hidden md:flex border-r-0">
+      <SidebarHeader className="px-4 py-5">
+        <NavLink to="/" className="group flex items-center gap-2.5">
+          <span className="relative flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-ember shadow-ember">
+            <span className="h-1.5 w-1.5 rounded-full bg-white" />
+            <span className="absolute inset-0 rounded-lg ring-1 ring-white/20" />
+          </span>
+          <span className="font-display text-xl font-bold tracking-tight text-sidebar-foreground">
+            Woref<span className="text-primary">.</span>
+          </span>
         </NavLink>
       </SidebarHeader>
 

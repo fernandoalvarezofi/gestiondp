@@ -64,7 +64,7 @@ export function AppLayout() {
   }
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
-    `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`;
+    `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all ${isActive ? "text-foreground" : "text-muted-foreground"}`;
 
   const secondary = [
     { to: "/lin/mercado", icon: Store, label: "Mercado" },
@@ -84,7 +84,7 @@ export function AppLayout() {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="flex items-center gap-2 border-b px-4 py-3 md:border-b-0">
+          <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-border/60 bg-background/85 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
             <div className="hidden md:flex"><SidebarTrigger /></div>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
@@ -92,10 +92,14 @@ export function AppLayout() {
                   <Menu className="h-5 w-5" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72">
-                <div className="mb-6 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
-                  <span className="text-lg font-bold tracking-tight">Woref</span>
+              <SheetContent side="left" className="w-72 bg-sidebar text-sidebar-foreground border-sidebar-border">
+                <div className="mb-6 flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-ember shadow-ember">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                  </span>
+                  <span className="font-display text-xl font-bold tracking-tight">
+                    Woref<span className="text-primary">.</span>
+                  </span>
                 </div>
                 <nav className="space-y-1">
                   {secondary.map(({ to, icon: Icon, label }) => (
@@ -104,21 +108,28 @@ export function AppLayout() {
                       to={to}
                       onClick={() => setMenuOpen(false)}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-secondary"}`
+                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
                       }
                     >
                       <Icon className="h-5 w-5" />
                       {label}
                     </NavLink>
                   ))}
-                  <div className="my-3 border-t" />
+                  <div className="my-3 border-t border-sidebar-border" />
                   <div className="px-1 py-1" onClick={() => setMenuOpen(false)}>
                     <InstallAppCTA variant="card" className="!p-4" />
                   </div>
                 </nav>
               </SheetContent>
             </Sheet>
-            <span className="font-semibold md:hidden">Woref</span>
+            <NavLink to="/lin" className="flex items-center gap-2 md:hidden">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-ember shadow-ember">
+                <span className="h-1 w-1 rounded-full bg-white" />
+              </span>
+              <span className="font-display text-lg font-bold tracking-tight">
+                Woref<span className="text-primary">.</span>
+              </span>
+            </NavLink>
             <div className="ml-auto flex items-center gap-1">
               <InstallAppCTA variant="icon" />
               <ThemeToggle />
@@ -129,38 +140,48 @@ export function AppLayout() {
           </div>
         </main>
 
-        <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t bg-background/95 backdrop-blur px-2 py-2 md:hidden">
+        <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border/60 bg-background/90 backdrop-blur-xl px-2 py-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-pop md:hidden">
           <NavLink to="/lin" end className={linkCls}>
-            <Home className="h-6 w-6" />
-            <span className="text-[10px]">Inicio</span>
+            {({ isActive }) => (<>
+              <Home className={`h-6 w-6 ${isActive ? "fill-primary/10 stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Inicio</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/explorar" className={linkCls}>
-            <Search className="h-6 w-6" />
-            <span className="text-[10px]">Explorar</span>
+            {({ isActive }) => (<>
+              <Search className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Explorar</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/publicar" className="flex flex-col items-center gap-0.5">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
-              <Plus className="h-5 w-5" />
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-ember text-primary-foreground shadow-ember ring-2 ring-background">
+              <Plus className="h-5 w-5" strokeWidth={2.5} />
             </div>
           </NavLink>
           <NavLink to="/lin/mercado" className={linkCls}>
-            <Store className="h-6 w-6" />
-            <span className="text-[10px]">Mercado</span>
+            {({ isActive }) => (<>
+              <Store className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Mercado</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
-            <div className="relative">
-              <MessageCircle className="h-6 w-6" />
-              {noLeidos > 0 && (
-                <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
-                  {noLeidos > 9 ? "9+" : noLeidos}
-                </span>
-              )}
-            </div>
-            <span className="text-[10px]">Mensajes</span>
+            {({ isActive }) => (<>
+              <div className="relative">
+                <MessageCircle className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+                {noLeidos > 0 && (
+                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-ember px-1 text-[9px] font-bold text-primary-foreground ring-2 ring-background">
+                    {noLeidos > 9 ? "9+" : noLeidos}
+                  </span>
+                )}
+              </div>
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Mensajes</span>
+            </>)}
           </NavLink>
           <NavLink to="/lin/perfil" className={linkCls}>
-            <UserCircle className="h-6 w-6" />
-            <span className="text-[10px]">Perfil</span>
+            {({ isActive }) => (<>
+              <UserCircle className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Perfil</span>
+            </>)}
           </NavLink>
         </nav>
       </div>

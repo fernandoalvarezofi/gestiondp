@@ -132,15 +132,19 @@ export default function Auth() {
         )}
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
-            <span className="font-bold text-xl tracking-tight">Woref</span>
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-ember shadow-ember">
+              <span className="h-2 w-2 rounded-full bg-white" />
+            </span>
+            <span className="font-display font-bold text-2xl tracking-tight">
+              Woref<span className="text-primary">.</span>
+            </span>
           </div>
 
           <div className="space-y-6">
-            <h1 className={`text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight ${textColor}`}>
+            <h1 className={`font-display text-5xl lg:text-6xl font-bold leading-[1.02] tracking-tight ${textColor}`}>
               Donde los que construyen<br />
-              se encuentran.
+              <span className="text-ember">se encuentran.</span>
             </h1>
             <p className={`text-lg max-w-md leading-relaxed ${subtextColor}`}>
               La red de emprendedores, creadores, inversores y empresas.

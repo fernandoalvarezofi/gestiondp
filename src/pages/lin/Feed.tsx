@@ -123,7 +123,7 @@ export default function Feed() {
       {/* Sticky header estilo X / Threads */}
       <header className="sticky top-0 z-30 -mx-4 border-b border-border/60 bg-background/80 backdrop-blur-md md:-mx-6">
         <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
-          <h1 className="text-lg font-bold tracking-tight">Inicio</h1>
+          <h1 className="font-display text-xl font-bold tracking-tight">Inicio<span className="text-primary">.</span></h1>
           {miPerfil && (
             <Link to="/lin/perfil" className="md:hidden">
               <Avatar className="h-8 w-8">
