@@ -118,7 +118,8 @@ export default function Feed() {
   }), [items, tab, seguidos, filtroTipo, q]);
 
   return (
-    <div className="mx-auto -mt-4 max-w-2xl md:-mt-6">
+    <div className="mx-auto -mt-4 grid max-w-6xl gap-6 md:-mt-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="min-w-0 max-w-2xl lg:mx-0 lg:max-w-none">
       {/* Sticky header estilo X / Threads */}
       <header className="sticky top-0 z-30 -mx-4 border-b border-border/60 bg-background/80 backdrop-blur-md md:-mx-6">
         <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
