@@ -1,12 +1,13 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3, Trash2, Pause, Play, Share2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3, Trash2, Pause, Play, Share2, ChevronLeft, ChevronRight } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TIPO_PUBLICACION, initials, formatTime, formatNumber } from "@/lib/worefHelpers";
+import { LazyImage } from "./LazyImage";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +18,8 @@ export function PostCard({ pub }: { pub: any }) {
   const [saved, setSaved] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [counts, setCounts] = useState({ likes: pub.total_likes || 0, com: pub.total_comentarios || 0, rep: pub.total_repostes || 0 });
+  const [expandido, setExpandido] = useState(false);
+  const [idxImg, setIdxImg] = useState(0);
 
   useEffect(() => {
     if (!user) return;
@@ -78,9 +81,18 @@ export function PostCard({ pub }: { pub: any }) {
   };
 
   const tipoMeta = TIPO_PUBLICACION[pub.tipo] || TIPO_PUBLICACION.general;
-  const portada = pub.media?.find((m: any) => m.es_portada)?.url || pub.media?.[0]?.url || pub.imagen_url;
+  const imagenes = useMemo(() => {
+    const set = new Set<string>();
+    const arr: string[] = [];
+    const push = (u?: string) => { if (u && !set.has(u)) { set.add(u); arr.push(u); } };
+    (pub.media || []).sort((a: any, b: any) => (a.orden ?? 0) - (b.orden ?? 0)).forEach((m: any) => push(m.url));
+    push(pub.imagen_url);
+    return arr;
+  }, [pub.media, pub.imagen_url]);
   const username = pub.perfil?.username;
   const open = () => navigate(`/lin/publicacion/${pub.id}`);
+  const cuerpoLargo = (pub.cuerpo || "").length > 300;
+  const cuerpoMostrado = expandido || !cuerpoLargo ? pub.cuerpo : `${pub.cuerpo.slice(0, 300)}…`;
 
   return (
     <article
