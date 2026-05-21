@@ -9,6 +9,7 @@ import {
   Rocket, Building2, TrendingUp, Sparkles, Briefcase, Trophy,
   UserPlus, Send, LineChart,
 } from "lucide-react";
+import { InstallAppCTA } from "@/components/InstallAppCTA";
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
