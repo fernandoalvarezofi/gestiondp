@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3, Trash2, Pause, Play, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3, Trash2, Pause, Play, Share2, ChevronLeft, ChevronRight, Link2, Flag, UserPlus, UserMinus, VolumeX, Pin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TIPO_PUBLICACION, initials, formatTime, formatNumber } from "@/lib/worefHelpers";
@@ -11,12 +11,14 @@ import { LazyImage } from "./LazyImage";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function PostCard({ pub }: { pub: any }) {
+export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string) => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [reposted, setReposted] = useState(false);
+  const [following, setFollowing] = useState<boolean | null>(null);
+  const [hidden, setHidden] = useState(false);
   const [counts, setCounts] = useState({ likes: pub.total_likes || 0, com: pub.total_comentarios || 0, rep: pub.total_repostes || 0 });
   const [expandido, setExpandido] = useState(false);
   const [idxImg, setIdxImg] = useState(0);
@@ -30,10 +32,31 @@ export function PostCard({ pub }: { pub: any }) {
         (supabase as any).from("repostes").select("id").eq("perfil_id", user.id).eq("publicacion_id", pub.id).maybeSingle(),
       ]);
       setLiked(!!l); setSaved(!!f); setReposted(!!r);
+      if (pub.perfil?.id && pub.perfil.id !== user.id) {
+        const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", pub.perfil.id).maybeSingle();
+        setFollowing(!!s);
+      }
     })();
-  }, [user, pub.id]);
+  }, [user, pub.id, pub.perfil?.id]);
 
   const requireAuth = () => { if (!user) { toast.error("Iniciá sesión"); return false; } return true; };
+
+  const copyLink = async () => {
+    const url = `${window.location.origin}/lin/publicacion/${pub.id}`;
+    await navigator.clipboard.writeText(url);
+    toast.success("Enlace copiado");
+  };
+
+  const toggleFollow = async () => {
+    if (!requireAuth() || !pub.perfil?.id) return;
+    if (following) {
+      await (supabase as any).from("seguidos").delete().eq("seguidor_id", user!.id).eq("seguido_id", pub.perfil.id);
+      setFollowing(false); toast.success("Dejaste de seguir");
+    } else {
+      await (supabase as any).from("seguidos").insert({ seguidor_id: user!.id, seguido_id: pub.perfil.id });
+      setFollowing(true); toast.success(`Siguiendo a @${pub.perfil.username}`);
+    }
+  };
 
   const toggleLike = async (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
