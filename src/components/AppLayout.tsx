@@ -119,7 +119,8 @@ export function AppLayout() {
               </SheetContent>
             </Sheet>
             <span className="font-semibold md:hidden">Woref</span>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1">
+              <InstallAppCTA variant="icon" />
               <ThemeToggle />
             </div>
           </div>
