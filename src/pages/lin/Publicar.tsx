@@ -104,6 +104,7 @@ export default function Publicar() {
         cuerpo: cuerpo || null,
         cuerpo_largo: cuerpoLargo || null,
         imagen_url, video_url,
+        es_reel: !!video_url && tipo === "video_corto",
         tags: tags ? tags.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean) : null,
       };
       if (tipo === "encuesta") payload.encuesta_opciones = encuesta.filter((o) => o.trim());

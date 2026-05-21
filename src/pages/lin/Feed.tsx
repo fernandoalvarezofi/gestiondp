@@ -42,11 +42,24 @@ export default function Feed() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await (supabase as any).from("publicaciones").select(SELECT)
-        .eq("estado", "activa")
-        .order("destacada", { ascending: false })
-        .order("created_at", { ascending: false }).limit(60);
-      setItems(data || []);
+      let data: any[] = [];
+      if (tab === "para-vos" && user) {
+        const { data: ranked } = await (supabase as any).rpc("obtener_feed_ranked", { p_perfil_id: user.id, p_limit: 60 });
+        const ids = (ranked || []).map((r: any) => r.id);
+        if (ids.length) {
+          const { data: rows } = await (supabase as any).from("publicaciones").select(SELECT).in("id", ids);
+          const order: Record<string, number> = Object.fromEntries(ids.map((id: string, i: number) => [id, i]));
+          data = (rows || []).sort((a: any, b: any) => order[a.id] - order[b.id]);
+        }
+      }
+      if (!data.length) {
+        const r = await (supabase as any).from("publicaciones").select(SELECT)
+          .eq("estado", "activa")
+          .order("destacada", { ascending: false })
+          .order("created_at", { ascending: false }).limit(60);
+        data = r.data || [];
+      }
+      setItems(data);
       setLoading(false);
     })();
     if (user) {
@@ -59,7 +72,7 @@ export default function Feed() {
         setMiPerfil(p);
       })();
     }
-  }, [user]);
+  }, [user, tab]);
 
   const filtered = useMemo(() => items.filter((p) => {
     if (tab === "siguiendo" && !seguidos.includes(p.perfil?.id)) return false;

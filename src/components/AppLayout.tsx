@@ -10,8 +10,9 @@ import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Search, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, MessageSquare, Sparkles, Bookmark, BarChart3, Settings,
+  Menu, Rocket, Users, MessageSquare, Sparkles, Bookmark, BarChart3, Settings, Compass, Film,
 } from "lucide-react";
+import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 
 export function AppLayout() {
   const { session, user, loading } = useAuth();
@@ -20,6 +21,7 @@ export function AppLayout() {
   const [noLeidos, setNoLeidos] = useState(0);
   const [notifSinLeer, setNotifSinLeer] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  usePresenciaHeartbeat();
 
   const recalcNoLeidos = async () => {
     if (!user) return;
@@ -64,6 +66,8 @@ export function AppLayout() {
     `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`;
 
   const secondary = [
+    { to: "/lin/explorar", icon: Compass, label: "Explorar" },
+    { to: "/lin/reels", icon: Film, label: "Reels" },
     { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
     { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
     { to: "/lin/foro", icon: MessageSquare, label: "Foro" },
@@ -123,14 +127,18 @@ export function AppLayout() {
             <Home className="h-6 w-6" />
             <span className="text-[10px]">Inicio</span>
           </NavLink>
-          <NavLink to="/lin/buscar" className={linkCls}>
+          <NavLink to="/lin/explorar" className={linkCls}>
             <Search className="h-6 w-6" />
-            <span className="text-[10px]">Buscar</span>
+            <span className="text-[10px]">Explorar</span>
           </NavLink>
           <NavLink to="/lin/publicar" className="flex flex-col items-center gap-0.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
               <Plus className="h-5 w-5" />
             </div>
+          </NavLink>
+          <NavLink to="/lin/reels" className={linkCls}>
+            <Film className="h-6 w-6" />
+            <span className="text-[10px]">Reels</span>
           </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
             <div className="relative">
