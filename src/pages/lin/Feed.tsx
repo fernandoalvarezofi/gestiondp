@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Sparkles, Users, Image as ImageIcon, BarChart3, Loader2 } from "lucide-react";
+import { Search, Sparkles, Users, Image as ImageIcon, BarChart3, Loader2, Flame } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,thumbnail_url
 export default function Feed() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
-  const [tab, setTab] = useState<"para-vos" | "siguiendo">("para-vos");
+  const [tab, setTab] = useState<"para-vos" | "siguiendo" | "tendencias">("para-vos");
   const [filtroTipo, setFiltroTipo] = useState("all");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
@@ -51,6 +51,14 @@ export default function Feed() {
           const order: Record<string, number> = Object.fromEntries(ids.map((id: string, i: number) => [id, i]));
           data = (rows || []).sort((a: any, b: any) => order[a.id] - order[b.id]);
         }
+      } else if (tab === "tendencias") {
+        const desde = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+        const r = await (supabase as any).from("publicaciones").select(SELECT)
+          .eq("estado", "activa").gte("created_at", desde).limit(120);
+        data = (r.data || []).map((p: any) => ({
+          ...p,
+          _score: (p.total_likes || 0) * 1 + (p.total_comentarios || 0) * 2 + (p.total_repostes || 0) * 3 + (p.vistas || 0) * 0.05,
+        })).sort((a: any, b: any) => b._score - a._score).slice(0, 60);
       }
       if (!data.length) {
         const r = await (supabase as any).from("publicaciones").select(SELECT)
@@ -115,6 +123,7 @@ export default function Feed() {
         <div className="flex">
           <TabBtn active={tab === "para-vos"} onClick={() => setTab("para-vos")} icon={Sparkles}>Para vos</TabBtn>
           <TabBtn active={tab === "siguiendo"} onClick={() => setTab("siguiendo")} icon={Users}>Siguiendo</TabBtn>
+          <TabBtn active={tab === "tendencias"} onClick={() => setTab("tendencias")} icon={Flame}>Tendencias</TabBtn>
         </div>
       </header>
 
