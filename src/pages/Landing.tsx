@@ -72,7 +72,8 @@ export default function Landing() {
             <div className="h-2 w-2 rounded-full bg-primary" />
             <span className="text-lg font-bold tracking-tight">Woref</span>
           </Link>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <InstallAppCTA variant="icon" />
             <Button asChild variant="ghost" size="sm"><Link to="/auth">Iniciar sesión</Link></Button>
             <Button asChild size="sm"><Link to="/auth">Crear cuenta</Link></Button>
           </div>
