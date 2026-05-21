@@ -9,6 +9,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { PostCard } from "@/components/lin/PostCard";
 import { HistoriasBar } from "@/components/lin/HistoriasBar";
+import { FeedRail } from "@/components/lin/FeedRail";
 import { initials } from "@/lib/worefHelpers";
 
 const FILTROS = [
