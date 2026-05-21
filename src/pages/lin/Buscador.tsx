@@ -67,6 +67,7 @@ export default function Buscador() {
         <TabsContent value="com" className="mt-4 space-y-2">{comunidades.map((c) => <ComunidadRow key={c.id} c={c} />)}</TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }
 
