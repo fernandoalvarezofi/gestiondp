@@ -111,6 +111,10 @@ export function AppLayout() {
                       {label}
                     </NavLink>
                   ))}
+                  <div className="my-3 border-t" />
+                  <div className="px-1 py-1" onClick={() => setMenuOpen(false)}>
+                    <InstallAppCTA variant="card" className="!p-4" />
+                  </div>
                 </nav>
               </SheetContent>
             </Sheet>
