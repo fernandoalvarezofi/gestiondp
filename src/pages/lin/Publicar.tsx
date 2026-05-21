@@ -10,23 +10,13 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { ArrowLeft, X, Plus, Image as ImageIcon, Video, Loader2 } from "lucide-react";
-import { initials } from "@/lib/worefHelpers";
+import { initials, TIPO_PUBLICACION } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 
 const TIPOS_VISUALES = [
-  { key: "update", emoji: "💬", label: "Update" },
-  { key: "lanzamiento", emoji: "🎯", label: "Lanzamiento" },
-  { key: "logro", emoji: "🏆", label: "Logro" },
-  { key: "busco_socio", emoji: "🤝", label: "Busco socio" },
-  { key: "oportunidad", emoji: "💰", label: "Oportunidad" },
-  { key: "hiring", emoji: "💼", label: "Hiring" },
-  { key: "recurso", emoji: "📦", label: "Recurso" },
-  { key: "contenido_largo", emoji: "📝", label: "Artículo" },
-  { key: "video_corto", emoji: "🎬", label: "Video corto" },
-  { key: "encuesta", emoji: "📊", label: "Encuesta" },
-  { key: "proyecto", emoji: "🚀", label: "Proyecto" },
-  { key: "idea", emoji: "💡", label: "Idea" },
-];
+  "update","lanzamiento","logro","busco_socio","oportunidad","hiring",
+  "recurso","contenido_largo","video_corto","encuesta","proyecto","idea",
+].map((key) => ({ key, ...TIPO_PUBLICACION[key] }));
 
 const placeholders: Record<string, string> = {
   update: "¿Qué estás construyendo hoy?",
@@ -158,7 +148,7 @@ export default function Publicar() {
           <SelectTrigger className="h-9 w-auto gap-2 rounded-full border-none bg-secondary px-3 text-xs font-semibold hover:bg-secondary/70 focus:ring-0">
             <SelectValue>
               <span className="flex items-center gap-1.5">
-                <span className="text-base leading-none">{tipoActual.emoji}</span>
+                <tipoActual.icon className="h-3.5 w-3.5" />
                 <span>{tipoActual.label}</span>
               </span>
             </SelectValue>
@@ -167,7 +157,7 @@ export default function Publicar() {
             {TIPOS_VISUALES.map((t) => (
               <SelectItem key={t.key} value={t.key}>
                 <span className="flex items-center gap-2">
-                  <span className="text-base">{t.emoji}</span>
+                  <t.icon className="h-4 w-4" />
                   <span>{t.label}</span>
                 </span>
               </SelectItem>

@@ -10,7 +10,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Search, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film,
+  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film, Store, ShoppingBag,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 
@@ -66,12 +66,13 @@ export function AppLayout() {
     `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors ${isActive ? "text-primary" : "text-muted-foreground"}`;
 
   const secondary = [
+    { to: "/lin/mercado", icon: Store, label: "Mercado" },
+    { to: "/lin/mis-compras", icon: ShoppingBag, label: "Mis compras" },
     { to: "/lin/explorar", icon: Compass, label: "Explorar" },
     { to: "/lin/reels", icon: Film, label: "Reels" },
     { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
     { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
     { to: "/lin/foro", icon: MessageSquare, label: "Foro" },
-    
     { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
     { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },
     { to: "/lin/perfil/editar", icon: Settings, label: "Editar perfil" },
@@ -136,9 +137,9 @@ export function AppLayout() {
               <Plus className="h-5 w-5" />
             </div>
           </NavLink>
-          <NavLink to="/lin/reels" className={linkCls}>
-            <Film className="h-6 w-6" />
-            <span className="text-[10px]">Reels</span>
+          <NavLink to="/lin/mercado" className={linkCls}>
+            <Store className="h-6 w-6" />
+            <span className="text-[10px]">Mercado</span>
           </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
             <div className="relative">
