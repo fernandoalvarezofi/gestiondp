@@ -6,23 +6,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import { ArrowLeft, X, Plus, Image as ImageIcon, Video, Loader2 } from "lucide-react";
 import { initials } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 
 const TIPOS_VISUALES = [
-  { key: "update", emoji: "💬", label: "Update", desc: "Contá qué estás haciendo" },
-  { key: "lanzamiento", emoji: "🎯", label: "Lanzamiento", desc: "Mostrá algo nuevo" },
-  { key: "logro", emoji: "🏆", label: "Logro", desc: "Compartí un éxito" },
-  { key: "busco_socio", emoji: "🤝", label: "Busco socio", desc: "Encontrá tu partner" },
-  { key: "oportunidad", emoji: "💰", label: "Oportunidad", desc: "Inversión o negocio" },
-  { key: "hiring", emoji: "💼", label: "Hiring", desc: "Buscás alguien para tu equipo" },
-  { key: "recurso", emoji: "📦", label: "Recurso", desc: "Herramienta o tutorial útil" },
-  { key: "contenido_largo", emoji: "📝", label: "Artículo", desc: "Escribí algo largo" },
-  { key: "video_corto", emoji: "🎬", label: "Video corto", desc: "Menos de 60 segundos" },
-  { key: "encuesta", emoji: "📊", label: "Encuesta", desc: "Preguntale a la red" },
-  { key: "proyecto", emoji: "🚀", label: "Proyecto", desc: "Mostrá en qué trabajás" },
-  { key: "idea", emoji: "💡", label: "Idea", desc: "Lanzá una idea al mundo" },
+  { key: "update", emoji: "💬", label: "Update" },
+  { key: "lanzamiento", emoji: "🎯", label: "Lanzamiento" },
+  { key: "logro", emoji: "🏆", label: "Logro" },
+  { key: "busco_socio", emoji: "🤝", label: "Busco socio" },
+  { key: "oportunidad", emoji: "💰", label: "Oportunidad" },
+  { key: "hiring", emoji: "💼", label: "Hiring" },
+  { key: "recurso", emoji: "📦", label: "Recurso" },
+  { key: "contenido_largo", emoji: "📝", label: "Artículo" },
+  { key: "video_corto", emoji: "🎬", label: "Video corto" },
+  { key: "encuesta", emoji: "📊", label: "Encuesta" },
+  { key: "proyecto", emoji: "🚀", label: "Proyecto" },
+  { key: "idea", emoji: "💡", label: "Idea" },
 ];
 
 const placeholders: Record<string, string> = {
@@ -40,17 +43,17 @@ const placeholders: Record<string, string> = {
   video_corto: "Describí brevemente tu video…",
 };
 
+type Img = { file: File; preview: string };
+
 export default function Publicar() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [paso, setPaso] = useState(1);
   const [tipo, setTipo] = useState("update");
   const [titulo, setTitulo] = useState("");
   const [cuerpo, setCuerpo] = useState("");
   const [cuerpoLargo, setCuerpoLargo] = useState("");
   const [tags, setTags] = useState("");
-  const [imagen, setImagen] = useState<File | null>(null);
-  const [imagenPreview, setImagenPreview] = useState<string | null>(null);
+  const [imagenes, setImagenes] = useState<Img[]>([]);
   const [video, setVideo] = useState<File | null>(null);
   const [encuesta, setEncuesta] = useState(["", ""]);
   const [rolBuscado, setRolBuscado] = useState("");
@@ -67,6 +70,20 @@ export default function Publicar() {
 
   const tipoActual = TIPOS_VISUALES.find((t) => t.key === tipo) || TIPOS_VISUALES[0];
 
+  const addImagenes = (files: FileList | null) => {
+    if (!files) return;
+    const restantes = 4 - imagenes.length;
+    const arr = Array.from(files).slice(0, restantes).map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
+    setImagenes((s) => [...s, ...arr]);
+  };
+
+  const quitarImagen = (i: number) => {
+    setImagenes((s) => {
+      URL.revokeObjectURL(s[i].preview);
+      return s.filter((_, k) => k !== i);
+    });
+  };
+
   const submit = async () => {
     if (!user) return toast.error("Iniciá sesión");
     if (!cuerpo && !titulo) return toast.error("Escribí algo");
@@ -75,15 +92,14 @@ export default function Publicar() {
     if (!miPerfilCheck) return toast.error("Completá tu perfil antes de publicar");
     setLoading(true);
     try {
-      let imagen_url: string | null = null;
-      let video_url: string | null = null;
-
-      if (imagen) {
-        const path = `${user.id}/${Date.now()}-${imagen.name}`;
-        const { error } = await (supabase as any).storage.from("publicaciones").upload(path, imagen);
+      const urls: string[] = [];
+      for (const img of imagenes) {
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${img.file.name}`;
+        const { error } = await (supabase as any).storage.from("publicaciones").upload(path, img.file);
         if (error) throw error;
-        imagen_url = (supabase as any).storage.from("publicaciones").getPublicUrl(path).data.publicUrl;
+        urls.push((supabase as any).storage.from("publicaciones").getPublicUrl(path).data.publicUrl);
       }
+      let video_url: string | null = null;
       if (video) {
         const path = `${user.id}/${Date.now()}-${video.name}`;
         const { error } = await (supabase as any).storage.from("videos").upload(path, video);
@@ -91,8 +107,9 @@ export default function Publicar() {
         video_url = (supabase as any).storage.from("videos").getPublicUrl(path).data.publicUrl;
       }
 
+      const imagen_url = urls[0] || null;
       const formato = video ? (tipo === "video_largo" ? "video_largo" : "video_corto")
-        : imagen ? "imagen"
+        : imagen_url ? "imagen"
         : tipo === "encuesta" ? "encuesta"
         : tipo === "contenido_largo" ? "articulo"
         : "texto";
@@ -116,6 +133,14 @@ export default function Publicar() {
 
       const { data, error } = await (supabase as any).from("publicaciones").insert(payload).select("id").single();
       if (error) throw error;
+
+      if (urls.length > 1) {
+        const rows = urls.map((url, i) => ({
+          publicacion_id: data.id, url, tipo: "imagen", orden: i, es_portada: i === 0,
+        }));
+        await (supabase as any).from("media_publicacion").insert(rows);
+      }
+
       toast.success("Publicado");
       navigate(`/lin/publicacion/${data.id}`);
     } catch (e: any) {
@@ -123,45 +148,32 @@ export default function Publicar() {
     } finally { setLoading(false); }
   };
 
-  if (paso === 1) {
-    return (
-      <div className="mx-auto max-w-2xl">
-        <div className="mb-6 flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="rounded-full p-2 hover:bg-secondary" aria-label="Volver">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <h1 className="text-2xl font-bold tracking-tight">¿Qué querés compartir?</h1>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {TIPOS_VISUALES.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => { setTipo(t.key); setPaso(2); }}
-              className="flex flex-col items-center gap-2 rounded-2xl border-2 border-transparent bg-secondary/50 p-4 text-center transition-all hover:border-primary hover:bg-primary/5 active:scale-95"
-            >
-              <span className="text-3xl">{t.emoji}</span>
-              <p className="text-sm font-semibold">{t.label}</p>
-              <p className="text-xs text-muted-foreground">{t.desc}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-2xl">
       <div className="sticky top-0 z-10 -mx-4 mb-4 flex items-center gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:-mx-6 md:px-6">
-        <button onClick={() => setPaso(1)} className="rounded-full p-1.5 hover:bg-secondary" aria-label="Volver">
+        <button onClick={() => navigate(-1)} className="rounded-full p-1.5 hover:bg-secondary" aria-label="Volver">
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <button
-          onClick={() => setPaso(1)}
-          className="flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-semibold transition-colors hover:bg-secondary/70"
-        >
-          <span className="text-base leading-none">{tipoActual.emoji}</span>
-          <span>{tipoActual.label}</span>
-        </button>
+        <Select value={tipo} onValueChange={setTipo}>
+          <SelectTrigger className="h-9 w-auto gap-2 rounded-full border-none bg-secondary px-3 text-xs font-semibold hover:bg-secondary/70 focus:ring-0">
+            <SelectValue>
+              <span className="flex items-center gap-1.5">
+                <span className="text-base leading-none">{tipoActual.emoji}</span>
+                <span>{tipoActual.label}</span>
+              </span>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            {TIPOS_VISUALES.map((t) => (
+              <SelectItem key={t.key} value={t.key}>
+                <span className="flex items-center gap-2">
+                  <span className="text-base">{t.emoji}</span>
+                  <span>{t.label}</span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button onClick={submit} disabled={loading || (!cuerpo && !titulo)} size="sm" className="ml-auto h-9 rounded-full px-5 font-semibold">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Publicar"}
         </Button>
@@ -200,16 +212,20 @@ export default function Publicar() {
           </div>
         </div>
 
-        {imagenPreview && (
-          <div className="relative ml-14 overflow-hidden rounded-2xl border">
-            <img src={imagenPreview} alt="preview" className="max-h-80 w-full object-cover" />
-            <button
-              onClick={() => { setImagen(null); setImagenPreview(null); }}
-              className="absolute right-2 top-2 rounded-full bg-black/70 p-1.5 text-white transition-colors hover:bg-black"
-              aria-label="Quitar imagen"
-            >
-              <X className="h-4 w-4" />
-            </button>
+        {imagenes.length > 0 && (
+          <div className={`ml-14 grid gap-2 ${imagenes.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+            {imagenes.map((img, i) => (
+              <div key={i} className="relative aspect-square overflow-hidden rounded-2xl border">
+                <img src={img.preview} alt="" className="h-full w-full object-cover" />
+                <button
+                  onClick={() => quitarImagen(i)}
+                  className="absolute right-2 top-2 rounded-full bg-black/70 p-1.5 text-white transition-colors hover:bg-black"
+                  aria-label="Quitar imagen"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
           </div>
         )}
 
@@ -257,18 +273,23 @@ export default function Publicar() {
         )}
 
         <div className="ml-14 flex items-center gap-1 border-t pt-3">
-          <label className="cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10" aria-label="Agregar imagen">
+          <label className={`cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10 ${imagenes.length >= 4 ? "pointer-events-none opacity-40" : ""}`} aria-label="Agregar imágenes">
             <ImageIcon className="h-5 w-5" />
-            <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-              const f = e.target.files?.[0] || null;
-              setImagen(f);
-              setImagenPreview(f ? URL.createObjectURL(f) : null);
-            }} />
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={(e) => { addImagenes(e.target.files); e.target.value = ""; }}
+            />
           </label>
           <label className="cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10" aria-label="Agregar video">
             <Video className="h-5 w-5" />
             <input type="file" accept="video/*" className="hidden" onChange={(e) => setVideo(e.target.files?.[0] || null)} />
           </label>
+          {imagenes.length > 0 && (
+            <span className="text-xs text-muted-foreground">{imagenes.length}/4</span>
+          )}
           <span className={`ml-auto text-xs ${cuerpo.length > 480 ? "text-amber-600" : "text-muted-foreground"}`}>{cuerpo.length}/500</span>
         </div>
 

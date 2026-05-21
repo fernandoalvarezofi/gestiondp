@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin, Plus, Star, Grid3x3, BookOpen } from "lucide-react";
+import { Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin, Star, UserPlus, UserCheck, Loader2 } from "lucide-react";
 import { PostCard } from "@/components/lin/PostCard";
 import { TIPO_USUARIO, initials } from "@/lib/worefHelpers";
 import { toast } from "sonner";
@@ -25,9 +25,9 @@ export default function Perfil() {
   const [pubs, setPubs] = useState<any[]>([]);
   const [resenas, setResenas] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
+  const [loadingSeguir, setLoadingSeguir] = useState(false);
   const [tab, setTab] = useState("publicaciones");
   const [tieneHistoria, setTieneHistoria] = useState(false);
-  const [vistaGrid, setVistaGrid] = useState(true);
 
   useEffect(() => {
     (async () => {
@@ -62,16 +62,35 @@ export default function Perfil() {
     })();
   }, [slug, user]);
 
+  // Realtime: refresh perfil stats on seguidos changes
+  useEffect(() => {
+    if (!perfil?.id) return;
+    const refrescarStats = async () => {
+      const { data } = await (supabase as any).from("perfiles")
+        .select("total_seguidores,total_siguiendo,total_publicaciones,score").eq("id", perfil.id).single();
+      if (data) setPerfil((p: any) => p ? { ...p, ...data } : p);
+    };
+    const ch = (supabase as any).channel(`perfil-stats-${perfil.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "seguidos", filter: `seguido_id=eq.${perfil.id}` }, refrescarStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "seguidos", filter: `seguidor_id=eq.${perfil.id}` }, refrescarStats)
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+  }, [perfil?.id]);
+
   const toggleSeguir = async () => {
-    if (!user || !perfil) return toast.error("Iniciá sesión");
-    if (siguiendo) {
-      await (supabase as any).from("seguidos").delete().eq("seguidor_id", user.id).eq("seguido_id", perfil.id);
-      setSiguiendo(false); setPerfil({ ...perfil, total_seguidores: perfil.total_seguidores - 1 });
-    } else {
-      await (supabase as any).from("seguidos").insert({ seguidor_id: user.id, seguido_id: perfil.id });
-      setSiguiendo(true); setPerfil({ ...perfil, total_seguidores: perfil.total_seguidores + 1 });
-      toast.success(`Ahora seguís a ${perfil.nombre}`);
-    }
+    if (!user || !perfil || loadingSeguir) return;
+    if (!user) return toast.error("Iniciá sesión");
+    setLoadingSeguir(true);
+    try {
+      if (siguiendo) {
+        await (supabase as any).from("seguidos").delete().eq("seguidor_id", user.id).eq("seguido_id", perfil.id);
+        setSiguiendo(false);
+      } else {
+        await (supabase as any).from("seguidos").insert({ seguidor_id: user.id, seguido_id: perfil.id });
+        setSiguiendo(true);
+        toast.success(`Ahora seguís a ${perfil.nombre}`);
+      }
+    } finally { setLoadingSeguir(false); }
   };
 
   const abrirChat = async () => {
@@ -80,7 +99,12 @@ export default function Perfil() {
     navigate(`/lin/mensajes/${data}`);
   };
 
-  if (!perfil) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (!perfil) return (
+    <div className="mx-auto max-w-3xl space-y-3">
+      <div className="h-40 animate-pulse rounded-2xl bg-secondary" />
+      <div className="h-32 animate-pulse rounded-2xl bg-secondary" />
+    </div>
+  );
   const isMine = user?.id === perfil.id;
 
   return (
@@ -123,8 +147,8 @@ export default function Perfil() {
                 <Button asChild variant="outline" size="sm"><Link to="/lin/perfil/editar"><Settings className="h-4 w-4" />Editar</Link></Button>
               ) : (
                 <>
-                  <Button onClick={toggleSeguir} variant={siguiendo ? "outline" : "default"} size="sm">
-                    {siguiendo ? "Siguiendo" : <><Plus className="h-4 w-4" />Seguir</>}
+                  <Button onClick={toggleSeguir} disabled={loadingSeguir} variant={siguiendo ? "outline" : "default"} size="sm">
+                    {loadingSeguir ? <Loader2 className="h-4 w-4 animate-spin" /> : siguiendo ? <><UserCheck className="h-4 w-4" />Siguiendo</> : <><UserPlus className="h-4 w-4" />Seguir</>}
                   </Button>
                   <Button onClick={abrirChat} variant="outline" size="sm"><MessageCircleMore className="h-4 w-4" />Mensaje</Button>
                 </>
@@ -137,8 +161,8 @@ export default function Perfil() {
 
           {(perfil.que_ofrece || perfil.que_busca) && (
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {perfil.que_ofrece && <div className="rounded-md border bg-secondary/40 p-3 text-xs"><p className="font-semibold mb-1">Ofrece</p><p>{perfil.que_ofrece}</p></div>}
-              {perfil.que_busca && <div className="rounded-md border bg-secondary/40 p-3 text-xs"><p className="font-semibold mb-1">Busca</p><p>{perfil.que_busca}</p></div>}
+              {perfil.que_ofrece && <div className="rounded-xl border bg-secondary/40 p-3 text-xs"><p className="font-semibold mb-1">Ofrece</p><p>{perfil.que_ofrece}</p></div>}
+              {perfil.que_busca && <div className="rounded-xl border bg-secondary/40 p-3 text-xs"><p className="font-semibold mb-1">Busca</p><p>{perfil.que_busca}</p></div>}
             </div>
           )}
 

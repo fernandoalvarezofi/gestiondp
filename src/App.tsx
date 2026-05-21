@@ -30,7 +30,7 @@ import NuevaComunidad from "./pages/lin/NuevaComunidad";
 import Foro from "./pages/lin/Foro";
 import ForoPost from "./pages/lin/ForoPost";
 import NuevoForoPost from "./pages/lin/NuevoForoPost";
-import Match from "./pages/lin/Match";
+
 import NuevaHistoria from "./pages/lin/NuevaHistoria";
 import HistoriaViewer from "./pages/lin/HistoriaViewer";
 import Reels from "./pages/lin/Reels";
@@ -58,7 +58,7 @@ const App = () => (
                   <Route path="/lin/reels" element={<Reels />} />
                   <Route path="/lin/publicar" element={<Publicar />} />
                   <Route path="/lin/buscar" element={<Buscador />} />
-                  <Route path="/lin/match" element={<Match />} />
+                  
                   <Route path="/lin/perfil" element={<Perfil />} />
                   <Route path="/lin/perfil/editar" element={<EditarPerfil />} />
                   <Route path="/lin/perfil/:slug" element={<Perfil />} />

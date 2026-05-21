@@ -10,7 +10,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Search, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, MessageSquare, Sparkles, Bookmark, BarChart3, Settings, Compass, Film,
+  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 
@@ -71,7 +71,7 @@ export function AppLayout() {
     { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
     { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
     { to: "/lin/foro", icon: MessageSquare, label: "Foro" },
-    { to: "/lin/match", icon: Sparkles, label: "Match" },
+    
     { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
     { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },
     { to: "/lin/perfil/editar", icon: Settings, label: "Editar perfil" },
