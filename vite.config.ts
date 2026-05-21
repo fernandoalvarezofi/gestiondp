@@ -20,15 +20,20 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       devOptions: { enabled: false },
       manifest: {
-        name: "Woref",
+        name: "Woref — Donde los que construyen se encuentran",
         short_name: "Woref",
+        description: "Red profesional para emprendedores, empresas, inversores y creadores.",
         theme_color: "#ff6b35",
         background_color: "#ffffff",
         display: "standalone",
+        orientation: "portrait",
         start_url: "/lin",
+        scope: "/",
+        categories: ["social", "business", "productivity"],
         icons: [
-          { src: "/placeholder.svg", sizes: "192x192", type: "image/svg+xml" },
-          { src: "/placeholder.svg", sizes: "512x512", type: "image/svg+xml" },
+          { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+          { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+          { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
         ],
       },
       workbox: {

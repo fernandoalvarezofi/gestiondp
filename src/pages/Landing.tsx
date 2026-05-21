@@ -9,6 +9,7 @@ import {
   Rocket, Building2, TrendingUp, Sparkles, Briefcase, Trophy,
   UserPlus, Send, LineChart,
 } from "lucide-react";
+import { InstallAppCTA } from "@/components/InstallAppCTA";
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
@@ -91,6 +92,7 @@ export default function Landing() {
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg"><Link to="/auth">Empezar gratis</Link></Button>
               <Button asChild size="lg" variant="outline"><Link to="/lin">Ver la red</Link></Button>
+              <InstallAppCTA variant="hero" />
             </div>
           </div>
 
@@ -211,6 +213,10 @@ export default function Landing() {
         <div className="space-y-4">
           {shown.map((p) => <PostCard key={p.id} pub={p as any} />)}
         </div>
+      </section>
+
+      <section className="mx-auto max-w-4xl px-4 pb-10">
+        <InstallAppCTA />
       </section>
 
       {/* CTA */}
