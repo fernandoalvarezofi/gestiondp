@@ -3243,6 +3243,24 @@ export type Database = {
         }
         Relationships: []
       }
+      vendedor_payouts: {
+        Row: {
+          id: string
+          payout_methods: Json
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          payout_methods?: Json
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          payout_methods?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       vendedor_perfiles: {
         Row: {
           activo: boolean
@@ -3319,6 +3337,48 @@ export type Database = {
           video_duracion: number | null
           video_url: string | null
           vistas: number | null
+        }
+        Relationships: []
+      }
+      vendedor_perfiles_publico: {
+        Row: {
+          activo: boolean | null
+          bio_comercial: string | null
+          created_at: string | null
+          entrega_automatica: boolean | null
+          id: string | null
+          rating_promedio: number | null
+          total_productos: number | null
+          total_reviews: number | null
+          total_ventas: number | null
+          updated_at: string | null
+          verificado: boolean | null
+        }
+        Insert: {
+          activo?: boolean | null
+          bio_comercial?: string | null
+          created_at?: string | null
+          entrega_automatica?: boolean | null
+          id?: string | null
+          rating_promedio?: number | null
+          total_productos?: number | null
+          total_reviews?: number | null
+          total_ventas?: number | null
+          updated_at?: string | null
+          verificado?: boolean | null
+        }
+        Update: {
+          activo?: boolean | null
+          bio_comercial?: string | null
+          created_at?: string | null
+          entrega_automatica?: boolean | null
+          id?: string | null
+          rating_promedio?: number | null
+          total_productos?: number | null
+          total_reviews?: number | null
+          total_ventas?: number | null
+          updated_at?: string | null
+          verificado?: boolean | null
         }
         Relationships: []
       }
