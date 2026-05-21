@@ -15,6 +15,7 @@ import { ESTADO_PROYECTO, initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 const ESTADOS_TAREA = [
   { id: "backlog", label: "Backlog", color: "bg-slate-500/10 text-slate-700 border-slate-500/20" },
@@ -152,7 +153,9 @@ export default function ProyectoDetalle() {
   const est = ESTADO_PROYECTO[p.estado];
 
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
+    <>
+      <BackHeader title="Proyecto" />
+      <div className="mx-auto max-w-6xl space-y-5">
       {/* Hero */}
       <div className="overflow-hidden rounded-2xl border bg-card">
         {p.portada_url ? (
@@ -401,6 +404,7 @@ export default function ProyectoDetalle() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }
 

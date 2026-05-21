@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 export default function NuevoForoPost() {
   const { user } = useAuth();
@@ -57,7 +58,9 @@ export default function NuevoForoPost() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
+      <BackHeader title="Nueva pregunta" />
+      <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader><CardTitle>Nuevo post en el foro</CardTitle></CardHeader>
         <CardContent className="space-y-4">
@@ -95,5 +98,6 @@ export default function NuevoForoPost() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ImagePlus, X } from "lucide-react";
 import { toast } from "sonner";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 export default function NuevaComunidad() {
   const { user } = useAuth();
@@ -53,7 +54,9 @@ export default function NuevaComunidad() {
   };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <>
+      <BackHeader title="Nueva comunidad" />
+      <div className="mx-auto max-w-2xl">
       <Card>
         <CardHeader><CardTitle>Crear comunidad</CardTitle></CardHeader>
         <CardContent className="space-y-4">
@@ -98,5 +101,6 @@ export default function NuevaComunidad() {
         </CardContent>
       </Card>
     </div>
+    </>
   );
 }

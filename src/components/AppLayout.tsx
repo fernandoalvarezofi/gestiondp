@@ -10,9 +10,10 @@ import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Search, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film, Store, ShoppingBag,
+  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film, Store, ShoppingBag, Download,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
+import { InstallAppCTA } from "@/components/InstallAppCTA";
 
 export function AppLayout() {
   const { session, user, loading } = useAuth();
@@ -110,11 +111,16 @@ export function AppLayout() {
                       {label}
                     </NavLink>
                   ))}
+                  <div className="my-3 border-t" />
+                  <div className="px-1 py-1" onClick={() => setMenuOpen(false)}>
+                    <InstallAppCTA variant="card" className="!p-4" />
+                  </div>
                 </nav>
               </SheetContent>
             </Sheet>
             <span className="font-semibold md:hidden">Woref</span>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-1">
+              <InstallAppCTA variant="icon" />
               <ThemeToggle />
             </div>
           </div>

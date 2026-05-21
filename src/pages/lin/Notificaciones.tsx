@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, Heart, MessageCircle, UserPlus, Repeat2, AtSign, Send } from "lucide-react";
 import { formatTime, initials } from "@/lib/worefHelpers";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 const ICONS: Record<string, any> = {
   nuevo_seguidor: UserPlus, like: Heart, like_publicacion: Heart,
@@ -69,7 +70,9 @@ export default function Notificaciones() {
   const noLeidas = items.filter((n) => !n.leida).length;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-3">
+    <>
+      <BackHeader title="Notificaciones" />
+      <div className="mx-auto max-w-2xl space-y-3">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Notificaciones</h1>
@@ -122,5 +125,6 @@ export default function Notificaciones() {
         </div>
       )}
     </div>
+    </>
   );
 }

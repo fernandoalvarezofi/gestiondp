@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { X, ImagePlus, Loader2, Type } from "lucide-react";
 import { toast } from "sonner";
+import { BackHeader } from "@/components/lin/BackHeader";
 
 const COLORES = [
   "linear-gradient(135deg,#FD5F35,#FF8A65)",
@@ -73,7 +74,9 @@ export default function NuevaHistoria() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black text-white">
+    <>
+      <BackHeader title="Nueva historia" />
+      <div className="fixed inset-0 z-50 flex flex-col bg-black text-white">
       <div className="flex items-center justify-between px-4 py-3">
         <button onClick={() => navigate(-1)} className="rounded-full p-2 hover:bg-white/10" aria-label="Cerrar">
           <X className="h-5 w-5" />
@@ -171,5 +174,6 @@ export default function NuevaHistoria() {
         />
       </div>
     </div>
+    </>
   );
 }
