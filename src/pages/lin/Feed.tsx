@@ -212,6 +212,8 @@ export default function Feed() {
       ) : (
         <div>{filtered.map((p) => <PostCard key={p.id} pub={p} />)}</div>
       )}
+      </div>
+      <FeedRail />
     </div>
   );
 }
