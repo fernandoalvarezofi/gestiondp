@@ -74,13 +74,24 @@ export default function Feed() {
     }
   }, [user, tab]);
 
-  // Realtime: si una publicación cambia de estado o se elimina, removerla del feed
+  // Realtime: nuevas publicaciones aparecen arriba, updates/eliminadas se reflejan al instante
+  const [nuevasIds, setNuevasIds] = useState<string[]>([]);
+
   useEffect(() => {
     const ch = (supabase as any).channel("feed_pub_rt")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "publicaciones" }, async (payload: any) => {
+        if (payload.new?.estado !== "activa") return;
+        // Traer la fila completa con joins
+        const { data: row } = await (supabase as any).from("publicaciones").select(SELECT).eq("id", payload.new.id).maybeSingle();
+        if (!row) return;
+        setItems((arr) => arr.some((p) => p.id === row.id) ? arr : [row, ...arr]);
+        setNuevasIds((ids) => [row.id, ...ids].slice(0, 50));
+      })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "publicaciones" }, (payload: any) => {
-        if (payload.new?.estado && payload.new.estado !== "activa") {
-          setItems((arr) => arr.filter((p) => p.id !== payload.new.id));
-        }
+        setItems((arr) => {
+          if (payload.new?.estado && payload.new.estado !== "activa") return arr.filter((p) => p.id !== payload.new.id);
+          return arr.map((p) => p.id === payload.new.id ? { ...p, ...payload.new } : p);
+        });
       })
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "publicaciones" }, (payload: any) => {
         setItems((arr) => arr.filter((p) => p.id !== payload.old?.id));
