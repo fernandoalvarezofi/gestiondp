@@ -133,23 +133,28 @@ export default function Auth() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center gap-2">
-            <div className="h-2.5 w-2.5 rounded-full bg-green-500" />
-            <span className="font-bold text-xl tracking-tight">Linqueño</span>
+            <div className="h-2.5 w-2.5 rounded-full bg-primary" />
+            <span className="font-bold text-xl tracking-tight">Woref</span>
           </div>
 
           <div className="space-y-6">
-            <h1 className={`text-5xl lg:text-6xl font-bold leading-[1.08] ${textColor}`}>
-              Todo Lincoln,<br />
-              en un solo lugar.
+            <h1 className={`text-5xl lg:text-6xl font-bold leading-[1.05] tracking-tight ${textColor}`}>
+              Donde los que construyen<br />
+              se encuentran.
             </h1>
             <p className={`text-lg max-w-md leading-relaxed ${subtextColor}`}>
-              La red social de Lincoln, Buenos Aires. Propiedades, empleos,
-              servicios, eventos y más — de tu ciudad, para tu ciudad.
+              La red de emprendedores, creadores, inversores y empresas.
+              Publicá, conectá, vendé y encontrá tu próximo socio, cliente o proyecto.
             </p>
+            <ul className={`space-y-2 text-sm ${subtextColor}`}>
+              <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-primary" /> Feed profesional con historias, reels y comunidades</li>
+              <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-primary" /> Mercado, mensajería y videollamadas integradas</li>
+              <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-primary" /> Proyectos colaborativos y foro pro</li>
+            </ul>
           </div>
 
           <p className={`text-sm ${footerColor}`}>
-            © 2026 Linqueño. Hecho en Lincoln para Lincoln.
+            © 2026 Woref. Construido para quienes hacen.
           </p>
         </div>
       </div>
