@@ -14,8 +14,18 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Outfit", "sans-serif"],
-        display: ["Outfit", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["Syne", "Plus Jakarta Sans", "sans-serif"],
+      },
+      backgroundImage: {
+        "gradient-ember": "var(--gradient-ember)",
+        "gradient-ink": "var(--gradient-ink)",
+        "gradient-cream": "var(--gradient-cream)",
+      },
+      boxShadow: {
+        ember: "var(--shadow-ember)",
+        soft: "var(--shadow-soft)",
+        pop: "var(--shadow-pop)",
       },
       colors: {
         border: "hsl(var(--border))",
