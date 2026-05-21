@@ -10,9 +10,10 @@ import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Search, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film, Store, ShoppingBag,
+  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film, Store, ShoppingBag, Download,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
+import { InstallAppCTA } from "@/components/InstallAppCTA";
 
 export function AppLayout() {
   const { session, user, loading } = useAuth();
