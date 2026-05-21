@@ -84,7 +84,7 @@ export function AppLayout() {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="flex items-center gap-2 border-b px-4 py-3 md:border-b-0">
+          <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-border/60 bg-background/85 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
             <div className="hidden md:flex"><SidebarTrigger /></div>
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
@@ -92,10 +92,14 @@ export function AppLayout() {
                   <Menu className="h-5 w-5" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72">
-                <div className="mb-6 flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-primary" />
-                  <span className="text-lg font-bold tracking-tight">Woref</span>
+              <SheetContent side="left" className="w-72 bg-sidebar text-sidebar-foreground border-sidebar-border">
+                <div className="mb-6 flex items-center gap-2.5">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-ember shadow-ember">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
+                  </span>
+                  <span className="font-display text-xl font-bold tracking-tight">
+                    Woref<span className="text-primary">.</span>
+                  </span>
                 </div>
                 <nav className="space-y-1">
                   {secondary.map(({ to, icon: Icon, label }) => (
@@ -104,21 +108,28 @@ export function AppLayout() {
                       to={to}
                       onClick={() => setMenuOpen(false)}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground hover:bg-secondary"}`
+                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
                       }
                     >
                       <Icon className="h-5 w-5" />
                       {label}
                     </NavLink>
                   ))}
-                  <div className="my-3 border-t" />
+                  <div className="my-3 border-t border-sidebar-border" />
                   <div className="px-1 py-1" onClick={() => setMenuOpen(false)}>
                     <InstallAppCTA variant="card" className="!p-4" />
                   </div>
                 </nav>
               </SheetContent>
             </Sheet>
-            <span className="font-semibold md:hidden">Woref</span>
+            <NavLink to="/lin" className="flex items-center gap-2 md:hidden">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-ember shadow-ember">
+                <span className="h-1 w-1 rounded-full bg-white" />
+              </span>
+              <span className="font-display text-lg font-bold tracking-tight">
+                Woref<span className="text-primary">.</span>
+              </span>
+            </NavLink>
             <div className="ml-auto flex items-center gap-1">
               <InstallAppCTA variant="icon" />
               <ThemeToggle />
