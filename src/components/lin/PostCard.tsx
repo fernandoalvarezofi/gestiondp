@@ -145,7 +145,6 @@ export function PostCard({ pub }: { pub: any }) {
                       onClick={async () => {
                         await (supabase as any).from("publicaciones").update({ estado: pub.estado === "activa" ? "pausada" : "activa" }).eq("id", pub.id).eq("perfil_id", user.id);
                         toast.success(pub.estado === "activa" ? "Pausada" : "Activada");
-                        window.location.reload();
                       }}
                     >
                       {pub.estado === "activa" ? <><Pause className="mr-2 h-4 w-4" /> Pausar</> : <><Play className="mr-2 h-4 w-4" /> Activar</>}
@@ -156,11 +155,11 @@ export function PostCard({ pub }: { pub: any }) {
                         if (!confirm("¿Eliminar esta publicación?")) return;
                         await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user.id);
                         toast.success("Eliminada");
-                        window.location.reload();
                       }}
                     >
                       <Trash2 className="mr-2 h-4 w-4" /> Eliminar
                     </DropdownMenuItem>
+
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
