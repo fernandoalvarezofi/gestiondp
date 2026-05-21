@@ -62,7 +62,7 @@ export default function Perfil() {
     })();
   }, [slug, user]);
 
-  // Realtime: refresh perfil stats on seguidos changes
+  // Realtime: refresh stats + publicaciones list
   useEffect(() => {
     if (!perfil?.id) return;
     const refrescarStats = async () => {
@@ -70,9 +70,16 @@ export default function Perfil() {
         .select("total_seguidores,total_siguiendo,total_publicaciones,score").eq("id", perfil.id).single();
       if (data) setPerfil((p: any) => p ? { ...p, ...data } : p);
     };
-    const ch = (supabase as any).channel(`perfil-stats-${perfil.id}`)
+    const refrescarPubs = async () => {
+      const { data } = await (supabase as any).from("publicaciones").select(SELECT)
+        .eq("perfil_id", perfil.id).eq("estado", "activa").order("created_at", { ascending: false });
+      setPubs(data || []);
+      refrescarStats();
+    };
+    const ch = (supabase as any).channel(`perfil-rt-${perfil.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "seguidos", filter: `seguido_id=eq.${perfil.id}` }, refrescarStats)
       .on("postgres_changes", { event: "*", schema: "public", table: "seguidos", filter: `seguidor_id=eq.${perfil.id}` }, refrescarStats)
+      .on("postgres_changes", { event: "*", schema: "public", table: "publicaciones", filter: `perfil_id=eq.${perfil.id}` }, refrescarPubs)
       .subscribe();
     return () => { (supabase as any).removeChannel(ch); };
   }, [perfil?.id]);

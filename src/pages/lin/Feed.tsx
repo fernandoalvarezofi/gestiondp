@@ -74,6 +74,21 @@ export default function Feed() {
     }
   }, [user, tab]);
 
+  // Realtime: si una publicación cambia de estado o se elimina, removerla del feed
+  useEffect(() => {
+    const ch = (supabase as any).channel("feed_pub_rt")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "publicaciones" }, (payload: any) => {
+        if (payload.new?.estado && payload.new.estado !== "activa") {
+          setItems((arr) => arr.filter((p) => p.id !== payload.new.id));
+        }
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "publicaciones" }, (payload: any) => {
+        setItems((arr) => arr.filter((p) => p.id !== payload.old?.id));
+      })
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+  }, []);
+
   const filtered = useMemo(() => items.filter((p) => {
     if (tab === "siguiendo" && !seguidos.includes(p.perfil?.id)) return false;
     if (filtroTipo !== "all" && p.tipo !== filtroTipo) return false;
