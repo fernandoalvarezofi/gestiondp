@@ -92,6 +92,7 @@ export default function Landing() {
             <div className="flex flex-wrap gap-3">
               <Button asChild size="lg"><Link to="/auth">Empezar gratis</Link></Button>
               <Button asChild size="lg" variant="outline"><Link to="/lin">Ver la red</Link></Button>
+              <InstallAppCTA variant="hero" />
             </div>
           </div>
 
