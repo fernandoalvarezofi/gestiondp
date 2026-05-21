@@ -41,6 +41,8 @@ import VendedorConfigurar from "./pages/lin/VendedorConfigurar";
 import VendedorProductos from "./pages/lin/VendedorProductos";
 import VendedorOrdenes from "./pages/lin/VendedorOrdenes";
 import MisCompras from "./pages/lin/MisCompras";
+import Configuracion from "./pages/lin/Configuracion";
+import RedDePerfil from "./pages/lin/RedDePerfil";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -91,6 +93,8 @@ const App = () => (
                   <Route path="/lin/vendedor/productos" element={<VendedorProductos />} />
                   <Route path="/lin/vendedor/ordenes" element={<VendedorOrdenes />} />
                   <Route path="/lin/mis-compras" element={<MisCompras />} />
+                  <Route path="/lin/configuracion" element={<Configuracion />} />
+                  <Route path="/lin/perfil/:slug/red" element={<RedDePerfil />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

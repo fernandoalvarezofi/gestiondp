@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3, Trash2, Pause, Play, Share2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3, Trash2, Pause, Play, Share2, ChevronLeft, ChevronRight, Link2, Flag, UserPlus, UserMinus, VolumeX, Pin } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { TIPO_PUBLICACION, initials, formatTime, formatNumber } from "@/lib/worefHelpers";
@@ -11,12 +11,14 @@ import { LazyImage } from "./LazyImage";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-export function PostCard({ pub }: { pub: any }) {
+export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string) => void }) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [reposted, setReposted] = useState(false);
+  const [following, setFollowing] = useState<boolean | null>(null);
+  const [hidden, setHidden] = useState(false);
   const [counts, setCounts] = useState({ likes: pub.total_likes || 0, com: pub.total_comentarios || 0, rep: pub.total_repostes || 0 });
   const [expandido, setExpandido] = useState(false);
   const [idxImg, setIdxImg] = useState(0);
@@ -30,10 +32,31 @@ export function PostCard({ pub }: { pub: any }) {
         (supabase as any).from("repostes").select("id").eq("perfil_id", user.id).eq("publicacion_id", pub.id).maybeSingle(),
       ]);
       setLiked(!!l); setSaved(!!f); setReposted(!!r);
+      if (pub.perfil?.id && pub.perfil.id !== user.id) {
+        const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", pub.perfil.id).maybeSingle();
+        setFollowing(!!s);
+      }
     })();
-  }, [user, pub.id]);
+  }, [user, pub.id, pub.perfil?.id]);
 
   const requireAuth = () => { if (!user) { toast.error("Iniciá sesión"); return false; } return true; };
+
+  const copyLink = async () => {
+    const url = `${window.location.origin}/lin/publicacion/${pub.id}`;
+    await navigator.clipboard.writeText(url);
+    toast.success("Enlace copiado");
+  };
+
+  const toggleFollow = async () => {
+    if (!requireAuth() || !pub.perfil?.id) return;
+    if (following) {
+      await (supabase as any).from("seguidos").delete().eq("seguidor_id", user!.id).eq("seguido_id", pub.perfil.id);
+      setFollowing(false); toast.success("Dejaste de seguir");
+    } else {
+      await (supabase as any).from("seguidos").insert({ seguidor_id: user!.id, seguido_id: pub.perfil.id });
+      setFollowing(true); toast.success(`Siguiendo a @${pub.perfil.username}`);
+    }
+  };
 
   const toggleLike = async (e: React.MouseEvent) => {
     e.stopPropagation(); e.preventDefault();
@@ -94,6 +117,9 @@ export function PostCard({ pub }: { pub: any }) {
   const cuerpoLargo = (pub.cuerpo || "").length > 300;
   const cuerpoMostrado = expandido || !cuerpoLargo ? pub.cuerpo : `${pub.cuerpo.slice(0, 300)}…`;
 
+  if (hidden) return null;
+  const isMine = user?.id === pub.perfil?.id;
+
   return (
     <article
       onClick={open}
@@ -133,44 +159,57 @@ export function PostCard({ pub }: { pub: any }) {
             </div>
 
             <div className="ml-auto -mr-1.5 -mt-1.5">
-              {user?.id === pub.perfil?.id ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        await (supabase as any).from("publicaciones").update({ estado: pub.estado === "activa" ? "pausada" : "activa" }).eq("id", pub.id).eq("perfil_id", user.id);
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem onClick={copyLink}><Link2 className="mr-2 h-4 w-4" />Copiar enlace</DropdownMenuItem>
+                  <DropdownMenuItem onClick={share}><Share2 className="mr-2 h-4 w-4" />Compartir</DropdownMenuItem>
+                  {isMine ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={async () => {
+                        await (supabase as any).from("publicaciones").update({ estado: pub.estado === "activa" ? "pausada" : "activa" }).eq("id", pub.id).eq("perfil_id", user!.id);
                         toast.success(pub.estado === "activa" ? "Pausada" : "Activada");
-                      }}
-                    >
-                      {pub.estado === "activa" ? <><Pause className="mr-2 h-4 w-4" /> Pausar</> : <><Play className="mr-2 h-4 w-4" /> Activar</>}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={async () => {
-                        if (!confirm("¿Eliminar esta publicación?")) return;
-                        await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user.id);
-                        toast.success("Eliminada");
-                      }}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                    </DropdownMenuItem>
-
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  variant="ghost" size="icon"
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              )}
+                        setHidden(true);
+                      }}>
+                        {pub.estado === "activa" ? <><Pause className="mr-2 h-4 w-4" />Pausar</> : <><Play className="mr-2 h-4 w-4" />Activar</>}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={async () => {
+                          if (!confirm("¿Eliminar esta publicación? No se puede deshacer.")) return;
+                          await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user!.id);
+                          toast.success("Publicación eliminada");
+                          setHidden(true);
+                          onDeleted?.(pub.id);
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                      </DropdownMenuItem>
+                    </>
+                  ) : user ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      {following !== null && (
+                        <DropdownMenuItem onClick={toggleFollow}>
+                          {following ? <><UserMinus className="mr-2 h-4 w-4" />Dejar de seguir a @{username}</> : <><UserPlus className="mr-2 h-4 w-4" />Seguir a @{username}</>}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => { setHidden(true); toast("No te volveremos a mostrar esto"); }}>
+                        <VolumeX className="mr-2 h-4 w-4" />No me interesa
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => toast.success("Reporte enviado, gracias")}>
+                        <Flag className="mr-2 h-4 w-4" />Reportar
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 

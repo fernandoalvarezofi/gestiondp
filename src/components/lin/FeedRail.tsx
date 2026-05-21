@@ -24,38 +24,38 @@ export function FeedRail() {
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
 
+  const cargar = async () => {
+    const desde = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const { data: posts } = await (supabase as any).from("publicaciones")
+      .select("tags").eq("estado", "activa").gte("created_at", desde).limit(500);
+    const counts = new Map<string, number>();
+    (posts || []).forEach((p: any) => (p.tags || []).forEach((t: string) => {
+      const k = t.trim().toLowerCase(); if (!k) return;
+      counts.set(k, (counts.get(k) || 0) + 1);
+    }));
+    setTrends(Array.from(counts.entries()).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([tag, total]) => ({ tag, total })));
+
+    const { data: perfiles } = await (supabase as any).from("perfiles")
+      .select("id,nombre,username,avatar_url,tipo,verificado,total_seguidores")
+      .order("verificado", { ascending: false })
+      .order("total_seguidores", { ascending: false })
+      .limit(20);
+    setSuggested((perfiles || []).filter((p: any) => p.id !== user?.id).slice(0, 5));
+
+    if (user) {
+      const { data: sigs } = await (supabase as any).from("seguidos").select("seguido_id").eq("seguidor_id", user.id);
+      setFollowing(new Set((sigs || []).map((s: any) => s.seguido_id)));
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      // Trending tags: últimos 7 días, agregamos por tag
-      const desde = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: posts } = await (supabase as any).from("publicaciones")
-        .select("tags").eq("estado", "activa").gte("created_at", desde).limit(500);
-      const counts = new Map<string, number>();
-      (posts || []).forEach((p: any) => (p.tags || []).forEach((t: string) => {
-        const k = t.trim().toLowerCase(); if (!k) return;
-        counts.set(k, (counts.get(k) || 0) + 1);
-      }));
-      const sortedTags = Array.from(counts.entries())
-        .sort((a, b) => b[1] - a[1]).slice(0, 6)
-        .map(([tag, total]) => ({ tag, total }));
-      setTrends(sortedTags);
-
-      // Sugerencias: perfiles verificados / con muchos seguidores, excluyendo al user
-      const { data: perfiles } = await (supabase as any).from("perfiles")
-        .select("id,nombre,username,avatar_url,tipo,verificado,total_seguidores")
-        .order("verificado", { ascending: false })
-        .order("total_seguidores", { ascending: false })
-        .limit(20);
-      const lista = (perfiles || []).filter((p: any) => p.id !== user?.id).slice(0, 5);
-      setSuggested(lista);
-
-      if (user) {
-        const { data: sigs } = await (supabase as any).from("seguidos")
-          .select("seguido_id").eq("seguidor_id", user.id);
-        setFollowing(new Set((sigs || []).map((s: any) => s.seguido_id)));
-      }
-    })();
-  }, [user]);
+    cargar();
+    if (!user) return;
+    const ch = (supabase as any).channel(`feedrail-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "seguidos", filter: `seguidor_id=eq.${user.id}` }, cargar)
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+  }, [user?.id]);
 
   const seguir = async (id: string) => {
     if (!user) return;
