@@ -178,8 +178,10 @@ export function AppLayout() {
             </>)}
           </NavLink>
           <NavLink to="/lin/perfil" className={linkCls}>
-            <UserCircle className="h-6 w-6" />
-            <span className="text-[10px]">Perfil</span>
+            {({ isActive }) => (<>
+              <UserCircle className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Perfil</span>
+            </>)}
           </NavLink>
         </nav>
       </div>
