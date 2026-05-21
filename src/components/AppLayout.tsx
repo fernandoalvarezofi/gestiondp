@@ -21,6 +21,7 @@ export function AppLayout() {
   const [noLeidos, setNoLeidos] = useState(0);
   const [notifSinLeer, setNotifSinLeer] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  usePresenciaHeartbeat();
 
   const recalcNoLeidos = async () => {
     if (!user) return;
