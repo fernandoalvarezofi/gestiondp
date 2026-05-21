@@ -33,13 +33,15 @@ export default function Mercado() {
     (supabase as any).from("marketplace_categorias").select("*").order("orden").then(({ data }) => setCats(data || []));
   }, []);
 
+  const SELECT_PRODUCTO = `*, vendedor:perfiles!vendedor_id(id,nombre,username,avatar_url,verificado), categoria:marketplace_categorias!categoria_id(nombre,slug,color)`;
+
   useEffect(() => {
     let active = true;
     setLoading(true);
     (async () => {
       let query = (supabase as any)
         .from("marketplace_productos")
-        .select(`*, vendedor:perfiles!vendedor_id(id,nombre,username,avatar_url,verificado), categoria:marketplace_categorias!categoria_id(nombre,slug,color)`)
+        .select(SELECT_PRODUCTO)
         .eq("estado", "activo")
         .limit(60);
       if (cat) query = query.eq("categoria_id", cat);
@@ -58,6 +60,28 @@ export default function Mercado() {
     })();
     return () => { active = false; };
   }, [cat, tipo, q, sort]);
+
+  // Realtime: nuevos productos, ediciones y eliminaciones aparecen al instante
+  useEffect(() => {
+    const ch = (supabase as any).channel("mercado_productos_rt")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "marketplace_productos" }, async (payload: any) => {
+        if (payload.new?.estado !== "activo") return;
+        const { data: row } = await (supabase as any).from("marketplace_productos").select(SELECT_PRODUCTO).eq("id", payload.new.id).maybeSingle();
+        if (!row) return;
+        setItems((arr) => arr.some((p) => p.id === row.id) ? arr : [row, ...arr]);
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "marketplace_productos" }, (payload: any) => {
+        setItems((arr) => {
+          if (payload.new?.estado && payload.new.estado !== "activo") return arr.filter((p) => p.id !== payload.new.id);
+          return arr.map((p) => p.id === payload.new.id ? { ...p, ...payload.new } : p);
+        });
+      })
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "marketplace_productos" }, (payload: any) => {
+        setItems((arr) => arr.filter((p) => p.id !== payload.old?.id));
+      })
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+  }, []);
 
   const destacados = useMemo(() => items.filter((p) => p.destacado).slice(0, 4), [items]);
 
