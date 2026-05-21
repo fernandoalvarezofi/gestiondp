@@ -117,6 +117,9 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
   const cuerpoLargo = (pub.cuerpo || "").length > 300;
   const cuerpoMostrado = expandido || !cuerpoLargo ? pub.cuerpo : `${pub.cuerpo.slice(0, 300)}…`;
 
+  if (hidden) return null;
+  const isMine = user?.id === pub.perfil?.id;
+
   return (
     <article
       onClick={open}
@@ -156,44 +159,57 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
             </div>
 
             <div className="ml-auto -mr-1.5 -mt-1.5">
-              {user?.id === pub.perfil?.id ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuItem
-                      onClick={async () => {
-                        await (supabase as any).from("publicaciones").update({ estado: pub.estado === "activa" ? "pausada" : "activa" }).eq("id", pub.id).eq("perfil_id", user.id);
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56" onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenuItem onClick={copyLink}><Link2 className="mr-2 h-4 w-4" />Copiar enlace</DropdownMenuItem>
+                  <DropdownMenuItem onClick={share}><Share2 className="mr-2 h-4 w-4" />Compartir</DropdownMenuItem>
+                  {isMine ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={async () => {
+                        await (supabase as any).from("publicaciones").update({ estado: pub.estado === "activa" ? "pausada" : "activa" }).eq("id", pub.id).eq("perfil_id", user!.id);
                         toast.success(pub.estado === "activa" ? "Pausada" : "Activada");
-                      }}
-                    >
-                      {pub.estado === "activa" ? <><Pause className="mr-2 h-4 w-4" /> Pausar</> : <><Play className="mr-2 h-4 w-4" /> Activar</>}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onClick={async () => {
-                        if (!confirm("¿Eliminar esta publicación?")) return;
-                        await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user.id);
-                        toast.success("Eliminada");
-                      }}
-                    >
-                      <Trash2 className="mr-2 h-4 w-4" /> Eliminar
-                    </DropdownMenuItem>
-
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button
-                  variant="ghost" size="icon"
-                  onClick={(e) => e.stopPropagation()}
-                  className="h-8 w-8 rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              )}
+                        setHidden(true);
+                      }}>
+                        {pub.estado === "activa" ? <><Pause className="mr-2 h-4 w-4" />Pausar</> : <><Play className="mr-2 h-4 w-4" />Activar</>}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={async () => {
+                          if (!confirm("¿Eliminar esta publicación? No se puede deshacer.")) return;
+                          await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user!.id);
+                          toast.success("Publicación eliminada");
+                          setHidden(true);
+                          onDeleted?.(pub.id);
+                        }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" />Eliminar
+                      </DropdownMenuItem>
+                    </>
+                  ) : user ? (
+                    <>
+                      <DropdownMenuSeparator />
+                      {following !== null && (
+                        <DropdownMenuItem onClick={toggleFollow}>
+                          {following ? <><UserMinus className="mr-2 h-4 w-4" />Dejar de seguir a @{username}</> : <><UserPlus className="mr-2 h-4 w-4" />Seguir a @{username}</>}
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuItem onClick={() => { setHidden(true); toast("No te volveremos a mostrar esto"); }}>
+                        <VolumeX className="mr-2 h-4 w-4" />No me interesa
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => toast.success("Reporte enviado, gracias")}>
+                        <Flag className="mr-2 h-4 w-4" />Reportar
+                      </DropdownMenuItem>
+                    </>
+                  ) : null}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
