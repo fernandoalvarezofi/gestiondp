@@ -1,4 +1,10 @@
 // Woref — helpers compartidos
+import {
+  Megaphone, Rocket, Briefcase, BookOpen, Lightbulb, Trophy, PartyPopper,
+  Handshake, Users, Radio, PenLine, FileText, Clapperboard, Video, BarChart3, MessageSquare,
+  type LucideIcon,
+} from "lucide-react";
+
 export const TIPO_USUARIO: Record<string, string> = {
   emprendedor: "Emprendedor",
   empresa: "Empresa",
@@ -11,23 +17,23 @@ export const TIPO_USUARIO: Record<string, string> = {
   institucion: "Institución",
 };
 
-export const TIPO_PUBLICACION: Record<string, { label: string; emoji: string }> = {
-  update: { label: "Update", emoji: "📣" },
-  proyecto: { label: "Proyecto", emoji: "🚀" },
-  oportunidad: { label: "Oportunidad", emoji: "💼" },
-  recurso: { label: "Recurso", emoji: "📚" },
-  idea: { label: "Idea", emoji: "💡" },
-  logro: { label: "Logro", emoji: "🏆" },
-  lanzamiento: { label: "Lanzamiento", emoji: "🎉" },
-  busco_socio: { label: "Busco socio", emoji: "🤝" },
-  busco_colaborador: { label: "Busco colab", emoji: "👥" },
-  hiring: { label: "Hiring", emoji: "📢" },
-  contenido_corto: { label: "Contenido", emoji: "✍️" },
-  contenido_largo: { label: "Artículo", emoji: "📝" },
-  video_corto: { label: "Video corto", emoji: "🎬" },
-  video_largo: { label: "Video largo", emoji: "🎥" },
-  encuesta: { label: "Encuesta", emoji: "📊" },
-  general: { label: "General", emoji: "💬" },
+export const TIPO_PUBLICACION: Record<string, { label: string; icon: LucideIcon; color: string }> = {
+  update:             { label: "Update",         icon: Megaphone,    color: "text-sky-600 bg-sky-500/10" },
+  proyecto:           { label: "Proyecto",       icon: Rocket,       color: "text-violet-600 bg-violet-500/10" },
+  oportunidad:        { label: "Oportunidad",    icon: Briefcase,    color: "text-amber-600 bg-amber-500/10" },
+  recurso:            { label: "Recurso",        icon: BookOpen,     color: "text-emerald-600 bg-emerald-500/10" },
+  idea:               { label: "Idea",           icon: Lightbulb,    color: "text-yellow-600 bg-yellow-500/10" },
+  logro:              { label: "Logro",          icon: Trophy,       color: "text-amber-600 bg-amber-500/10" },
+  lanzamiento:        { label: "Lanzamiento",    icon: PartyPopper,  color: "text-fuchsia-600 bg-fuchsia-500/10" },
+  busco_socio:        { label: "Busco socio",    icon: Handshake,    color: "text-teal-600 bg-teal-500/10" },
+  busco_colaborador:  { label: "Busco colab",    icon: Users,        color: "text-cyan-600 bg-cyan-500/10" },
+  hiring:             { label: "Hiring",         icon: Radio,        color: "text-rose-600 bg-rose-500/10" },
+  contenido_corto:    { label: "Contenido",      icon: PenLine,      color: "text-slate-600 bg-slate-500/10" },
+  contenido_largo:    { label: "Artículo",       icon: FileText,     color: "text-slate-600 bg-slate-500/10" },
+  video_corto:        { label: "Video corto",    icon: Clapperboard, color: "text-pink-600 bg-pink-500/10" },
+  video_largo:        { label: "Video largo",    icon: Video,        color: "text-pink-600 bg-pink-500/10" },
+  encuesta:           { label: "Encuesta",       icon: BarChart3,    color: "text-indigo-600 bg-indigo-500/10" },
+  general:            { label: "General",        icon: MessageSquare,color: "text-muted-foreground bg-secondary" },
 };
 
 export const FORMATO_PUBLICACION: Record<string, string> = {

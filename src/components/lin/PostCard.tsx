@@ -123,8 +123,8 @@ export function PostCard({ pub }: { pub: any }) {
               <span className="text-muted-foreground">·</span>
               <span className="shrink-0 text-muted-foreground hover:underline">{formatTime(pub.created_at)}</span>
               {pub.tipo !== "general" && (
-                <span className="ml-1 hidden items-center gap-1 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-flex">
-                  <span>{tipoMeta.emoji}</span>{tipoMeta.label}
+                <span className={cn("ml-1 hidden items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-medium sm:inline-flex", tipoMeta.color)}>
+                  <tipoMeta.icon className="h-3 w-3" />{tipoMeta.label}
                 </span>
               )}
               {pub.destacada && (
