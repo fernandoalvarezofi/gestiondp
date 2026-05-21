@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import {
   Send, ArrowLeft, Phone, Video, Info, Pencil, ImageIcon, Loader2, X,
-  Mic, Smile, Reply, MoreHorizontal, Heart,
+  Mic, Smile, Reply, Heart, Check, CheckCheck,
 } from "lucide-react";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
@@ -296,7 +296,15 @@ export default function Mensajes() {
                         <AudioPlayer url={m.audio_url} duracion={m.audio_duracion} mio={mio} />
                       ) : (
                         <>
-                          {m.imagen_url && <img src={m.imagen_url} className="mb-1 max-h-72 rounded-2xl object-cover" alt="" />}
+                          {m.imagen_url && (
+                            <img
+                              src={m.imagen_url}
+                              loading="lazy"
+                              onClick={(e) => { e.stopPropagation(); window.open(m.imagen_url, "_blank", "noopener,noreferrer"); }}
+                              className="mb-1 max-h-72 cursor-pointer rounded-2xl object-cover transition hover:opacity-90"
+                              alt=""
+                            />
+                          )}
                           {m.contenido && (
                             <div className={cn(
                               "px-3.5 py-2 text-[14px] leading-snug",
@@ -330,11 +338,14 @@ export default function Mensajes() {
                         </div>
                       )}
 
-                      <p className={cn("mt-0.5 text-[10px] text-muted-foreground", mio ? "text-right" : "text-left")}>
-                        {formatTime(m.created_at)}
-                        {mio && m.id === ultimoEnviadoId && (
-                          <span className="ml-1.5">· {String(m.id).startsWith("tmp-") ? "Enviando…" : m.leido ? "Visto" : "Enviado"}</span>
+                      <p className={cn("mt-0.5 flex items-center gap-1 text-[10px] text-muted-foreground", mio ? "justify-end" : "justify-start")}>
+                        <span>{formatTime(m.created_at)}</span>
+                        {mio && m.id === ultimoEnviadoId && !String(m.id).startsWith("tmp-") && (
+                          m.leido
+                            ? <span className="flex items-center gap-0.5 text-primary"><CheckCheck className="h-3 w-3" />Visto</span>
+                            : <span className="flex items-center gap-0.5"><Check className="h-3 w-3" />Enviado</span>
                         )}
+                        {mio && String(m.id).startsWith("tmp-") && <span>Enviando…</span>}
                       </p>
                     </div>
 
