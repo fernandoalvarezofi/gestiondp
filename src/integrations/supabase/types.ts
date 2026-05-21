@@ -156,33 +156,55 @@ export type Database = {
       }
       comunidad_canales: {
         Row: {
+          categoria_id: string | null
           comunidad_id: string
           created_at: string
           descripcion: string | null
           id: string
           nombre: string
+          nsfw: boolean
           orden: number
+          slow_mode_seg: number
+          solo_lectura: boolean
           tipo: string
+          topic: string | null
         }
         Insert: {
+          categoria_id?: string | null
           comunidad_id: string
           created_at?: string
           descripcion?: string | null
           id?: string
           nombre: string
+          nsfw?: boolean
           orden?: number
+          slow_mode_seg?: number
+          solo_lectura?: boolean
           tipo?: string
+          topic?: string | null
         }
         Update: {
+          categoria_id?: string | null
           comunidad_id?: string
           created_at?: string
           descripcion?: string | null
           id?: string
           nombre?: string
+          nsfw?: boolean
           orden?: number
+          slow_mode_seg?: number
+          solo_lectura?: boolean
           tipo?: string
+          topic?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "comunidad_canales_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "comunidad_categorias"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comunidad_canales_comunidad_id_fkey"
             columns: ["comunidad_id"]
@@ -192,27 +214,57 @@ export type Database = {
           },
         ]
       }
-      comunidad_miembros: {
+      comunidad_categorias: {
         Row: {
           comunidad_id: string
           created_at: string
           id: string
-          perfil_id: string
-          rol: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+          nombre: string
+          orden: number
         }
         Insert: {
           comunidad_id: string
           created_at?: string
           id?: string
-          perfil_id: string
-          rol?: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+          nombre: string
+          orden?: number
         }
         Update: {
           comunidad_id?: string
           created_at?: string
           id?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: []
+      }
+      comunidad_miembros: {
+        Row: {
+          comunidad_id: string
+          created_at: string
+          id: string
+          nickname: string | null
+          perfil_id: string
+          rol: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+          rol_id: string | null
+        }
+        Insert: {
+          comunidad_id: string
+          created_at?: string
+          id?: string
+          nickname?: string | null
+          perfil_id: string
+          rol?: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+          rol_id?: string | null
+        }
+        Update: {
+          comunidad_id?: string
+          created_at?: string
+          id?: string
+          nickname?: string | null
           perfil_id?: string
           rol?: Database["public"]["Enums"]["tipo_miembro_comunidad"]
+          rol_id?: string | null
         }
         Relationships: [
           {
@@ -229,6 +281,45 @@ export type Database = {
             referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comunidad_miembros_rol_id_fkey"
+            columns: ["rol_id"]
+            isOneToOne: false
+            referencedRelation: "comunidad_roles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comunidad_post_reacciones: {
+        Row: {
+          created_at: string
+          emoji: string
+          id: string
+          perfil_id: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string
+          emoji: string
+          id?: string
+          perfil_id: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string
+          emoji?: string
+          id?: string
+          perfil_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comunidad_post_reacciones_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "comunidad_posts"
+            referencedColumns: ["id"]
+          },
         ]
       }
       comunidad_posts: {
@@ -237,9 +328,13 @@ export type Database = {
           comunidad_id: string
           contenido: string
           created_at: string
+          editado_at: string | null
+          fijado: boolean
+          hilo_titulo: string | null
           id: string
           imagen_url: string | null
           perfil_id: string
+          respuesta_a: string | null
           titulo: string | null
           total_likes: number
           total_respuestas: number
@@ -249,9 +344,13 @@ export type Database = {
           comunidad_id: string
           contenido: string
           created_at?: string
+          editado_at?: string | null
+          fijado?: boolean
+          hilo_titulo?: string | null
           id?: string
           imagen_url?: string | null
           perfil_id: string
+          respuesta_a?: string | null
           titulo?: string | null
           total_likes?: number
           total_respuestas?: number
@@ -261,9 +360,13 @@ export type Database = {
           comunidad_id?: string
           contenido?: string
           created_at?: string
+          editado_at?: string | null
+          fijado?: boolean
+          hilo_titulo?: string | null
           id?: string
           imagen_url?: string | null
           perfil_id?: string
+          respuesta_a?: string | null
           titulo?: string | null
           total_likes?: number
           total_respuestas?: number
@@ -290,7 +393,44 @@ export type Database = {
             referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comunidad_posts_respuesta_a_fkey"
+            columns: ["respuesta_a"]
+            isOneToOne: false
+            referencedRelation: "comunidad_posts"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      comunidad_roles: {
+        Row: {
+          color: string
+          comunidad_id: string
+          created_at: string
+          id: string
+          nombre: string
+          orden: number
+          permisos: Json
+        }
+        Insert: {
+          color?: string
+          comunidad_id: string
+          created_at?: string
+          id?: string
+          nombre: string
+          orden?: number
+          permisos?: Json
+        }
+        Update: {
+          color?: string
+          comunidad_id?: string
+          created_at?: string
+          id?: string
+          nombre?: string
+          orden?: number
+          permisos?: Json
+        }
+        Relationships: []
       }
       comunidades: {
         Row: {
@@ -836,6 +976,7 @@ export type Database = {
           total_likes: number
           total_respuestas: number
           total_vistas: number
+          total_votos: number
           updated_at: string
         }
         Insert: {
@@ -852,6 +993,7 @@ export type Database = {
           total_likes?: number
           total_respuestas?: number
           total_vistas?: number
+          total_votos?: number
           updated_at?: string
         }
         Update: {
@@ -868,6 +1010,7 @@ export type Database = {
           total_likes?: number
           total_respuestas?: number
           total_vistas?: number
+          total_votos?: number
           updated_at?: string
         }
         Relationships: [
@@ -897,6 +1040,7 @@ export type Database = {
           post_id: string
           respuesta_a: string | null
           total_likes: number
+          total_votos: number
         }
         Insert: {
           contenido: string
@@ -907,6 +1051,7 @@ export type Database = {
           post_id: string
           respuesta_a?: string | null
           total_likes?: number
+          total_votos?: number
         }
         Update: {
           contenido?: string
@@ -917,6 +1062,7 @@ export type Database = {
           post_id?: string
           respuesta_a?: string | null
           total_likes?: number
+          total_votos?: number
         }
         Relationships: [
           {
@@ -936,6 +1082,48 @@ export type Database = {
           {
             foreignKeyName: "foro_respuestas_respuesta_a_fkey"
             columns: ["respuesta_a"]
+            isOneToOne: false
+            referencedRelation: "foro_respuestas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      foro_votos: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          post_id: string | null
+          resp_id: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          post_id?: string | null
+          resp_id?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          post_id?: string | null
+          resp_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foro_votos_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "foro_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foro_votos_resp_id_fkey"
+            columns: ["resp_id"]
             isOneToOne: false
             referencedRelation: "foro_respuestas"
             referencedColumns: ["id"]
@@ -2203,6 +2391,85 @@ export type Database = {
         }
         Relationships: []
       }
+      proyecto_actividad: {
+        Row: {
+          accion: string
+          created_at: string
+          id: string
+          meta: Json
+          perfil_id: string
+          proyecto_id: string
+        }
+        Insert: {
+          accion: string
+          created_at?: string
+          id?: string
+          meta?: Json
+          perfil_id: string
+          proyecto_id: string
+        }
+        Update: {
+          accion?: string
+          created_at?: string
+          id?: string
+          meta?: Json
+          perfil_id?: string
+          proyecto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_actividad_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proyecto_archivos: {
+        Row: {
+          created_at: string
+          id: string
+          mime_type: string | null
+          nombre: string
+          proyecto_id: string
+          size_bytes: number | null
+          storage_path: string | null
+          subido_por: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          nombre: string
+          proyecto_id: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          subido_por: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          nombre?: string
+          proyecto_id?: string
+          size_bytes?: number | null
+          storage_path?: string | null
+          subido_por?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_archivos_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proyecto_miembros: {
         Row: {
           created_at: string
@@ -2274,6 +2541,62 @@ export type Database = {
           },
           {
             foreignKeyName: "proyecto_seguidores_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proyecto_tareas: {
+        Row: {
+          asignado_id: string | null
+          creado_por: string
+          created_at: string
+          descripcion: string | null
+          estado: Database["public"]["Enums"]["proyecto_tarea_estado"]
+          etiquetas: string[] | null
+          fecha_limite: string | null
+          id: string
+          orden: number
+          prioridad: Database["public"]["Enums"]["proyecto_tarea_prioridad"]
+          proyecto_id: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          asignado_id?: string | null
+          creado_por: string
+          created_at?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["proyecto_tarea_estado"]
+          etiquetas?: string[] | null
+          fecha_limite?: string | null
+          id?: string
+          orden?: number
+          prioridad?: Database["public"]["Enums"]["proyecto_tarea_prioridad"]
+          proyecto_id: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          asignado_id?: string | null
+          creado_por?: string
+          created_at?: string
+          descripcion?: string | null
+          estado?: Database["public"]["Enums"]["proyecto_tarea_estado"]
+          etiquetas?: string[] | null
+          fecha_limite?: string | null
+          id?: string
+          orden?: number
+          prioridad?: Database["public"]["Enums"]["proyecto_tarea_prioridad"]
+          proyecto_id?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_tareas_proyecto_id_fkey"
             columns: ["proyecto_id"]
             isOneToOne: false
             referencedRelation: "proyectos"
@@ -2959,6 +3282,12 @@ export type Database = {
         | "proyecto"
         | "encuesta"
         | "recurso"
+      proyecto_tarea_estado:
+        | "backlog"
+        | "en_progreso"
+        | "revision"
+        | "completada"
+      proyecto_tarea_prioridad: "baja" | "media" | "alta" | "urgente"
       tipo_miembro_comunidad: "miembro" | "moderador" | "admin"
       tipo_notificacion:
         | "nuevo_seguidor"
@@ -3149,6 +3478,13 @@ export const Constants = {
         "encuesta",
         "recurso",
       ],
+      proyecto_tarea_estado: [
+        "backlog",
+        "en_progreso",
+        "revision",
+        "completada",
+      ],
+      proyecto_tarea_prioridad: ["baja", "media", "alta", "urgente"],
       tipo_miembro_comunidad: ["miembro", "moderador", "admin"],
       tipo_notificacion: [
         "nuevo_seguidor",
