@@ -166,7 +166,7 @@ export default function Auth() {
             {isLogin ? "Bienvenido de nuevo" : "Crear cuenta"}
           </h2>
           <p className="text-sm text-muted-foreground mb-8">
-            {isLogin ? "Iniciá sesión en Linqueño" : "Empezá a publicar en minutos"}
+            {isLogin ? "Iniciá sesión en Woref" : "Empezá a publicar y conectar en minutos"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
