@@ -215,6 +215,10 @@ export default function Landing() {
         </div>
       </section>
 
+      <section className="mx-auto max-w-4xl px-4 pb-10">
+        <InstallAppCTA />
+      </section>
+
       {/* CTA */}
       <section className="bg-primary text-primary-foreground">
         <div className="mx-auto max-w-4xl px-4 py-16 text-center">
