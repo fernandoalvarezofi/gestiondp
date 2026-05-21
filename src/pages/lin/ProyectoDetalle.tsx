@@ -404,6 +404,7 @@ export default function ProyectoDetalle() {
         </TabsContent>
       </Tabs>
     </div>
+    </>
   );
 }
 
@@ -412,6 +413,5 @@ function LinkChip({ href, icon: Icon, label }: any) {
     <a href={href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-full border bg-secondary/40 px-3 py-1 text-xs font-medium transition-colors hover:border-primary hover:text-primary">
       <Icon className="h-3.5 w-3.5" />{label}
     </a>
-    </>
   );
 }
