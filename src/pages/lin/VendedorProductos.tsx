@@ -108,6 +108,7 @@ export default function VendedorProductos() {
         </DialogContent>
       </Dialog>
     </div>
+    </>
   );
 }
 
