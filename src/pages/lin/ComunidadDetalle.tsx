@@ -434,10 +434,11 @@ export default function ComunidadDetalle() {
         )}
       </main>
 
-      {/* Roster */}
-      <aside className="hidden flex-col border-l bg-secondary/40 md:flex">
+      {/* Roster — visible solo desde xl */}
+      <aside className="hidden flex-col border-l bg-secondary/40 xl:flex">
         <Roster />
       </aside>
+    </div>
     </div>
   );
 }
