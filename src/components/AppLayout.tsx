@@ -10,7 +10,7 @@ import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Search, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, MessageSquare, Sparkles, Bookmark, BarChart3, Settings, Compass, Film,
+  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 
