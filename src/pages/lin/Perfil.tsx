@@ -151,7 +151,10 @@ export default function Perfil() {
             </div>
             <div className="flex gap-2">
               {isMine ? (
-                <Button asChild variant="outline" size="sm"><Link to="/lin/perfil/editar"><Settings className="h-4 w-4" />Editar</Link></Button>
+                <>
+                  <Button asChild variant="outline" size="sm"><Link to="/lin/perfil/editar"><Settings className="h-4 w-4" />Editar</Link></Button>
+                  <Button asChild variant="ghost" size="sm"><Link to="/lin/configuracion"><Settings className="h-4 w-4" /></Link></Button>
+                </>
               ) : (
                 <>
                   <Button onClick={toggleSeguir} disabled={loadingSeguir} variant={siguiendo ? "outline" : "default"} size="sm">
@@ -189,8 +192,8 @@ export default function Perfil() {
 
           <div className="mt-4 flex gap-5 border-t pt-3 text-sm">
             <Stat n={perfil.total_publicaciones} label="Publicaciones" />
-            <Stat n={perfil.total_seguidores} label="Seguidores" />
-            <Stat n={perfil.total_siguiendo} label="Siguiendo" />
+            <Link to={`/lin/perfil/${perfil.username}/red?tab=seguidores`} className="hover:underline"><Stat n={perfil.total_seguidores} label="Seguidores" /></Link>
+            <Link to={`/lin/perfil/${perfil.username}/red?tab=siguiendo`} className="hover:underline"><Stat n={perfil.total_siguiendo} label="Siguiendo" /></Link>
             <Stat n={perfil.score} label="Score" />
           </div>
         </div>
