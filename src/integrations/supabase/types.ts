@@ -1281,6 +1281,311 @@ export type Database = {
         }
         Relationships: []
       }
+      marketplace_archivos: {
+        Row: {
+          contenido_externo: string | null
+          created_at: string
+          id: string
+          mime_type: string | null
+          nombre: string
+          producto_id: string
+          size_bytes: number | null
+          storage_path: string
+          tipo: string
+        }
+        Insert: {
+          contenido_externo?: string | null
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          nombre: string
+          producto_id: string
+          size_bytes?: number | null
+          storage_path: string
+          tipo?: string
+        }
+        Update: {
+          contenido_externo?: string | null
+          created_at?: string
+          id?: string
+          mime_type?: string | null
+          nombre?: string
+          producto_id?: string
+          size_bytes?: number | null
+          storage_path?: string
+          tipo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_archivos_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_categorias: {
+        Row: {
+          color: string | null
+          created_at: string
+          icono: string | null
+          id: string
+          nombre: string
+          orden: number
+          slug: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icono?: string | null
+          id?: string
+          nombre: string
+          orden?: number
+          slug: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icono?: string | null
+          id?: string
+          nombre?: string
+          orden?: number
+          slug?: string
+        }
+        Relationships: []
+      }
+      marketplace_favoritos: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          producto_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          producto_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          producto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_favoritos_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_ordenes: {
+        Row: {
+          cancelada_at: string | null
+          comprador_id: string
+          comprador_nota: string | null
+          created_at: string
+          entregada_at: string | null
+          estado: string
+          id: string
+          metodo_pago: string
+          moneda: string
+          monto: number
+          pagada_at: string | null
+          payment_link: string | null
+          producto_id: string
+          token_descarga: string | null
+          updated_at: string
+          vendedor_id: string
+          vendedor_nota: string | null
+        }
+        Insert: {
+          cancelada_at?: string | null
+          comprador_id: string
+          comprador_nota?: string | null
+          created_at?: string
+          entregada_at?: string | null
+          estado?: string
+          id?: string
+          metodo_pago: string
+          moneda: string
+          monto: number
+          pagada_at?: string | null
+          payment_link?: string | null
+          producto_id: string
+          token_descarga?: string | null
+          updated_at?: string
+          vendedor_id: string
+          vendedor_nota?: string | null
+        }
+        Update: {
+          cancelada_at?: string | null
+          comprador_id?: string
+          comprador_nota?: string | null
+          created_at?: string
+          entregada_at?: string | null
+          estado?: string
+          id?: string
+          metodo_pago?: string
+          moneda?: string
+          monto?: number
+          pagada_at?: string | null
+          payment_link?: string | null
+          producto_id?: string
+          token_descarga?: string | null
+          updated_at?: string
+          vendedor_id?: string
+          vendedor_nota?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_ordenes_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_productos: {
+        Row: {
+          categoria_id: string | null
+          created_at: string
+          demo_url: string | null
+          descripcion: string
+          destacado: boolean
+          estado: string
+          galeria: Json
+          id: string
+          moneda: string
+          portada_url: string | null
+          precio: number
+          rating_promedio: number
+          resumen: string | null
+          slug: string
+          tags: string[] | null
+          tipo: string
+          titulo: string
+          total_reviews: number
+          total_ventas: number
+          total_vistas: number
+          updated_at: string
+          vendedor_id: string
+        }
+        Insert: {
+          categoria_id?: string | null
+          created_at?: string
+          demo_url?: string | null
+          descripcion: string
+          destacado?: boolean
+          estado?: string
+          galeria?: Json
+          id?: string
+          moneda?: string
+          portada_url?: string | null
+          precio?: number
+          rating_promedio?: number
+          resumen?: string | null
+          slug: string
+          tags?: string[] | null
+          tipo?: string
+          titulo: string
+          total_reviews?: number
+          total_ventas?: number
+          total_vistas?: number
+          updated_at?: string
+          vendedor_id: string
+        }
+        Update: {
+          categoria_id?: string | null
+          created_at?: string
+          demo_url?: string | null
+          descripcion?: string
+          destacado?: boolean
+          estado?: string
+          galeria?: Json
+          id?: string
+          moneda?: string
+          portada_url?: string | null
+          precio?: number
+          rating_promedio?: number
+          resumen?: string | null
+          slug?: string
+          tags?: string[] | null
+          tipo?: string
+          titulo?: string
+          total_reviews?: number
+          total_ventas?: number
+          total_vistas?: number
+          updated_at?: string
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_productos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketplace_reviews: {
+        Row: {
+          comentario: string | null
+          comprador_id: string
+          created_at: string
+          id: string
+          orden_id: string
+          producto_id: string
+          rating: number
+          respuesta_vendedor: string | null
+          vendedor_id: string
+        }
+        Insert: {
+          comentario?: string | null
+          comprador_id: string
+          created_at?: string
+          id?: string
+          orden_id: string
+          producto_id: string
+          rating: number
+          respuesta_vendedor?: string | null
+          vendedor_id: string
+        }
+        Update: {
+          comentario?: string | null
+          comprador_id?: string
+          created_at?: string
+          id?: string
+          orden_id?: string
+          producto_id?: string
+          rating?: number
+          respuesta_vendedor?: string | null
+          vendedor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketplace_reviews_orden_id_fkey"
+            columns: ["orden_id"]
+            isOneToOne: true
+            referencedRelation: "marketplace_ordenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_reviews_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "marketplace_productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       match_acciones: {
         Row: {
           accion: string
@@ -2483,6 +2788,51 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      vendedor_perfiles: {
+        Row: {
+          activo: boolean
+          bio_comercial: string | null
+          created_at: string
+          entrega_automatica: boolean
+          id: string
+          payout_methods: Json
+          rating_promedio: number
+          total_productos: number
+          total_reviews: number
+          total_ventas: number
+          updated_at: string
+          verificado: boolean
+        }
+        Insert: {
+          activo?: boolean
+          bio_comercial?: string | null
+          created_at?: string
+          entrega_automatica?: boolean
+          id: string
+          payout_methods?: Json
+          rating_promedio?: number
+          total_productos?: number
+          total_reviews?: number
+          total_ventas?: number
+          updated_at?: string
+          verificado?: boolean
+        }
+        Update: {
+          activo?: boolean
+          bio_comercial?: string | null
+          created_at?: string
+          entrega_automatica?: boolean
+          id?: string
+          payout_methods?: Json
+          rating_promedio?: number
+          total_productos?: number
+          total_reviews?: number
+          total_ventas?: number
+          updated_at?: string
+          verificado?: boolean
         }
         Relationships: []
       }
