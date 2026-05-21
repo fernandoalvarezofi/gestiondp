@@ -262,9 +262,10 @@ export default function ComunidadDetalle() {
   );
 
   return (
-    <div className="mx-auto grid h-[calc(100vh-7rem)] max-w-7xl grid-cols-1 gap-0 overflow-hidden rounded-2xl border bg-background md:grid-cols-[240px_1fr_240px]">
-      {/* Sidebar canales */}
-      <aside className="hidden flex-col border-r bg-secondary/40 md:flex">
+    <div className="-mx-4 -my-4 md:-mx-6 md:-my-6">
+    <div className="mx-auto grid h-[calc(100vh-3.5rem)] max-w-[1600px] grid-cols-1 gap-0 overflow-hidden border-y bg-background lg:h-[calc(100vh-3.5rem)] lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_260px]">
+      {/* Sidebar canales — visible desde lg */}
+      <aside className="hidden flex-col border-r bg-secondary/40 lg:flex">
         <Sidebar />
       </aside>
 
@@ -274,11 +275,11 @@ export default function ComunidadDetalle() {
           <div className="flex min-w-0 items-center gap-2">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden"><Hash className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 lg:hidden" aria-label="Canales"><Hash className="h-4 w-4" /></Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-72 p-0"><div className="flex h-full flex-col"><Sidebar /></div></SheetContent>
             </Sheet>
-            <Hash className="hidden h-5 w-5 shrink-0 text-muted-foreground md:block" />
+            <Hash className="hidden h-5 w-5 shrink-0 text-muted-foreground lg:block" />
             <div className="min-w-0">
               <h1 className="truncate font-bold leading-tight">{canalNombre}</h1>
               {canalActual?.topic && <p className="truncate text-[11px] text-muted-foreground">{canalActual.topic}</p>}
@@ -287,7 +288,7 @@ export default function ComunidadDetalle() {
           <div className="flex items-center gap-1">
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 md:hidden"><Users className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 xl:hidden" aria-label="Miembros"><Users className="h-4 w-4" /></Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-72 p-0"><div className="flex h-full flex-col"><Roster /></div></SheetContent>
             </Sheet>
@@ -433,10 +434,11 @@ export default function ComunidadDetalle() {
         )}
       </main>
 
-      {/* Roster */}
-      <aside className="hidden flex-col border-l bg-secondary/40 md:flex">
+      {/* Roster — visible solo desde xl */}
+      <aside className="hidden flex-col border-l bg-secondary/40 xl:flex">
         <Roster />
       </aside>
+    </div>
     </div>
   );
 }
