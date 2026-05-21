@@ -35,6 +35,12 @@ import NuevaHistoria from "./pages/lin/NuevaHistoria";
 import HistoriaViewer from "./pages/lin/HistoriaViewer";
 import Reels from "./pages/lin/Reels";
 import Explorar from "./pages/lin/Explorar";
+import Mercado from "./pages/lin/Mercado";
+import MercadoProducto from "./pages/lin/MercadoProducto";
+import VendedorConfigurar from "./pages/lin/VendedorConfigurar";
+import VendedorProductos from "./pages/lin/VendedorProductos";
+import VendedorOrdenes from "./pages/lin/VendedorOrdenes";
+import MisCompras from "./pages/lin/MisCompras";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +85,12 @@ const App = () => (
                   <Route path="/lin/foro/post/:id" element={<ForoPost />} />
                   <Route path="/lin/historias/nueva" element={<NuevaHistoria />} />
                   <Route path="/lin/historias/:perfilId" element={<HistoriaViewer />} />
+                  <Route path="/lin/mercado" element={<Mercado />} />
+                  <Route path="/lin/mercado/:slug" element={<MercadoProducto />} />
+                  <Route path="/lin/vendedor/configurar" element={<VendedorConfigurar />} />
+                  <Route path="/lin/vendedor/productos" element={<VendedorProductos />} />
+                  <Route path="/lin/vendedor/ordenes" element={<VendedorOrdenes />} />
+                  <Route path="/lin/mis-compras" element={<MisCompras />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
