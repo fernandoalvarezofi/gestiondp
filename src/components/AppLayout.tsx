@@ -71,7 +71,7 @@ export function AppLayout() {
     { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
     { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
     { to: "/lin/foro", icon: MessageSquare, label: "Foro" },
-    { to: "/lin/match", icon: Sparkles, label: "Match" },
+    
     { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
     { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },
     { to: "/lin/perfil/editar", icon: Settings, label: "Editar perfil" },

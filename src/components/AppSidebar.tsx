@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Home, PlusSquare, Search as SearchIcon, UserCircle, MessageCircle, Bell, Bookmark,
-  LineChart, Settings, LogOut, Rocket, Users, MessagesSquare, Sparkles,
+  LineChart, Settings, LogOut, Rocket, Users, MessagesSquare,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -16,7 +16,7 @@ const nav = [
   { title: "Feed", icon: Home, to: "/lin", end: true },
   { title: "Publicar", icon: PlusSquare, to: "/lin/publicar" },
   { title: "Buscar", icon: SearchIcon, to: "/lin/buscar" },
-  { title: "Match", icon: Sparkles, to: "/lin/match" },
+  
   { title: "Proyectos", icon: Rocket, to: "/lin/proyectos" },
   { title: "Comunidades", icon: Users, to: "/lin/comunidades" },
   { title: "Foro", icon: MessagesSquare, to: "/lin/foro" },
