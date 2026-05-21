@@ -127,9 +127,9 @@ export function AppLayout() {
             <Home className="h-6 w-6" />
             <span className="text-[10px]">Inicio</span>
           </NavLink>
-          <NavLink to="/lin/buscar" className={linkCls}>
+          <NavLink to="/lin/explorar" className={linkCls}>
             <Search className="h-6 w-6" />
-            <span className="text-[10px]">Buscar</span>
+            <span className="text-[10px]">Explorar</span>
           </NavLink>
           <NavLink to="/lin/publicar" className="flex flex-col items-center gap-0.5">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg">
