@@ -136,6 +136,10 @@ export function AppLayout() {
               <Plus className="h-5 w-5" />
             </div>
           </NavLink>
+          <NavLink to="/lin/reels" className={linkCls}>
+            <Film className="h-6 w-6" />
+            <span className="text-[10px]">Reels</span>
+          </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
             <div className="relative">
               <MessageCircle className="h-6 w-6" />
