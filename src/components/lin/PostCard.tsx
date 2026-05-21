@@ -122,6 +122,11 @@ export function PostCard({ pub }: { pub: any }) {
               <span className="truncate text-muted-foreground">@{username}</span>
               <span className="text-muted-foreground">·</span>
               <span className="shrink-0 text-muted-foreground hover:underline">{formatTime(pub.created_at)}</span>
+              {pub.tipo !== "general" && (
+                <span className="ml-1 hidden items-center gap-1 rounded-full bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-flex">
+                  <span>{tipoMeta.emoji}</span>{tipoMeta.label}
+                </span>
+              )}
               {pub.destacada && (
                 <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">Destacado</span>
               )}
@@ -170,22 +175,23 @@ export function PostCard({ pub }: { pub: any }) {
             </div>
           </div>
 
-          {/* Tipo chip */}
-          {pub.tipo !== "general" && (
-            <div className="mt-0.5">
-              <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                <span>{tipoMeta.emoji}</span>{tipoMeta.label}
-              </span>
-            </div>
-          )}
-
           {/* Contenido */}
           <div className="mt-1 space-y-2">
             {pub.titulo && <h3 className="text-[15px] font-semibold leading-snug">{pub.titulo}</h3>}
             {pub.cuerpo && (
-              <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90 line-clamp-6">
-                {pub.cuerpo}
-              </p>
+              <div>
+                <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90">
+                  {cuerpoMostrado}
+                </p>
+                {cuerpoLargo && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); e.preventDefault(); setExpandido(!expandido); }}
+                    className="mt-0.5 text-[13px] font-medium text-primary hover:underline"
+                  >
+                    {expandido ? "Ver menos" : "Ver más"}
+                  </button>
+                )}
+              </div>
             )}
 
             {pub.tipo === "encuesta" && pub.encuesta_opciones?.length > 0 && (
@@ -204,9 +210,33 @@ export function PostCard({ pub }: { pub: any }) {
               </div>
             )}
 
-            {portada && (
-              <div className="overflow-hidden rounded-2xl border bg-secondary/20">
-                <img src={portada} alt={pub.titulo || ""} className="max-h-[500px] w-full object-cover" loading="lazy" />
+            {imagenes.length === 1 && (
+              <div className="overflow-hidden rounded-2xl border bg-secondary/20" style={{ aspectRatio: "16 / 9" }}>
+                <LazyImage src={imagenes[0]} alt={pub.titulo || ""} className="object-cover" />
+              </div>
+            )}
+            {imagenes.length > 1 && (
+              <div
+                className="relative overflow-hidden rounded-2xl border bg-secondary/20"
+                style={{ aspectRatio: "4 / 3" }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <LazyImage src={imagenes[idxImg]} alt={pub.titulo || ""} className="object-cover" />
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIdxImg((i) => (i - 1 + imagenes.length) % imagenes.length); }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white opacity-80 transition hover:opacity-100"
+                  aria-label="Anterior"
+                ><ChevronLeft className="h-4 w-4" /></button>
+                <button
+                  onClick={(e) => { e.stopPropagation(); setIdxImg((i) => (i + 1) % imagenes.length); }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/50 p-1.5 text-white opacity-80 transition hover:opacity-100"
+                  aria-label="Siguiente"
+                ><ChevronRight className="h-4 w-4" /></button>
+                <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
+                  {imagenes.map((_, i) => (
+                    <span key={i} className={cn("h-1.5 w-1.5 rounded-full transition", i === idxImg ? "bg-white" : "bg-white/40")} />
+                  ))}
+                </div>
               </div>
             )}
             {pub.video_url && (
