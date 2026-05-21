@@ -34,7 +34,7 @@ export function BackHeader({ title, subtitle, right, onBack, sticky = true }: Pr
         <ArrowLeft className="h-5 w-5" />
       </button>
       <div className="min-w-0 flex-1">
-        {title && <h1 className="truncate text-[15px] font-bold leading-tight">{title}</h1>}
+        {title && <h1 className="font-display truncate text-[16px] font-bold leading-tight tracking-tight">{title}</h1>}
         {subtitle && <p className="truncate text-[11px] text-muted-foreground">{subtitle}</p>}
       </div>
       {right}
