@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-import { BackHeader } from "@/components/lin/BackHeader";
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
+import { BackHeader } from "@/components/lin/BackHeader";
 import { ArrowLeft, X, Plus, Image as ImageIcon, Video, Loader2 } from "lucide-react";
 import { initials, TIPO_PUBLICACION } from "@/lib/worefHelpers";
 import { toast } from "sonner";
