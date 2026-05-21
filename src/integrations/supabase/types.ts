@@ -62,6 +62,42 @@ export type Database = {
           },
         ]
       }
+      bloqueos: {
+        Row: {
+          bloqueado_id: string
+          created_at: string
+          id: string
+          perfil_id: string
+        }
+        Insert: {
+          bloqueado_id: string
+          created_at?: string
+          id?: string
+          perfil_id: string
+        }
+        Update: {
+          bloqueado_id?: string
+          created_at?: string
+          id?: string
+          perfil_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bloqueos_bloqueado_id_fkey"
+            columns: ["bloqueado_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bloqueos_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comentarios: {
         Row: {
           contenido: string
@@ -2181,11 +2217,14 @@ export type Database = {
         Row: {
           activo: boolean
           actualmente: string | null
+          autoplay_videos: boolean
           avatar_url: string | null
           bio: string | null
           created_at: string
+          data_saver: boolean
           id: string
           idioma: string
+          idioma_contenido: string
           industria: string | null
           instagram: string | null
           intereses: string[] | null
@@ -2200,13 +2239,17 @@ export type Database = {
           notif_menciones: boolean
           notif_mensajes: boolean
           notif_push: boolean
+          notif_resumen_semanal: boolean
           notif_seguidores: boolean
+          notif_sonido: boolean
+          palabras_filtradas: string[] | null
           perfil_privado: boolean
           permitir_etiquetas: boolean
           portada_url: string | null
           que_busca: string | null
           que_ofrece: string | null
           score: number
+          sensible_blur: boolean
           sitio_web: string | null
           skills: string[] | null
           tema: string
@@ -2224,11 +2267,14 @@ export type Database = {
         Insert: {
           activo?: boolean
           actualmente?: string | null
+          autoplay_videos?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          data_saver?: boolean
           id: string
           idioma?: string
+          idioma_contenido?: string
           industria?: string | null
           instagram?: string | null
           intereses?: string[] | null
@@ -2243,13 +2289,17 @@ export type Database = {
           notif_menciones?: boolean
           notif_mensajes?: boolean
           notif_push?: boolean
+          notif_resumen_semanal?: boolean
           notif_seguidores?: boolean
+          notif_sonido?: boolean
+          palabras_filtradas?: string[] | null
           perfil_privado?: boolean
           permitir_etiquetas?: boolean
           portada_url?: string | null
           que_busca?: string | null
           que_ofrece?: string | null
           score?: number
+          sensible_blur?: boolean
           sitio_web?: string | null
           skills?: string[] | null
           tema?: string
@@ -2267,11 +2317,14 @@ export type Database = {
         Update: {
           activo?: boolean
           actualmente?: string | null
+          autoplay_videos?: boolean
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          data_saver?: boolean
           id?: string
           idioma?: string
+          idioma_contenido?: string
           industria?: string | null
           instagram?: string | null
           intereses?: string[] | null
@@ -2286,13 +2339,17 @@ export type Database = {
           notif_menciones?: boolean
           notif_mensajes?: boolean
           notif_push?: boolean
+          notif_resumen_semanal?: boolean
           notif_seguidores?: boolean
+          notif_sonido?: boolean
+          palabras_filtradas?: string[] | null
           perfil_privado?: boolean
           permitir_etiquetas?: boolean
           portada_url?: string | null
           que_busca?: string | null
           que_ofrece?: string | null
           score?: number
+          sensible_blur?: boolean
           sitio_web?: string | null
           skills?: string[] | null
           tema?: string
@@ -3018,6 +3075,42 @@ export type Database = {
             columns: ["llamada_id"]
             isOneToOne: false
             referencedRelation: "llamadas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      silenciados: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          silenciado_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          silenciado_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          silenciado_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "silenciados_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "silenciados_silenciado_id_fkey"
+            columns: ["silenciado_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
