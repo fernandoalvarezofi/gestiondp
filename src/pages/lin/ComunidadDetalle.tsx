@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ImagePlus, X, Users, Hash, Plus, Send, Settings, Crown, ChevronDown, ChevronRight, Volume2, SmilePlus, Pin, Reply, Megaphone, Shield } from "lucide-react";
+import { ImagePlus, X, Users, Hash, Plus, Send, Settings, Crown, ChevronDown, ChevronRight, Volume2, SmilePlus, Pin, Reply, Megaphone, Shield, Pencil, Trash2, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,7 +35,25 @@ export default function ComunidadDetalle() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [respondiendoA, setRespondiendoA] = useState<any | null>(null);
   const [nuevoCanal, setNuevoCanal] = useState({ open: false, nombre: "", topic: "", categoria_id: "" });
+  const [editandoMsg, setEditandoMsg] = useState<string | null>(null);
+  const [editMsgTxt, setEditMsgTxt] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+
+  const editarMsg = async (postId: string) => {
+    if (!editMsgTxt.trim()) return;
+    const { error } = await (supabase as any).from("comunidad_posts")
+      .update({ contenido: editMsgTxt, editado_at: new Date().toISOString() })
+      .eq("id", postId);
+    if (error) return toast.error(error.message);
+    setEditandoMsg(null);
+    setEditMsgTxt("");
+  };
+
+  const borrarMsg = async (postId: string) => {
+    const { error } = await (supabase as any).from("comunidad_posts").delete().eq("id", postId);
+    if (error) return toast.error(error.message);
+    toast.success("Mensaje eliminado");
+  };
 
   const esCreador = user?.id === c?.creador_id;
 
