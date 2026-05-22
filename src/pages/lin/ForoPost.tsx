@@ -1,15 +1,18 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import { ChevronUp, ChevronDown, CheckCircle2, Pin, MessageSquare, Share2, ArrowLeft, Eye } from "lucide-react";
+import { ChevronUp, ChevronDown, CheckCircle2, Pin, MessageSquare, Share2, ArrowLeft, Eye, MoreHorizontal, Pencil, Trash2, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Vote = { id: string; valor: number; post_id: string | null; resp_id: string | null };
@@ -17,11 +20,17 @@ type Vote = { id: string; valor: number; post_id: string | null; resp_id: string
 export default function ForoPost() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [post, setPost] = useState<any>(null);
   const [resp, setResp] = useState<any[]>([]);
   const [votos, setVotos] = useState<Vote[]>([]);
   const [txt, setTxt] = useState("");
   const [orden, setOrden] = useState<"votos" | "recientes">("votos");
+  const [editandoPost, setEditandoPost] = useState(false);
+  const [editTitulo, setEditTitulo] = useState("");
+  const [editCuerpo, setEditCuerpo] = useState("");
+  const [editandoResp, setEditandoResp] = useState<string | null>(null);
+  const [editRespTxt, setEditRespTxt] = useState("");
 
   const load = async () => {
     const { data } = await (supabase as any).from("foro_posts")
