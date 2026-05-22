@@ -182,16 +182,58 @@ export default function ForoPost() {
               {post.fijado && <Badge variant="secondary"><Pin className="mr-1 h-3 w-3" />Fijado</Badge>}
               {post.resuelto && <Badge className="bg-emerald-500/15 text-emerald-700"><CheckCircle2 className="mr-1 h-3 w-3" />Resuelto</Badge>}
               {post.tags?.map((t: string) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}
+              {esAutor && (
+                <div className="ml-auto">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={iniciarEditPost}><Pencil className="mr-2 h-3.5 w-3.5" />Editar</DropdownMenuItem>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-rose-600 focus:text-rose-600">
+                            <Trash2 className="mr-2 h-3.5 w-3.5" />Eliminar
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar publicación?</AlertDialogTitle>
+                            <AlertDialogDescription>Esta acción no se puede deshacer. Se borrarán también las respuestas.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={borrarPost} className="bg-rose-600 hover:bg-rose-700">Eliminar</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
-            <h1 className="text-xl font-bold leading-tight tracking-tight sm:text-2xl">{post.titulo}</h1>
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Avatar className="h-6 w-6"><AvatarImage src={post.perfil.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(post.perfil.nombre)}</AvatarFallback></Avatar>
-              <Link to={`/lin/perfil/${post.perfil.username}`} className="font-medium text-foreground hover:text-primary">{post.perfil.nombre}</Link>
-              <span>·</span><span>{formatTime(post.created_at)}</span>
-              <span>·</span><span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.total_vistas || 0}</span>
-            </div>
-            {post.imagen_url && <img src={post.imagen_url} alt="" className="mt-3 max-h-80 rounded-lg border object-cover" />}
-            <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-sm leading-relaxed">{post.contenido}</div>
+            {editandoPost ? (
+              <div className="space-y-2">
+                <Input value={editTitulo} onChange={(e) => setEditTitulo(e.target.value)} placeholder="Título" className="text-base font-bold" />
+                <Textarea value={editCuerpo} onChange={(e) => setEditCuerpo(e.target.value)} rows={6} />
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setEditandoPost(false)} className="gap-1.5"><X className="h-3.5 w-3.5" />Cancelar</Button>
+                  <Button size="sm" onClick={guardarEditPost} className="gap-1.5"><Check className="h-3.5 w-3.5" />Guardar</Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-xl font-bold leading-tight tracking-tight sm:text-2xl">{post.titulo}</h1>
+                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Avatar className="h-6 w-6"><AvatarImage src={post.perfil.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(post.perfil.nombre)}</AvatarFallback></Avatar>
+                  <Link to={`/lin/perfil/${post.perfil.username}`} className="font-medium text-foreground hover:text-primary">{post.perfil.nombre}</Link>
+                  <span>·</span><span>{formatTime(post.created_at)}</span>
+                  <span>·</span><span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.total_vistas || 0}</span>
+                </div>
+                {post.imagen_url && <img src={post.imagen_url} alt="" className="mt-3 max-h-80 rounded-lg border object-cover" />}
+                <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-sm leading-relaxed">{post.contenido}</div>
+              </>
+            )}
 
             <div className="mt-4 flex items-center gap-2 border-t pt-3">
               <Button size="sm" variant="ghost" onClick={compartir} className="gap-1.5"><Share2 className="h-3.5 w-3.5" />Compartir</Button>
