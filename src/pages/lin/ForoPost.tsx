@@ -107,6 +107,48 @@ export default function ForoPost() {
     toast.success("Link copiado");
   };
 
+  const borrarPost = async () => {
+    if (!post) return;
+    const { error } = await (supabase as any).from("foro_posts").delete().eq("id", post.id);
+    if (error) return toast.error(error.message);
+    toast.success("Publicación eliminada");
+    navigate("/lin/hub?tab=foro");
+  };
+
+  const iniciarEditPost = () => {
+    setEditTitulo(post.titulo || "");
+    setEditCuerpo(post.contenido || "");
+    setEditandoPost(true);
+  };
+
+  const guardarEditPost = async () => {
+    if (!editTitulo.trim()) return toast.error("El título no puede estar vacío");
+    const { error } = await (supabase as any).from("foro_posts")
+      .update({ titulo: editTitulo.trim(), contenido: editCuerpo, updated_at: new Date().toISOString() })
+      .eq("id", post.id);
+    if (error) return toast.error(error.message);
+    toast.success("Publicación actualizada");
+    setEditandoPost(false);
+    load();
+  };
+
+  const borrarResp = async (rid: string) => {
+    const { error } = await (supabase as any).from("foro_respuestas").delete().eq("id", rid);
+    if (error) return toast.error(error.message);
+    toast.success("Respuesta eliminada");
+    load();
+  };
+
+  const guardarEditResp = async (rid: string) => {
+    if (!editRespTxt.trim()) return;
+    const { error } = await (supabase as any).from("foro_respuestas")
+      .update({ contenido: editRespTxt }).eq("id", rid);
+    if (error) return toast.error(error.message);
+    setEditandoResp(null);
+    setEditRespTxt("");
+    load();
+  };
+
   if (!post) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   const miVotoPost = votos.find((v) => v.post_id === id)?.valor || 0;
