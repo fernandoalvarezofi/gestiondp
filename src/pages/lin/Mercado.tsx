@@ -191,6 +191,32 @@ export default function Mercado() {
         </div>
       )}
 
+      {/* RECIÉN PUBLICADOS - rail */}
+      {recientes.length > 0 && !q && !cat && !tipo && (
+        <div className="mb-8">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+              </span>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Recién publicados</h2>
+              <Badge variant="secondary" className="gap-1 text-[10px]"><Zap className="h-2.5 w-2.5" />En vivo</Badge>
+            </div>
+          </div>
+          <ScrollArea>
+            <div className="flex gap-3 pb-3">
+              {recientes.map((p) => (
+                <div key={p.id} className="w-[240px] shrink-0 sm:w-[260px]">
+                  <ProductCard p={p} isNew />
+                </div>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+      )}
+
       {/* GRID */}
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -209,7 +235,7 @@ export default function Mercado() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {items.map((p) => <ProductCard key={p.id} p={p} />)}
+          {items.map((p) => <ProductCard key={p.id} p={p} isNew={isNew(p.created_at)} />)}
         </div>
       )}
     </div>
@@ -237,21 +263,72 @@ function ProductCard({ p, featured }: { p: any; featured?: boolean }) {
             </span>
           )}
         </div>
-        <CardContent className="p-3">
-          <p className="line-clamp-1 font-semibold leading-snug">{p.titulo}</p>
-          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{p.resumen || p.descripcion}</p>
-          <div className="mt-2 flex items-center justify-between">
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[11px] text-muted-foreground">por {p.vendedor?.nombre ?? "—"}</p>
-              {p.total_reviews > 0 && (
-                <div className="mt-0.5 flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-                  <span>{Number(p.rating_promedio).toFixed(1)}</span>
-                  <span>· {p.total_reviews}</span>
-                </div>
-              )}
+function ProductCard({ p, featured, isNew }: { p: any; featured?: boolean; isNew?: boolean }) {
+  const typeMeta = PRODUCT_TYPES.find((t) => t.id === p.tipo);
+  return (
+    <Link to={`/lin/mercado/${p.slug}`} className="group block">
+      <Card className="h-full overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
+        <div className="relative aspect-video overflow-hidden bg-gradient-to-br from-secondary/40 to-secondary">
+          {p.portada_url ? (
+            <img src={p.portada_url} alt={p.titulo} loading="lazy" className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-5xl opacity-30">
+              {typeMeta?.icon ?? "📦"}
             </div>
-            <p className="shrink-0 text-base font-bold text-primary">{formatPrice(Number(p.precio), p.moneda)}</p>
+          )}
+          {/* gradient overlay on hover for legibilidad */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/70 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+          <div className="absolute left-2 top-2 flex flex-col gap-1">
+            {featured && (
+              <Badge className="gap-1 bg-primary/95 shadow-sm"><Sparkles className="h-3 w-3" /> Destacado</Badge>
+            )}
+            {isNew && !featured && (
+              <Badge className="gap-1 border-0 bg-emerald-500/95 text-white shadow-sm"><Clock className="h-3 w-3" /> Nuevo</Badge>
+            )}
+          </div>
+
+          {p.categoria && (
+            <span style={{ background: `${p.categoria.color}E6` }} className="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium text-white shadow-sm">
+              {p.categoria.nombre}
+            </span>
+          )}
+
+          {/* Preview info en hover (resumen visible) */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 p-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
+            <p className="line-clamp-2 text-[11px] font-medium leading-snug text-white drop-shadow">
+              {p.resumen || p.descripcion}
+            </p>
+          </div>
+        </div>
+
+        <CardContent className="space-y-2 p-3">
+          <div className="flex items-start justify-between gap-2">
+            <p className="line-clamp-1 font-semibold leading-snug">{p.titulo}</p>
+            <p className="shrink-0 font-display text-base font-bold text-primary">{formatPrice(Number(p.precio), p.moneda)}</p>
+          </div>
+          <p className="line-clamp-2 text-xs text-muted-foreground">{p.resumen || p.descripcion}</p>
+
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              {p.vendedor?.avatar_url ? (
+                <img src={p.vendedor.avatar_url} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover" />
+              ) : (
+                <div className="h-5 w-5 shrink-0 rounded-full bg-secondary" />
+              )}
+              <span className="truncate text-[11px] text-muted-foreground">{p.vendedor?.nombre ?? "—"}</span>
+              {p.vendedor?.verificado && <span className="text-[11px] text-primary">✓</span>}
+            </div>
+            <div className="flex shrink-0 items-center gap-2 text-[11px] text-muted-foreground">
+              {typeMeta && <span title={typeMeta.label}>{typeMeta.icon}</span>}
+              {p.total_reviews > 0 && (
+                <span className="flex items-center gap-0.5">
+                  <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                  <span className="font-medium">{Number(p.rating_promedio).toFixed(1)}</span>
+                </span>
+              )}
+              {p.total_ventas > 0 && <span>· {p.total_ventas} ventas</span>}
+            </div>
           </div>
         </CardContent>
       </Card>
