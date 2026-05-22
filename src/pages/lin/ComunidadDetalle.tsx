@@ -345,9 +345,19 @@ export default function ComunidadDetalle() {
                       </div>
                     </PopoverContent>
                   </Popover>
-                  <button onClick={() => setRespondiendoA(p)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground">
+                  <button onClick={() => setRespondiendoA(p)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground" title="Responder">
                     <Reply className="h-3.5 w-3.5" />
                   </button>
+                  {user?.id === p.perfil_id && (
+                    <>
+                      <button onClick={() => { setEditandoMsg(p.id); setEditMsgTxt(p.contenido || ""); }} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground" title="Editar">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => borrarMsg(p.id)} className="rounded p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600" title="Eliminar">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <div className="w-10 shrink-0">
@@ -373,7 +383,22 @@ export default function ComunidadDetalle() {
                       {p.fijado && <Pin className="h-3 w-3 text-amber-600" />}
                     </div>
                   )}
-                  {p.contenido && <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.contenido}</p>}
+                  {editandoMsg === p.id ? (
+                    <div className="mt-1 space-y-1.5">
+                      <Textarea value={editMsgTxt} onChange={(e) => setEditMsgTxt(e.target.value)} rows={2} className="resize-none text-sm" autoFocus />
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditandoMsg(null)}><X className="h-3 w-3" /></Button>
+                        <Button size="sm" className="h-6 px-2 text-xs" onClick={() => editarMsg(p.id)}><Check className="h-3 w-3" /></Button>
+                      </div>
+                    </div>
+                  ) : (
+                    p.contenido && (
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {p.contenido}
+                        {p.editado_at && <span className="ml-1 text-[10px] text-muted-foreground/70">(editado)</span>}
+                      </p>
+                    )
+                  )}
                   {p.imagen_url && (
                     <a href={p.imagen_url} target="_blank" rel="noreferrer" className="mt-1 block w-fit">
                       <img src={p.imagen_url} alt="" loading="lazy" className="max-h-64 rounded-lg border object-cover" />
