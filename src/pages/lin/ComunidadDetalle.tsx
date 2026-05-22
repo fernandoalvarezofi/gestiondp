@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { ImagePlus, X, Users, Hash, Plus, Send, Settings, Crown, ChevronDown, ChevronRight, Volume2, SmilePlus, Pin, Reply, Megaphone, Shield } from "lucide-react";
+import { ImagePlus, X, Users, Hash, Plus, Send, Settings, Crown, ChevronDown, ChevronRight, Volume2, SmilePlus, Pin, Reply, Megaphone, Shield, Pencil, Trash2, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -35,7 +35,25 @@ export default function ComunidadDetalle() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [respondiendoA, setRespondiendoA] = useState<any | null>(null);
   const [nuevoCanal, setNuevoCanal] = useState({ open: false, nombre: "", topic: "", categoria_id: "" });
+  const [editandoMsg, setEditandoMsg] = useState<string | null>(null);
+  const [editMsgTxt, setEditMsgTxt] = useState("");
   const endRef = useRef<HTMLDivElement>(null);
+
+  const editarMsg = async (postId: string) => {
+    if (!editMsgTxt.trim()) return;
+    const { error } = await (supabase as any).from("comunidad_posts")
+      .update({ contenido: editMsgTxt, editado_at: new Date().toISOString() })
+      .eq("id", postId);
+    if (error) return toast.error(error.message);
+    setEditandoMsg(null);
+    setEditMsgTxt("");
+  };
+
+  const borrarMsg = async (postId: string) => {
+    const { error } = await (supabase as any).from("comunidad_posts").delete().eq("id", postId);
+    if (error) return toast.error(error.message);
+    toast.success("Mensaje eliminado");
+  };
 
   const esCreador = user?.id === c?.creador_id;
 
@@ -327,9 +345,19 @@ export default function ComunidadDetalle() {
                       </div>
                     </PopoverContent>
                   </Popover>
-                  <button onClick={() => setRespondiendoA(p)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground">
+                  <button onClick={() => setRespondiendoA(p)} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground" title="Responder">
                     <Reply className="h-3.5 w-3.5" />
                   </button>
+                  {user?.id === p.perfil_id && (
+                    <>
+                      <button onClick={() => { setEditandoMsg(p.id); setEditMsgTxt(p.contenido || ""); }} className="rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground" title="Editar">
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button onClick={() => borrarMsg(p.id)} className="rounded p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600" title="Eliminar">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 <div className="w-10 shrink-0">
@@ -355,7 +383,22 @@ export default function ComunidadDetalle() {
                       {p.fijado && <Pin className="h-3 w-3 text-amber-600" />}
                     </div>
                   )}
-                  {p.contenido && <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.contenido}</p>}
+                  {editandoMsg === p.id ? (
+                    <div className="mt-1 space-y-1.5">
+                      <Textarea value={editMsgTxt} onChange={(e) => setEditMsgTxt(e.target.value)} rows={2} className="resize-none text-sm" autoFocus />
+                      <div className="flex gap-1">
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-xs" onClick={() => setEditandoMsg(null)}><X className="h-3 w-3" /></Button>
+                        <Button size="sm" className="h-6 px-2 text-xs" onClick={() => editarMsg(p.id)}><Check className="h-3 w-3" /></Button>
+                      </div>
+                    </div>
+                  ) : (
+                    p.contenido && (
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">
+                        {p.contenido}
+                        {p.editado_at && <span className="ml-1 text-[10px] text-muted-foreground/70">(editado)</span>}
+                      </p>
+                    )
+                  )}
                   {p.imagen_url && (
                     <a href={p.imagen_url} target="_blank" rel="noreferrer" className="mt-1 block w-fit">
                       <img src={p.imagen_url} alt="" loading="lazy" className="max-h-64 rounded-lg border object-cover" />

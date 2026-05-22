@@ -1,15 +1,18 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import { ChevronUp, ChevronDown, CheckCircle2, Pin, MessageSquare, Share2, ArrowLeft, Eye } from "lucide-react";
+import { ChevronUp, ChevronDown, CheckCircle2, Pin, MessageSquare, Share2, ArrowLeft, Eye, MoreHorizontal, Pencil, Trash2, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Vote = { id: string; valor: number; post_id: string | null; resp_id: string | null };
@@ -17,11 +20,17 @@ type Vote = { id: string; valor: number; post_id: string | null; resp_id: string
 export default function ForoPost() {
   const { id } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [post, setPost] = useState<any>(null);
   const [resp, setResp] = useState<any[]>([]);
   const [votos, setVotos] = useState<Vote[]>([]);
   const [txt, setTxt] = useState("");
   const [orden, setOrden] = useState<"votos" | "recientes">("votos");
+  const [editandoPost, setEditandoPost] = useState(false);
+  const [editTitulo, setEditTitulo] = useState("");
+  const [editCuerpo, setEditCuerpo] = useState("");
+  const [editandoResp, setEditandoResp] = useState<string | null>(null);
+  const [editRespTxt, setEditRespTxt] = useState("");
 
   const load = async () => {
     const { data } = await (supabase as any).from("foro_posts")
@@ -98,6 +107,48 @@ export default function ForoPost() {
     toast.success("Link copiado");
   };
 
+  const borrarPost = async () => {
+    if (!post) return;
+    const { error } = await (supabase as any).from("foro_posts").delete().eq("id", post.id);
+    if (error) return toast.error(error.message);
+    toast.success("Publicación eliminada");
+    navigate("/lin/hub?tab=foro");
+  };
+
+  const iniciarEditPost = () => {
+    setEditTitulo(post.titulo || "");
+    setEditCuerpo(post.contenido || "");
+    setEditandoPost(true);
+  };
+
+  const guardarEditPost = async () => {
+    if (!editTitulo.trim()) return toast.error("El título no puede estar vacío");
+    const { error } = await (supabase as any).from("foro_posts")
+      .update({ titulo: editTitulo.trim(), contenido: editCuerpo, updated_at: new Date().toISOString() })
+      .eq("id", post.id);
+    if (error) return toast.error(error.message);
+    toast.success("Publicación actualizada");
+    setEditandoPost(false);
+    load();
+  };
+
+  const borrarResp = async (rid: string) => {
+    const { error } = await (supabase as any).from("foro_respuestas").delete().eq("id", rid);
+    if (error) return toast.error(error.message);
+    toast.success("Respuesta eliminada");
+    load();
+  };
+
+  const guardarEditResp = async (rid: string) => {
+    if (!editRespTxt.trim()) return;
+    const { error } = await (supabase as any).from("foro_respuestas")
+      .update({ contenido: editRespTxt }).eq("id", rid);
+    if (error) return toast.error(error.message);
+    setEditandoResp(null);
+    setEditRespTxt("");
+    load();
+  };
+
   if (!post) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   const miVotoPost = votos.find((v) => v.post_id === id)?.valor || 0;
@@ -105,7 +156,7 @@ export default function ForoPost() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <Link to="/lin/foro" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+      <Link to="/lin/hub?tab=foro" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Volver al foro
       </Link>
 
@@ -131,16 +182,58 @@ export default function ForoPost() {
               {post.fijado && <Badge variant="secondary"><Pin className="mr-1 h-3 w-3" />Fijado</Badge>}
               {post.resuelto && <Badge className="bg-emerald-500/15 text-emerald-700"><CheckCircle2 className="mr-1 h-3 w-3" />Resuelto</Badge>}
               {post.tags?.map((t: string) => <Badge key={t} variant="secondary" className="text-[10px]">{t}</Badge>)}
+              {esAutor && (
+                <div className="ml-auto">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" className="h-7 w-7"><MoreHorizontal className="h-4 w-4" /></Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={iniciarEditPost}><Pencil className="mr-2 h-3.5 w-3.5" />Editar</DropdownMenuItem>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-rose-600 focus:text-rose-600">
+                            <Trash2 className="mr-2 h-3.5 w-3.5" />Eliminar
+                          </DropdownMenuItem>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>¿Eliminar publicación?</AlertDialogTitle>
+                            <AlertDialogDescription>Esta acción no se puede deshacer. Se borrarán también las respuestas.</AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={borrarPost} className="bg-rose-600 hover:bg-rose-700">Eliminar</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
-            <h1 className="text-xl font-bold leading-tight tracking-tight sm:text-2xl">{post.titulo}</h1>
-            <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-              <Avatar className="h-6 w-6"><AvatarImage src={post.perfil.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(post.perfil.nombre)}</AvatarFallback></Avatar>
-              <Link to={`/lin/perfil/${post.perfil.username}`} className="font-medium text-foreground hover:text-primary">{post.perfil.nombre}</Link>
-              <span>·</span><span>{formatTime(post.created_at)}</span>
-              <span>·</span><span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.total_vistas || 0}</span>
-            </div>
-            {post.imagen_url && <img src={post.imagen_url} alt="" className="mt-3 max-h-80 rounded-lg border object-cover" />}
-            <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-sm leading-relaxed">{post.contenido}</div>
+            {editandoPost ? (
+              <div className="space-y-2">
+                <Input value={editTitulo} onChange={(e) => setEditTitulo(e.target.value)} placeholder="Título" className="text-base font-bold" />
+                <Textarea value={editCuerpo} onChange={(e) => setEditCuerpo(e.target.value)} rows={6} />
+                <div className="flex justify-end gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => setEditandoPost(false)} className="gap-1.5"><X className="h-3.5 w-3.5" />Cancelar</Button>
+                  <Button size="sm" onClick={guardarEditPost} className="gap-1.5"><Check className="h-3.5 w-3.5" />Guardar</Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <h1 className="text-xl font-bold leading-tight tracking-tight sm:text-2xl">{post.titulo}</h1>
+                <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Avatar className="h-6 w-6"><AvatarImage src={post.perfil.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(post.perfil.nombre)}</AvatarFallback></Avatar>
+                  <Link to={`/lin/perfil/${post.perfil.username}`} className="font-medium text-foreground hover:text-primary">{post.perfil.nombre}</Link>
+                  <span>·</span><span>{formatTime(post.created_at)}</span>
+                  <span>·</span><span className="flex items-center gap-1"><Eye className="h-3 w-3" />{post.total_vistas || 0}</span>
+                </div>
+                {post.imagen_url && <img src={post.imagen_url} alt="" className="mt-3 max-h-80 rounded-lg border object-cover" />}
+                <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-sm leading-relaxed">{post.contenido}</div>
+              </>
+            )}
 
             <div className="mt-4 flex items-center gap-2 border-t pt-3">
               <Button size="sm" variant="ghost" onClick={compartir} className="gap-1.5"><Share2 className="h-3.5 w-3.5" />Compartir</Button>
@@ -196,9 +289,36 @@ export default function ForoPost() {
                     <Avatar className="h-6 w-6"><AvatarImage src={r.perfil.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(r.perfil.nombre)}</AvatarFallback></Avatar>
                     <Link to={`/lin/perfil/${r.perfil.username}`} className="font-semibold hover:text-primary">{r.perfil.nombre}</Link>
                     <span className="text-muted-foreground">· {formatTime(r.created_at)}</span>
+                    {user?.id === r.perfil_id && (
+                      <div className="ml-auto">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-6 w-6"><MoreHorizontal className="h-3.5 w-3.5" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setEditandoResp(r.id); setEditRespTxt(r.contenido); }}>
+                              <Pencil className="mr-2 h-3.5 w-3.5" />Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => borrarResp(r.id)} className="text-rose-600 focus:text-rose-600">
+                              <Trash2 className="mr-2 h-3.5 w-3.5" />Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.contenido}</p>
-                  {esAutor && !r.es_solucion && (
+                  {editandoResp === r.id ? (
+                    <div className="mt-2 space-y-2">
+                      <Textarea value={editRespTxt} onChange={(e) => setEditRespTxt(e.target.value)} rows={3} className="resize-none" />
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => setEditandoResp(null)} className="h-7">Cancelar</Button>
+                        <Button size="sm" onClick={() => guardarEditResp(r.id)} className="h-7">Guardar</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.contenido}</p>
+                  )}
+                  {esAutor && !r.es_solucion && editandoResp !== r.id && (
                     <Button size="sm" variant="ghost" className="mt-2 h-7 gap-1.5 text-xs text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-700"
                       onClick={() => marcarSolucion(r.id)}>
                       <CheckCircle2 className="h-3.5 w-3.5" />Marcar como solución

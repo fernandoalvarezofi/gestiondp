@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { CallProvider } from "@/contexts/CallContext";
@@ -30,6 +30,7 @@ import NuevaComunidad from "./pages/lin/NuevaComunidad";
 import Foro from "./pages/lin/Foro";
 import ForoPost from "./pages/lin/ForoPost";
 import NuevoForoPost from "./pages/lin/NuevoForoPost";
+import Hub from "./pages/lin/Hub";
 
 import NuevaHistoria from "./pages/lin/NuevaHistoria";
 import HistoriaViewer from "./pages/lin/HistoriaViewer";
@@ -79,10 +80,11 @@ const App = () => (
                   <Route path="/lin/proyectos" element={<Proyectos />} />
                   <Route path="/lin/proyectos/nuevo" element={<NuevoProyecto />} />
                   <Route path="/lin/proyectos/:slug" element={<ProyectoDetalle />} />
-                  <Route path="/lin/comunidades" element={<Comunidades />} />
+                  <Route path="/lin/hub" element={<Hub />} />
+                  <Route path="/lin/comunidades" element={<Navigate to="/lin/hub?tab=comunidades" replace />} />
                   <Route path="/lin/comunidades/nueva" element={<NuevaComunidad />} />
                   <Route path="/lin/comunidades/:slug" element={<ComunidadDetalle />} />
-                  <Route path="/lin/foro" element={<Foro />} />
+                  <Route path="/lin/foro" element={<Navigate to="/lin/hub?tab=foro" replace />} />
                   <Route path="/lin/foro/nuevo" element={<NuevoForoPost />} />
                   <Route path="/lin/foro/post/:id" element={<ForoPost />} />
                   <Route path="/lin/historias/nueva" element={<NuevaHistoria />} />
