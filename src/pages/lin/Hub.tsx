@@ -40,9 +40,9 @@ export default function Hub() {
         </div>
       </header>
 
-      <_Suspense fallback={<div className="py-10 text-center text-xs text-muted-foreground">Cargando…</div>}>
+      <Suspense fallback={<div className="py-10 text-center text-xs text-muted-foreground">Cargando…</div>}>
         {tab === "foro" ? <Foro /> : <Comunidades />}
-      </_Suspense>
+      </Suspense>
     </div>
   );
 }
