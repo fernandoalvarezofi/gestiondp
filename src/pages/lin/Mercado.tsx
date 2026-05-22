@@ -242,27 +242,6 @@ export default function Mercado() {
   );
 }
 
-function ProductCard({ p, featured }: { p: any; featured?: boolean }) {
-  return (
-    <Link to={`/lin/mercado/${p.slug}`} className="group block">
-      <Card className="overflow-hidden border transition-all hover:-translate-y-0.5 hover:shadow-lg">
-        <div className="relative aspect-video bg-gradient-to-br from-secondary/40 to-secondary">
-          {p.portada_url ? (
-            <img src={p.portada_url} alt={p.titulo} loading="lazy" className="h-full w-full object-cover transition group-hover:scale-[1.02]" />
-          ) : (
-            <div className="flex h-full items-center justify-center text-4xl opacity-30">
-              {PRODUCT_TYPES.find((t) => t.id === p.tipo)?.icon ?? "📦"}
-            </div>
-          )}
-          {featured && (
-            <Badge className="absolute left-2 top-2 gap-1 bg-primary/95"><Sparkles className="h-3 w-3" /> Destacado</Badge>
-          )}
-          {p.categoria && (
-            <span style={{ background: `${p.categoria.color}E6` }} className="absolute right-2 top-2 rounded-full px-2 py-0.5 text-[10px] font-medium text-white">
-              {p.categoria.nombre}
-            </span>
-          )}
-        </div>
 function ProductCard({ p, featured, isNew }: { p: any; featured?: boolean; isNew?: boolean }) {
   const typeMeta = PRODUCT_TYPES.find((t) => t.id === p.tipo);
   return (
