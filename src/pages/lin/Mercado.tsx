@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, Star, Store, TrendingUp, Sparkles, Plus, ShoppingBag } from "lucide-react";
+import { Search, Star, Store, TrendingUp, Sparkles, Plus, ShoppingBag, Zap, Clock } from "lucide-react";
 import { formatPrice, PRODUCT_TYPES } from "@/lib/marketplace";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -84,6 +84,14 @@ export default function Mercado() {
   }, []);
 
   const destacados = useMemo(() => items.filter((p) => p.destacado).slice(0, 4), [items]);
+  const recientes = useMemo(() => {
+    const day = Date.now() - 24 * 60 * 60 * 1000;
+    return items
+      .filter((p) => new Date(p.created_at).getTime() > day)
+      .sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at))
+      .slice(0, 8);
+  }, [items]);
+  const isNew = (created_at: string) => Date.now() - new Date(created_at).getTime() < 24 * 60 * 60 * 1000;
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6">
