@@ -289,9 +289,36 @@ export default function ForoPost() {
                     <Avatar className="h-6 w-6"><AvatarImage src={r.perfil.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(r.perfil.nombre)}</AvatarFallback></Avatar>
                     <Link to={`/lin/perfil/${r.perfil.username}`} className="font-semibold hover:text-primary">{r.perfil.nombre}</Link>
                     <span className="text-muted-foreground">· {formatTime(r.created_at)}</span>
+                    {user?.id === r.perfil_id && (
+                      <div className="ml-auto">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-6 w-6"><MoreHorizontal className="h-3.5 w-3.5" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setEditandoResp(r.id); setEditRespTxt(r.contenido); }}>
+                              <Pencil className="mr-2 h-3.5 w-3.5" />Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => borrarResp(r.id)} className="text-rose-600 focus:text-rose-600">
+                              <Trash2 className="mr-2 h-3.5 w-3.5" />Eliminar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.contenido}</p>
-                  {esAutor && !r.es_solucion && (
+                  {editandoResp === r.id ? (
+                    <div className="mt-2 space-y-2">
+                      <Textarea value={editRespTxt} onChange={(e) => setEditRespTxt(e.target.value)} rows={3} className="resize-none" />
+                      <div className="flex justify-end gap-2">
+                        <Button size="sm" variant="ghost" onClick={() => setEditandoResp(null)} className="h-7">Cancelar</Button>
+                        <Button size="sm" onClick={() => guardarEditResp(r.id)} className="h-7">Guardar</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.contenido}</p>
+                  )}
+                  {esAutor && !r.es_solucion && editandoResp !== r.id && (
                     <Button size="sm" variant="ghost" className="mt-2 h-7 gap-1.5 text-xs text-emerald-700 hover:bg-emerald-500/10 hover:text-emerald-700"
                       onClick={() => marcarSolucion(r.id)}>
                       <CheckCircle2 className="h-3.5 w-3.5" />Marcar como solución
