@@ -1,11 +1,10 @@
-import { useSearchParams, NavLink } from "react-router-dom";
-import { Suspense, lazy } from "lucide-react" && undefined as never;
-import { lazy as _lazy, Suspense as _Suspense } from "react";
+import { useSearchParams } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import { MessagesSquare, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const Foro = _lazy(() => import("./Foro"));
-const Comunidades = _lazy(() => import("./Comunidades"));
+const Foro = lazy(() => import("./Foro"));
+const Comunidades = lazy(() => import("./Comunidades"));
 
 export default function Hub() {
   const [sp, setSp] = useSearchParams();
