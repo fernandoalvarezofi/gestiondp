@@ -28,11 +28,18 @@ const FILTROS_ESTADO = [
 ];
 
 export default function Proyectos() {
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [estado, setEstado] = useState<string>("all");
-  const [orden, setOrden] = useState<Orden>("destacados");
+  const [orden, setOrden] = useState<Orden>("upvotes");
   const [q, setQ] = useState("");
+  const [misVotos, setMisVotos] = useState<Set<string>>(new Set());
+
+  const cargarVotos = async (uid: string) => {
+    const { data } = await (supabase as any).from("proyecto_upvotes").select("proyecto_id").eq("perfil_id", uid);
+    setMisVotos(new Set((data || []).map((v: any) => v.proyecto_id)));
+  };
 
   useEffect(() => {
     (async () => {
@@ -41,12 +48,32 @@ export default function Proyectos() {
         .from("proyectos")
         .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)")
         .order("destacado", { ascending: false })
+        .order("total_upvotes", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(120);
       setItems(data || []);
       setLoading(false);
     })();
-  }, []);
+    if (user) cargarVotos(user.id);
+  }, [user]);
+
+  const toggleUpvote = async (proyectoId: string) => {
+    if (!user) { toast.error("Iniciá sesión para votar"); return; }
+    const tieneVoto = misVotos.has(proyectoId);
+    const nextSet = new Set(misVotos);
+    if (tieneVoto) {
+      nextSet.delete(proyectoId);
+      setMisVotos(nextSet);
+      setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) } : p));
+      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", proyectoId).eq("perfil_id", user.id);
+    } else {
+      nextSet.add(proyectoId);
+      setMisVotos(nextSet);
+      setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: (p.total_upvotes || 0) + 1 } : p));
+      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: proyectoId, perfil_id: user.id });
+      if (error) toast.error("No se pudo registrar el voto");
+    }
+  };
 
   const filtered = useMemo(() => {
     let list = [...items];
@@ -62,11 +89,15 @@ export default function Proyectos() {
     }
     if (orden === "recientes") list.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
     if (orden === "trending") list.sort((a, b) => (b.total_seguidores || 0) - (a.total_seguidores || 0));
+    if (orden === "upvotes") list.sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0));
     if (orden === "completados") list = list.filter((p) => p.estado === "completado" || p.estado === "lanzado");
     return list;
   }, [items, estado, q, orden]);
 
-  const destacados = useMemo(() => items.filter((p) => p.destacado).slice(0, 3), [items]);
+  const destacados = useMemo(
+    () => [...items].sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0)).slice(0, 3),
+    [items]
+  );
   const restantes = useMemo(() => filtered.filter((p) => !destacados.some((d) => d.id === p.id)), [filtered, destacados]);
 
   // Stats
