@@ -28,6 +28,7 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
   const [idxImg, setIdxImg] = useState(0);
   const [muted, setMuted] = useState(true);
   const [voted, setVoted] = useState<number | null>(null);
+  const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
