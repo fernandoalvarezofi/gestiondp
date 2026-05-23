@@ -196,7 +196,20 @@ export default function ProyectoDetalle() {
                 {p.tags?.map((t: string) => <Badge key={t} variant="secondary">{t}</Badge>)}
               </div>
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                onClick={toggleUpvote}
+                aria-pressed={voted}
+                className={cn(
+                  "flex h-14 w-16 flex-col items-center justify-center rounded-xl border-2 font-bold tabular-nums transition-all",
+                  voted
+                    ? "border-primary bg-primary text-primary-foreground shadow-ember"
+                    : "border-border bg-background text-foreground hover:border-primary hover:bg-primary/5 hover:text-primary"
+                )}
+              >
+                <Triangle className={cn("h-3.5 w-3.5", voted ? "fill-current" : "fill-none")} strokeWidth={2.5} />
+                <span className="text-[13px] leading-none mt-0.5">{p.total_upvotes || 0}</span>
+              </button>
               <Button variant={siguiendo ? "outline" : "default"} onClick={toggleSeguir} size="sm">
                 {siguiendo ? "Siguiendo" : "Seguir"}
               </Button>
