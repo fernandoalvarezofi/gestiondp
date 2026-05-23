@@ -393,17 +393,20 @@ function ProyectoCard({ p, voted, onUpvote }: { p: any; voted: boolean; onUpvote
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between border-t pt-2.5">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Avatar className="h-5 w-5"><AvatarImage src={p.perfil?.avatar_url || ""} /><AvatarFallback className="text-[9px]">{initials(p.perfil?.nombre)}</AvatarFallback></Avatar>
-            <span className="truncate text-[11px] font-medium text-muted-foreground">{p.perfil?.nombre}</span>
+        <div className="mt-auto flex items-end justify-between gap-2 border-t pt-2.5">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Avatar className="h-5 w-5"><AvatarImage src={p.perfil?.avatar_url || ""} /><AvatarFallback className="text-[9px]">{initials(p.perfil?.nombre)}</AvatarFallback></Avatar>
+              <span className="truncate text-[11px] font-medium text-muted-foreground">{p.perfil?.nombre}</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2.5 text-[11px] font-semibold text-muted-foreground">
+              {p.sitio_web && <Globe className="h-3 w-3" />}
+              {p.repo_url && <Github className="h-3 w-3" />}
+              {p.demo_url && <ExternalLink className="h-3 w-3" />}
+              <span className="flex items-center gap-0.5"><Users className="h-3 w-3" />{p.total_seguidores || 0}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2.5 text-[11px] font-semibold text-muted-foreground">
-            {p.sitio_web && <Globe className="h-3 w-3" />}
-            {p.repo_url && <Github className="h-3 w-3" />}
-            {p.demo_url && <ExternalLink className="h-3 w-3" />}
-            <span className="flex items-center gap-0.5"><Users className="h-3 w-3" />{p.total_seguidores || 0}</span>
-          </div>
+          <UpvoteButton count={p.total_upvotes || 0} voted={voted} onClick={onUpvote} size="md" />
         </div>
       </div>
     </Link>
