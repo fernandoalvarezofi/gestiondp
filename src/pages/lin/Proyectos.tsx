@@ -254,7 +254,32 @@ function Stat({ label, value, accent }: { label: string; value: number; accent: 
   );
 }
 
-function FeaturedCard({ p, rank }: { p: any; rank: number }) {
+function UpvoteButton({ count, voted, onClick, size = "md" }: { count: number; voted: boolean; onClick: () => void; size?: "sm" | "md" | "lg" }) {
+  const sizes = {
+    sm: "h-9 w-12 text-[11px]",
+    md: "h-11 w-14 text-[12px]",
+    lg: "h-14 w-16 text-[13px]",
+  } as const;
+  return (
+    <button
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}
+      className={cn(
+        "flex shrink-0 flex-col items-center justify-center gap-0 rounded-xl border-2 font-bold tabular-nums transition-all",
+        sizes[size],
+        voted
+          ? "border-primary bg-primary text-primary-foreground shadow-ember"
+          : "border-border bg-background text-foreground hover:border-primary hover:bg-primary/5 hover:text-primary"
+      )}
+      aria-label={voted ? "Quitar voto" : "Votar"}
+      aria-pressed={voted}
+    >
+      <Triangle className={cn("h-3 w-3", voted ? "fill-current" : "fill-none")} strokeWidth={2.5} />
+      <span className="leading-none">{count}</span>
+    </button>
+  );
+}
+
+function FeaturedCard({ p, rank, voted, onUpvote }: { p: any; rank: number; voted: boolean; onUpvote: () => void }) {
   const est = ESTADO_PROYECTO[p.estado];
   return (
     <Link to={`/lin/proyectos/${p.slug || p.id}`} className="group relative block overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/10">
@@ -274,11 +299,13 @@ function FeaturedCard({ p, rank }: { p: any; rank: number }) {
         )}
       </div>
       <div className="space-y-2.5 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-base font-bold group-hover:text-primary">{p.nombre}</h3>
-          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-1 text-base font-bold group-hover:text-primary">{p.nombre}</h3>
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{p.descripcion || "Sin descripción."}</p>
+          </div>
+          <UpvoteButton count={p.total_upvotes || 0} voted={voted} onClick={onUpvote} size="md" />
         </div>
-        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{p.descripcion || "Sin descripción."}</p>
         {typeof p.progreso === "number" && p.progreso > 0 && (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -303,7 +330,7 @@ function FeaturedCard({ p, rank }: { p: any; rank: number }) {
   );
 }
 
-function ProyectoCard({ p }: { p: any }) {
+function ProyectoCard({ p, voted, onUpvote }: { p: any; voted: boolean; onUpvote: () => void }) {
   const est = ESTADO_PROYECTO[p.estado];
   const buscando = (p.buscando || []) as string[];
   const tags = (p.tags || []) as string[];
