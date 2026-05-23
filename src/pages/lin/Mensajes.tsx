@@ -399,6 +399,7 @@ export default function Mensajes() {
                   <Input
                     value={txt} onChange={handleTyping}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
+                    onFocus={() => setTimeout(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), 350)}
                     placeholder="Mensaje…"
                     className="rounded-full border-transparent bg-secondary/60 px-4 transition-all focus-visible:bg-background focus-visible:ring-1"
                   />
