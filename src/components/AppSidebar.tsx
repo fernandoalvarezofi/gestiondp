@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import {
-  Home, PlusSquare, Search as SearchIcon, UserCircle, MessageCircle, Bell, Bookmark,
-  LineChart, Settings, LogOut, Rocket, Users, MessagesSquare, Store, ShoppingBag,
+  Home, Compass, Play, Rocket, Store, Users, MessageCircle, Bell, UserCircle,
+  Settings, LogOut, Plus,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -13,19 +13,39 @@ import {
 } from "@/components/ui/sidebar";
 import { NavLink } from "react-router-dom";
 
-const nav = [
-  { title: "Feed", icon: Home, to: "/lin", end: true },
-  { title: "Publicar", icon: PlusSquare, to: "/lin/publicar" },
-  { title: "Buscar", icon: SearchIcon, to: "/lin/buscar" },
-  { title: "Mercado", icon: Store, to: "/lin/mercado" },
-  { title: "Proyectos", icon: Rocket, to: "/lin/proyectos" },
-  { title: "Comunidad", icon: Users, to: "/lin/hub" },
-  { title: "Mensajes", icon: MessageCircle, to: "/lin/mensajes", badgeKey: "msg" as const },
-  { title: "Notificaciones", icon: Bell, to: "/lin/notificaciones", badgeKey: "notif" as const },
-  { title: "Mis compras", icon: ShoppingBag, to: "/lin/mis-compras" },
-  { title: "Guardados", icon: Bookmark, to: "/lin/favoritos" },
-  { title: "Mi panel", icon: LineChart, to: "/lin/panel" },
-  { title: "Mi perfil", icon: UserCircle, to: "/lin/perfil" },
+type NavItem = {
+  title: string;
+  icon: any;
+  to: string;
+  end?: boolean;
+  badgeKey?: "msg" | "notif";
+};
+
+const GROUPS: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Descubrir",
+    items: [
+      { title: "Feed", icon: Home, to: "/lin", end: true },
+      { title: "Explorar", icon: Compass, to: "/lin/explorar" },
+      { title: "Reels", icon: Play, to: "/lin/reels" },
+    ],
+  },
+  {
+    label: "Construir",
+    items: [
+      { title: "Proyectos", icon: Rocket, to: "/lin/proyectos" },
+      { title: "Mercado", icon: Store, to: "/lin/mercado" },
+      { title: "Comunidad", icon: Users, to: "/lin/hub" },
+    ],
+  },
+  {
+    label: "Yo",
+    items: [
+      { title: "Mensajes", icon: MessageCircle, to: "/lin/mensajes", badgeKey: "msg" },
+      { title: "Notificaciones", icon: Bell, to: "/lin/notificaciones", badgeKey: "notif" },
+      { title: "Mi perfil", icon: UserCircle, to: "/lin/perfil" },
+    ],
+  },
 ];
 
 export function AppSidebar() {
@@ -83,22 +103,38 @@ export function AppSidebar() {
             Woref<span className="text-primary">.</span>
           </span>
         </NavLink>
+        <NavLink
+          to="/lin/publicar"
+          className="mt-2 mb-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-ember transition-transform hover:scale-[1.02]"
+        >
+          <Plus className="h-4 w-4" /> Publicar
+        </NavLink>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup><SidebarGroupContent><SidebarMenu>
-          {nav.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
-                <NavLink to={item.to} end={item.end}
-                  className={({ isActive }) => isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""}>
-                  <item.icon className="h-4 w-4" /><span>{item.title}</span>
-                  {badge(item.badgeKey)}
-                </NavLink>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu></SidebarGroupContent></SidebarGroup>
+        {GROUPS.map((group, gi) => (
+          <SidebarGroup key={group.label}>
+            <p className="px-3 mt-4 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              {group.label}
+            </p>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.items.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink to={item.to} end={item.end}
+                        className={({ isActive }) => isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : ""}>
+                        <item.icon className="h-4 w-4" /><span>{item.title}</span>
+                        {badge(item.badgeKey)}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+            {gi < GROUPS.length - 1 && <div className="mx-3 mt-3 h-px bg-border" />}
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="space-y-2 p-4">

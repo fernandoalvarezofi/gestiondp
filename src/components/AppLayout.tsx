@@ -9,8 +9,8 @@ import { AppSidebar } from "./AppSidebar";
 import { ThemeToggle } from "./ThemeToggle";
 import { supabase } from "@/integrations/supabase/client";
 import {
-  Loader2, Home, Search, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, MessageSquare, Bookmark, BarChart3, Settings, Compass, Film, Store, ShoppingBag, Download,
+  Loader2, Home, Compass, Plus, MessageCircle, UserCircle,
+  Menu, Rocket, Users, Bookmark, BarChart3, Settings, Film, Store, ShoppingBag, Bell,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
@@ -64,19 +64,31 @@ export function AppLayout() {
   }
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
-    `flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-all ${isActive ? "text-foreground" : "text-muted-foreground"}`;
+    `min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg transition-all ${isActive ? "text-foreground" : "text-muted-foreground"}`;
 
-  const secondary = [
-    { to: "/lin/mercado", icon: Store, label: "Mercado" },
-    { to: "/lin/mis-compras", icon: ShoppingBag, label: "Mis compras" },
-    { to: "/lin/explorar", icon: Compass, label: "Explorar" },
-    { to: "/lin/reels", icon: Film, label: "Reels" },
-    { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
-    { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
-    { to: "/lin/foro", icon: MessageSquare, label: "Foro" },
-    { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
-    { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },
-    { to: "/lin/perfil/editar", icon: Settings, label: "Editar perfil" },
+  const sheetGroups: { label: string; items: { to: string; icon: any; label: string }[] }[] = [
+    {
+      label: "Descubrir",
+      items: [{ to: "/lin/reels", icon: Film, label: "Reels" }],
+    },
+    {
+      label: "Construir",
+      items: [
+        { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
+        { to: "/lin/mercado", icon: Store, label: "Mercado" },
+        { to: "/lin/hub", icon: Users, label: "Comunidad" },
+      ],
+    },
+    {
+      label: "Mi cuenta",
+      items: [
+        { to: "/lin/notificaciones", icon: Bell, label: "Notificaciones" },
+        { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
+        { to: "/lin/mis-compras", icon: ShoppingBag, label: "Mis compras" },
+        { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },
+        { to: "/lin/perfil/editar", icon: Settings, label: "Editar perfil" },
+      ],
+    },
   ];
 
   return (
@@ -92,7 +104,7 @@ export function AppLayout() {
                   <Menu className="h-5 w-5" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="left" className="w-72 bg-sidebar text-sidebar-foreground border-sidebar-border">
+              <SheetContent side="left" className="w-72 overflow-y-auto bg-sidebar text-sidebar-foreground border-sidebar-border">
                 <div className="mb-6 flex items-center gap-2.5">
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-ember shadow-ember">
                     <span className="h-1.5 w-1.5 rounded-full bg-white" />
@@ -101,22 +113,31 @@ export function AppLayout() {
                     Woref<span className="text-primary">.</span>
                   </span>
                 </div>
-                <nav className="space-y-1">
-                  {secondary.map(({ to, icon: Icon, label }) => (
-                    <NavLink
-                      key={to}
-                      to={to}
-                      onClick={() => setMenuOpen(false)}
-                      className={({ isActive }) =>
-                        `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
-                      }
-                    >
-                      <Icon className="h-5 w-5" />
-                      {label}
-                    </NavLink>
+                <nav>
+                  {sheetGroups.map((group, gi) => (
+                    <div key={group.label}>
+                      <p className="px-3 mt-4 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                        {group.label}
+                      </p>
+                      <div className="space-y-0.5">
+                        {group.items.map(({ to, icon: Icon, label }) => (
+                          <NavLink
+                            key={to}
+                            to={to}
+                            onClick={() => setMenuOpen(false)}
+                            className={({ isActive }) =>
+                              `flex items-center gap-3 rounded-xl px-3 py-2.5 min-h-[44px] text-sm transition-colors ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
+                            }
+                          >
+                            <Icon className="h-5 w-5" />
+                            {label}
+                          </NavLink>
+                        ))}
+                      </div>
+                      {gi < sheetGroups.length - 1 && <div className="mx-3 mt-3 h-px bg-border" />}
+                    </div>
                   ))}
-                  <div className="my-3 border-t border-sidebar-border" />
-                  <div className="px-1 py-1" onClick={() => setMenuOpen(false)}>
+                  <div className="mt-6 px-1 py-1" onClick={() => setMenuOpen(false)}>
                     <InstallAppCTA variant="card" className="!p-4" />
                   </div>
                 </nav>
@@ -135,7 +156,7 @@ export function AppLayout() {
               <ThemeToggle />
             </div>
           </div>
-          <div className="p-4 md:p-6">
+          <div className="px-0 pt-0 pb-0 md:p-6">
             <Outlet />
           </div>
         </main>
@@ -149,20 +170,14 @@ export function AppLayout() {
           </NavLink>
           <NavLink to="/lin/explorar" className={linkCls}>
             {({ isActive }) => (<>
-              <Search className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <Compass className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
               <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Explorar</span>
             </>)}
           </NavLink>
-          <NavLink to="/lin/publicar" className="flex flex-col items-center gap-0.5">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-ember text-primary-foreground shadow-ember ring-2 ring-background">
+          <NavLink to="/lin/publicar" className="min-h-[44px] flex flex-col items-center justify-center" aria-label="Publicar">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-ember ring-2 ring-background">
               <Plus className="h-5 w-5" strokeWidth={2.5} />
             </div>
-          </NavLink>
-          <NavLink to="/lin/mercado" className={linkCls}>
-            {({ isActive }) => (<>
-              <Store className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
-              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Mercado</span>
-            </>)}
           </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
             {({ isActive }) => (<>
