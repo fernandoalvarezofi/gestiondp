@@ -141,17 +141,25 @@ export default function Proyectos() {
         </div>
       </section>
 
-      {/* TOP DESTACADOS — estilo Product Hunt */}
-      {destacados.length > 0 && (
+      {/* TOP DESTACADOS — estilo Product Hunt (ranking por upvotes) */}
+      {destacados.length > 0 && destacados[0].total_upvotes > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-lg font-bold">
-              <Flame className="h-5 w-5 text-orange-500" /> Destacados de la semana
+              <Flame className="h-5 w-5 text-orange-500" /> Top de la semana
             </h2>
-            <Link to="#" className="text-xs font-semibold text-muted-foreground hover:text-foreground">Ver todos</Link>
+            <span className="text-xs font-semibold text-muted-foreground">Votado por la comunidad</span>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            {destacados.map((p, i) => <FeaturedCard key={p.id} p={p} rank={i + 1} />)}
+            {destacados.map((p, i) => (
+              <FeaturedCard
+                key={p.id}
+                p={p}
+                rank={i + 1}
+                voted={misVotos.has(p.id)}
+                onUpvote={() => toggleUpvote(p.id)}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -173,7 +181,7 @@ export default function Proyectos() {
             onChange={(e) => setOrden(e.target.value as Orden)}
             className="h-10 rounded-full border bg-background px-3 text-sm font-medium"
           >
-            <option value="destacados">Destacados</option>
+            <option value="upvotes">Más votados</option>
             <option value="trending">Más seguidos</option>
             <option value="recientes">Recientes</option>
             <option value="completados">Lanzados</option>
