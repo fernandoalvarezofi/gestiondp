@@ -1,9 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Heart, MessageCircle, Repeat2, Bookmark, BadgeCheck, MoreHorizontal, BarChart3, Trash2,
   Pause, Play, Share2, ChevronLeft, ChevronRight, Link2, Flag, UserPlus, UserMinus, VolumeX,
-  Volume2, FileText, Clock, ArrowRight, Briefcase, MapPin, Globe, Maximize2,
+  Volume2, FileText, Clock, ArrowRight, Briefcase, MapPin, Globe, Maximize2, X, ExternalLink,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
