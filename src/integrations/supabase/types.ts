@@ -2742,6 +2742,35 @@ export type Database = {
           },
         ]
       }
+      proyecto_upvotes: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          proyecto_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          proyecto_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          proyecto_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_upvotes_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proyectos: {
         Row: {
           buscando: string[] | null
@@ -2762,6 +2791,7 @@ export type Database = {
           tags: string[] | null
           total_miembros: number
           total_seguidores: number
+          total_upvotes: number
           updated_at: string
         }
         Insert: {
@@ -2783,6 +2813,7 @@ export type Database = {
           tags?: string[] | null
           total_miembros?: number
           total_seguidores?: number
+          total_upvotes?: number
           updated_at?: string
         }
         Update: {
@@ -2804,6 +2835,7 @@ export type Database = {
           tags?: string[] | null
           total_miembros?: number
           total_seguidores?: number
+          total_upvotes?: number
           updated_at?: string
         }
         Relationships: [
