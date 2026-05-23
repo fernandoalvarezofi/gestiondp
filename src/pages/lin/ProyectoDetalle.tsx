@@ -95,6 +95,20 @@ export default function ProyectoDetalle() {
     setSiguiendo(!siguiendo);
   };
 
+  const toggleUpvote = async () => {
+    if (!user) return toast.error("Iniciá sesión para votar");
+    if (voted) {
+      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", p.id).eq("perfil_id", user.id);
+      setVoted(false);
+      setP({ ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) });
+    } else {
+      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: p.id, perfil_id: user.id });
+      if (error) return toast.error("No se pudo registrar el voto");
+      setVoted(true);
+      setP({ ...p, total_upvotes: (p.total_upvotes || 0) + 1 });
+    }
+  };
+
   const crearTarea = async () => {
     if (!user || !nuevaTarea.titulo.trim()) return;
     const { error } = await (supabase as any).from("proyecto_tareas").insert({
