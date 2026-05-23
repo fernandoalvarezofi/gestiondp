@@ -41,6 +41,7 @@ export default function ProyectoDetalle() {
   const [archivos, setArchivos] = useState<any[]>([]);
   const [actividad, setActividad] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
+  const [voted, setVoted] = useState(false);
   const [esMiembro, setEsMiembro] = useState(false);
   const [tab, setTab] = useState("overview");
   const [nuevaTarea, setNuevaTarea] = useState({ open: false, titulo: "", descripcion: "", estado: "backlog", prioridad: "media", asignado_id: "", fecha_limite: "" });
