@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Plus, Rocket, TrendingUp, Sparkles, Users, Search, Star, Flame, Globe, Github, ExternalLink,
-  Loader2, ArrowUpRight, CheckCircle2, Layers,
+  Loader2, ArrowUpRight, CheckCircle2, Layers, ChevronUp, Triangle,
 } from "lucide-react";
 import { ESTADO_PROYECTO, initials } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-type Orden = "destacados" | "recientes" | "trending" | "completados";
+type Orden = "destacados" | "recientes" | "trending" | "upvotes" | "completados";
 
 const FILTROS_ESTADO = [
   { key: "all", label: "Todos", icon: Layers },
@@ -26,11 +28,18 @@ const FILTROS_ESTADO = [
 ];
 
 export default function Proyectos() {
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [estado, setEstado] = useState<string>("all");
-  const [orden, setOrden] = useState<Orden>("destacados");
+  const [orden, setOrden] = useState<Orden>("upvotes");
   const [q, setQ] = useState("");
+  const [misVotos, setMisVotos] = useState<Set<string>>(new Set());
+
+  const cargarVotos = async (uid: string) => {
+    const { data } = await (supabase as any).from("proyecto_upvotes").select("proyecto_id").eq("perfil_id", uid);
+    setMisVotos(new Set((data || []).map((v: any) => v.proyecto_id)));
+  };
 
   useEffect(() => {
     (async () => {
@@ -39,12 +48,32 @@ export default function Proyectos() {
         .from("proyectos")
         .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)")
         .order("destacado", { ascending: false })
+        .order("total_upvotes", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(120);
       setItems(data || []);
       setLoading(false);
     })();
-  }, []);
+    if (user) cargarVotos(user.id);
+  }, [user]);
+
+  const toggleUpvote = async (proyectoId: string) => {
+    if (!user) { toast.error("Iniciá sesión para votar"); return; }
+    const tieneVoto = misVotos.has(proyectoId);
+    const nextSet = new Set(misVotos);
+    if (tieneVoto) {
+      nextSet.delete(proyectoId);
+      setMisVotos(nextSet);
+      setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) } : p));
+      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", proyectoId).eq("perfil_id", user.id);
+    } else {
+      nextSet.add(proyectoId);
+      setMisVotos(nextSet);
+      setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: (p.total_upvotes || 0) + 1 } : p));
+      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: proyectoId, perfil_id: user.id });
+      if (error) toast.error("No se pudo registrar el voto");
+    }
+  };
 
   const filtered = useMemo(() => {
     let list = [...items];
@@ -60,11 +89,15 @@ export default function Proyectos() {
     }
     if (orden === "recientes") list.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
     if (orden === "trending") list.sort((a, b) => (b.total_seguidores || 0) - (a.total_seguidores || 0));
+    if (orden === "upvotes") list.sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0));
     if (orden === "completados") list = list.filter((p) => p.estado === "completado" || p.estado === "lanzado");
     return list;
   }, [items, estado, q, orden]);
 
-  const destacados = useMemo(() => items.filter((p) => p.destacado).slice(0, 3), [items]);
+  const destacados = useMemo(
+    () => [...items].sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0)).slice(0, 3),
+    [items]
+  );
   const restantes = useMemo(() => filtered.filter((p) => !destacados.some((d) => d.id === p.id)), [filtered, destacados]);
 
   // Stats
@@ -108,17 +141,25 @@ export default function Proyectos() {
         </div>
       </section>
 
-      {/* TOP DESTACADOS — estilo Product Hunt */}
-      {destacados.length > 0 && (
+      {/* TOP DESTACADOS — estilo Product Hunt (ranking por upvotes) */}
+      {destacados.length > 0 && destacados[0].total_upvotes > 0 && (
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 text-lg font-bold">
-              <Flame className="h-5 w-5 text-orange-500" /> Destacados de la semana
+              <Flame className="h-5 w-5 text-orange-500" /> Top de la semana
             </h2>
-            <Link to="#" className="text-xs font-semibold text-muted-foreground hover:text-foreground">Ver todos</Link>
+            <span className="text-xs font-semibold text-muted-foreground">Votado por la comunidad</span>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            {destacados.map((p, i) => <FeaturedCard key={p.id} p={p} rank={i + 1} />)}
+            {destacados.map((p, i) => (
+              <FeaturedCard
+                key={p.id}
+                p={p}
+                rank={i + 1}
+                voted={misVotos.has(p.id)}
+                onUpvote={() => toggleUpvote(p.id)}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -140,7 +181,7 @@ export default function Proyectos() {
             onChange={(e) => setOrden(e.target.value as Orden)}
             className="h-10 rounded-full border bg-background px-3 text-sm font-medium"
           >
-            <option value="destacados">Destacados</option>
+            <option value="upvotes">Más votados</option>
             <option value="trending">Más seguidos</option>
             <option value="recientes">Recientes</option>
             <option value="completados">Lanzados</option>
@@ -188,7 +229,14 @@ export default function Proyectos() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {restantes.map((p) => <ProyectoCard key={p.id} p={p} />)}
+          {restantes.map((p) => (
+            <ProyectoCard
+              key={p.id}
+              p={p}
+              voted={misVotos.has(p.id)}
+              onUpvote={() => toggleUpvote(p.id)}
+            />
+          ))}
         </div>
       )}
     </div>
@@ -206,7 +254,32 @@ function Stat({ label, value, accent }: { label: string; value: number; accent: 
   );
 }
 
-function FeaturedCard({ p, rank }: { p: any; rank: number }) {
+function UpvoteButton({ count, voted, onClick, size = "md" }: { count: number; voted: boolean; onClick: () => void; size?: "sm" | "md" | "lg" }) {
+  const sizes = {
+    sm: "h-9 w-12 text-[11px]",
+    md: "h-11 w-14 text-[12px]",
+    lg: "h-14 w-16 text-[13px]",
+  } as const;
+  return (
+    <button
+      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}
+      className={cn(
+        "flex shrink-0 flex-col items-center justify-center gap-0 rounded-xl border-2 font-bold tabular-nums transition-all",
+        sizes[size],
+        voted
+          ? "border-primary bg-primary text-primary-foreground shadow-ember"
+          : "border-border bg-background text-foreground hover:border-primary hover:bg-primary/5 hover:text-primary"
+      )}
+      aria-label={voted ? "Quitar voto" : "Votar"}
+      aria-pressed={voted}
+    >
+      <Triangle className={cn("h-3 w-3", voted ? "fill-current" : "fill-none")} strokeWidth={2.5} />
+      <span className="leading-none">{count}</span>
+    </button>
+  );
+}
+
+function FeaturedCard({ p, rank, voted, onUpvote }: { p: any; rank: number; voted: boolean; onUpvote: () => void }) {
   const est = ESTADO_PROYECTO[p.estado];
   return (
     <Link to={`/lin/proyectos/${p.slug || p.id}`} className="group relative block overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/10">
@@ -226,11 +299,13 @@ function FeaturedCard({ p, rank }: { p: any; rank: number }) {
         )}
       </div>
       <div className="space-y-2.5 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-base font-bold group-hover:text-primary">{p.nombre}</h3>
-          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+        <div className="flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-1 text-base font-bold group-hover:text-primary">{p.nombre}</h3>
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{p.descripcion || "Sin descripción."}</p>
+          </div>
+          <UpvoteButton count={p.total_upvotes || 0} voted={voted} onClick={onUpvote} size="md" />
         </div>
-        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{p.descripcion || "Sin descripción."}</p>
         {typeof p.progreso === "number" && p.progreso > 0 && (
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -255,7 +330,7 @@ function FeaturedCard({ p, rank }: { p: any; rank: number }) {
   );
 }
 
-function ProyectoCard({ p }: { p: any }) {
+function ProyectoCard({ p, voted, onUpvote }: { p: any; voted: boolean; onUpvote: () => void }) {
   const est = ESTADO_PROYECTO[p.estado];
   const buscando = (p.buscando || []) as string[];
   const tags = (p.tags || []) as string[];
@@ -318,17 +393,20 @@ function ProyectoCard({ p }: { p: any }) {
           </div>
         )}
 
-        <div className="mt-auto flex items-center justify-between border-t pt-2.5">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Avatar className="h-5 w-5"><AvatarImage src={p.perfil?.avatar_url || ""} /><AvatarFallback className="text-[9px]">{initials(p.perfil?.nombre)}</AvatarFallback></Avatar>
-            <span className="truncate text-[11px] font-medium text-muted-foreground">{p.perfil?.nombre}</span>
+        <div className="mt-auto flex items-end justify-between gap-2 border-t pt-2.5">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Avatar className="h-5 w-5"><AvatarImage src={p.perfil?.avatar_url || ""} /><AvatarFallback className="text-[9px]">{initials(p.perfil?.nombre)}</AvatarFallback></Avatar>
+              <span className="truncate text-[11px] font-medium text-muted-foreground">{p.perfil?.nombre}</span>
+            </div>
+            <div className="mt-1 flex items-center gap-2.5 text-[11px] font-semibold text-muted-foreground">
+              {p.sitio_web && <Globe className="h-3 w-3" />}
+              {p.repo_url && <Github className="h-3 w-3" />}
+              {p.demo_url && <ExternalLink className="h-3 w-3" />}
+              <span className="flex items-center gap-0.5"><Users className="h-3 w-3" />{p.total_seguidores || 0}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2.5 text-[11px] font-semibold text-muted-foreground">
-            {p.sitio_web && <Globe className="h-3 w-3" />}
-            {p.repo_url && <Github className="h-3 w-3" />}
-            {p.demo_url && <ExternalLink className="h-3 w-3" />}
-            <span className="flex items-center gap-0.5"><Users className="h-3 w-3" />{p.total_seguidores || 0}</span>
-          </div>
+          <UpvoteButton count={p.total_upvotes || 0} voted={voted} onClick={onUpvote} size="md" />
         </div>
       </div>
     </Link>

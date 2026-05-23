@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ESTADO_PROYECTO, initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles } from "lucide-react";
+import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackHeader } from "@/components/lin/BackHeader";
 
@@ -41,6 +41,7 @@ export default function ProyectoDetalle() {
   const [archivos, setArchivos] = useState<any[]>([]);
   const [actividad, setActividad] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
+  const [voted, setVoted] = useState(false);
   const [esMiembro, setEsMiembro] = useState(false);
   const [tab, setTab] = useState("overview");
   const [nuevaTarea, setNuevaTarea] = useState({ open: false, titulo: "", descripcion: "", estado: "backlog", prioridad: "media", asignado_id: "", fecha_limite: "" });
@@ -59,8 +60,12 @@ export default function ProyectoDetalle() {
     ]);
     setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []);
     if (user) {
-      const { data: s } = await (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle();
+      const [{ data: s }, { data: v }] = await Promise.all([
+        (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
+        (supabase as any).from("proyecto_upvotes").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
+      ]);
       setSiguiendo(!!s);
+      setVoted(!!v);
       setEsMiembro((m || []).some((x: any) => x.perfil_id === user.id) || data.perfil_id === user.id);
     }
   };
@@ -88,6 +93,20 @@ export default function ProyectoDetalle() {
     if (siguiendo) await (supabase as any).from("proyecto_seguidores").delete().eq("proyecto_id", p.id).eq("perfil_id", user.id);
     else await (supabase as any).from("proyecto_seguidores").insert({ proyecto_id: p.id, perfil_id: user.id });
     setSiguiendo(!siguiendo);
+  };
+
+  const toggleUpvote = async () => {
+    if (!user) return toast.error("Iniciá sesión para votar");
+    if (voted) {
+      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", p.id).eq("perfil_id", user.id);
+      setVoted(false);
+      setP({ ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) });
+    } else {
+      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: p.id, perfil_id: user.id });
+      if (error) return toast.error("No se pudo registrar el voto");
+      setVoted(true);
+      setP({ ...p, total_upvotes: (p.total_upvotes || 0) + 1 });
+    }
   };
 
   const crearTarea = async () => {
@@ -177,7 +196,20 @@ export default function ProyectoDetalle() {
                 {p.tags?.map((t: string) => <Badge key={t} variant="secondary">{t}</Badge>)}
               </div>
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 items-center gap-2">
+              <button
+                onClick={toggleUpvote}
+                aria-pressed={voted}
+                className={cn(
+                  "flex h-14 w-16 flex-col items-center justify-center rounded-xl border-2 font-bold tabular-nums transition-all",
+                  voted
+                    ? "border-primary bg-primary text-primary-foreground shadow-ember"
+                    : "border-border bg-background text-foreground hover:border-primary hover:bg-primary/5 hover:text-primary"
+                )}
+              >
+                <Triangle className={cn("h-3.5 w-3.5", voted ? "fill-current" : "fill-none")} strokeWidth={2.5} />
+                <span className="text-[13px] leading-none mt-0.5">{p.total_upvotes || 0}</span>
+              </button>
               <Button variant={siguiendo ? "outline" : "default"} onClick={toggleSeguir} size="sm">
                 {siguiendo ? "Siguiendo" : "Seguir"}
               </Button>
