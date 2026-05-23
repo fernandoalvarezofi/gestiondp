@@ -469,3 +469,139 @@ function IconBtn({ icon: Icon, onClick, active, hoverColor, activeColor, fillOnA
     </button>
   );
 }
+
+/* ----------------------------- Helpers UI ----------------------------- */
+
+const URL_REGEX = /(https?:\/\/[^\s]+)/g;
+
+function renderTextWithLinks(text: string) {
+  if (!text) return null;
+  const parts = text.split(URL_REGEX);
+  return parts.map((part, i) => {
+    if (URL_REGEX.test(part)) {
+      URL_REGEX.lastIndex = 0;
+      return (
+        <a key={i} href={part} target="_blank" rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="text-primary hover:underline break-all">
+          {part.length > 60 ? `${part.slice(0, 60)}…` : part}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
+function extractFirstUrl(text: string): string | null {
+  if (!text) return null;
+  const m = text.match(URL_REGEX);
+  return m?.[0] || null;
+}
+
+function LinkPreview({ text }: { text: string }) {
+  const url = extractFirstUrl(text);
+  if (!url) return null;
+  let host = "";
+  let path = "";
+  try {
+    const u = new URL(url);
+    host = u.hostname.replace(/^www\./, "");
+    path = u.pathname === "/" ? "" : u.pathname;
+  } catch { return null; }
+  const favicon = `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={(e) => e.stopPropagation()}
+      className="group/lp flex items-stretch gap-3 overflow-hidden rounded-2xl border bg-secondary/30 transition-colors hover:border-primary/40 hover:bg-secondary/50"
+    >
+      <div className="flex h-20 w-20 shrink-0 items-center justify-center bg-background sm:h-24 sm:w-24">
+        <img
+          src={favicon}
+          alt=""
+          className="h-10 w-10 rounded-md"
+          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
+        />
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col justify-center py-2.5 pr-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{host}</p>
+        <p className="line-clamp-2 text-[14px] font-medium text-foreground">{path || url}</p>
+        <p className="mt-1 inline-flex items-center gap-1 text-[12px] text-primary opacity-0 transition-opacity group-hover/lp:opacity-100">
+          Abrir enlace <ExternalLink className="h-3 w-3" />
+        </p>
+      </div>
+    </a>
+  );
+}
+
+function Lightbox({ images, index, onClose, onChange }: { images: string[]; index: number; onClose: () => void; onChange: (i: number) => void }) {
+  const prev = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    onChange((index - 1 + images.length) % images.length);
+  }, [index, images.length, onChange]);
+  const next = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    onChange((index + 1) % images.length);
+  }, [index, images.length, onChange]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowLeft") prev();
+      if (e.key === "ArrowRight") next();
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [onClose, prev, next]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <button
+        onClick={(e) => { e.stopPropagation(); onClose(); }}
+        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
+        aria-label="Cerrar"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={prev}
+            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20"
+            aria-label="Anterior"
+          >
+            <ChevronLeft className="h-6 w-6" />
+          </button>
+          <button
+            onClick={next}
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition hover:bg-white/20"
+            aria-label="Siguiente"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </button>
+          <span className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-white/10 px-3 py-1 text-[12px] font-semibold text-white">
+            {index + 1} / {images.length}
+          </span>
+        </>
+      )}
+      <img
+        src={images[index]}
+        alt=""
+        onClick={(e) => e.stopPropagation()}
+        className="max-h-[92vh] max-w-[92vw] object-contain"
+      />
+    </div>
+  );
+}
+
