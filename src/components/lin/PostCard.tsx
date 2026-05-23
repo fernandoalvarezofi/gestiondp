@@ -213,10 +213,12 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
             toggleFollow={toggleFollow} copyLink={copyLink} share={share} setHidden={setHidden} onDeleted={onDeleted} />
 
           <div className="mt-1 space-y-2.5">
-            {pub.titulo && <h3 className="text-[15px] font-semibold leading-snug">{pub.titulo}</h3>}
+            {pub.titulo && <h3 className="text-[16px] sm:text-[15px] font-semibold leading-snug">{pub.titulo}</h3>}
             {pub.cuerpo && (
               <div>
-                <p className="whitespace-pre-wrap text-[15px] leading-relaxed text-foreground/90">{cuerpoMostrado}</p>
+                <p className="whitespace-pre-wrap break-words text-[16px] leading-relaxed text-foreground/90">
+                  {renderTextWithLinks(cuerpoMostrado)}
+                </p>
                 {cuerpoLargo && (
                   <button onClick={(e) => { e.stopPropagation(); e.preventDefault(); setExpandido(!expandido); }}
                     className="mt-0.5 text-[13px] font-medium text-primary hover:underline">
@@ -226,6 +228,11 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
               </div>
             )}
 
+            {/* Link preview — solo si no hay imágenes ni video */}
+            {imagenes.length === 0 && !isVideo && pub.cuerpo && (
+              <LinkPreview text={pub.cuerpo} />
+            )}
+
             {isHiring && (pub.rol_buscado || pub.modalidad || pub.pais) && (
               <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-amber-500/5 p-3.5">
                 <div className="flex items-start gap-2">
@@ -233,11 +240,11 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
                   <div className="min-w-0 flex-1">
                     {pub.rol_buscado && <p className="text-sm font-semibold">{pub.rol_buscado}</p>}
                     <div className="mt-1 flex flex-wrap gap-1.5">
-                      {pub.modalidad && <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium"><Globe className="h-2.5 w-2.5" />{pub.modalidad}</span>}
-                      {pub.pais && <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-[11px] font-medium"><MapPin className="h-2.5 w-2.5" />{pub.pais}</span>}
+                      {pub.modalidad && <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-[12px] font-medium"><Globe className="h-2.5 w-2.5" />{pub.modalidad}</span>}
+                      {pub.pais && <span className="inline-flex items-center gap-1 rounded-full bg-background px-2 py-0.5 text-[12px] font-medium"><MapPin className="h-2.5 w-2.5" />{pub.pais}</span>}
                     </div>
                   </div>
-                  <Button size="sm" variant="default" className="h-7 rounded-full px-3 text-[11px]" onClick={(e) => { e.stopPropagation(); open(); }}>
+                  <Button size="sm" variant="default" className="h-7 rounded-full px-3 text-[12px]" onClick={(e) => { e.stopPropagation(); open(); }}>
                     Aplicar
                   </Button>
                 </div>
@@ -264,20 +271,26 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
                     </button>
                   );
                 })}
-                <p className="text-[11px] text-muted-foreground">{voted !== null ? "Voto registrado" : "Tocá una opción para votar"} · {formatNumber(pub.vistas)} vistas</p>
+                <p className="text-[12px] text-muted-foreground">{voted !== null ? "Voto registrado" : "Tocá una opción para votar"} · {formatNumber(pub.vistas)} vistas</p>
               </div>
             )}
 
             {imagenes.length === 1 && (
-              <div className="overflow-hidden rounded-2xl border bg-secondary/20" style={{ aspectRatio: "16 / 10" }}>
+              <div
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); setLightboxIdx(0); }}
+                className="cursor-zoom-in overflow-hidden rounded-2xl border bg-secondary/20"
+                style={{ aspectRatio: "16 / 10" }}
+              >
                 <LazyImage src={imagenes[0]} alt={pub.titulo || ""} className="object-cover" />
               </div>
             )}
             {imagenes.length > 1 && (
               <div className="relative overflow-hidden rounded-2xl border bg-secondary/20" style={{ aspectRatio: "4 / 3" }}
                 onClick={(e) => e.stopPropagation()}>
-                <LazyImage src={imagenes[idxImg]} alt={pub.titulo || ""} className="object-cover" />
-                <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-semibold text-white backdrop-blur">
+                <div className="h-full w-full cursor-zoom-in" onClick={(e) => { e.stopPropagation(); e.preventDefault(); setLightboxIdx(idxImg); }}>
+                  <LazyImage src={imagenes[idxImg]} alt={pub.titulo || ""} className="object-cover" />
+                </div>
+                <span className="absolute right-2 top-2 rounded-full bg-black/60 px-2 py-0.5 text-[12px] font-semibold text-white backdrop-blur">
                   {idxImg + 1}/{imagenes.length}
                 </span>
                 <button onClick={() => setIdxImg((i) => (i - 1 + imagenes.length) % imagenes.length)}
@@ -296,7 +309,7 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
             {isVideo && (
               <div className="relative overflow-hidden rounded-2xl border bg-black" onClick={(e) => e.stopPropagation()}>
                 <video src={pub.video_url} controls className="max-h-[500px] w-full" preload="metadata" />
-                <span className="pointer-events-none absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-semibold text-white backdrop-blur">
+                <span className="pointer-events-none absolute left-2 top-2 inline-flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[12px] font-semibold text-white backdrop-blur">
                   <Play className="h-2.5 w-2.5 fill-current" /> Video
                 </span>
               </div>
@@ -308,6 +321,15 @@ export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string
             toggleLike={toggleLike} toggleRepost={toggleRepost} toggleSave={toggleSave} share={share} open={open} views={pub.vistas} />
         </div>
       </div>
+
+      {lightboxIdx !== null && imagenes.length > 0 && (
+        <Lightbox
+          images={imagenes}
+          index={lightboxIdx}
+          onClose={() => setLightboxIdx(null)}
+          onChange={setLightboxIdx}
+        />
+      )}
     </article>
   );
 }
