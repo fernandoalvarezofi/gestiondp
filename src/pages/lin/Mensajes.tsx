@@ -181,7 +181,7 @@ export default function Mensajes() {
   const ultimoEnviadoId = enviados.at(-1)?.id;
 
   return (
-    <div className="mx-auto -mt-4 grid h-[calc(100vh-7rem)] max-w-6xl gap-0 overflow-hidden md:-mt-6 md:h-[calc(100vh-4rem)] md:grid-cols-[340px_1fr] md:rounded-2xl md:border">
+    <div className="mx-auto -mt-4 grid h-[calc(100dvh-130px)] max-w-6xl gap-0 overflow-hidden md:-mt-6 md:h-[calc(100vh-4rem)] md:grid-cols-[340px_1fr] md:rounded-2xl md:border">
       {/* Lista */}
       <aside className={`flex flex-col overflow-hidden border-r bg-background ${showChat ? "hidden md:flex" : "flex"}`}>
         <div className="flex items-center justify-between border-b px-4 py-3">
