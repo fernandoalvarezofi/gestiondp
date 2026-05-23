@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,12 +9,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
   Plus, Rocket, TrendingUp, Sparkles, Users, Search, Star, Flame, Globe, Github, ExternalLink,
-  Loader2, ArrowUpRight, CheckCircle2, Layers,
+  Loader2, ArrowUpRight, CheckCircle2, Layers, ChevronUp, Triangle,
 } from "lucide-react";
 import { ESTADO_PROYECTO, initials } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
-type Orden = "destacados" | "recientes" | "trending" | "completados";
+type Orden = "destacados" | "recientes" | "trending" | "upvotes" | "completados";
 
 const FILTROS_ESTADO = [
   { key: "all", label: "Todos", icon: Layers },
