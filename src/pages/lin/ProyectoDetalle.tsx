@@ -60,8 +60,12 @@ export default function ProyectoDetalle() {
     ]);
     setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []);
     if (user) {
-      const { data: s } = await (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle();
+      const [{ data: s }, { data: v }] = await Promise.all([
+        (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
+        (supabase as any).from("proyecto_upvotes").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
+      ]);
       setSiguiendo(!!s);
+      setVoted(!!v);
       setEsMiembro((m || []).some((x: any) => x.perfil_id === user.id) || data.perfil_id === user.id);
     }
   };
