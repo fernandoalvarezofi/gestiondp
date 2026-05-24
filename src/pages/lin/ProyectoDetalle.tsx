@@ -137,8 +137,11 @@ export default function ProyectoDetalle() {
 
   const eliminarTarea = async (id: string) => {
     const t = tareas.find((x) => x.id === id);
+    const ok = await confirm({ title: "¿Eliminar tarea?", description: t ? `Se eliminará "${t.titulo}".` : undefined, confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
     await (supabase as any).from("proyecto_tareas").delete().eq("id", id);
     if (t) registrarActividad(`eliminó "${t.titulo}"`, {});
+    toast.success("Tarea eliminada");
   };
 
   const subirArchivo = async (file: File) => {
@@ -160,10 +163,14 @@ export default function ProyectoDetalle() {
   };
 
   const eliminarArchivo = async (a: any) => {
+    const ok = await confirm({ title: "¿Eliminar archivo?", description: `Se eliminará "${a.nombre}" permanentemente.`, confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
     if (a.storage_path) await (supabase as any).storage.from("proyectos-archivos").remove([a.storage_path]);
     await (supabase as any).from("proyecto_archivos").delete().eq("id", a.id);
     registrarActividad(`eliminó ${a.nombre}`, {});
+    toast.success("Archivo eliminado");
   };
+
 
   const tareasPorEstado = useMemo(() => {
     return ESTADOS_TAREA.map((e) => ({ ...e, tareas: tareas.filter((t) => t.estado === e.id) }));
