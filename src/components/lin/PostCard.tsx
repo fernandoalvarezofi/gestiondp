@@ -410,12 +410,14 @@ function PostMenu({ pub, isMine, user, username, following, toggleFollow, copyLi
                 {pub.estado === "activa" ? <><Pause className="mr-2 h-4 w-4" />Pausar</> : <><Play className="mr-2 h-4 w-4" />Activar</>}
               </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={async () => {
-                if (!confirm("¿Eliminar esta publicación? No se puede deshacer.")) return;
+                const ok = await confirm({ title: "¿Eliminar publicación?", description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+                if (!ok) return;
                 await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", pub.id).eq("perfil_id", user!.id);
                 toast.success("Publicación eliminada"); setHidden(true); onDeleted?.(pub.id);
               }}>
                 <Trash2 className="mr-2 h-4 w-4" />Eliminar
               </DropdownMenuItem>
+
             </>
           ) : user ? (
             <>
