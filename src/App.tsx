@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { CallProvider } from "@/contexts/CallContext";
 import { CallOverlay } from "@/components/lin/CallOverlay";
+import { ConfirmProvider } from "@/components/lin/ConfirmDialog";
+
 
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
