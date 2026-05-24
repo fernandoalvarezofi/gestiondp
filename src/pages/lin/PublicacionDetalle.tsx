@@ -50,6 +50,20 @@ export default function PublicacionDetalle() {
     setNuevo(""); load();
   };
 
+  const eliminarComentario = async (cid: string) => {
+    const ok = await confirm({ title: "¿Eliminar comentario?", description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
+    await (supabase as any).from("comentarios").delete().eq("id", cid).eq("perfil_id", user!.id);
+    toast.success("Comentario eliminado"); load();
+  };
+
+  const guardarEdicion = async (cid: string) => {
+    if (!editTxt.trim()) return;
+    await (supabase as any).from("comentarios").update({ contenido: editTxt }).eq("id", cid).eq("perfil_id", user!.id);
+    setEditId(null); setEditTxt(""); toast.success("Comentario actualizado"); load();
+  };
+
+
   if (!pub) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   return (
