@@ -13,6 +13,8 @@ import { Plus, Trash2, Pencil, Package, Eye, EyeOff, Settings2, Upload, X } from
 import { PRODUCT_TYPES, slugify, formatPrice } from "@/lib/marketplace";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/lin/BackHeader";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 export default function VendedorProductos() {
   const { user } = useAuth();
