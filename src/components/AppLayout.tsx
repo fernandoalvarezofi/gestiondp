@@ -68,11 +68,8 @@ export function AppLayout() {
 
   const sheetGroups: { label: string; items: { to: string; icon: any; label: string }[] }[] = [
     {
-      label: "Descubrir",
-      items: [{ to: "/lin/reels", icon: Film, label: "Reels" }],
-    },
-    {
       label: "Construir",
+
       items: [
         { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
         { to: "/lin/mercado", icon: Store, label: "Mercado" },
