@@ -140,8 +140,9 @@ export default function Feed() {
         </div>
       </header>
 
-      {/* Historias */}
-      <HistoriasBar />
+      {/* Historias - oculto temporalmente */}
+      {/* <HistoriasBar /> */}
+
 
       {/* Compose inline estilo Twitter */}
       {user && (
