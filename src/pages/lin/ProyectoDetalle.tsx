@@ -36,6 +36,8 @@ const PRIORIDADES: Record<string, { label: string; color: string }> = {
 export default function ProyectoDetalle() {
   const { slug } = useParams();
   const { user } = useAuth();
+  const confirm = useConfirm();
+
   const [p, setP] = useState<any>(null);
   const [miembros, setMiembros] = useState<any[]>([]);
   const [updates, setUpdates] = useState<any[]>([]);
