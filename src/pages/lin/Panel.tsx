@@ -24,6 +24,8 @@ const COLORES = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#8b5cf6", "#ec489
 
 export default function Panel() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+
   const [p, setP] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
   const [seguidores, setSeguidores] = useState<any[]>([]);
