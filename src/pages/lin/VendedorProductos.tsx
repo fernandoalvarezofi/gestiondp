@@ -18,6 +18,8 @@ import { useConfirm } from "@/components/lin/ConfirmDialog";
 
 export default function VendedorProductos() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+
   const [items, setItems] = useState<any[]>([]);
   const [cats, setCats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
