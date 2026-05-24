@@ -59,7 +59,9 @@ const App = () => (
         <AuthProvider>
           <BrowserRouter>
             <CallProvider>
+              <ConfirmProvider>
               <CallOverlay />
+
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
