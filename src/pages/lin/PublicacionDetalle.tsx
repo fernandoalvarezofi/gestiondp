@@ -10,6 +10,9 @@ import { PostCard } from "@/components/lin/PostCard";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/lin/BackHeader";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+import { Trash2, Pencil, Check, X } from "lucide-react";
+
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,cuerpo_largo,imagen_url,video_url,encuesta_opciones,
   rol_buscado,modalidad,pais,tags,vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
