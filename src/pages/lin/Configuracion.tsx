@@ -48,6 +48,8 @@ const TABS = [
 
 export default function Configuracion() {
   const { user, signOut } = useAuth();
+  const confirm = useConfirm();
+
   const { setTheme } = useTheme();
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<any>(null);
