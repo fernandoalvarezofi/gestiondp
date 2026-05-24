@@ -142,11 +142,13 @@ export default function Panel() {
   const segPeriodo = seguidores.filter((s) => s.created_at >= desde);
 
   const eliminar = async (id: string) => {
-    if (!confirm("¿Eliminar esta publicación? Esta acción no se puede deshacer.")) return;
+    const ok = await confirm({ title: "¿Eliminar publicación?", description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
     await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", id).eq("perfil_id", user?.id);
     setPubs((prev) => prev.filter((x) => x.id !== id));
     toast.success("Publicación eliminada");
   };
+
 
   if (loading || !p) {
     return (
