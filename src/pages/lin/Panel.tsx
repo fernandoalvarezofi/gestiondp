@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts";
 import { initials, formatTime } from "@/lib/worefHelpers";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 type Periodo = "7d" | "30d" | "90d";
 const COLORES = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
