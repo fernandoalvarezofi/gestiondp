@@ -20,6 +20,8 @@ import {
   User as UserIcon, Shield, Bell, Palette, KeyRound, LogOut, Trash2, Download, Loader2,
   Eye, VolumeX, Ban, Film, Globe, ShieldCheck, X, Plus, Smartphone, Mail,
 } from "lucide-react";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 type Prefs = Record<string, any>;
 
