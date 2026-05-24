@@ -386,6 +386,8 @@ function AutorHeader({ pub, tipoMeta, username, isMine, user, following, toggleF
 }
 
 function PostMenu({ pub, isMine, user, username, following, toggleFollow, copyLink, share, setHidden, onDeleted }: any) {
+  const confirm = useConfirm();
+
   return (
     <div className="ml-auto -mr-1.5 -mt-1.5">
       <DropdownMenu>
