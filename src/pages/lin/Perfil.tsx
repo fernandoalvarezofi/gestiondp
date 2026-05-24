@@ -18,6 +18,8 @@ import { TIPO_USUARIO, initials, formatNumber } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,encuesta_opciones,
