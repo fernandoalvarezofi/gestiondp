@@ -14,6 +14,8 @@ import { TIPO_PUBLICACION, initials, formatTime, formatNumber } from "@/lib/wore
 import { LazyImage } from "./LazyImage";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useConfirm } from "./ConfirmDialog";
+
 
 export function PostCard({ pub, onDeleted }: { pub: any; onDeleted?: (id: string) => void }) {
   const { user } = useAuth();
