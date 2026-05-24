@@ -13,9 +13,13 @@ import { Plus, Trash2, Pencil, Package, Eye, EyeOff, Settings2, Upload, X } from
 import { PRODUCT_TYPES, slugify, formatPrice } from "@/lib/marketplace";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/lin/BackHeader";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 export default function VendedorProductos() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+
   const [items, setItems] = useState<any[]>([]);
   const [cats, setCats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,10 +47,12 @@ export default function VendedorProductos() {
   };
 
   const remove = async (p: any) => {
-    if (!confirm(`¿Eliminar "${p.titulo}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await confirm({ title: `¿Eliminar "${p.titulo}"?`, description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
     await (supabase as any).from("marketplace_productos").delete().eq("id", p.id);
     load();
   };
+
 
   return (
     <>

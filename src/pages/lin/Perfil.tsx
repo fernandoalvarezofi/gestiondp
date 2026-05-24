@@ -18,6 +18,8 @@ import { TIPO_USUARIO, initials, formatNumber } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,encuesta_opciones,
@@ -28,6 +30,8 @@ const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
 export default function Perfil() {
   const { slug } = useParams();
   const { user } = useAuth();
+  const confirm = useConfirm();
+
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
@@ -115,10 +119,13 @@ export default function Perfil() {
   };
 
   const bloquear = async () => {
-    if (!user || !perfil || !confirm(`¿Bloquear a ${perfil.nombre}?`)) return;
+    if (!user || !perfil) return;
+    const ok = await confirm({ title: `¿Bloquear a ${perfil.nombre}?`, description: "No verán tu perfil ni podrán contactarte.", confirmText: "Bloquear", destructive: true });
+    if (!ok) return;
     await (supabase as any).from("bloqueos").insert({ perfil_id: user.id, bloqueado_id: perfil.id });
     toast.success("Usuario bloqueado");
   };
+
 
   const reels = pubs.filter((p) => p.video_url);
   const articulos = pubs.filter((p) => p.tipo === "contenido_largo" || p.formato === "articulo");

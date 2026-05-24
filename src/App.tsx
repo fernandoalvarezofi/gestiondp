@@ -7,6 +7,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { CallProvider } from "@/contexts/CallContext";
 import { CallOverlay } from "@/components/lin/CallOverlay";
+import { ConfirmProvider } from "@/components/lin/ConfirmDialog";
+
 
 import { AppLayout } from "@/components/AppLayout";
 import Auth from "./pages/Auth";
@@ -57,7 +59,9 @@ const App = () => (
         <AuthProvider>
           <BrowserRouter>
             <CallProvider>
+              <ConfirmProvider>
               <CallOverlay />
+
               <Routes>
                 <Route path="/" element={<Landing />} />
                 <Route path="/auth" element={<Auth />} />
@@ -100,7 +104,9 @@ const App = () => (
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </ConfirmProvider>
             </CallProvider>
+
           </BrowserRouter>
         </AuthProvider>
       </TooltipProvider>

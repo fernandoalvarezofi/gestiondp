@@ -20,6 +20,8 @@ import {
   User as UserIcon, Shield, Bell, Palette, KeyRound, LogOut, Trash2, Download, Loader2,
   Eye, VolumeX, Ban, Film, Globe, ShieldCheck, X, Plus, Smartphone, Mail,
 } from "lucide-react";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 type Prefs = Record<string, any>;
 
@@ -46,6 +48,8 @@ const TABS = [
 
 export default function Configuracion() {
   const { user, signOut } = useAuth();
+  const confirm = useConfirm();
+
   const { setTheme } = useTheme();
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<any>(null);
@@ -109,14 +113,17 @@ export default function Configuracion() {
   };
 
   const borrarCuenta = async () => {
-    if (!confirm("¿Eliminar tu cuenta? Esta acción es irreversible.")) return;
-    if (!confirm("Última confirmación: tus publicaciones, mensajes y perfil serán eliminados.")) return;
+    const ok1 = await confirm({ title: "¿Eliminar tu cuenta?", description: "Esta acción es irreversible. Tus publicaciones, mensajes y perfil serán eliminados.", confirmText: "Continuar", destructive: true });
+    if (!ok1) return;
+    const ok2 = await confirm({ title: "Última confirmación", description: "Esta es tu última oportunidad para cancelar. ¿Estás seguro?", confirmText: "Eliminar definitivamente", destructive: true });
+    if (!ok2) return;
     await (supabase as any).from("perfiles").update({
       activo: false, bio: null, avatar_url: null, portada_url: null, nombre: "Cuenta eliminada",
     }).eq("id", user!.id);
     await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("perfil_id", user!.id);
     await signOut(); toast.success("Cuenta desactivada"); navigate("/");
   };
+
 
   const addPalabra = async () => {
     const w = palabra.trim().toLowerCase();

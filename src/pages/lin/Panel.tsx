@@ -16,12 +16,16 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, BarChart, Bar, PieChart, Pie, Cell, Legend } from "recharts";
 import { initials, formatTime } from "@/lib/worefHelpers";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 type Periodo = "7d" | "30d" | "90d";
 const COLORES = ["hsl(var(--primary))", "#10b981", "#f59e0b", "#8b5cf6", "#ec4899"];
 
 export default function Panel() {
   const { user } = useAuth();
+  const confirm = useConfirm();
+
   const [p, setP] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
   const [seguidores, setSeguidores] = useState<any[]>([]);
@@ -138,11 +142,13 @@ export default function Panel() {
   const segPeriodo = seguidores.filter((s) => s.created_at >= desde);
 
   const eliminar = async (id: string) => {
-    if (!confirm("¿Eliminar esta publicación? Esta acción no se puede deshacer.")) return;
+    const ok = await confirm({ title: "¿Eliminar publicación?", description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
     await (supabase as any).from("publicaciones").update({ estado: "eliminada" }).eq("id", id).eq("perfil_id", user?.id);
     setPubs((prev) => prev.filter((x) => x.id !== id));
     toast.success("Publicación eliminada");
   };
+
 
   if (loading || !p) {
     return (
