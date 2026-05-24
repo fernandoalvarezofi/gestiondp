@@ -47,10 +47,12 @@ export default function VendedorProductos() {
   };
 
   const remove = async (p: any) => {
-    if (!confirm(`¿Eliminar "${p.titulo}"? Esta acción no se puede deshacer.`)) return;
+    const ok = await confirm({ title: `¿Eliminar "${p.titulo}"?`, description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
     await (supabase as any).from("marketplace_productos").delete().eq("id", p.id);
     load();
   };
+
 
   return (
     <>
