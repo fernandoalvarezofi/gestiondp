@@ -16,6 +16,8 @@ import { toast } from "sonner";
 import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackHeader } from "@/components/lin/BackHeader";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+
 
 const ESTADOS_TAREA = [
   { id: "backlog", label: "Backlog", color: "bg-slate-500/10 text-slate-700 border-slate-500/20" },
