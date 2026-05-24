@@ -119,10 +119,13 @@ export default function Perfil() {
   };
 
   const bloquear = async () => {
-    if (!user || !perfil || !confirm(`¿Bloquear a ${perfil.nombre}?`)) return;
+    if (!user || !perfil) return;
+    const ok = await confirm({ title: `¿Bloquear a ${perfil.nombre}?`, description: "No verán tu perfil ni podrán contactarte.", confirmText: "Bloquear", destructive: true });
+    if (!ok) return;
     await (supabase as any).from("bloqueos").insert({ perfil_id: user.id, bloqueado_id: perfil.id });
     toast.success("Usuario bloqueado");
   };
+
 
   const reels = pubs.filter((p) => p.video_url);
   const articulos = pubs.filter((p) => p.tipo === "contenido_largo" || p.formato === "articulo");
