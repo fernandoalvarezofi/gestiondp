@@ -22,9 +22,13 @@ const SELECT = `id,tipo,formato,titulo,cuerpo,cuerpo_largo,imagen_url,video_url,
 export default function PublicacionDetalle() {
   const { id } = useParams();
   const { user } = useAuth();
+  const confirm = useConfirm();
   const [pub, setPub] = useState<any>(null);
   const [coms, setComs] = useState<any[]>([]);
   const [nuevo, setNuevo] = useState("");
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editTxt, setEditTxt] = useState("");
+
 
   const load = async () => {
     if (!id) return;
