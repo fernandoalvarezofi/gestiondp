@@ -506,41 +506,46 @@ function extractFirstUrl(text: string): string | null {
 
 function LinkPreview({ text }: { text: string }) {
   const url = extractFirstUrl(text);
+  const [meta, setMeta] = useState<{ title?: string; description?: string; image?: string; host?: string; siteName?: string } | null>(null);
+  useEffect(() => {
+    if (!url) return;
+    let cancel = false;
+    (async () => {
+      try {
+        const { data } = await (supabase as any).functions.invoke("og-preview", { body: { url } });
+        if (!cancel && data && !data.error) setMeta(data);
+      } catch {}
+    })();
+    return () => { cancel = true; };
+  }, [url]);
   if (!url) return null;
-  let host = "";
-  let path = "";
-  try {
-    const u = new URL(url);
-    host = u.hostname.replace(/^www\./, "");
-    path = u.pathname === "/" ? "" : u.pathname;
-  } catch { return null; }
-  const favicon = `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+  let host = meta?.host || "";
+  if (!host) { try { host = new URL(url).hostname.replace(/^www\./, ""); } catch { return null; } }
+  const favicon = `https://www.google.com/s2/favicons?domain=${host}&sz=128`;
   return (
     <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
-      className="group/lp flex items-stretch gap-3 overflow-hidden rounded-2xl border bg-secondary/30 transition-colors hover:border-primary/40 hover:bg-secondary/50"
+      href={url} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}
+      className="group/lp block overflow-hidden rounded-2xl border bg-secondary/30 transition-colors hover:border-primary/40 hover:bg-secondary/50"
     >
-      <div className="flex h-20 w-20 shrink-0 items-center justify-center bg-background sm:h-24 sm:w-24">
-        <img
-          src={favicon}
-          alt=""
-          className="h-10 w-10 rounded-md"
-          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-        />
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col justify-center py-2.5 pr-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{host}</p>
-        <p className="line-clamp-2 text-[14px] font-medium text-foreground">{path || url}</p>
-        <p className="mt-1 inline-flex items-center gap-1 text-[12px] text-primary opacity-0 transition-opacity group-hover/lp:opacity-100">
-          Abrir enlace <ExternalLink className="h-3 w-3" />
-        </p>
+      {meta?.image && (
+        <div className="aspect-[1.91/1] w-full overflow-hidden bg-background">
+          <img src={meta.image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover/lp:scale-[1.02]"
+            onError={(e) => { (e.currentTarget.parentElement as HTMLElement).style.display = "none"; }} />
+        </div>
+      )}
+      <div className="flex items-center gap-2.5 px-3.5 py-2.5">
+        <img src={favicon} alt="" className="h-4 w-4 shrink-0 rounded" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+        <div className="min-w-0 flex-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{meta?.siteName || host}</p>
+          <p className="line-clamp-1 text-[14px] font-semibold text-foreground">{meta?.title || url}</p>
+          {meta?.description && <p className="line-clamp-1 text-[12px] text-muted-foreground">{meta.description}</p>}
+        </div>
+        <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/lp:opacity-100" />
       </div>
     </a>
   );
 }
+
 
 function Lightbox({ images, index, onClose, onChange }: { images: string[]; index: number; onClose: () => void; onChange: (i: number) => void }) {
   const prev = useCallback((e?: React.MouseEvent) => {
