@@ -30,6 +30,8 @@ const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
 export default function Perfil() {
   const { slug } = useParams();
   const { user } = useAuth();
+  const confirm = useConfirm();
+
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
