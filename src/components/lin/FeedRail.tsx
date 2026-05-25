@@ -22,6 +22,8 @@ export function FeedRail() {
   const { user } = useAuth();
   const [trends, setTrends] = useState<{ tag: string; total: number }[]>([]);
   const [suggested, setSuggested] = useState<any[]>([]);
+  const [launches, setLaunches] = useState<any[]>([]);
+  const [myVotes, setMyVotes] = useState<Set<string>>(new Set());
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
 
