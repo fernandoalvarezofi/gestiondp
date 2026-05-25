@@ -3,412 +3,397 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import {
-  Plus, Rocket, TrendingUp, Sparkles, Users, Search, Star, Flame, Globe, Github, ExternalLink,
-  Loader2, ArrowUpRight, CheckCircle2, Layers, ChevronUp, Triangle,
+  Plus, Rocket, Sparkles, Users, Search, Flame, Loader2, Triangle, Trophy,
+  MessageCircle, Calendar, ArrowRight, Zap, Target, Award,
 } from "lucide-react";
-import { ESTADO_PROYECTO, initials } from "@/lib/worefHelpers";
+import { ESTADO_PROYECTO, initials, formatNumber } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-type Orden = "destacados" | "recientes" | "trending" | "upvotes" | "completados";
+/**
+ * Proyectos — estilo Product Hunt.
+ * Leaderboard temporal (Hoy / Semana / Mes / Todo) con ranking #1, #2, #3…
+ * Filtros por categoría, búsqueda y panel lateral con info útil.
+ */
 
-const FILTROS_ESTADO = [
-  { key: "all", label: "Todos", icon: Layers },
-  { key: "idea", label: "Ideas", icon: Sparkles },
-  { key: "en_desarrollo", label: "En desarrollo", icon: Rocket },
-  { key: "lanzado", label: "Lanzados", icon: TrendingUp },
-  { key: "buscando_equipo", label: "Buscan equipo", icon: Users },
-  { key: "buscando_inversion", label: "Buscan inversión", icon: Star },
-  { key: "completado", label: "Completados", icon: CheckCircle2 },
+type Periodo = "hoy" | "semana" | "mes" | "all";
+
+const PERIODOS: { key: Periodo; label: string; desde: () => Date | null }[] = [
+  { key: "hoy",    label: "Hoy",         desde: () => { const d = new Date(); d.setHours(0,0,0,0); return d; } },
+  { key: "semana", label: "Esta semana", desde: () => new Date(Date.now() - 7 * 86400_000) },
+  { key: "mes",    label: "Este mes",    desde: () => new Date(Date.now() - 30 * 86400_000) },
+  { key: "all",    label: "Todo",        desde: () => null },
 ];
+
+const CATEGORIAS = ["Todas", "SaaS", "IA", "DevTools", "FinTech", "EdTech", "Health", "Marketplace", "Web3", "Hardware", "Otro"];
 
 export default function Proyectos() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [estado, setEstado] = useState<string>("all");
-  const [orden, setOrden] = useState<Orden>("upvotes");
+  const [periodo, setPeriodo] = useState<Periodo>("semana");
+  const [categoria, setCategoria] = useState("Todas");
   const [q, setQ] = useState("");
   const [misVotos, setMisVotos] = useState<Set<string>>(new Set());
-
-  const cargarVotos = async (uid: string) => {
-    const { data } = await (supabase as any).from("proyecto_upvotes").select("proyecto_id").eq("perfil_id", uid);
-    setMisVotos(new Set((data || []).map((v: any) => v.proyecto_id)));
-  };
 
   useEffect(() => {
     (async () => {
       setLoading(true);
-      const { data } = await (supabase as any)
+      const desde = PERIODOS.find((p) => p.key === periodo)?.desde() ?? null;
+      let query = (supabase as any)
         .from("proyectos")
         .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)")
-        .order("destacado", { ascending: false })
         .order("total_upvotes", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(120);
+      if (desde) query = query.gte("created_at", desde.toISOString());
+      const { data } = await query;
       setItems(data || []);
       setLoading(false);
     })();
-    if (user) cargarVotos(user.id);
+  }, [periodo]);
+
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      const { data } = await (supabase as any).from("proyecto_upvotes").select("proyecto_id").eq("perfil_id", user.id);
+      setMisVotos(new Set((data || []).map((v: any) => v.proyecto_id)));
+    })();
   }, [user]);
 
   const toggleUpvote = async (proyectoId: string) => {
     if (!user) { toast.error("Iniciá sesión para votar"); return; }
-    const tieneVoto = misVotos.has(proyectoId);
-    const nextSet = new Set(misVotos);
-    if (tieneVoto) {
-      nextSet.delete(proyectoId);
-      setMisVotos(nextSet);
+    const tiene = misVotos.has(proyectoId);
+    const next = new Set(misVotos);
+    if (tiene) {
+      next.delete(proyectoId);
       setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) } : p));
       await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", proyectoId).eq("perfil_id", user.id);
     } else {
-      nextSet.add(proyectoId);
-      setMisVotos(nextSet);
+      next.add(proyectoId);
       setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: (p.total_upvotes || 0) + 1 } : p));
       const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: proyectoId, perfil_id: user.id });
-      if (error) toast.error("No se pudo registrar el voto");
+      if (error) { toast.error("No se pudo registrar el voto"); return; }
     }
+    setMisVotos(next);
   };
 
   const filtered = useMemo(() => {
     let list = [...items];
-    if (estado !== "all") list = list.filter((p) => p.estado === estado);
+    if (categoria !== "Todas") list = list.filter((p) => (p.categoria || "").toLowerCase() === categoria.toLowerCase());
     if (q.trim()) {
       const t = q.toLowerCase();
       list = list.filter((p) =>
         p.nombre?.toLowerCase().includes(t) ||
         p.descripcion?.toLowerCase().includes(t) ||
-        p.categoria?.toLowerCase().includes(t) ||
         (p.tags || []).some((tag: string) => tag.toLowerCase().includes(t))
       );
     }
-    if (orden === "recientes") list.sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at));
-    if (orden === "trending") list.sort((a, b) => (b.total_seguidores || 0) - (a.total_seguidores || 0));
-    if (orden === "upvotes") list.sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0));
-    if (orden === "completados") list = list.filter((p) => p.estado === "completado" || p.estado === "lanzado");
-    return list;
-  }, [items, estado, q, orden]);
+    return list.sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0));
+  }, [items, categoria, q]);
 
-  const destacados = useMemo(
-    () => [...items].sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0)).slice(0, 3),
-    [items]
-  );
-  const restantes = useMemo(() => filtered.filter((p) => !destacados.some((d) => d.id === p.id)), [filtered, destacados]);
-
-  // Stats
   const stats = useMemo(() => ({
     total: items.length,
-    lanzados: items.filter((p) => p.estado === "lanzado").length,
+    votos: items.reduce((s, p) => s + (p.total_upvotes || 0), 0),
     buscando: items.filter((p) => p.estado === "buscando_equipo" || p.estado === "buscando_inversion").length,
   }), [items]);
 
-  return (
-    <div className="mx-auto max-w-6xl space-y-6">
-      {/* HERO */}
-      <section className="relative overflow-hidden rounded-3xl border bg-gradient-to-br from-primary/15 via-background to-surface-mint p-6 sm:p-10">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-primary/20 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-teal-data/20 blur-3xl" />
-        <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-xl space-y-3">
-            <div className="inline-flex items-center gap-1.5 rounded-full border bg-background/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary backdrop-blur">
-              <Rocket className="h-3 w-3" /> Proyectos en marcha
-            </div>
-            <h1 className="text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-              Descubrí lo que se está<br />construyendo ahora mismo.
-            </h1>
-            <p className="text-sm text-muted-foreground sm:text-base">
-              Productos, startups, side-projects y obras en curso. Encontrá tu próximo cofounder, contratá talento, sumate a un equipo o seguí lo que más te inspira.
-            </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <Button asChild size="lg" className="rounded-full font-semibold">
-                <Link to="/lin/proyectos/nuevo"><Plus className="h-4 w-4" />Publicar proyecto</Link>
-              </Button>
-              <Button asChild size="lg" variant="outline" className="rounded-full font-semibold">
-                <Link to="/lin/explorar"><Sparkles className="h-4 w-4" />Explorar la red</Link>
-              </Button>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3 sm:gap-4">
-            <Stat label="Activos" value={stats.total} accent="text-primary" />
-            <Stat label="Lanzados" value={stats.lanzados} accent="text-emerald-600" />
-            <Stat label="Reclutando" value={stats.buscando} accent="text-fuchsia-600" />
-          </div>
-        </div>
-      </section>
+  const periodoLabel = PERIODOS.find((p) => p.key === periodo)?.label ?? "";
 
-      {/* TOP DESTACADOS — estilo Product Hunt (ranking por upvotes) */}
-      {destacados.length > 0 && destacados[0].total_upvotes > 0 && (
-        <section>
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="flex items-center gap-2 text-lg font-bold">
-              <Flame className="h-5 w-5 text-orange-500" /> Top de la semana
-            </h2>
-            <span className="text-xs font-semibold text-muted-foreground">Votado por la comunidad</span>
+  return (
+    <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="min-w-0 space-y-5">
+        {/* HERO — compacto y enfocado en leaderboard */}
+        <header className="rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-surface-mint p-5 sm:p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border bg-background/80 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                <Trophy className="h-3 w-3" /> Leaderboard
+              </div>
+              <h1 className="text-2xl font-extrabold leading-tight tracking-tight sm:text-3xl">
+                Los mejores lanzamientos de {periodoLabel.toLowerCase()}
+              </h1>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Descubrí, votá y apoyá lo que la comunidad está construyendo.
+              </p>
+            </div>
+            <Button asChild size="sm" className="shrink-0 rounded-full font-semibold">
+              <Link to="/lin/proyectos/nuevo"><Plus className="h-4 w-4" />Lanzar</Link>
+            </Button>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            {destacados.map((p, i) => (
-              <FeaturedCard
-                key={p.id}
-                p={p}
-                rank={i + 1}
-                voted={misVotos.has(p.id)}
-                onUpvote={() => toggleUpvote(p.id)}
-              />
+
+          {/* Selector de período (Product Hunt style) */}
+          <div className="mt-4 inline-flex rounded-xl border bg-background/70 p-1 backdrop-blur">
+            {PERIODOS.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => setPeriodo(p.key)}
+                className={cn(
+                  "rounded-lg px-3 py-1.5 text-xs font-bold transition-all",
+                  periodo === p.key
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {p.label}
+              </button>
             ))}
           </div>
-        </section>
-      )}
+        </header>
 
-      {/* CONTROLES */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
+        {/* Buscador + categorías */}
+        <div className="space-y-3">
+          <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Buscar por nombre, categoría, tag…"
-              className="h-10 rounded-full border bg-background/60 pl-9 text-sm"
+              placeholder="Buscar proyectos, categorías, tags…"
+              className="h-10 rounded-full border bg-background pl-9 text-sm"
             />
           </div>
-          <select
-            value={orden}
-            onChange={(e) => setOrden(e.target.value as Orden)}
-            className="h-10 rounded-full border bg-background px-3 text-sm font-medium"
-          >
-            <option value="upvotes">Más votados</option>
-            <option value="trending">Más seguidos</option>
-            <option value="recientes">Recientes</option>
-            <option value="completados">Lanzados</option>
-          </select>
-        </div>
-
-        <ScrollArea className="w-full whitespace-nowrap">
-          <div className="flex gap-1.5 pb-1">
-            {FILTROS_ESTADO.map((f) => {
-              const Icon = f.icon;
-              const active = estado === f.key;
-              return (
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-1.5 pb-1">
+              {CATEGORIAS.map((c) => (
                 <button
-                  key={f.key}
-                  onClick={() => setEstado(f.key)}
+                  key={c}
+                  onClick={() => setCategoria(c)}
                   className={cn(
-                    "inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
-                    active
-                      ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                    "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+                    categoria === c
+                      ? "border-primary bg-primary text-primary-foreground"
                       : "border-border bg-background hover:bg-secondary"
                   )}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  {f.label}
+                  {c}
                 </button>
-              );
-            })}
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </div>
+
+        {/* LEADERBOARD — lista vertical estilo PH */}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      </section>
-
-      {/* GRID PRINCIPAL */}
-      {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : restantes.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-background py-16 text-center">
-          <Rocket className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-          <p className="text-sm font-medium">Aún no hay proyectos con esos filtros.</p>
-          <Button asChild className="mt-4 rounded-full">
-            <Link to="/lin/proyectos/nuevo"><Plus className="h-4 w-4" />Publicá el primero</Link>
-          </Button>
-        </div>
-      ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {restantes.map((p) => (
-            <ProyectoCard
-              key={p.id}
-              p={p}
-              voted={misVotos.has(p.id)}
-              onUpvote={() => toggleUpvote(p.id)}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/* ---------------------------------- Cards ---------------------------------- */
-
-function Stat({ label, value, accent }: { label: string; value: number; accent: string }) {
-  return (
-    <div className="min-w-[80px] rounded-2xl border bg-background/80 px-4 py-3 text-center shadow-sm backdrop-blur">
-      <p className={cn("text-2xl font-extrabold leading-none tabular-nums", accent)}>{value}</p>
-      <p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
-    </div>
-  );
-}
-
-function UpvoteButton({ count, voted, onClick, size = "md" }: { count: number; voted: boolean; onClick: () => void; size?: "sm" | "md" | "lg" }) {
-  const sizes = {
-    sm: "h-9 w-12 text-[11px]",
-    md: "h-11 w-14 text-[12px]",
-    lg: "h-14 w-16 text-[13px]",
-  } as const;
-  return (
-    <button
-      onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClick(); }}
-      className={cn(
-        "flex shrink-0 flex-col items-center justify-center gap-0 rounded-xl border-2 font-bold tabular-nums transition-all",
-        sizes[size],
-        voted
-          ? "border-primary bg-primary text-primary-foreground shadow-ember"
-          : "border-border bg-background text-foreground hover:border-primary hover:bg-primary/5 hover:text-primary"
-      )}
-      aria-label={voted ? "Quitar voto" : "Votar"}
-      aria-pressed={voted}
-    >
-      <Triangle className={cn("h-3 w-3", voted ? "fill-current" : "fill-none")} strokeWidth={2.5} />
-      <span className="leading-none">{count}</span>
-    </button>
-  );
-}
-
-function FeaturedCard({ p, rank, voted, onUpvote }: { p: any; rank: number; voted: boolean; onUpvote: () => void }) {
-  const est = ESTADO_PROYECTO[p.estado];
-  return (
-    <Link to={`/lin/proyectos/${p.slug || p.id}`} className="group relative block overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/10">
-      <div className="relative h-36 overflow-hidden bg-gradient-to-br from-primary/20 via-secondary to-teal-data/15">
-        {p.portada_url ? (
-          <img src={p.portada_url} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+        ) : filtered.length === 0 ? (
+          <EmptyState />
         ) : (
-          <div className="flex h-full items-center justify-center"><Rocket className="h-10 w-10 text-foreground/20" /></div>
-        )}
-        <span className="absolute left-3 top-3 flex h-7 w-7 items-center justify-center rounded-full bg-background/95 text-[11px] font-extrabold shadow-md ring-1 ring-border">
-          #{rank}
-        </span>
-        {est && (
-          <span className={cn("absolute right-3 top-3 rounded-full px-2 py-0.5 text-[10px] font-semibold backdrop-blur", est.color)}>
-            {est.label}
-          </span>
+          <div className="divide-y overflow-hidden rounded-2xl border bg-card">
+            <div className="flex items-center justify-between px-4 py-3 sm:px-5">
+              <h2 className="flex items-center gap-2 text-sm font-bold">
+                <Flame className="h-4 w-4 text-primary" />
+                Top {periodoLabel}
+              </h2>
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {filtered.length} {filtered.length === 1 ? "proyecto" : "proyectos"}
+              </span>
+            </div>
+            <ul className="divide-y">
+              {filtered.map((p, i) => (
+                <li key={p.id}>
+                  <LeaderRow
+                    p={p}
+                    rank={i + 1}
+                    voted={misVotos.has(p.id)}
+                    onUpvote={() => toggleUpvote(p.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
       </div>
-      <div className="space-y-2.5 p-4">
-        <div className="flex items-start gap-3">
-          <div className="min-w-0 flex-1">
-            <h3 className="line-clamp-1 text-base font-bold group-hover:text-primary">{p.nombre}</h3>
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{p.descripcion || "Sin descripción."}</p>
-          </div>
-          <UpvoteButton count={p.total_upvotes || 0} voted={voted} onClick={onUpvote} size="md" />
-        </div>
-        {typeof p.progreso === "number" && p.progreso > 0 && (
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <span>Progreso</span><span className="text-foreground">{p.progreso}%</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-              <div className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400" style={{ width: `${p.progreso}%` }} />
-            </div>
-          </div>
-        )}
-        <div className="flex items-center justify-between border-t pt-2.5">
-          <div className="flex items-center gap-1.5">
-            <Avatar className="h-5 w-5"><AvatarImage src={p.perfil?.avatar_url || ""} /><AvatarFallback className="text-[9px]">{initials(p.perfil?.nombre)}</AvatarFallback></Avatar>
-            <span className="truncate text-[11px] font-medium text-muted-foreground">{p.perfil?.nombre}</span>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-            <Users className="h-3 w-3" /> {p.total_seguidores || 0}
-          </div>
-        </div>
-      </div>
-    </Link>
+
+      {/* SIDEBAR derecho — centraliza descubrimiento */}
+      <SideRail stats={stats} />
+    </div>
   );
 }
 
-function ProyectoCard({ p, voted, onUpvote }: { p: any; voted: boolean; onUpvote: () => void }) {
+/* ---------------------------------- Row PH style ---------------------------------- */
+
+function LeaderRow({ p, rank, voted, onUpvote }: { p: any; rank: number; voted: boolean; onUpvote: () => void }) {
   const est = ESTADO_PROYECTO[p.estado];
-  const buscando = (p.buscando || []) as string[];
-  const tags = (p.tags || []) as string[];
+  const isTop3 = rank <= 3;
 
   return (
     <Link
       to={`/lin/proyectos/${p.slug || p.id}`}
-      className="group flex h-full flex-col overflow-hidden rounded-2xl border bg-card transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5"
+      className="group flex items-center gap-3 px-3 py-3.5 transition-colors hover:bg-secondary/40 sm:gap-4 sm:px-5"
     >
-      <div className="relative aspect-[16/9] overflow-hidden bg-gradient-to-br from-secondary via-background to-surface-mint">
+      {/* Rank */}
+      <div className={cn(
+        "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold tabular-nums sm:h-10 sm:w-10 sm:text-base",
+        isTop3 ? "bg-gradient-to-br from-primary to-orange-400 text-primary-foreground shadow-sm" : "bg-secondary text-muted-foreground"
+      )}>
+        {rank}
+      </div>
+
+      {/* Thumbnail */}
+      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl border bg-secondary sm:h-14 sm:w-14">
         {p.portada_url ? (
-          <img src={p.portada_url} alt="" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          <img src={p.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full items-center justify-center">
-            <Rocket className="h-9 w-9 text-foreground/15" />
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-surface-mint">
+            <Rocket className="h-5 w-5 text-foreground/30" />
           </div>
         )}
-        {est && (
-          <Badge className={cn("absolute left-2.5 top-2.5 rounded-full border-0 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-sm", est.color)}>
-            {est.label}
-          </Badge>
-        )}
-        {p.categoria && (
-          <span className="absolute right-2.5 top-2.5 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-semibold text-foreground backdrop-blur">
-            {p.categoria}
+      </div>
+
+      {/* Info */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <h3 className="truncate text-sm font-bold leading-tight group-hover:text-primary sm:text-[15px]">
+            {p.nombre}
+          </h3>
+          {est && (
+            <span className={cn("hidden shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider sm:inline-block", est.color)}>
+              {est.label}
+            </span>
+          )}
+        </div>
+        <p className="mt-0.5 line-clamp-1 text-[12px] leading-snug text-muted-foreground sm:text-xs">
+          {p.descripcion || "Sin descripción."}
+        </p>
+        <div className="mt-1 flex items-center gap-2 text-[10px] font-medium text-muted-foreground sm:text-[11px]">
+          <span className="inline-flex items-center gap-1 truncate">
+            <Avatar className="h-3.5 w-3.5"><AvatarImage src={p.perfil?.avatar_url || ""} /><AvatarFallback className="text-[7px]">{initials(p.perfil?.nombre)}</AvatarFallback></Avatar>
+            <span className="truncate">{p.perfil?.nombre}</span>
           </span>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col gap-2.5 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="line-clamp-1 text-[15px] font-bold leading-tight group-hover:text-primary">{p.nombre}</h3>
-          <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground/60 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
-        </div>
-
-        <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">{p.descripcion || "Sin descripción."}</p>
-
-        {/* Buscando + tags */}
-        {(buscando.length > 0 || tags.length > 0) && (
-          <div className="flex flex-wrap gap-1">
-            {buscando.slice(0, 2).map((b) => (
-              <span key={b} className="inline-flex items-center gap-1 rounded-full bg-fuchsia-500/10 px-2 py-0.5 text-[10px] font-semibold text-fuchsia-700 dark:text-fuchsia-300">
-                <Sparkles className="h-2.5 w-2.5" />Busca {b}
-              </span>
-            ))}
-            {tags.slice(0, 3).map((t) => (
-              <span key={t} className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-muted-foreground">#{t}</span>
-            ))}
-          </div>
-        )}
-
-        {typeof p.progreso === "number" && p.progreso > 0 && (
-          <div className="mt-auto space-y-1 pt-1">
-            <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground">
-              <span>Progreso</span><span className="text-foreground">{p.progreso}%</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-              <div className="h-full rounded-full bg-gradient-to-r from-primary to-orange-400 transition-all" style={{ width: `${p.progreso}%` }} />
-            </div>
-          </div>
-        )}
-
-        <div className="mt-auto flex items-end justify-between gap-2 border-t pt-2.5">
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <Avatar className="h-5 w-5"><AvatarImage src={p.perfil?.avatar_url || ""} /><AvatarFallback className="text-[9px]">{initials(p.perfil?.nombre)}</AvatarFallback></Avatar>
-              <span className="truncate text-[11px] font-medium text-muted-foreground">{p.perfil?.nombre}</span>
-            </div>
-            <div className="mt-1 flex items-center gap-2.5 text-[11px] font-semibold text-muted-foreground">
-              {p.sitio_web && <Globe className="h-3 w-3" />}
-              {p.repo_url && <Github className="h-3 w-3" />}
-              {p.demo_url && <ExternalLink className="h-3 w-3" />}
-              <span className="flex items-center gap-0.5"><Users className="h-3 w-3" />{p.total_seguidores || 0}</span>
-            </div>
-          </div>
-          <UpvoteButton count={p.total_upvotes || 0} voted={voted} onClick={onUpvote} size="md" />
+          {p.categoria && <><span>·</span><span className="truncate">{p.categoria}</span></>}
+          <span>·</span>
+          <span className="inline-flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{formatNumber(p.total_seguidores)}</span>
         </div>
       </div>
+
+      {/* Upvote — PH style */}
+      <button
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onUpvote(); }}
+        aria-pressed={voted}
+        className={cn(
+          "flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-xl border-2 font-extrabold tabular-nums transition-all sm:h-14 sm:w-14",
+          voted
+            ? "border-primary bg-gradient-to-b from-primary to-orange-500 text-primary-foreground shadow-md shadow-primary/30"
+            : "border-border bg-background text-foreground hover:border-primary hover:bg-primary/5 hover:text-primary active:scale-95"
+        )}
+      >
+        <Triangle className={cn("h-3 w-3 sm:h-3.5 sm:w-3.5", voted ? "fill-current" : "fill-none")} strokeWidth={2.8} />
+        <span className="text-[11px] leading-none sm:text-[13px]">{p.total_upvotes || 0}</span>
+      </button>
     </Link>
+  );
+}
+
+/* ---------------------------------- Side rail ---------------------------------- */
+
+function SideRail({ stats }: { stats: { total: number; votos: number; buscando: number } }) {
+  return (
+    <aside className="space-y-4 lg:sticky lg:top-4 lg:h-fit">
+      {/* Stats card */}
+      <section className="overflow-hidden rounded-2xl border bg-card">
+        <div className="border-b bg-secondary/40 px-4 py-2.5">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">En este período</h3>
+        </div>
+        <ul className="divide-y">
+          <StatRow icon={Rocket} label="Proyectos" value={stats.total} accent="text-primary" />
+          <StatRow icon={Triangle} label="Votos totales" value={stats.votos} accent="text-orange-500" />
+          <StatRow icon={Target} label="Reclutando" value={stats.buscando} accent="text-fuchsia-600" />
+        </ul>
+      </section>
+
+      {/* CTA Launch */}
+      <section className="rounded-2xl border bg-gradient-to-br from-primary/15 via-card to-surface-mint p-4">
+        <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+          <Zap className="h-4 w-4" />
+        </div>
+        <p className="text-sm font-bold leading-tight">¿Listo para lanzar?</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+          Subí tu proyecto, conseguí votos, feedback y los primeros usuarios.
+        </p>
+        <Button asChild size="sm" className="mt-3 w-full rounded-full font-semibold">
+          <Link to="/lin/proyectos/nuevo">Lanzar proyecto <ArrowRight className="h-3.5 w-3.5" /></Link>
+        </Button>
+      </section>
+
+      {/* Cómo funciona */}
+      <section className="overflow-hidden rounded-2xl border bg-card">
+        <div className="border-b px-4 py-2.5">
+          <h3 className="flex items-center gap-1.5 text-sm font-bold">
+            <Award className="h-4 w-4 text-primary" /> Cómo funciona
+          </h3>
+        </div>
+        <ol className="space-y-2 px-4 py-3 text-xs leading-relaxed">
+          {[
+            ["Subí tu proyecto", "Nombre, tagline, portada y link."],
+            ["Compartilo", "Invitá a la comunidad a votarte."],
+            ["Subí en el ranking", "Más votos = más visibilidad."],
+            ["Conseguí tracción", "Seguidores, feedback y leads."],
+          ].map(([t, d], i) => (
+            <li key={t} className="flex gap-2">
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{i + 1}</span>
+              <div className="min-w-0">
+                <p className="font-semibold text-foreground">{t}</p>
+                <p className="text-muted-foreground">{d}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+
+      {/* Atajos cruzados — centraliza con el resto de la red */}
+      <section className="overflow-hidden rounded-2xl border bg-card">
+        <div className="border-b px-4 py-2.5">
+          <h3 className="text-sm font-bold">Explorá la red</h3>
+        </div>
+        <ul className="divide-y text-sm">
+          <ShortcutRow to="/lin/hub" icon={Users} label="Comunidades & foro" />
+          <ShortcutRow to="/lin/mercado" icon={Sparkles} label="Mercado" />
+          <ShortcutRow to="/lin/explorar" icon={Flame} label="Tendencias" />
+          <ShortcutRow to="/lin" icon={Calendar} label="Feed" />
+        </ul>
+      </section>
+    </aside>
+  );
+}
+
+function StatRow({ icon: Icon, label, value, accent }: { icon: any; label: string; value: number; accent: string }) {
+  return (
+    <li className="flex items-center gap-3 px-4 py-2.5">
+      <Icon className={cn("h-4 w-4", accent)} />
+      <span className="flex-1 text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-extrabold tabular-nums">{formatNumber(value)}</span>
+    </li>
+  );
+}
+
+function ShortcutRow({ to, icon: Icon, label }: { to: string; icon: any; label: string }) {
+  return (
+    <li>
+      <Link to={to} className="flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-secondary/40">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="flex-1 font-medium">{label}</span>
+        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/50" />
+      </Link>
+    </li>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="rounded-2xl border border-dashed bg-card py-16 text-center">
+      <Rocket className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+      <p className="text-sm font-medium">Aún no hay proyectos en este período.</p>
+      <p className="mt-1 text-xs text-muted-foreground">Sé el primero en lanzar.</p>
+      <Button asChild className="mt-4 rounded-full">
+        <Link to="/lin/proyectos/nuevo"><Plus className="h-4 w-4" />Lanzar proyecto</Link>
+      </Button>
+    </div>
   );
 }
