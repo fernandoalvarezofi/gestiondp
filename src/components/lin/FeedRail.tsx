@@ -45,9 +45,22 @@ export function FeedRail() {
       .limit(20);
     setSuggested((perfiles || []).filter((p: any) => p.id !== user?.id).slice(0, 5));
 
+    // Top launches de la semana
+    const { data: proys } = await (supabase as any).from("proyectos")
+      .select("id,nombre,descripcion,slug,portada_url,total_upvotes,categoria,perfil:perfiles!perfil_id(nombre,username,avatar_url)")
+      .gte("created_at", desde)
+      .order("total_upvotes", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(4);
+    setLaunches(proys || []);
+
     if (user) {
-      const { data: sigs } = await (supabase as any).from("seguidos").select("seguido_id").eq("seguidor_id", user.id);
+      const [{ data: sigs }, { data: votes }] = await Promise.all([
+        (supabase as any).from("seguidos").select("seguido_id").eq("seguidor_id", user.id),
+        (supabase as any).from("proyecto_upvotes").select("proyecto_id").eq("perfil_id", user.id),
+      ]);
       setFollowing(new Set((sigs || []).map((s: any) => s.seguido_id)));
+      setMyVotes(new Set((votes || []).map((v: any) => v.proyecto_id)));
     }
   };
 
