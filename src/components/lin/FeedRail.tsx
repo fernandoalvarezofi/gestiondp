@@ -88,6 +88,23 @@ export function FeedRail() {
     setFollowing(new Set(next));
   };
 
+  const upvoteProyecto = async (id: string) => {
+    if (!user) { toast.error("Iniciá sesión para votar"); return; }
+    const tiene = myVotes.has(id);
+    const next = new Set(myVotes);
+    if (tiene) {
+      next.delete(id);
+      setLaunches((arr) => arr.map((p) => p.id === id ? { ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) } : p));
+      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", id).eq("perfil_id", user.id);
+    } else {
+      next.add(id);
+      setLaunches((arr) => arr.map((p) => p.id === id ? { ...p, total_upvotes: (p.total_upvotes || 0) + 1 } : p));
+      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: id, perfil_id: user.id });
+      if (error) { toast.error("No se pudo votar"); return; }
+    }
+    setMyVotes(next);
+  };
+
   return (
     <aside className="sticky top-4 hidden h-fit space-y-4 lg:block">
       {/* Buscador */}
@@ -103,6 +120,52 @@ export function FeedRail() {
           className="h-10 rounded-full border-none bg-secondary/70 pl-9 text-sm focus-visible:ring-1"
         />
       </form>
+
+      {/* 🚀 Top Lanzamientos — conecta Feed con Proyectos */}
+      {launches.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border bg-card">
+          <div className="flex items-center justify-between border-b bg-gradient-to-r from-primary/10 to-transparent px-4 py-3">
+            <h3 className="flex items-center gap-1.5 text-sm font-bold">
+              <Trophy className="h-4 w-4 text-primary" /> Top lanzamientos
+            </h3>
+            <Link to="/lin/proyectos" className="text-[11px] font-semibold text-muted-foreground hover:text-primary">Ver todos</Link>
+          </div>
+          <ul className="divide-y">
+            {launches.map((p, i) => {
+              const voted = myVotes.has(p.id);
+              return (
+                <li key={p.id} className="flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-secondary/40">
+                  <span className="w-4 text-center text-[11px] font-bold text-muted-foreground tabular-nums">{i + 1}</span>
+                  <Link to={`/lin/proyectos/${p.slug || p.id}`} className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border bg-secondary">
+                    {p.portada_url ? (
+                      <img src={p.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center"><Rocket className="h-4 w-4 text-foreground/30" /></div>
+                    )}
+                  </Link>
+                  <Link to={`/lin/proyectos/${p.slug || p.id}`} className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-bold leading-tight">{p.nombre}</p>
+                    <p className="truncate text-[10px] text-muted-foreground">{p.descripcion || p.categoria || ""}</p>
+                  </Link>
+                  <button
+                    onClick={() => upvoteProyecto(p.id)}
+                    aria-pressed={voted}
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-md border font-bold tabular-nums transition-all",
+                      voted
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background hover:border-primary hover:text-primary"
+                    )}
+                  >
+                    <Triangle className={cn("h-2.5 w-2.5", voted ? "fill-current" : "fill-none")} strokeWidth={2.8} />
+                    <span className="text-[10px] leading-none">{p.total_upvotes || 0}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       {/* Trending */}
       <section className="overflow-hidden rounded-2xl border bg-card">
