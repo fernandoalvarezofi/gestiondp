@@ -86,10 +86,36 @@ export default function ProyectoDetalle() {
       .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_tareas", filter: `proyecto_id=eq.${p.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_archivos", filter: `proyecto_id=eq.${p.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_actividad", filter: `proyecto_id=eq.${p.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_comentarios", filter: `proyecto_id=eq.${p.id}` }, load)
       .subscribe();
     return () => { (supabase as any).removeChannel(ch); };
     // eslint-disable-next-line
   }, [p?.id]);
+
+  const enviarComentario = async () => {
+    if (!user) return toast.error("Iniciá sesión para comentar");
+    const texto = nuevoComent.trim();
+    if (!texto) return;
+    const { error } = await (supabase as any).from("proyecto_comentarios").insert({
+      proyecto_id: p.id, perfil_id: user.id, contenido: texto,
+    });
+    if (error) return toast.error(error.message);
+    setNuevoComent("");
+  };
+
+  const guardarEdicionComent = async () => {
+    if (!editandoComent) return;
+    const texto = editandoComent.texto.trim();
+    if (!texto) return;
+    await (supabase as any).from("proyecto_comentarios").update({ contenido: texto, editado_at: new Date().toISOString() }).eq("id", editandoComent.id);
+    setEditandoComent(null);
+  };
+
+  const eliminarComent = async (id: string) => {
+    const ok = await confirm({ title: "¿Eliminar comentario?", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
+    await (supabase as any).from("proyecto_comentarios").delete().eq("id", id);
+  };
 
   const registrarActividad = async (accion: string, meta: any = {}) => {
     if (!user || !p) return;
