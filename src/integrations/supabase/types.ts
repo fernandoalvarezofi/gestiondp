@@ -2563,6 +2563,54 @@ export type Database = {
           },
         ]
       }
+      proyecto_comentarios: {
+        Row: {
+          contenido: string
+          created_at: string
+          editado_at: string | null
+          id: string
+          perfil_id: string
+          proyecto_id: string
+          respuesta_a: string | null
+          total_likes: number
+        }
+        Insert: {
+          contenido: string
+          created_at?: string
+          editado_at?: string | null
+          id?: string
+          perfil_id: string
+          proyecto_id: string
+          respuesta_a?: string | null
+          total_likes?: number
+        }
+        Update: {
+          contenido?: string
+          created_at?: string
+          editado_at?: string | null
+          id?: string
+          perfil_id?: string
+          proyecto_id?: string
+          respuesta_a?: string | null
+          total_likes?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_comentarios_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proyecto_comentarios_respuesta_a_fkey"
+            columns: ["respuesta_a"]
+            isOneToOne: false
+            referencedRelation: "proyecto_comentarios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proyecto_miembros: {
         Row: {
           created_at: string
@@ -2789,6 +2837,7 @@ export type Database = {
           sitio_web: string | null
           slug: string | null
           tags: string[] | null
+          total_comentarios: number
           total_miembros: number
           total_seguidores: number
           total_upvotes: number
@@ -2811,6 +2860,7 @@ export type Database = {
           sitio_web?: string | null
           slug?: string | null
           tags?: string[] | null
+          total_comentarios?: number
           total_miembros?: number
           total_seguidores?: number
           total_upvotes?: number
@@ -2833,6 +2883,7 @@ export type Database = {
           sitio_web?: string | null
           slug?: string | null
           tags?: string[] | null
+          total_comentarios?: number
           total_miembros?: number
           total_seguidores?: number
           total_upvotes?: number
