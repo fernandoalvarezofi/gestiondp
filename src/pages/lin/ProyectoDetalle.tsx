@@ -283,8 +283,9 @@ export default function ProyectoDetalle() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full justify-start gap-1 rounded-xl bg-secondary/60 p-1">
+        <TabsList className="w-full justify-start gap-1 overflow-x-auto rounded-xl bg-secondary/60 p-1">
           <TabsTrigger value="overview" className="gap-1.5 rounded-lg"><Info className="h-3.5 w-3.5" />Resumen</TabsTrigger>
+          <TabsTrigger value="comentarios" className="gap-1.5 rounded-lg"><MessageSquare className="h-3.5 w-3.5" />Comentarios {comentarios.length > 0 && <span className="rounded-full bg-background px-1.5 text-[10px]">{comentarios.length}</span>}</TabsTrigger>
           <TabsTrigger value="tareas" className="gap-1.5 rounded-lg"><Layers className="h-3.5 w-3.5" />Tareas {tareas.length > 0 && <span className="rounded-full bg-background px-1.5 text-[10px]">{tareas.length}</span>}</TabsTrigger>
           <TabsTrigger value="archivos" className="gap-1.5 rounded-lg"><Paperclip className="h-3.5 w-3.5" />Archivos {archivos.length > 0 && <span className="rounded-full bg-background px-1.5 text-[10px]">{archivos.length}</span>}</TabsTrigger>
           <TabsTrigger value="actividad" className="gap-1.5 rounded-lg"><Activity className="h-3.5 w-3.5" />Actividad</TabsTrigger>
