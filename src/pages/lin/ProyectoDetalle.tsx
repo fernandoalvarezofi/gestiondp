@@ -320,6 +320,91 @@ export default function ProyectoDetalle() {
           </CardContent></Card>
         </TabsContent>
 
+        {/* COMENTARIOS */}
+        <TabsContent value="comentarios" className="space-y-4">
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-start gap-2">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage src={user?.user_metadata?.avatar_url || ""} />
+                  <AvatarFallback className="text-xs">{initials((user?.user_metadata as any)?.nombre || "Yo")}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                  <Textarea
+                    placeholder={user ? "Compartí tu opinión, feedback o pregunta…" : "Iniciá sesión para comentar"}
+                    rows={3}
+                    value={nuevoComent}
+                    onChange={(e) => setNuevoComent(e.target.value)}
+                    disabled={!user}
+                    className="resize-none"
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-muted-foreground">{nuevoComent.length}/4000</p>
+                    <Button size="sm" onClick={enviarComentario} disabled={!user || !nuevoComent.trim()}>
+                      <Send className="h-3.5 w-3.5" />Publicar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {comentarios.length === 0 ? (
+            <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-40" />
+              Sé el primero en comentar este proyecto.
+            </CardContent></Card>
+          ) : (
+            <ul className="space-y-3">
+              {comentarios.map((c) => {
+                const esAutor = user?.id === c.perfil_id;
+                const enEdicion = editandoComent?.id === c.id;
+                return (
+                  <li key={c.id} className="rounded-xl border bg-card p-3">
+                    <div className="flex items-start gap-2.5">
+                      <Link to={`/lin/perfil/${c.perfil?.username}`} className="shrink-0">
+                        <Avatar className="h-8 w-8"><AvatarImage src={c.perfil?.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(c.perfil?.nombre)}</AvatarFallback></Avatar>
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <Link to={`/lin/perfil/${c.perfil?.username}`} className="text-sm font-semibold hover:text-primary">{c.perfil?.nombre}</Link>
+                          {c.perfil?.verificado && <span className="text-xs text-primary">✓</span>}
+                          <span className="text-[11px] text-muted-foreground">· {formatTime(c.created_at)}{c.editado_at && " · editado"}</span>
+                          {esAutor && !enEdicion && (
+                            <div className="ml-auto flex items-center gap-1">
+                              <button onClick={() => setEditandoComent({ id: c.id, texto: c.contenido })} className="text-muted-foreground hover:text-foreground" aria-label="Editar">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button onClick={() => eliminarComent(c.id)} className="text-muted-foreground hover:text-rose-500" aria-label="Eliminar">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {enEdicion ? (
+                          <div className="mt-1.5 space-y-2">
+                            <Textarea
+                              rows={3} value={editandoComent.texto}
+                              onChange={(e) => setEditandoComent({ ...editandoComent, texto: e.target.value })}
+                              className="resize-none"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => setEditandoComent(null)}>Cancelar</Button>
+                              <Button size="sm" onClick={guardarEdicionComent}>Guardar</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{c.contenido}</p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </TabsContent>
+
         {/* TAREAS — Kanban */}
         <TabsContent value="tareas">
           <div className="mb-3 flex items-center justify-between">
