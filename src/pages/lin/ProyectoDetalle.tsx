@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ESTADO_PROYECTO, initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle } from "lucide-react";
+import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle, MessageSquare, Send, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackHeader } from "@/components/lin/BackHeader";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
@@ -44,6 +44,9 @@ export default function ProyectoDetalle() {
   const [tareas, setTareas] = useState<any[]>([]);
   const [archivos, setArchivos] = useState<any[]>([]);
   const [actividad, setActividad] = useState<any[]>([]);
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [nuevoComent, setNuevoComent] = useState("");
+  const [editandoComent, setEditandoComent] = useState<{ id: string; texto: string } | null>(null);
   const [siguiendo, setSiguiendo] = useState(false);
   const [voted, setVoted] = useState(false);
   const [esMiembro, setEsMiembro] = useState(false);
@@ -55,14 +58,15 @@ export default function ProyectoDetalle() {
     const { data } = await (supabase as any).from("proyectos").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").or(`slug.eq.${slug},id.eq.${slug}`).single();
     if (!data) return;
     setP(data);
-    const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }] = await Promise.all([
+    const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }] = await Promise.all([
       (supabase as any).from("proyecto_miembros").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id),
       (supabase as any).from("proyecto_updates").select("*").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
       (supabase as any).from("proyecto_tareas").select("*, asignado:perfiles!asignado_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id).order("orden"),
       (supabase as any).from("proyecto_archivos").select("*, perfil:perfiles!subido_por(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
       (supabase as any).from("proyecto_actividad").select("*, perfil:perfiles!perfil_id(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }).limit(50),
+      (supabase as any).from("proyecto_comentarios").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
     ]);
-    setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []);
+    setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []); setComentarios(cm || []);
     if (user) {
       const [{ data: s }, { data: v }] = await Promise.all([
         (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
@@ -82,10 +86,36 @@ export default function ProyectoDetalle() {
       .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_tareas", filter: `proyecto_id=eq.${p.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_archivos", filter: `proyecto_id=eq.${p.id}` }, load)
       .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_actividad", filter: `proyecto_id=eq.${p.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "proyecto_comentarios", filter: `proyecto_id=eq.${p.id}` }, load)
       .subscribe();
     return () => { (supabase as any).removeChannel(ch); };
     // eslint-disable-next-line
   }, [p?.id]);
+
+  const enviarComentario = async () => {
+    if (!user) return toast.error("Iniciá sesión para comentar");
+    const texto = nuevoComent.trim();
+    if (!texto) return;
+    const { error } = await (supabase as any).from("proyecto_comentarios").insert({
+      proyecto_id: p.id, perfil_id: user.id, contenido: texto,
+    });
+    if (error) return toast.error(error.message);
+    setNuevoComent("");
+  };
+
+  const guardarEdicionComent = async () => {
+    if (!editandoComent) return;
+    const texto = editandoComent.texto.trim();
+    if (!texto) return;
+    await (supabase as any).from("proyecto_comentarios").update({ contenido: texto, editado_at: new Date().toISOString() }).eq("id", editandoComent.id);
+    setEditandoComent(null);
+  };
+
+  const eliminarComent = async (id: string) => {
+    const ok = await confirm({ title: "¿Eliminar comentario?", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
+    await (supabase as any).from("proyecto_comentarios").delete().eq("id", id);
+  };
 
   const registrarActividad = async (accion: string, meta: any = {}) => {
     if (!user || !p) return;
@@ -253,8 +283,9 @@ export default function ProyectoDetalle() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full justify-start gap-1 rounded-xl bg-secondary/60 p-1">
+        <TabsList className="w-full justify-start gap-1 overflow-x-auto rounded-xl bg-secondary/60 p-1">
           <TabsTrigger value="overview" className="gap-1.5 rounded-lg"><Info className="h-3.5 w-3.5" />Resumen</TabsTrigger>
+          <TabsTrigger value="comentarios" className="gap-1.5 rounded-lg"><MessageSquare className="h-3.5 w-3.5" />Comentarios {comentarios.length > 0 && <span className="rounded-full bg-background px-1.5 text-[10px]">{comentarios.length}</span>}</TabsTrigger>
           <TabsTrigger value="tareas" className="gap-1.5 rounded-lg"><Layers className="h-3.5 w-3.5" />Tareas {tareas.length > 0 && <span className="rounded-full bg-background px-1.5 text-[10px]">{tareas.length}</span>}</TabsTrigger>
           <TabsTrigger value="archivos" className="gap-1.5 rounded-lg"><Paperclip className="h-3.5 w-3.5" />Archivos {archivos.length > 0 && <span className="rounded-full bg-background px-1.5 text-[10px]">{archivos.length}</span>}</TabsTrigger>
           <TabsTrigger value="actividad" className="gap-1.5 rounded-lg"><Activity className="h-3.5 w-3.5" />Actividad</TabsTrigger>
@@ -287,6 +318,91 @@ export default function ProyectoDetalle() {
             {updates.length === 0 ? <p className="text-xs text-muted-foreground">Sin updates aún.</p>
               : updates.map((u) => <div key={u.id} className="border-t pt-2 first:border-0 first:pt-0"><p className="text-sm font-medium">{u.titulo}</p><p className="text-sm text-muted-foreground">{u.contenido}</p></div>)}
           </CardContent></Card>
+        </TabsContent>
+
+        {/* COMENTARIOS */}
+        <TabsContent value="comentarios" className="space-y-4">
+          <Card>
+            <CardContent className="space-y-3 p-4">
+              <div className="flex items-start gap-2">
+                <Avatar className="h-8 w-8 shrink-0">
+                  <AvatarImage src={user?.user_metadata?.avatar_url || ""} />
+                  <AvatarFallback className="text-xs">{initials((user?.user_metadata as any)?.nombre || "Yo")}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 space-y-2">
+                  <Textarea
+                    placeholder={user ? "Compartí tu opinión, feedback o pregunta…" : "Iniciá sesión para comentar"}
+                    rows={3}
+                    value={nuevoComent}
+                    onChange={(e) => setNuevoComent(e.target.value)}
+                    disabled={!user}
+                    className="resize-none"
+                  />
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] text-muted-foreground">{nuevoComent.length}/4000</p>
+                    <Button size="sm" onClick={enviarComentario} disabled={!user || !nuevoComent.trim()}>
+                      <Send className="h-3.5 w-3.5" />Publicar
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {comentarios.length === 0 ? (
+            <Card><CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-40" />
+              Sé el primero en comentar este proyecto.
+            </CardContent></Card>
+          ) : (
+            <ul className="space-y-3">
+              {comentarios.map((c) => {
+                const esAutor = user?.id === c.perfil_id;
+                const enEdicion = editandoComent?.id === c.id;
+                return (
+                  <li key={c.id} className="rounded-xl border bg-card p-3">
+                    <div className="flex items-start gap-2.5">
+                      <Link to={`/lin/perfil/${c.perfil?.username}`} className="shrink-0">
+                        <Avatar className="h-8 w-8"><AvatarImage src={c.perfil?.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(c.perfil?.nombre)}</AvatarFallback></Avatar>
+                      </Link>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <Link to={`/lin/perfil/${c.perfil?.username}`} className="text-sm font-semibold hover:text-primary">{c.perfil?.nombre}</Link>
+                          {c.perfil?.verificado && <span className="text-xs text-primary">✓</span>}
+                          <span className="text-[11px] text-muted-foreground">· {formatTime(c.created_at)}{c.editado_at && " · editado"}</span>
+                          {esAutor && !enEdicion && (
+                            <div className="ml-auto flex items-center gap-1">
+                              <button onClick={() => setEditandoComent({ id: c.id, texto: c.contenido })} className="text-muted-foreground hover:text-foreground" aria-label="Editar">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button onClick={() => eliminarComent(c.id)} className="text-muted-foreground hover:text-rose-500" aria-label="Eliminar">
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                        {enEdicion ? (
+                          <div className="mt-1.5 space-y-2">
+                            <Textarea
+                              rows={3} value={editandoComent.texto}
+                              onChange={(e) => setEditandoComent({ ...editandoComent, texto: e.target.value })}
+                              className="resize-none"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <Button size="sm" variant="ghost" onClick={() => setEditandoComent(null)}>Cancelar</Button>
+                              <Button size="sm" onClick={guardarEdicionComent}>Guardar</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed">{c.contenido}</p>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </TabsContent>
 
         {/* TAREAS — Kanban */}
