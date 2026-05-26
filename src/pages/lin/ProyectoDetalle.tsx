@@ -44,6 +44,9 @@ export default function ProyectoDetalle() {
   const [tareas, setTareas] = useState<any[]>([]);
   const [archivos, setArchivos] = useState<any[]>([]);
   const [actividad, setActividad] = useState<any[]>([]);
+  const [comentarios, setComentarios] = useState<any[]>([]);
+  const [nuevoComent, setNuevoComent] = useState("");
+  const [editandoComent, setEditandoComent] = useState<{ id: string; texto: string } | null>(null);
   const [siguiendo, setSiguiendo] = useState(false);
   const [voted, setVoted] = useState(false);
   const [esMiembro, setEsMiembro] = useState(false);
