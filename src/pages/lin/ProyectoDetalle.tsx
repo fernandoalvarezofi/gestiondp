@@ -214,6 +214,19 @@ export default function ProyectoDetalle() {
 
   if (!p) return <p className="text-sm text-muted-foreground">Cargando…</p>;
   const est = ESTADO_PROYECTO[p.estado];
+  const fundingLabel: Record<string, string> = {
+    idea: "Idea", bootstrapped: "Bootstrapped", pre_seed: "Pre-seed", seed: "Seed", serie_a: "Serie A+",
+  };
+  const videoEmbedUrl = (() => {
+    const url = p.video_demo_url as string | null;
+    if (!url) return null;
+    const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    const vm = url.match(/vimeo\.com\/(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+    return null;
+  })();
+  const safeIdx = Math.min(mediaIdx, Math.max(0, mediaList.length - 1));
 
   return (
     <>
