@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ESTADO_PROYECTO, initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle, MessageSquare, Send, Pencil } from "lucide-react";
+import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle, MessageSquare, Send, Pencil, TrendingUp, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackHeader } from "@/components/lin/BackHeader";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
@@ -45,6 +45,8 @@ export default function ProyectoDetalle() {
   const [archivos, setArchivos] = useState<any[]>([]);
   const [actividad, setActividad] = useState<any[]>([]);
   const [comentarios, setComentarios] = useState<any[]>([]);
+  const [mediaList, setMediaList] = useState<any[]>([]);
+  const [mediaIdx, setMediaIdx] = useState(0);
   const [nuevoComent, setNuevoComent] = useState("");
   const [editandoComent, setEditandoComent] = useState<{ id: string; texto: string } | null>(null);
   const [siguiendo, setSiguiendo] = useState(false);
@@ -58,15 +60,16 @@ export default function ProyectoDetalle() {
     const { data } = await (supabase as any).from("proyectos").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").or(`slug.eq.${slug},id.eq.${slug}`).single();
     if (!data) return;
     setP(data);
-    const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }] = await Promise.all([
+    const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }, { data: md }] = await Promise.all([
       (supabase as any).from("proyecto_miembros").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id),
       (supabase as any).from("proyecto_updates").select("*").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
       (supabase as any).from("proyecto_tareas").select("*, asignado:perfiles!asignado_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id).order("orden"),
       (supabase as any).from("proyecto_archivos").select("*, perfil:perfiles!subido_por(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
       (supabase as any).from("proyecto_actividad").select("*, perfil:perfiles!perfil_id(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }).limit(50),
       (supabase as any).from("proyecto_comentarios").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
+      (supabase as any).from("proyecto_media").select("*").eq("proyecto_id", data.id).order("orden"),
     ]);
-    setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []); setComentarios(cm || []);
+    setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []); setComentarios(cm || []); setMediaList(md || []);
     if (user) {
       const [{ data: s }, { data: v }] = await Promise.all([
         (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
