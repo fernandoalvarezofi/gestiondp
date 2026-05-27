@@ -241,16 +241,26 @@ export default function ProyectoDetalle() {
         )}
         <div className="space-y-3 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{p.nombre}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                por <Link className="font-medium text-foreground hover:text-primary" to={`/lin/perfil/${p.perfil?.username}`}>{p.perfil?.nombre}</Link>
-                {" · "}<span>{p.total_seguidores} seguidores</span>{" · "}<span>{miembros.length} miembros</span>
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {est && <Badge className={est.color}>{est.label}</Badge>}
-                {p.categoria && <Badge variant="outline">{p.categoria}</Badge>}
-                {p.tags?.map((t: string) => <Badge key={t} variant="secondary">{t}</Badge>)}
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              {p.logo_url && (
+                <img src={p.logo_url} alt={p.nombre} className="h-14 w-14 shrink-0 rounded-2xl border bg-card object-cover shadow-sm sm:h-16 sm:w-16" />
+              )}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{p.nombre}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  por <Link className="font-medium text-foreground hover:text-primary" to={`/lin/perfil/${p.perfil?.username}`}>{p.perfil?.nombre}</Link>
+                  {" · "}<span>{p.total_seguidores} seguidores</span>{" · "}<span>{miembros.length} miembros</span>
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {est && <Badge className={est.color}>{est.label}</Badge>}
+                  {p.funding_etapa && (
+                    <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
+                      <TrendingUp className="h-3 w-3" />{fundingLabel[p.funding_etapa] || p.funding_etapa}
+                    </Badge>
+                  )}
+                  {p.categoria && <Badge variant="outline">{p.categoria}</Badge>}
+                  {p.tags?.map((t: string) => <Badge key={t} variant="secondary">{t}</Badge>)}
+                </div>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
