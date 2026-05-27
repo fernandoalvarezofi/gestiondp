@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ESTADO_PROYECTO, initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle, MessageSquare, Send, Pencil } from "lucide-react";
+import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle, MessageSquare, Send, Pencil, TrendingUp, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackHeader } from "@/components/lin/BackHeader";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
@@ -45,6 +45,8 @@ export default function ProyectoDetalle() {
   const [archivos, setArchivos] = useState<any[]>([]);
   const [actividad, setActividad] = useState<any[]>([]);
   const [comentarios, setComentarios] = useState<any[]>([]);
+  const [mediaList, setMediaList] = useState<any[]>([]);
+  const [mediaIdx, setMediaIdx] = useState(0);
   const [nuevoComent, setNuevoComent] = useState("");
   const [editandoComent, setEditandoComent] = useState<{ id: string; texto: string } | null>(null);
   const [siguiendo, setSiguiendo] = useState(false);
@@ -58,15 +60,16 @@ export default function ProyectoDetalle() {
     const { data } = await (supabase as any).from("proyectos").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").or(`slug.eq.${slug},id.eq.${slug}`).single();
     if (!data) return;
     setP(data);
-    const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }] = await Promise.all([
+    const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }, { data: md }] = await Promise.all([
       (supabase as any).from("proyecto_miembros").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id),
       (supabase as any).from("proyecto_updates").select("*").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
       (supabase as any).from("proyecto_tareas").select("*, asignado:perfiles!asignado_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id).order("orden"),
       (supabase as any).from("proyecto_archivos").select("*, perfil:perfiles!subido_por(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
       (supabase as any).from("proyecto_actividad").select("*, perfil:perfiles!perfil_id(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }).limit(50),
       (supabase as any).from("proyecto_comentarios").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
+      (supabase as any).from("proyecto_media").select("*").eq("proyecto_id", data.id).order("orden"),
     ]);
-    setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []); setComentarios(cm || []);
+    setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []); setComentarios(cm || []); setMediaList(md || []);
     if (user) {
       const [{ data: s }, { data: v }] = await Promise.all([
         (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
@@ -211,6 +214,19 @@ export default function ProyectoDetalle() {
 
   if (!p) return <p className="text-sm text-muted-foreground">Cargando…</p>;
   const est = ESTADO_PROYECTO[p.estado];
+  const fundingLabel: Record<string, string> = {
+    idea: "Idea", bootstrapped: "Bootstrapped", pre_seed: "Pre-seed", seed: "Seed", serie_a: "Serie A+",
+  };
+  const videoEmbedUrl = (() => {
+    const url = p.video_demo_url as string | null;
+    if (!url) return null;
+    const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/);
+    if (yt) return `https://www.youtube.com/embed/${yt[1]}`;
+    const vm = url.match(/vimeo\.com\/(\d+)/);
+    if (vm) return `https://player.vimeo.com/video/${vm[1]}`;
+    return null;
+  })();
+  const safeIdx = Math.min(mediaIdx, Math.max(0, mediaList.length - 1));
 
   return (
     <>
@@ -225,16 +241,26 @@ export default function ProyectoDetalle() {
         )}
         <div className="space-y-3 p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{p.nombre}</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                por <Link className="font-medium text-foreground hover:text-primary" to={`/lin/perfil/${p.perfil?.username}`}>{p.perfil?.nombre}</Link>
-                {" · "}<span>{p.total_seguidores} seguidores</span>{" · "}<span>{miembros.length} miembros</span>
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {est && <Badge className={est.color}>{est.label}</Badge>}
-                {p.categoria && <Badge variant="outline">{p.categoria}</Badge>}
-                {p.tags?.map((t: string) => <Badge key={t} variant="secondary">{t}</Badge>)}
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              {p.logo_url && (
+                <img src={p.logo_url} alt={p.nombre} className="h-14 w-14 shrink-0 rounded-2xl border bg-card object-cover shadow-sm sm:h-16 sm:w-16" />
+              )}
+              <div className="min-w-0 flex-1">
+                <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl">{p.nombre}</h1>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  por <Link className="font-medium text-foreground hover:text-primary" to={`/lin/perfil/${p.perfil?.username}`}>{p.perfil?.nombre}</Link>
+                  {" · "}<span>{p.total_seguidores} seguidores</span>{" · "}<span>{miembros.length} miembros</span>
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {est && <Badge className={est.color}>{est.label}</Badge>}
+                  {p.funding_etapa && (
+                    <Badge variant="outline" className="gap-1 border-primary/30 text-primary">
+                      <TrendingUp className="h-3 w-3" />{fundingLabel[p.funding_etapa] || p.funding_etapa}
+                    </Badge>
+                  )}
+                  {p.categoria && <Badge variant="outline">{p.categoria}</Badge>}
+                  {p.tags?.map((t: string) => <Badge key={t} variant="secondary">{t}</Badge>)}
+                </div>
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
@@ -293,6 +319,68 @@ export default function ProyectoDetalle() {
 
         {/* OVERVIEW */}
         <TabsContent value="overview" className="space-y-4">
+          {/* Gallery */}
+          {mediaList.length > 0 && (
+            <Card>
+              <CardContent className="space-y-2 p-3">
+                <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
+                  <img src={mediaList[safeIdx]?.url} alt="" className="h-full w-full object-contain" />
+                  {mediaList.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setMediaIdx((i) => (i - 1 + mediaList.length) % mediaList.length)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-sm backdrop-blur transition hover:bg-background"
+                        aria-label="Anterior"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setMediaIdx((i) => (i + 1) % mediaList.length)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-sm backdrop-blur transition hover:bg-background"
+                        aria-label="Siguiente"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                      <span className="absolute bottom-2 right-2 rounded-full bg-background/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums">
+                        {safeIdx + 1} / {mediaList.length}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {mediaList.length > 1 && (
+                  <div className="flex gap-1.5 overflow-x-auto pb-1">
+                    {mediaList.map((m, i) => (
+                      <button
+                        key={m.id}
+                        onClick={() => setMediaIdx(i)}
+                        className={cn(
+                          "h-14 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-all",
+                          i === safeIdx ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"
+                        )}
+                      >
+                        <img src={m.url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Video embed */}
+          {videoEmbedUrl && (
+            <Card>
+              <CardContent className="space-y-2 p-3">
+                <div className="flex items-center gap-1.5 px-1 text-sm font-semibold">
+                  <PlayCircle className="h-4 w-4 text-primary" /> Video demo
+                </div>
+                <div className="overflow-hidden rounded-xl bg-black aspect-video">
+                  <iframe src={videoEmbedUrl} className="h-full w-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {p.descripcion && (
             <Card><CardContent className="whitespace-pre-wrap p-5 text-sm leading-relaxed">{p.descripcion}</CardContent></Card>
           )}

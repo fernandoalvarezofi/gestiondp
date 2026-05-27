@@ -2611,6 +2611,41 @@ export type Database = {
           },
         ]
       }
+      proyecto_media: {
+        Row: {
+          created_at: string
+          id: string
+          orden: number
+          proyecto_id: string
+          storage_path: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          orden?: number
+          proyecto_id: string
+          storage_path?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          orden?: number
+          proyecto_id?: string
+          storage_path?: string | null
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proyecto_media_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proyecto_miembros: {
         Row: {
           created_at: string
@@ -2828,7 +2863,9 @@ export type Database = {
           descripcion: string | null
           destacado: boolean
           estado: Database["public"]["Enums"]["estado_proyecto"]
+          funding_etapa: string | null
           id: string
+          logo_url: string | null
           nombre: string
           perfil_id: string
           portada_url: string | null
@@ -2842,6 +2879,7 @@ export type Database = {
           total_seguidores: number
           total_upvotes: number
           updated_at: string
+          video_demo_url: string | null
         }
         Insert: {
           buscando?: string[] | null
@@ -2851,7 +2889,9 @@ export type Database = {
           descripcion?: string | null
           destacado?: boolean
           estado?: Database["public"]["Enums"]["estado_proyecto"]
+          funding_etapa?: string | null
           id?: string
+          logo_url?: string | null
           nombre: string
           perfil_id: string
           portada_url?: string | null
@@ -2865,6 +2905,7 @@ export type Database = {
           total_seguidores?: number
           total_upvotes?: number
           updated_at?: string
+          video_demo_url?: string | null
         }
         Update: {
           buscando?: string[] | null
@@ -2874,7 +2915,9 @@ export type Database = {
           descripcion?: string | null
           destacado?: boolean
           estado?: Database["public"]["Enums"]["estado_proyecto"]
+          funding_etapa?: string | null
           id?: string
+          logo_url?: string | null
           nombre?: string
           perfil_id?: string
           portada_url?: string | null
@@ -2888,6 +2931,7 @@ export type Database = {
           total_seguidores?: number
           total_upvotes?: number
           updated_at?: string
+          video_demo_url?: string | null
         }
         Relationships: [
           {
