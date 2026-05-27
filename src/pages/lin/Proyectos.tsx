@@ -11,7 +11,7 @@ import {
   Plus, Rocket, Search, Triangle, MessageSquare,
   ArrowRight, Zap, Award, Flame, Globe, ExternalLink, Github,
 } from "lucide-react";
-import { initials, formatNumber } from "@/lib/worefHelpers";
+import { initials, formatNumber, ESTADO_PROYECTO } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -32,6 +32,14 @@ const PERIODOS: { key: Periodo; label: string; desde: () => Date | null }[] = [
 ];
 
 const CATEGORIAS = ["Todas", "SaaS", "IA", "DevTools", "FinTech", "EdTech", "Health", "Marketplace", "Web3", "Hardware", "Otro"];
+const ESTADOS_FILTRO: { key: string; label: string }[] = [
+  { key: "todos", label: "Todos" },
+  { key: "idea", label: "Idea" },
+  { key: "en_desarrollo", label: "En desarrollo" },
+  { key: "lanzado", label: "Lanzado" },
+  { key: "buscando_equipo", label: "Busca equipo" },
+  { key: "buscando_inversion", label: "Busca inversión" },
+];
 
 const SELECT_PROYECTO = `
   id, slug, nombre, descripcion, portada_url, categoria, tags, estado,
@@ -46,6 +54,7 @@ export default function Proyectos() {
   const [loading, setLoading] = useState(true);
   const [periodo, setPeriodo] = useState<Periodo>("semana");
   const [categoria, setCategoria] = useState("Todas");
+  const [estado, setEstado] = useState<string>("todos");
   const [q, setQ] = useState("");
   const [misVotos, setMisVotos] = useState<Set<string>>(new Set());
 
