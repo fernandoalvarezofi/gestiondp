@@ -319,6 +319,68 @@ export default function ProyectoDetalle() {
 
         {/* OVERVIEW */}
         <TabsContent value="overview" className="space-y-4">
+          {/* Gallery */}
+          {mediaList.length > 0 && (
+            <Card>
+              <CardContent className="space-y-2 p-3">
+                <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
+                  <img src={mediaList[safeIdx]?.url} alt="" className="h-full w-full object-contain" />
+                  {mediaList.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setMediaIdx((i) => (i - 1 + mediaList.length) % mediaList.length)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-sm backdrop-blur transition hover:bg-background"
+                        aria-label="Anterior"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => setMediaIdx((i) => (i + 1) % mediaList.length)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/80 p-1.5 shadow-sm backdrop-blur transition hover:bg-background"
+                        aria-label="Siguiente"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                      <span className="absolute bottom-2 right-2 rounded-full bg-background/80 px-2 py-0.5 text-[11px] font-semibold tabular-nums">
+                        {safeIdx + 1} / {mediaList.length}
+                      </span>
+                    </>
+                  )}
+                </div>
+                {mediaList.length > 1 && (
+                  <div className="flex gap-1.5 overflow-x-auto pb-1">
+                    {mediaList.map((m, i) => (
+                      <button
+                        key={m.id}
+                        onClick={() => setMediaIdx(i)}
+                        className={cn(
+                          "h-14 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-all",
+                          i === safeIdx ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"
+                        )}
+                      >
+                        <img src={m.url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Video embed */}
+          {videoEmbedUrl && (
+            <Card>
+              <CardContent className="space-y-2 p-3">
+                <div className="flex items-center gap-1.5 px-1 text-sm font-semibold">
+                  <PlayCircle className="h-4 w-4 text-primary" /> Video demo
+                </div>
+                <div className="overflow-hidden rounded-xl bg-black aspect-video">
+                  <iframe src={videoEmbedUrl} className="h-full w-full" allow="autoplay; encrypted-media; picture-in-picture" allowFullScreen />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {p.descripcion && (
             <Card><CardContent className="whitespace-pre-wrap p-5 text-sm leading-relaxed">{p.descripcion}</CardContent></Card>
           )}
