@@ -102,6 +102,7 @@ export default function Proyectos() {
 
   const filtered = useMemo(() => {
     let list = [...items];
+    if (estado !== "todos") list = list.filter((p) => p.estado === estado);
     if (categoria !== "Todas") list = list.filter((p) => (p.categoria || "").toLowerCase() === categoria.toLowerCase());
     if (q.trim()) {
       const t = q.toLowerCase();
@@ -112,7 +113,7 @@ export default function Proyectos() {
       );
     }
     return list.sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0));
-  }, [items, categoria, q]);
+  }, [items, categoria, estado, q]);
 
   // Agrupar por día (Hoy / Ayer / dd MMM)
   const grupos = useMemo(() => groupByDay(filtered), [filtered]);
@@ -171,6 +172,25 @@ export default function Proyectos() {
               />
             </div>
           </div>
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-1.5 pb-1">
+              {ESTADOS_FILTRO.map((e) => (
+                <button
+                  key={e.key}
+                  onClick={() => setEstado(e.key)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
+                    estado === e.key
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-background text-muted-foreground hover:bg-secondary"
+                  )}
+                >
+                  {e.label}
+                </button>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-1.5 pb-1">
               {CATEGORIAS.map((c) => (
