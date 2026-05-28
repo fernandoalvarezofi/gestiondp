@@ -13,11 +13,22 @@ import { formatTime, initials } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
 
 export default function Foro() {
+  const { user } = useAuth();
+  const confirm = useConfirm();
   const [cats, setCats] = useState<any[]>([]);
   const [posts, setPosts] = useState<any[]>([]);
   const [cat, setCat] = useState<string>("all");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"recientes" | "trending">("recientes");
+
+  const eliminarPost = async (id: string) => {
+    const ok = await confirm({ title: "¿Eliminar post?", description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+    if (!ok) return;
+    const { error } = await (supabase as any).from("foro_posts").delete().eq("id", id).eq("perfil_id", user?.id);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Post eliminado");
+    setPosts((arr) => arr.filter((p) => p.id !== id));
+  };
 
   const load = async () => {
     const [{ data: c }, { data: p }] = await Promise.all([
