@@ -1668,10 +1668,24 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "marketplace_ordenes_comprador_perfil_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "marketplace_ordenes_producto_id_fkey"
             columns: ["producto_id"]
             isOneToOne: false
             referencedRelation: "marketplace_productos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_ordenes_vendedor_perfil_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1757,6 +1771,13 @@ export type Database = {
             referencedRelation: "marketplace_categorias"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "marketplace_productos_vendedor_perfil_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       marketplace_reviews: {
@@ -1795,6 +1816,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "marketplace_reviews_comprador_perfil_fkey"
+            columns: ["comprador_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "marketplace_reviews_orden_id_fkey"
             columns: ["orden_id"]
             isOneToOne: true
@@ -1806,6 +1834,13 @@ export type Database = {
             columns: ["producto_id"]
             isOneToOne: false
             referencedRelation: "marketplace_productos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketplace_reviews_vendedor_perfil_fkey"
+            columns: ["vendedor_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
             referencedColumns: ["id"]
           },
         ]
