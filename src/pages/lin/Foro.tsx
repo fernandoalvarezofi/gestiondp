@@ -114,35 +114,53 @@ export default function Foro() {
               No hay posts con esos filtros.
             </div>
           ) : filtered.map((p) => (
-            <Link key={p.id} to={`/lin/foro/post/${p.id}`} className="block px-3 py-3 transition-colors hover:bg-secondary/40">
-              <div className="flex gap-3">
-                <Avatar className="h-9 w-9 shrink-0">
-                  <AvatarImage src={p.perfil?.avatar_url || ""} />
-                  <AvatarFallback className="text-xs">{initials(p.perfil?.nombre || "??")}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="font-semibold text-foreground">{p.perfil?.nombre}</span>
-                    <span>·</span>
-                    <span>{formatTime(p.created_at)}</span>
-                    {p.categoria && (
-                      <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ backgroundColor: `${p.categoria.color}20`, color: p.categoria.color }}>
-                        #{p.categoria.slug}
-                      </span>
-                    )}
-                    {p.fijado && <Pin className="h-3 w-3 text-primary" />}
-                    {p.resuelto && <CheckCircle2 className="h-3 w-3 text-emerald-500" />}
+            <div key={p.id} className="group relative">
+              <Link to={`/lin/foro/post/${p.id}`} className="block px-3 py-3 transition-colors hover:bg-secondary/40">
+                <div className="flex gap-3">
+                  <Avatar className="h-9 w-9 shrink-0">
+                    <AvatarImage src={p.perfil?.avatar_url || ""} />
+                    <AvatarFallback className="text-xs">{initials(p.perfil?.nombre || "??")}</AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="font-semibold text-foreground">{p.perfil?.nombre}</span>
+                      <span>·</span>
+                      <span>{formatTime(p.created_at)}</span>
+                      {p.categoria && (
+                        <span className="rounded-full px-1.5 py-0.5 text-[10px] font-medium" style={{ backgroundColor: `${p.categoria.color}20`, color: p.categoria.color }}>
+                          #{p.categoria.slug}
+                        </span>
+                      )}
+                      {p.fijado && <Pin className="h-3 w-3 text-primary" />}
+                      {p.resuelto && <CheckCircle2 className="h-3 w-3 text-emerald-500" />}
+                    </div>
+                    <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">{p.titulo}</p>
+                    {p.contenido && <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">{p.contenido}</p>}
+                    <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" />{p.total_respuestas}</span>
+                      <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5" />{p.total_likes}</span>
+                    </div>
                   </div>
-                  <p className="mt-0.5 line-clamp-2 font-semibold leading-snug">{p.titulo}</p>
-                  {p.contenido && <p className="mt-0.5 line-clamp-1 text-sm text-muted-foreground">{p.contenido}</p>}
-                  <div className="mt-1.5 flex items-center gap-3 text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1"><MessageSquare className="h-3.5 w-3.5" />{p.total_respuestas}</span>
-                    <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5" />{p.total_likes}</span>
-                  </div>
+                  {p.imagen_url && <img src={p.imagen_url} alt="" loading="lazy" className="hidden h-16 w-16 shrink-0 rounded-lg object-cover sm:block" />}
                 </div>
-                {p.imagen_url && <img src={p.imagen_url} alt="" loading="lazy" className="hidden h-16 w-16 shrink-0 rounded-lg object-cover sm:block" />}
-              </div>
-            </Link>
+              </Link>
+              {user?.id === p.perfil_id && (
+                <div className="absolute right-2 top-2 opacity-0 transition-opacity group-hover:opacity-100">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="rounded-full bg-background/80 p-1.5 hover:bg-secondary" onClick={(e) => e.stopPropagation()}>
+                        <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => eliminarPost(p.id)}>
+                        <Trash2 className="mr-2 h-4 w-4" />Eliminar post
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
+            </div>
           ))}
         </div>
       </div>
