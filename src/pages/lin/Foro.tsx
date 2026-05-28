@@ -3,8 +3,12 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Plus, MessageSquare, Heart, Pin, CheckCircle2, Search, Hash, TrendingUp, Sparkles } from "lucide-react";
+import { Plus, MessageSquare, Heart, Pin, CheckCircle2, Search, Hash, TrendingUp, Sparkles, MoreHorizontal, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/contexts/AuthContext";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
+import { toast } from "sonner";
 import { formatTime, initials } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
 
