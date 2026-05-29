@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
+import ChatDock from "@/components/lin/ChatDock";
 
 export function AppLayout() {
   const { session, user, loading } = useAuth();
@@ -196,6 +197,8 @@ export function AppLayout() {
             </>)}
           </NavLink>
         </nav>
+
+        <ChatDock />
       </div>
     </SidebarProvider>
   );
