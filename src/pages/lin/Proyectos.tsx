@@ -8,18 +8,15 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Plus, Rocket, Search, Triangle, MessageSquare,
-  ArrowRight, Zap, Award, Flame, Globe, ExternalLink, Github,
+  Plus, Rocket, Search, MessageSquare, ArrowRight, Zap, Award,
+  Globe, ExternalLink, Github, Users, FolderOpen,
 } from "lucide-react";
-import { initials, formatNumber, ESTADO_PROYECTO } from "@/lib/worefHelpers";
+import { initials, formatNumber } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 
 /**
- * Proyectos — leaderboard profesional inspirado en Product Hunt.
- * - Agrupación por día (Hoy / Ayer / fecha)
- * - Card amplia con thumbnail grande, tagline, makers, comentarios y upvote
- * - Filtro por período + categoría + búsqueda
+ * Proyectos — listado tipo Product Hunt, sin upvotes.
+ * Orden cronológico, agrupado por día. Card horizontal con portada izquierda.
  */
 
 type Periodo = "hoy" | "semana" | "mes" | "all";
@@ -32,18 +29,10 @@ const PERIODOS: { key: Periodo; label: string; desde: () => Date | null }[] = [
 ];
 
 const CATEGORIAS = ["Todas", "SaaS", "IA", "DevTools", "FinTech", "EdTech", "Health", "Marketplace", "Web3", "Hardware", "Otro"];
-const ESTADOS_FILTRO: { key: string; label: string }[] = [
-  { key: "todos", label: "Todos" },
-  { key: "idea", label: "Idea" },
-  { key: "en_desarrollo", label: "En desarrollo" },
-  { key: "lanzado", label: "Lanzado" },
-  { key: "buscando_equipo", label: "Busca equipo" },
-  { key: "buscando_inversion", label: "Busca inversión" },
-];
 
 const SELECT_PROYECTO = `
-  id, slug, nombre, descripcion, portada_url, categoria, tags, estado,
-  total_upvotes, total_comentarios, total_seguidores, sitio_web, demo_url, repo_url, created_at,
+  id, slug, nombre, descripcion, tagline, portada_url, categoria, tags,
+  total_comentarios, sitio_web, demo_url, repo_url, created_at, perfil_id,
   perfil:perfiles!perfil_id(id, nombre, username, avatar_url, verificado),
   miembros:proyecto_miembros(perfil:perfiles!perfil_id(id, nombre, username, avatar_url))
 `;
@@ -51,12 +40,12 @@ const SELECT_PROYECTO = `
 export default function Proyectos() {
   const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
+  const [mios, setMios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [periodo, setPeriodo] = useState<Periodo>("semana");
   const [categoria, setCategoria] = useState("Todas");
-  const [estado, setEstado] = useState<string>("todos");
   const [q, setQ] = useState("");
-  const [misVotos, setMisVotos] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useState<"todos" | "mios">("todos");
 
   useEffect(() => {
     (async () => {
@@ -65,7 +54,6 @@ export default function Proyectos() {
       let query = (supabase as any)
         .from("proyectos")
         .select(SELECT_PROYECTO)
-        .order("total_upvotes", { ascending: false })
         .order("created_at", { ascending: false })
         .limit(120);
       if (desde) query = query.gte("created_at", desde.toISOString());
@@ -76,76 +64,89 @@ export default function Proyectos() {
   }, [periodo]);
 
   useEffect(() => {
-    if (!user) { setMisVotos(new Set()); return; }
+    if (!user) { setMios([]); return; }
     (async () => {
-      const { data } = await (supabase as any).from("proyecto_upvotes").select("proyecto_id").eq("perfil_id", user.id);
-      setMisVotos(new Set((data || []).map((v: any) => v.proyecto_id)));
+      const { data } = await (supabase as any)
+        .from("proyectos")
+        .select(SELECT_PROYECTO)
+        .eq("perfil_id", user.id)
+        .order("created_at", { ascending: false });
+      setMios(data || []);
     })();
   }, [user]);
 
-  const toggleUpvote = async (proyectoId: string) => {
-    if (!user) { toast.error("Iniciá sesión para votar"); return; }
-    const tiene = misVotos.has(proyectoId);
-    const next = new Set(misVotos);
-    if (tiene) {
-      next.delete(proyectoId);
-      setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) } : p));
-      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", proyectoId).eq("perfil_id", user.id);
-    } else {
-      next.add(proyectoId);
-      setItems((prev) => prev.map((p) => p.id === proyectoId ? { ...p, total_upvotes: (p.total_upvotes || 0) + 1 } : p));
-      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: proyectoId, perfil_id: user.id });
-      if (error) { toast.error("No se pudo registrar el voto"); return; }
-    }
-    setMisVotos(next);
-  };
-
   const filtered = useMemo(() => {
-    let list = [...items];
-    if (estado !== "todos") list = list.filter((p) => p.estado === estado);
+    const source = tab === "mios" ? mios : items;
+    let list = [...source];
     if (categoria !== "Todas") list = list.filter((p) => (p.categoria || "").toLowerCase() === categoria.toLowerCase());
     if (q.trim()) {
       const t = q.toLowerCase();
       list = list.filter((p) =>
         p.nombre?.toLowerCase().includes(t) ||
         p.descripcion?.toLowerCase().includes(t) ||
+        p.tagline?.toLowerCase().includes(t) ||
         (p.tags || []).some((tag: string) => tag.toLowerCase().includes(t))
       );
     }
-    return list.sort((a, b) => (b.total_upvotes || 0) - (a.total_upvotes || 0));
-  }, [items, categoria, estado, q]);
+    return list;
+  }, [items, mios, tab, categoria, q]);
 
-  // Agrupar por día (Hoy / Ayer / dd MMM)
   const grupos = useMemo(() => groupByDay(filtered), [filtered]);
 
-  const stats = useMemo(() => ({
-    total: items.length,
-    votos: items.reduce((s, p) => s + (p.total_upvotes || 0), 0),
-    comments: items.reduce((s, p) => s + (p.total_comentarios || 0), 0),
-  }), [items]);
+  const stats = useMemo(() => {
+    const makersSet = new Set<string>();
+    for (const p of items) {
+      if (p.perfil?.id) makersSet.add(p.perfil.id);
+      for (const m of p.miembros || []) if (m.perfil?.id) makersSet.add(m.perfil.id);
+    }
+    return {
+      total: items.length,
+      comments: items.reduce((s, p) => s + (p.total_comentarios || 0), 0),
+      makers: makersSet.size,
+    };
+  }, [items]);
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 px-3 sm:px-4 lg:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="mx-auto grid max-w-6xl gap-6 px-3 sm:px-4 md:grid-cols-[minmax(0,1fr)_280px]">
       <div className="min-w-0 space-y-5">
-        {/* HERO compacto — tipografía PH */}
+        {/* HEADER */}
         <header className="space-y-2 border-b pb-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Lanzamientos</p>
-              <h1 className="font-display text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-4xl">
+              <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary">Lanzamientos</p>
+              <h1 className="font-display text-3xl font-extrabold leading-[1.05] tracking-tight">
                 Los mejores productos de la comunidad.
               </h1>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                Descubrí, votá y comentá lo que se está construyendo en Woref.
-              </p>
             </div>
-            <Button asChild className="rounded-full font-semibold">
+            <Button asChild className="rounded-full bg-primary font-semibold text-primary-foreground">
               <Link to="/lin/proyectos/nuevo"><Plus className="h-4 w-4" />Lanzar producto</Link>
             </Button>
           </div>
         </header>
 
-        {/* Controles: período + búsqueda + categorías */}
+        {/* TABS Todos / Míos */}
+        {user && (
+          <div className="flex gap-1 border-b">
+            {([
+              { k: "todos", l: "Todos los proyectos" },
+              { k: "mios", l: `Mis proyectos${mios.length ? ` (${mios.length})` : ""}` },
+            ] as const).map((t) => (
+              <button
+                key={t.k}
+                onClick={() => setTab(t.k)}
+                className={cn(
+                  "relative px-4 py-2 text-sm font-semibold transition-colors",
+                  tab === t.k ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {t.l}
+                {tab === t.k && <span className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-primary" />}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* FILTROS */}
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex rounded-full border bg-card p-1">
@@ -154,7 +155,7 @@ export default function Proyectos() {
                   key={p.key}
                   onClick={() => setPeriodo(p.key)}
                   className={cn(
-                    "rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all",
+                    "rounded-full px-4 py-1.5 text-sm font-semibold transition-all",
                     periodo === p.key ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -167,30 +168,11 @@ export default function Proyectos() {
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar productos, tags…"
+                placeholder="Buscar proyectos, tags…"
                 className="h-9 rounded-full border bg-background pl-9 text-sm"
               />
             </div>
           </div>
-          <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex gap-1.5 pb-1">
-              {ESTADOS_FILTRO.map((e) => (
-                <button
-                  key={e.key}
-                  onClick={() => setEstado(e.key)}
-                  className={cn(
-                    "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
-                    estado === e.key
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border bg-background text-muted-foreground hover:bg-secondary"
-                  )}
-                >
-                  {e.label}
-                </button>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
           <ScrollArea className="w-full whitespace-nowrap">
             <div className="flex gap-1.5 pb-1">
               {CATEGORIAS.map((c) => (
@@ -200,7 +182,7 @@ export default function Proyectos() {
                   className={cn(
                     "rounded-full border px-3 py-1 text-xs font-semibold transition-colors",
                     categoria === c
-                      ? "border-foreground bg-foreground text-background"
+                      ? "border-transparent bg-foreground text-background"
                       : "border-border bg-background hover:bg-secondary"
                   )}
                 >
@@ -212,44 +194,33 @@ export default function Proyectos() {
           </ScrollArea>
         </div>
 
-        {/* LEADERBOARD */}
+        {/* LISTADO */}
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => <RowSkeleton key={i} />)}
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState />
+          <EmptyState mios={tab === "mios"} />
         ) : (
           <div className="space-y-6">
             {grupos.map(({ label, items: rows }) => (
               <section key={label}>
-                <div className="mb-2 flex items-end justify-between border-b pb-2">
-                  <h2 className="flex items-center gap-2 font-display text-lg font-extrabold tracking-tight">
-                    {label}
-                  </h2>
+                <div className="mb-2 flex items-end justify-between">
+                  <h2 className="font-display text-lg font-extrabold tracking-tight">{label}</h2>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     {rows.length} {rows.length === 1 ? "producto" : "productos"}
                   </span>
                 </div>
-                <ul className="divide-y rounded-2xl border bg-card">
-                  {rows.map((p, i) => (
-                    <li key={p.id}>
-                      <LaunchRow
-                        p={p}
-                        rank={i + 1}
-                        voted={misVotos.has(p.id)}
-                        onUpvote={() => toggleUpvote(p.id)}
-                      />
-                    </li>
-                  ))}
-                </ul>
+                <div className="mb-3 h-px bg-border" />
+                <div>
+                  {rows.map((p, i) => <ProjectRow key={p.id} p={p} rank={i + 1} />)}
+                </div>
               </section>
             ))}
           </div>
         )}
       </div>
 
-      {/* SIDEBAR */}
       <SideRail stats={stats} />
     </div>
   );
@@ -257,47 +228,48 @@ export default function Proyectos() {
 
 /* ---------------------- Row ---------------------- */
 
-function LaunchRow({ p, rank, voted, onUpvote }: { p: any; rank: number; voted: boolean; onUpvote: () => void }) {
+function ProjectRow({ p, rank }: { p: any; rank: number }) {
   const detalleHref = `/lin/proyectos/${p.slug || p.id}`;
   const makers: any[] = [p.perfil, ...((p.miembros || []).map((m: any) => m.perfil).filter(Boolean))]
     .filter(Boolean)
     .filter((m, i, arr) => arr.findIndex((x) => x.id === m.id) === i)
     .slice(0, 4);
+  const tag = p.tagline || p.descripcion;
 
   return (
-    <div className="flex items-center gap-3 px-3 py-4 transition-colors hover:bg-secondary/30 sm:gap-4 sm:px-5">
-      {/* Thumbnail grande */}
-      <Link to={detalleHref} className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border bg-secondary sm:h-16 sm:w-16">
+    <Link
+      to={detalleHref}
+      className="mb-3 flex cursor-pointer items-stretch overflow-hidden rounded-2xl border border-border/60 bg-card transition-shadow hover:shadow-md"
+    >
+      {/* PORTADA */}
+      <div className="relative w-[120px] flex-shrink-0 overflow-hidden bg-secondary sm:w-[160px]">
         {p.portada_url ? (
           <img src={p.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-surface-mint">
-            <Rocket className="h-6 w-6 text-foreground/40" />
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-secondary">
+            <Rocket className="h-8 w-8 text-foreground/30" />
           </div>
         )}
-      </Link>
+      </div>
 
-      {/* Info */}
-      <div className="min-w-0 flex-1">
-        <Link to={detalleHref} className="group block">
-          <div className="flex items-center gap-1.5">
+      {/* BODY */}
+      <div className="flex flex-1 flex-col justify-between gap-2 p-4">
+        <div>
+          <div className="flex items-center gap-2">
             <span className="shrink-0 text-xs font-bold text-muted-foreground tabular-nums">#{rank}</span>
-            <h3 className="truncate text-[15px] font-extrabold leading-tight tracking-tight group-hover:text-primary sm:text-base">
-              {p.nombre}
-            </h3>
+            <h3 className="truncate text-[15px] font-extrabold tracking-tight hover:text-primary">{p.nombre}</h3>
             {p.categoria && (
               <span className="hidden shrink-0 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground sm:inline-block">
                 {p.categoria}
               </span>
             )}
           </div>
-          <p className="mt-0.5 line-clamp-1 text-[13px] leading-snug text-muted-foreground">
-            {p.descripcion || "Sin descripción."}
-          </p>
-        </Link>
+          {tag && (
+            <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-muted-foreground">{tag}</p>
+          )}
+        </div>
 
-        {/* Makers + meta + acciones */}
-        <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
           {makers.length > 0 && (
             <div className="flex -space-x-1.5">
               {makers.map((m: any) => (
@@ -308,86 +280,61 @@ function LaunchRow({ p, rank, voted, onUpvote }: { p: any; rank: number; voted: 
               ))}
             </div>
           )}
-          <Link to={detalleHref} className="inline-flex items-center gap-1 font-medium hover:text-foreground">
+          <span className="inline-flex items-center gap-1">
             <MessageSquare className="h-3.5 w-3.5" />
             <span className="tabular-nums">{p.total_comentarios || 0}</span>
-          </Link>
+          </span>
           {p.sitio_web && (
-            <a
-              href={p.sitio_web} target="_blank" rel="noreferrer noopener"
+            <a href={p.sitio_web} target="_blank" rel="noreferrer noopener"
               onClick={(e) => e.stopPropagation()}
-              className="hidden items-center gap-1 font-medium hover:text-foreground sm:inline-flex"
-            >
-              <Globe className="h-3.5 w-3.5" /> Sitio
-            </a>
+              className="hidden items-center gap-1 hover:text-foreground sm:inline-flex"
+            ><Globe className="h-3.5 w-3.5" />Sitio</a>
           )}
           {p.demo_url && (
-            <a
-              href={p.demo_url} target="_blank" rel="noreferrer noopener"
+            <a href={p.demo_url} target="_blank" rel="noreferrer noopener"
               onClick={(e) => e.stopPropagation()}
-              className="hidden items-center gap-1 font-medium hover:text-foreground sm:inline-flex"
-            >
-              <ExternalLink className="h-3.5 w-3.5" /> Demo
-            </a>
+              className="hidden items-center gap-1 hover:text-foreground sm:inline-flex"
+            ><ExternalLink className="h-3.5 w-3.5" />Demo</a>
           )}
           {p.repo_url && (
-            <a
-              href={p.repo_url} target="_blank" rel="noreferrer noopener"
+            <a href={p.repo_url} target="_blank" rel="noreferrer noopener"
               onClick={(e) => e.stopPropagation()}
-              className="hidden items-center gap-1 font-medium hover:text-foreground sm:inline-flex"
-            >
-              <Github className="h-3.5 w-3.5" /> Repo
-            </a>
+              className="hidden items-center gap-1 hover:text-foreground sm:inline-flex"
+            ><Github className="h-3.5 w-3.5" />Repo</a>
           )}
         </div>
       </div>
-
-      {/* Upvote */}
-      <button
-        onClick={onUpvote}
-        aria-pressed={voted}
-        className={cn(
-          "flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl border-2 font-extrabold tabular-nums transition-all sm:h-16 sm:w-16",
-          voted
-            ? "border-primary bg-gradient-to-b from-primary to-orange-500 text-primary-foreground shadow-md shadow-primary/30"
-            : "border-border bg-background text-foreground hover:border-primary hover:text-primary active:scale-95"
-        )}
-      >
-        <Triangle className={cn("h-3.5 w-3.5", voted ? "fill-current" : "fill-none")} strokeWidth={2.8} />
-        <span className="mt-0.5 text-sm leading-none">{p.total_upvotes || 0}</span>
-      </button>
-    </div>
+    </Link>
   );
 }
 
 function RowSkeleton() {
   return (
-    <div className="flex items-center gap-4 rounded-2xl border bg-card p-4">
-      <Skeleton className="h-16 w-16 rounded-xl" />
-      <div className="flex-1 space-y-2">
+    <div className="flex items-stretch overflow-hidden rounded-2xl border bg-card">
+      <Skeleton className="h-[120px] w-[160px] rounded-none" />
+      <div className="flex-1 space-y-2 p-4">
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-3 w-3/4" />
         <Skeleton className="h-3 w-1/3" />
       </div>
-      <Skeleton className="h-16 w-16 rounded-xl" />
     </div>
   );
 }
 
-/* ---------------------- Side rail ---------------------- */
+/* ---------------------- Sidebar ---------------------- */
 
-function SideRail({ stats }: { stats: { total: number; votos: number; comments: number } }) {
+function SideRail({ stats }: { stats: { total: number; comments: number; makers: number } }) {
   return (
-    <aside className="space-y-4 lg:sticky lg:top-4 lg:h-fit">
-      <section className="rounded-2xl border bg-gradient-to-br from-primary/15 via-card to-surface-mint p-4">
+    <aside className="hidden space-y-4 md:block md:sticky md:top-4 md:h-fit">
+      <section className="rounded-2xl border bg-secondary/40 p-4">
         <div className="mb-2 inline-flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <Zap className="h-4 w-4" />
         </div>
         <p className="text-sm font-bold leading-tight">¿Listo para lanzar?</p>
-        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-          Subí tu producto, conseguí votos, feedback y los primeros usuarios.
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground mb-3">
+          Subí tu proyecto y mostralo a la comunidad.
         </p>
-        <Button asChild size="sm" className="mt-3 w-full rounded-full font-semibold">
+        <Button asChild size="sm" className="w-full rounded-full bg-primary font-semibold text-primary-foreground">
           <Link to="/lin/proyectos/nuevo">Lanzar producto <ArrowRight className="h-3.5 w-3.5" /></Link>
         </Button>
       </section>
@@ -397,9 +344,9 @@ function SideRail({ stats }: { stats: { total: number; votos: number; comments: 
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">En este período</h3>
         </div>
         <ul className="divide-y">
-          <StatRow icon={Rocket} label="Productos" value={stats.total} />
-          <StatRow icon={Triangle} label="Votos" value={stats.votos} />
+          <StatRow icon={Rocket} label="Proyectos" value={stats.total} />
           <StatRow icon={MessageSquare} label="Comentarios" value={stats.comments} />
+          <StatRow icon={Users} label="Makers" value={stats.makers} />
         </ul>
       </section>
 
@@ -411,10 +358,10 @@ function SideRail({ stats }: { stats: { total: number; votos: number; comments: 
         </div>
         <ol className="space-y-2.5 px-4 py-3 text-xs leading-relaxed">
           {[
-            ["Lanzá tu producto", "Nombre, tagline, portada y links."],
-            ["Compartilo", "Invitá a la comunidad a votarte."],
-            ["Subí en el ranking", "Más votos = más visibilidad."],
-            ["Conversá", "Respondé feedback en los comentarios."],
+            ["Lanzá tu proyecto", "Nombre, tagline y portada."],
+            ["Compartilo", "Invitá a tu red a verlo."],
+            ["Conseguí feedback", "Leé los comentarios."],
+            ["Encontrá equipo", "Conectá con los interesados."],
           ].map(([t, d], i) => (
             <li key={t} className="flex gap-2">
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">{i + 1}</span>
@@ -440,13 +387,15 @@ function StatRow({ icon: Icon, label, value }: { icon: any; label: string; value
   );
 }
 
-function EmptyState() {
+function EmptyState({ mios }: { mios?: boolean }) {
   return (
     <div className="rounded-2xl border border-dashed bg-card py-16 text-center">
-      <Flame className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-      <p className="text-sm font-medium">Aún no hay productos en este período.</p>
-      <p className="mt-1 text-xs text-muted-foreground">Sé el primero en lanzar.</p>
-      <Button asChild className="mt-4 rounded-full">
+      {mios ? <FolderOpen className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+            : <Rocket className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />}
+      <p className="text-sm font-medium">
+        {mios ? "Todavía no lanzaste ningún proyecto." : "Aún no hay proyectos."}
+      </p>
+      <Button asChild className="mt-4 rounded-full bg-primary text-primary-foreground">
         <Link to="/lin/proyectos/nuevo"><Plus className="h-4 w-4" />Lanzar producto</Link>
       </Button>
     </div>
