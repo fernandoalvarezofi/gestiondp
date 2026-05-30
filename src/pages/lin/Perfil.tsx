@@ -10,8 +10,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin,
   Star, UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, FileText, Play, Share2, MoreHorizontal,
-  Calendar, Briefcase,
+  Calendar, Briefcase, Heart, Repeat2, Info,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { PostCard } from "@/components/lin/PostCard";
 import { LazyImage } from "@/components/lin/LazyImage";
 import { TIPO_USUARIO, initials, formatNumber } from "@/lib/worefHelpers";
@@ -36,6 +37,8 @@ export default function Perfil() {
   const [perfil, setPerfil] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
   const [resenas, setResenas] = useState<any[]>([]);
+  const [likedPubs, setLikedPubs] = useState<any[]>([]);
+  const [repostesPubs, setRepostesPubs] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
   const [loadingSeguir, setLoadingSeguir] = useState(false);
   const [tab, setTab] = useState("publicaciones");
@@ -54,13 +57,17 @@ export default function Perfil() {
       if (error || !p) { toast.error("Perfil no encontrado"); navigate("/lin"); return; }
       setPerfil(p);
 
-      const [{ data: posts }, { data: rs }, { data: hist }] = await Promise.all([
+      const [{ data: posts }, { data: rs }, { data: hist }, { data: likedData }, { data: repostesData }] = await Promise.all([
         (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
         (supabase as any).from("resenas").select("*, autor:perfiles!autor_id(nombre,username,avatar_url)").eq("perfil_id", p.id).order("created_at", { ascending: false }),
         (supabase as any).from("historias").select("id").eq("perfil_id", p.id).gt("expira_at", new Date().toISOString()).limit(1),
+        (supabase as any).from("likes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
+        (supabase as any).from("repostes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
       ]);
       setPubs(posts || []);
       setResenas(rs || []);
+      setLikedPubs((likedData || []).map((l: any) => l.publicacion).filter(Boolean));
+      setRepostesPubs((repostesData || []).map((r: any) => r.publicacion).filter(Boolean));
       setTieneHistoria((hist || []).length > 0);
 
       if (user && user.id !== p.id) {
@@ -257,7 +264,7 @@ export default function Perfil() {
             <StatCell n={perfil.total_publicaciones} label="Posts" />
             <StatCell n={perfil.total_seguidores} label="Seguidores" to={`/lin/perfil/${perfil.username}/red?tab=seguidores`} />
             <StatCell n={perfil.total_siguiendo} label="Siguiendo" to={`/lin/perfil/${perfil.username}/red?tab=siguiendo`} />
-            <StatCell n={perfil.score} label="Score" />
+            <StatCell n={perfil.score} label="Score" tooltip="El score refleja tu actividad en Woref: publicaciones, seguidores, likes y comentarios." />
           </div>
         </div>
 
@@ -269,6 +276,8 @@ export default function Perfil() {
               <TabTrigger value="reels" icon={Play} label="Reels" count={reels.length} active={tab === "reels"} />
               <TabTrigger value="articulos" icon={FileText} label="Artículos" count={articulos.length} active={tab === "articulos"} />
               <TabTrigger value="resenas" icon={Star} label="Reseñas" count={resenas.length} active={tab === "resenas"} />
+              <TabTrigger value="likes" icon={Heart} label="Me gusta" count={likedPubs.length} active={tab === "likes"} />
+              {isMine && <TabTrigger value="repostes" icon={Repeat2} label="Repostes" count={repostesPubs.length} active={tab === "repostes"} />}
             </TabsList>
             {tab === "publicaciones" && (
               <div className="hidden gap-1 sm:flex">
@@ -303,19 +312,40 @@ export default function Perfil() {
                 </CardContent></Card>
               ))}
           </TabsContent>
+          <TabsContent value="likes" className="mt-4 -mx-4 sm:-mx-6">
+            {likedPubs.length === 0 ? <EmptyTab text="Aún no hay publicaciones con me gusta." /> : likedPubs.map((p) => <PostCard key={p.id} pub={p} />)}
+          </TabsContent>
+          {isMine && (
+            <TabsContent value="repostes" className="mt-4 -mx-4 sm:-mx-6">
+              {repostesPubs.length === 0 ? <EmptyTab text="Aún no reposteaste nada." /> : repostesPubs.map((p) => <PostCard key={p.id} pub={p} />)}
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>
   );
 }
 
-function StatCell({ n, label, to }: { n: number; label: string; to?: string }) {
+function StatCell({ n, label, to, tooltip }: { n: number; label: string; to?: string; tooltip?: string }) {
   const inner = (
-    <div className="flex flex-col items-center justify-center px-2 py-3 text-center">
+    <div className={cn("flex flex-col items-center justify-center px-2 py-3 text-center", tooltip && "cursor-help")}>
       <span className="font-display text-xl font-bold">{formatNumber(n)}</span>
-      <span className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</span>
+      <span className="inline-flex items-center gap-1 text-[11px] uppercase tracking-wider text-muted-foreground">
+        {label}
+        {tooltip && <Info className="h-3 w-3" />}
+      </span>
     </div>
   );
+  if (tooltip) {
+    return (
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild><div>{inner}</div></TooltipTrigger>
+          <TooltipContent className="max-w-[220px] text-xs">{tooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
   return to ? <Link to={to} className="transition-colors hover:bg-secondary/40">{inner}</Link> : inner;
 }
 

@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TrendingUp, UserPlus, Search, Hash, BadgeCheck, Sparkles, ArrowRight, Triangle, Rocket, Trophy } from "lucide-react";
+import { TrendingUp, UserPlus, Search, Hash, BadgeCheck, Sparkles, ArrowRight, Rocket, Trophy } from "lucide-react";
 import { initials, TIPO_USUARIO } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -23,7 +23,6 @@ export function FeedRail() {
   const [trends, setTrends] = useState<{ tag: string; total: number }[]>([]);
   const [suggested, setSuggested] = useState<any[]>([]);
   const [launches, setLaunches] = useState<any[]>([]);
-  const [myVotes, setMyVotes] = useState<Set<string>>(new Set());
   const [following, setFollowing] = useState<Set<string>>(new Set());
   const [q, setQ] = useState("");
 
@@ -47,20 +46,15 @@ export function FeedRail() {
 
     // Top launches de la semana
     const { data: proys } = await (supabase as any).from("proyectos")
-      .select("id,nombre,descripcion,slug,portada_url,total_upvotes,categoria,perfil:perfiles!perfil_id(nombre,username,avatar_url)")
+      .select("id,nombre,descripcion,slug,portada_url,categoria,perfil:perfiles!perfil_id(nombre,username,avatar_url)")
       .gte("created_at", desde)
-      .order("total_upvotes", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(4);
     setLaunches(proys || []);
 
     if (user) {
-      const [{ data: sigs }, { data: votes }] = await Promise.all([
-        (supabase as any).from("seguidos").select("seguido_id").eq("seguidor_id", user.id),
-        (supabase as any).from("proyecto_upvotes").select("proyecto_id").eq("perfil_id", user.id),
-      ]);
+      const { data: sigs } = await (supabase as any).from("seguidos").select("seguido_id").eq("seguidor_id", user.id);
       setFollowing(new Set((sigs || []).map((s: any) => s.seguido_id)));
-      setMyVotes(new Set((votes || []).map((v: any) => v.proyecto_id)));
     }
   };
 
@@ -88,22 +82,6 @@ export function FeedRail() {
     setFollowing(new Set(next));
   };
 
-  const upvoteProyecto = async (id: string) => {
-    if (!user) { toast.error("Iniciá sesión para votar"); return; }
-    const tiene = myVotes.has(id);
-    const next = new Set(myVotes);
-    if (tiene) {
-      next.delete(id);
-      setLaunches((arr) => arr.map((p) => p.id === id ? { ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) } : p));
-      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", id).eq("perfil_id", user.id);
-    } else {
-      next.add(id);
-      setLaunches((arr) => arr.map((p) => p.id === id ? { ...p, total_upvotes: (p.total_upvotes || 0) + 1 } : p));
-      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: id, perfil_id: user.id });
-      if (error) { toast.error("No se pudo votar"); return; }
-    }
-    setMyVotes(next);
-  };
 
   return (
     <aside className="sticky top-4 hidden h-fit space-y-4 lg:block">
@@ -131,38 +109,22 @@ export function FeedRail() {
             <Link to="/lin/proyectos" className="text-[11px] font-semibold text-muted-foreground hover:text-primary">Ver todos</Link>
           </div>
           <ul className="divide-y">
-            {launches.map((p, i) => {
-              const voted = myVotes.has(p.id);
-              return (
-                <li key={p.id} className="flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-secondary/40">
-                  <span className="w-4 text-center text-[11px] font-bold text-muted-foreground tabular-nums">{i + 1}</span>
-                  <Link to={`/lin/proyectos/${p.slug || p.id}`} className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border bg-secondary">
-                    {p.portada_url ? (
-                      <img src={p.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                    ) : (
-                      <div className="flex h-full w-full items-center justify-center"><Rocket className="h-4 w-4 text-foreground/30" /></div>
-                    )}
-                  </Link>
-                  <Link to={`/lin/proyectos/${p.slug || p.id}`} className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-bold leading-tight">{p.nombre}</p>
-                    <p className="truncate text-[10px] text-muted-foreground">{p.descripcion || p.categoria || ""}</p>
-                  </Link>
-                  <button
-                    onClick={() => upvoteProyecto(p.id)}
-                    aria-pressed={voted}
-                    className={cn(
-                      "flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-md border font-bold tabular-nums transition-all",
-                      voted
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background hover:border-primary hover:text-primary"
-                    )}
-                  >
-                    <Triangle className={cn("h-2.5 w-2.5", voted ? "fill-current" : "fill-none")} strokeWidth={2.8} />
-                    <span className="text-[10px] leading-none">{p.total_upvotes || 0}</span>
-                  </button>
-                </li>
-              );
-            })}
+            {launches.map((p, i) => (
+              <li key={p.id} className="flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-secondary/40">
+                <span className="w-4 text-center text-[11px] font-bold text-muted-foreground tabular-nums">{i + 1}</span>
+                <Link to={`/lin/proyectos/${p.slug || p.id}`} className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border bg-secondary">
+                  {p.portada_url ? (
+                    <img src={p.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center"><Rocket className="h-4 w-4 text-foreground/30" /></div>
+                  )}
+                </Link>
+                <Link to={`/lin/proyectos/${p.slug || p.id}`} className="min-w-0 flex-1">
+                  <p className="truncate text-[12px] font-bold leading-tight">{p.nombre}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">{p.descripcion || p.categoria || ""}</p>
+                </Link>
+              </li>
+            ))}
           </ul>
         </section>
       )}
