@@ -12,6 +12,7 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { NavLink } from "react-router-dom";
+import worefLogo from "@/assets/woref-logo-full.png";
 
 type NavItem = {
   title: string;
@@ -95,7 +96,7 @@ export function AppSidebar() {
     <Sidebar className="hidden md:flex border-r-0">
       <SidebarHeader className="px-4 py-5">
         <NavLink to="/" className="group flex items-center gap-2">
-          <img src={(await import("@/assets/woref-logo-full.png")).default} alt="Woref" className="h-7 w-auto" />
+          <img src={worefLogo} alt="Woref" className="h-7 w-auto" />
         </NavLink>
         <NavLink
           to="/lin/publicar"
