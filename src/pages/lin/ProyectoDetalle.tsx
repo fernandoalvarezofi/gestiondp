@@ -59,8 +59,12 @@ export default function ProyectoDetalle() {
   const [subiendo, setSubiendo] = useState(false);
 
   const load = async () => {
-    const { data } = await (supabase as any).from("proyectos").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").or(`slug.eq.${slug},id.eq.${slug}`).single();
-    if (!data) return;
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug || "");
+    const query = (supabase as any)
+      .from("proyectos")
+      .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)");
+    const { data, error } = await (isUUID ? query.eq("id", slug) : query.eq("slug", slug)).maybeSingle();
+    if (error || !data) { setNotFound(true); return; }
     setP(data);
     const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }, { data: md }] = await Promise.all([
       (supabase as any).from("proyecto_miembros").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id),
@@ -73,12 +77,8 @@ export default function ProyectoDetalle() {
     ]);
     setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []); setComentarios(cm || []); setMediaList(md || []);
     if (user) {
-      const [{ data: s }, { data: v }] = await Promise.all([
-        (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
-        (supabase as any).from("proyecto_upvotes").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle(),
-      ]);
+      const { data: s } = await (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle();
       setSiguiendo(!!s);
-      setVoted(!!v);
       setEsMiembro((m || []).some((x: any) => x.perfil_id === user.id) || data.perfil_id === user.id);
     }
   };
