@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { ESTADO_PROYECTO, initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
-import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, Triangle, MessageSquare, Send, Pencil, TrendingUp, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
+import { Plus, Paperclip, Activity, Layers, Info, Upload, File as FileIcon, Calendar, Flag, Trash2, ExternalLink, Github, Globe, Sparkles, MessageSquare, Send, Pencil, TrendingUp, ChevronLeft, ChevronRight, PlayCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { BackHeader } from "@/components/lin/BackHeader";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
@@ -35,8 +35,10 @@ const PRIORIDADES: Record<string, { label: string; color: string }> = {
 
 export default function ProyectoDetalle() {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const confirm = useConfirm();
+  const [notFound, setNotFound] = useState(false);
 
   const [p, setP] = useState<any>(null);
   const [miembros, setMiembros] = useState<any[]>([]);
@@ -50,7 +52,7 @@ export default function ProyectoDetalle() {
   const [nuevoComent, setNuevoComent] = useState("");
   const [editandoComent, setEditandoComent] = useState<{ id: string; texto: string } | null>(null);
   const [siguiendo, setSiguiendo] = useState(false);
-  const [voted, setVoted] = useState(false);
+  
   const [esMiembro, setEsMiembro] = useState(false);
   const [tab, setTab] = useState("overview");
   const [nuevaTarea, setNuevaTarea] = useState({ open: false, titulo: "", descripcion: "", estado: "backlog", prioridad: "media", asignado_id: "", fecha_limite: "" });
@@ -132,19 +134,6 @@ export default function ProyectoDetalle() {
     setSiguiendo(!siguiendo);
   };
 
-  const toggleUpvote = async () => {
-    if (!user) return toast.error("Iniciá sesión para votar");
-    if (voted) {
-      await (supabase as any).from("proyecto_upvotes").delete().eq("proyecto_id", p.id).eq("perfil_id", user.id);
-      setVoted(false);
-      setP({ ...p, total_upvotes: Math.max(0, (p.total_upvotes || 0) - 1) });
-    } else {
-      const { error } = await (supabase as any).from("proyecto_upvotes").insert({ proyecto_id: p.id, perfil_id: user.id });
-      if (error) return toast.error("No se pudo registrar el voto");
-      setVoted(true);
-      setP({ ...p, total_upvotes: (p.total_upvotes || 0) + 1 });
-    }
-  };
 
   const crearTarea = async () => {
     if (!user || !nuevaTarea.titulo.trim()) return;
@@ -212,6 +201,12 @@ export default function ProyectoDetalle() {
   const completadas = tareas.filter((t) => t.estado === "completada").length;
   const progreso = tareas.length > 0 ? Math.round((completadas / tareas.length) * 100) : p?.progreso || 0;
 
+  if (notFound) return (
+    <div className="mx-auto max-w-md py-20 text-center">
+      <p className="mb-4 text-lg font-semibold">Proyecto no encontrado</p>
+      <Button onClick={() => navigate("/lin/proyectos")}>Ver proyectos</Button>
+    </div>
+  );
   if (!p) return <p className="text-sm text-muted-foreground">Cargando…</p>;
   const est = ESTADO_PROYECTO[p.estado];
   const fundingLabel: Record<string, string> = {
@@ -264,19 +259,6 @@ export default function ProyectoDetalle() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
-              <button
-                onClick={toggleUpvote}
-                aria-pressed={voted}
-                className={cn(
-                  "flex h-14 w-16 flex-col items-center justify-center rounded-xl border-2 font-bold tabular-nums transition-all",
-                  voted
-                    ? "border-primary bg-primary text-primary-foreground shadow-ember"
-                    : "border-border bg-background text-foreground hover:border-primary hover:bg-primary/5 hover:text-primary"
-                )}
-              >
-                <Triangle className={cn("h-3.5 w-3.5", voted ? "fill-current" : "fill-none")} strokeWidth={2.5} />
-                <span className="text-[13px] leading-none mt-0.5">{p.total_upvotes || 0}</span>
-              </button>
               <Button variant={siguiendo ? "outline" : "default"} onClick={toggleSeguir} size="sm">
                 {siguiendo ? "Siguiendo" : "Seguir"}
               </Button>
