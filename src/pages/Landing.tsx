@@ -10,6 +10,7 @@ import {
   UserPlus, Send, LineChart,
 } from "lucide-react";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
+import worefLogo from "@/assets/woref-logo-full.png";
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
@@ -68,9 +69,8 @@ export default function Landing() {
       {/* NAV */}
       <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-primary" />
-            <span className="text-lg font-bold tracking-tight">Woref</span>
+          <Link to="/" className="flex items-center">
+            <img src={worefLogo} alt="Woref" className="h-8 w-auto" />
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
             <InstallAppCTA variant="icon" />

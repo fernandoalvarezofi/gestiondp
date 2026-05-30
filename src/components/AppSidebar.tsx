@@ -12,6 +12,7 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { NavLink } from "react-router-dom";
+import worefLogo from "@/assets/woref-logo-full.png";
 
 type NavItem = {
   title: string;
@@ -94,16 +95,8 @@ export function AppSidebar() {
   return (
     <Sidebar className="hidden md:flex border-r-0">
       <SidebarHeader className="px-4 py-5">
-        <NavLink to="/" className="group flex items-center gap-2.5">
-          <span className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-ember shadow-ember">
-            <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg">
-              <path d="M2 7l3 10 4-8 3 8 4-10 3 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="absolute inset-0 rounded-lg ring-1 ring-white/20" />
-          </span>
-          <span className="font-display text-xl font-bold tracking-tight text-sidebar-foreground">
-            Woref<span className="text-primary">.</span>
-          </span>
+        <NavLink to="/" className="group flex items-center gap-2">
+          <img src={worefLogo} alt="Woref" className="h-7 w-auto" />
         </NavLink>
         <NavLink
           to="/lin/publicar"
