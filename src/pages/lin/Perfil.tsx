@@ -10,8 +10,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin,
   Star, UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, FileText, Play, Share2, MoreHorizontal,
-  Calendar, Briefcase,
+  Calendar, Briefcase, Heart, Repeat2, Info,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { PostCard } from "@/components/lin/PostCard";
 import { LazyImage } from "@/components/lin/LazyImage";
 import { TIPO_USUARIO, initials, formatNumber } from "@/lib/worefHelpers";
@@ -36,6 +37,8 @@ export default function Perfil() {
   const [perfil, setPerfil] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
   const [resenas, setResenas] = useState<any[]>([]);
+  const [likedPubs, setLikedPubs] = useState<any[]>([]);
+  const [repostesPubs, setRepostesPubs] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
   const [loadingSeguir, setLoadingSeguir] = useState(false);
   const [tab, setTab] = useState("publicaciones");
@@ -54,13 +57,17 @@ export default function Perfil() {
       if (error || !p) { toast.error("Perfil no encontrado"); navigate("/lin"); return; }
       setPerfil(p);
 
-      const [{ data: posts }, { data: rs }, { data: hist }] = await Promise.all([
+      const [{ data: posts }, { data: rs }, { data: hist }, { data: likedData }, { data: repostesData }] = await Promise.all([
         (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
         (supabase as any).from("resenas").select("*, autor:perfiles!autor_id(nombre,username,avatar_url)").eq("perfil_id", p.id).order("created_at", { ascending: false }),
         (supabase as any).from("historias").select("id").eq("perfil_id", p.id).gt("expira_at", new Date().toISOString()).limit(1),
+        (supabase as any).from("likes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
+        (supabase as any).from("repostes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
       ]);
       setPubs(posts || []);
       setResenas(rs || []);
+      setLikedPubs((likedData || []).map((l: any) => l.publicacion).filter(Boolean));
+      setRepostesPubs((repostesData || []).map((r: any) => r.publicacion).filter(Boolean));
       setTieneHistoria((hist || []).length > 0);
 
       if (user && user.id !== p.id) {
