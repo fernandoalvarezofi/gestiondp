@@ -42,7 +42,7 @@ export default function Proyectos() {
   const [items, setItems] = useState<any[]>([]);
   const [mios, setMios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [periodo, setPeriodo] = useState<Periodo>("semana");
+  const [periodo, setPeriodo] = useState<Periodo>("all");
   const [categoria, setCategoria] = useState("Todas");
   const [q, setQ] = useState("");
   const [tab, setTab] = useState<"todos" | "mios">("todos");
