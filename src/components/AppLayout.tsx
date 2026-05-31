@@ -15,6 +15,7 @@ import {
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
 import ChatDock from "@/components/lin/ChatDock";
+import { WorefLogo } from "@/components/lin/WorefLogo";
 
 export function AppLayout() {
   const { session, user, loading } = useAuth();
