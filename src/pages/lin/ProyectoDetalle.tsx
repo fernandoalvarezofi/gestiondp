@@ -64,8 +64,18 @@ export default function ProyectoDetalle() {
       .from("proyectos")
       .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)");
     const { data, error } = await (isUUID ? query.eq("id", slug) : query.eq("slug", slug)).maybeSingle();
-    if (error || !data) { setNotFound(true); return; }
-    setP(data);
+    if (error) { setNotFound(true); return; }
+    let row = data;
+    if (!row && !isUUID) {
+      const { data: fb } = await (supabase as any)
+        .from("proyectos")
+        .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)")
+        .eq("id", slug)
+        .maybeSingle();
+      if (fb) row = fb;
+    }
+    if (!row) { setNotFound(true); return; }
+    setP(row);
     const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }, { data: md }] = await Promise.all([
       (supabase as any).from("proyecto_miembros").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id),
       (supabase as any).from("proyecto_updates").select("*").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
