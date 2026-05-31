@@ -79,6 +79,10 @@ export default function Publicar() {
   const submit = async () => {
     if (!user) return toast.error("Iniciá sesión");
     if (!cuerpo && !titulo) return toast.error("Escribí algo");
+    const opcionesValidas = encuesta.filter((o) => o.trim());
+    if (tipo === "encuesta" && opcionesValidas.length < 2) {
+      return toast.error("La encuesta necesita al menos 2 opciones");
+    }
     const { data: miPerfilCheck } = await (supabase as any)
       .from("perfiles").select("id").eq("id", user.id).maybeSingle();
     if (!miPerfilCheck) return toast.error("Completá tu perfil antes de publicar");
