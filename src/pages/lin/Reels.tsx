@@ -26,7 +26,7 @@ export default function Reels() {
   useEffect(() => {
     (async () => {
       const { data } = await (supabase as any).from("publicaciones").select(SELECT)
-        .eq("estado", "activa").not("video_url", "is", null)
+        .eq("estado", "activa").or("video_url.not.is.null,imagen_url.not.is.null")
         .order("created_at", { ascending: false }).limit(30);
       setReels(data || []);
       if (user && data?.length) {
