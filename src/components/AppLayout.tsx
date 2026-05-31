@@ -105,12 +105,7 @@ export function AppLayout() {
               </SheetTrigger>
               <SheetContent side="left" className="w-72 overflow-y-auto bg-sidebar text-sidebar-foreground border-sidebar-border">
                 <div className="mb-6 flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-ember shadow-ember">
-                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                  </span>
-                  <span className="font-display text-xl font-bold tracking-tight">
-                    Woref<span className="text-primary">.</span>
-                  </span>
+                  <WorefLogo variant="full" size={22} />
                 </div>
                 <nav>
                   {sheetGroups.map((group, gi) => (
