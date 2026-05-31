@@ -63,6 +63,7 @@ export default function Publicar() {
 
   const addImagenes = (files: FileList | null) => {
     if (!files) return;
+    setVideo(null);
     const restantes = 4 - imagenes.length;
     const arr = Array.from(files).slice(0, restantes).map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
     setImagenes((s) => [...s, ...arr]);
