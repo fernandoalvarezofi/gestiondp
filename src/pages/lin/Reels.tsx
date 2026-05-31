@@ -10,7 +10,7 @@ import { trackEvento } from "@/lib/feedTracker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const SELECT = `id,titulo,cuerpo,video_url,thumbnail_url,total_likes,total_comentarios,total_repostes,vistas,created_at,
+const SELECT = `id,titulo,cuerpo,video_url,imagen_url,thumbnail_url,total_likes,total_comentarios,total_repostes,vistas,created_at,
   perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)`;
 
 export default function Reels() {
