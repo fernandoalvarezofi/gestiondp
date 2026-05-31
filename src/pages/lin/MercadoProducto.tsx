@@ -31,12 +31,19 @@ export default function MercadoProducto() {
     let active = true;
     (async () => {
       setLoading(true);
-      const { data: prod } = await (supabase as any)
-        .from("marketplace_productos")
-        .select(`*, vendedor:perfiles!vendedor_id(id,nombre,username,avatar_url,verificado,bio), categoria:marketplace_categorias!categoria_id(nombre,slug,color)`)
-        .eq("slug", slug).maybeSingle();
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug || "");
+      const baseSelect = `*, vendedor:perfiles!vendedor_id(id,nombre,username,avatar_url,verificado,bio), categoria:marketplace_categorias!categoria_id(nombre,slug,color)`;
+      const q1 = (supabase as any).from("marketplace_productos").select(baseSelect);
+      let { data: prod } = isUUID
+        ? await q1.eq("id", slug).maybeSingle()
+        : await q1.eq("slug", slug).maybeSingle();
+      if (!prod && !isUUID) {
+        const q2 = (supabase as any).from("marketplace_productos").select(baseSelect);
+        const fb = await q2.eq("id", slug).maybeSingle();
+        prod = fb.data;
+      }
       if (!active) return;
-      if (!prod) { setLoading(false); return; }
+      if (!prod) { setLoading(false); toast.error("Producto no encontrado"); navigate("/lin/mercado"); return; }
       setP(prod);
       const [{ data: vp }, { data: rv }] = await Promise.all([
         (supabase as any).from("vendedor_perfiles").select("*").eq("id", prod.vendedor_id).maybeSingle(),
