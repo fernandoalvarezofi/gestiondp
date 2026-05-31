@@ -134,12 +134,8 @@ export default function Auth() {
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
           <div className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-ember shadow-ember">
-              <span className="h-2 w-2 rounded-full bg-white" />
-            </span>
-            <span className="font-display font-bold text-2xl tracking-tight">
-              Woref<span className="text-primary">.</span>
-            </span>
+            <WorefLogo variant="symbol" size={48} className="text-primary" />
+            <WorefLogo variant="wordmark" size={36} className="text-foreground" />
           </div>
 
           <div className="space-y-6">
