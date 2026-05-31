@@ -96,16 +96,20 @@ export default function Reels() {
       <div ref={containerRef} onScroll={onScroll} className="h-full snap-y snap-mandatory overflow-y-scroll scroll-smooth">
         {reels.map((r, i) => (
           <article key={r.id} className="relative flex h-full w-full snap-start items-center justify-center bg-black">
-            <video
-              ref={(el) => (videoRefs.current[i] = el)}
-              src={r.video_url}
-              poster={r.thumbnail_url || undefined}
-              muted={muted}
-              loop
-              playsInline
-              onClick={() => { const v = videoRefs.current[i]; if (!v) return; v.paused ? v.play() : v.pause(); }}
-              className="max-h-full max-w-full object-contain"
-            />
+            {r.video_url ? (
+              <video
+                ref={(el) => (videoRefs.current[i] = el)}
+                src={r.video_url}
+                poster={r.thumbnail_url || undefined}
+                muted={muted}
+                loop
+                playsInline
+                onClick={() => { const v = videoRefs.current[i]; if (!v) return; v.paused ? v.play() : v.pause(); }}
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : r.imagen_url ? (
+              <img src={r.imagen_url} alt={r.titulo || ""} className="h-full w-full object-cover" />
+            ) : null}
 
             {/* Overlay info */}
             <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 text-white">
