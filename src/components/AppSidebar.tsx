@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import {
   Home, Compass, Play, Rocket, Store, Users, MessageCircle, Bell, UserCircle,
-  Settings, LogOut, Plus,
+  Settings, LogOut, Plus, Film, BarChart3, Bookmark,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,7 +12,7 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { NavLink } from "react-router-dom";
-import worefLogo from "@/assets/woref-logo-full.png";
+import { WorefLogo } from "@/components/lin/WorefLogo";
 
 type NavItem = {
   title: string;
