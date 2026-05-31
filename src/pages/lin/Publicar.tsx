@@ -120,7 +120,7 @@ export default function Publicar() {
         es_reel: !!video_url && tipo === "video_corto",
         tags: tags ? tags.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean) : null,
       };
-      if (tipo === "encuesta") payload.encuesta_opciones = encuesta.filter((o) => o.trim());
+      if (tipo === "encuesta") payload.encuesta_opciones = opcionesValidas;
       if (tipo === "hiring" || tipo === "oportunidad") {
         payload.rol_buscado = rolBuscado || null;
         payload.modalidad = modalidad || null;
