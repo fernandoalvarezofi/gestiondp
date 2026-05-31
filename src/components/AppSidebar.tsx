@@ -135,6 +135,8 @@ export function AppSidebar() {
 
       <SidebarFooter className="space-y-2 p-4">
         <SidebarMenu>
+          <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/panel"><BarChart3 className="h-4 w-4" /><span>Mi panel</span></NavLink></SidebarMenuButton></SidebarMenuItem>
+          <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/favoritos"><Bookmark className="h-4 w-4" /><span>Guardados</span></NavLink></SidebarMenuButton></SidebarMenuItem>
           <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/configuracion"><Settings className="h-4 w-4" /><span>Configuración</span></NavLink></SidebarMenuButton></SidebarMenuItem>
           <SidebarMenuItem><SidebarMenuButton onClick={signOut}><LogOut className="h-4 w-4" /><span>Cerrar sesión</span></SidebarMenuButton></SidebarMenuItem>
         </SidebarMenu>
