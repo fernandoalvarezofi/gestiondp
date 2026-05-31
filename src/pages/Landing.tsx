@@ -10,7 +10,7 @@ import {
   UserPlus, Send, LineChart,
 } from "lucide-react";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
-import worefLogo from "@/assets/woref-logo-full.png";
+import { WorefLogo } from "@/components/lin/WorefLogo";
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,created_at,
