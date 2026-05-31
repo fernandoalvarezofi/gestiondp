@@ -11,6 +11,7 @@ import { z } from "zod";
 import { sanitizeErrorMessage } from "@/lib/sanitize";
 import { lovable } from "@/integrations/lovable/index";
 import { Separator } from "@/components/ui/separator";
+import { WorefLogo } from "@/components/lin/WorefLogo";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Ingresá un email válido").max(255),
