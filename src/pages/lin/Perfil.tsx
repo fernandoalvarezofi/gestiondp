@@ -276,7 +276,7 @@ export default function Perfil() {
               <TabTrigger value="reels" icon={Play} label="Reels" count={reels.length} active={tab === "reels"} />
               <TabTrigger value="articulos" icon={FileText} label="Artículos" count={articulos.length} active={tab === "articulos"} />
               <TabTrigger value="resenas" icon={Star} label="Reseñas" count={resenas.length} active={tab === "resenas"} />
-              <TabTrigger value="likes" icon={Heart} label="Me gusta" count={likedPubs.length} active={tab === "likes"} />
+              {isMine && <TabTrigger value="likes" icon={Heart} label="Me gusta" count={likedPubs.length} active={tab === "likes"} />}
               {isMine && <TabTrigger value="repostes" icon={Repeat2} label="Repostes" count={repostesPubs.length} active={tab === "repostes"} />}
             </TabsList>
             {tab === "publicaciones" && (
