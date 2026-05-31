@@ -312,9 +312,11 @@ export default function Perfil() {
                 </CardContent></Card>
               ))}
           </TabsContent>
-          <TabsContent value="likes" className="mt-4 -mx-4 sm:-mx-6">
-            {likedPubs.length === 0 ? <EmptyTab text="Aún no hay publicaciones con me gusta." /> : likedPubs.map((p) => <PostCard key={p.id} pub={p} />)}
-          </TabsContent>
+          {isMine && (
+            <TabsContent value="likes" className="mt-4 -mx-4 sm:-mx-6">
+              {likedPubs.length === 0 ? <EmptyTab text="Aún no hay publicaciones con me gusta." /> : likedPubs.map((p) => <PostCard key={p.id} pub={p} />)}
+            </TabsContent>
+          )}
           {isMine && (
             <TabsContent value="repostes" className="mt-4 -mx-4 sm:-mx-6">
               {repostesPubs.length === 0 ? <EmptyTab text="Aún no reposteaste nada." /> : repostesPubs.map((p) => <PostCard key={p.id} pub={p} />)}
