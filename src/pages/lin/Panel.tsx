@@ -47,7 +47,7 @@ export default function Panel() {
         (supabase as any).from("publicaciones")
           .select("id,titulo,cuerpo,vistas,total_likes,total_comentarios,total_repostes,total_guardados,estado,formato,tipo,es_reel,imagen_url,thumbnail_url,created_at")
           .eq("perfil_id", user.id).neq("estado", "eliminada").order("created_at", { ascending: false }).limit(200),
-        (supabase as any).from("seguidores")
+        (supabase as any).from("seguidos")
           .select("created_at, seguidor:perfiles!seguidor_id(id,nombre,username,avatar_url,verificado)")
           .eq("seguido_id", user.id).order("created_at", { ascending: false }).limit(50),
       ]);
