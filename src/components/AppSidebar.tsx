@@ -97,7 +97,7 @@ export function AppSidebar() {
     <Sidebar className="hidden md:flex border-r-0">
       <SidebarHeader className="px-4 py-5">
         <NavLink to="/" className="group flex items-center gap-2">
-          <img src={worefLogo} alt="Woref" className="h-7 w-auto" />
+          <WorefLogo variant="full" size={24} />
         </NavLink>
         <NavLink
           to="/lin/publicar"
