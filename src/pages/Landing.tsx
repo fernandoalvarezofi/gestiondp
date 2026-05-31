@@ -70,7 +70,7 @@ export default function Landing() {
       <header className="sticky top-0 z-30 border-b bg-background/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
           <Link to="/" className="flex items-center">
-            <img src={worefLogo} alt="Woref" className="h-8 w-auto" />
+            <WorefLogo variant="full" size={26} />
           </Link>
           <div className="flex items-center gap-1 sm:gap-2">
             <InstallAppCTA variant="icon" />
