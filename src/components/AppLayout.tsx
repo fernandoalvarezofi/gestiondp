@@ -15,6 +15,7 @@ import {
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
 import ChatDock from "@/components/lin/ChatDock";
+import { WorefLogo } from "@/components/lin/WorefLogo";
 
 export function AppLayout() {
   const { session, user, loading } = useAuth();
@@ -104,12 +105,7 @@ export function AppLayout() {
               </SheetTrigger>
               <SheetContent side="left" className="w-72 overflow-y-auto bg-sidebar text-sidebar-foreground border-sidebar-border">
                 <div className="mb-6 flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-ember shadow-ember">
-                    <span className="h-1.5 w-1.5 rounded-full bg-white" />
-                  </span>
-                  <span className="font-display text-xl font-bold tracking-tight">
-                    Woref<span className="text-primary">.</span>
-                  </span>
+                  <WorefLogo variant="full" size={22} />
                 </div>
                 <nav>
                   {sheetGroups.map((group, gi) => (
@@ -142,12 +138,7 @@ export function AppLayout() {
               </SheetContent>
             </Sheet>
             <NavLink to="/lin" className="flex items-center gap-2 md:hidden">
-              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-ember shadow-ember">
-                <span className="h-1 w-1 rounded-full bg-white" />
-              </span>
-              <span className="font-display text-lg font-bold tracking-tight">
-                Woref<span className="text-primary">.</span>
-              </span>
+              <WorefLogo variant="full" size={20} />
             </NavLink>
             <div className="ml-auto flex items-center gap-1">
               <InstallAppCTA variant="icon" />

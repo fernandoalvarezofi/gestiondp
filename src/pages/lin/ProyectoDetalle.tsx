@@ -64,22 +64,32 @@ export default function ProyectoDetalle() {
       .from("proyectos")
       .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)");
     const { data, error } = await (isUUID ? query.eq("id", slug) : query.eq("slug", slug)).maybeSingle();
-    if (error || !data) { setNotFound(true); return; }
-    setP(data);
+    if (error) { setNotFound(true); return; }
+    let row = data;
+    if (!row && !isUUID) {
+      const { data: fb } = await (supabase as any)
+        .from("proyectos")
+        .select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)")
+        .eq("id", slug)
+        .maybeSingle();
+      if (fb) row = fb;
+    }
+    if (!row) { setNotFound(true); return; }
+    setP(row);
     const [{ data: m }, { data: u }, { data: t }, { data: a }, { data: act }, { data: cm }, { data: md }] = await Promise.all([
-      (supabase as any).from("proyecto_miembros").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id),
-      (supabase as any).from("proyecto_updates").select("*").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
-      (supabase as any).from("proyecto_tareas").select("*, asignado:perfiles!asignado_id(id,nombre,username,avatar_url)").eq("proyecto_id", data.id).order("orden"),
-      (supabase as any).from("proyecto_archivos").select("*, perfil:perfiles!subido_por(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
-      (supabase as any).from("proyecto_actividad").select("*, perfil:perfiles!perfil_id(nombre,username,avatar_url)").eq("proyecto_id", data.id).order("created_at", { ascending: false }).limit(50),
-      (supabase as any).from("proyecto_comentarios").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)").eq("proyecto_id", data.id).order("created_at", { ascending: false }),
-      (supabase as any).from("proyecto_media").select("*").eq("proyecto_id", data.id).order("orden"),
+      (supabase as any).from("proyecto_miembros").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url)").eq("proyecto_id", row.id),
+      (supabase as any).from("proyecto_updates").select("*").eq("proyecto_id", row.id).order("created_at", { ascending: false }),
+      (supabase as any).from("proyecto_tareas").select("*, asignado:perfiles!asignado_id(id,nombre,username,avatar_url)").eq("proyecto_id", row.id).order("orden"),
+      (supabase as any).from("proyecto_archivos").select("*, perfil:perfiles!subido_por(nombre,username,avatar_url)").eq("proyecto_id", row.id).order("created_at", { ascending: false }),
+      (supabase as any).from("proyecto_actividad").select("*, perfil:perfiles!perfil_id(nombre,username,avatar_url)").eq("proyecto_id", row.id).order("created_at", { ascending: false }).limit(50),
+      (supabase as any).from("proyecto_comentarios").select("*, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)").eq("proyecto_id", row.id).order("created_at", { ascending: false }),
+      (supabase as any).from("proyecto_media").select("*").eq("proyecto_id", row.id).order("orden"),
     ]);
     setMiembros(m || []); setUpdates(u || []); setTareas(t || []); setArchivos(a || []); setActividad(act || []); setComentarios(cm || []); setMediaList(md || []);
     if (user) {
-      const { data: s } = await (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", data.id).eq("perfil_id", user.id).maybeSingle();
+      const { data: s } = await (supabase as any).from("proyecto_seguidores").select("id").eq("proyecto_id", row.id).eq("perfil_id", user.id).maybeSingle();
       setSiguiendo(!!s);
-      setEsMiembro((m || []).some((x: any) => x.perfil_id === user.id) || data.perfil_id === user.id);
+      setEsMiembro((m || []).some((x: any) => x.perfil_id === user.id) || row.perfil_id === user.id);
     }
   };
 

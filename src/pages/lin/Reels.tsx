@@ -10,7 +10,7 @@ import { trackEvento } from "@/lib/feedTracker";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
-const SELECT = `id,titulo,cuerpo,video_url,thumbnail_url,total_likes,total_comentarios,total_repostes,vistas,created_at,
+const SELECT = `id,titulo,cuerpo,video_url,imagen_url,thumbnail_url,total_likes,total_comentarios,total_repostes,vistas,created_at,
   perfil:perfiles!perfil_id(id,nombre,username,avatar_url,verificado)`;
 
 export default function Reels() {
@@ -26,7 +26,7 @@ export default function Reels() {
   useEffect(() => {
     (async () => {
       const { data } = await (supabase as any).from("publicaciones").select(SELECT)
-        .eq("estado", "activa").not("video_url", "is", null)
+        .eq("estado", "activa").or("video_url.not.is.null,imagen_url.not.is.null")
         .order("created_at", { ascending: false }).limit(30);
       setReels(data || []);
       if (user && data?.length) {
@@ -96,16 +96,20 @@ export default function Reels() {
       <div ref={containerRef} onScroll={onScroll} className="h-full snap-y snap-mandatory overflow-y-scroll scroll-smooth">
         {reels.map((r, i) => (
           <article key={r.id} className="relative flex h-full w-full snap-start items-center justify-center bg-black">
-            <video
-              ref={(el) => (videoRefs.current[i] = el)}
-              src={r.video_url}
-              poster={r.thumbnail_url || undefined}
-              muted={muted}
-              loop
-              playsInline
-              onClick={() => { const v = videoRefs.current[i]; if (!v) return; v.paused ? v.play() : v.pause(); }}
-              className="max-h-full max-w-full object-contain"
-            />
+            {r.video_url ? (
+              <video
+                ref={(el) => (videoRefs.current[i] = el)}
+                src={r.video_url}
+                poster={r.thumbnail_url || undefined}
+                muted={muted}
+                loop
+                playsInline
+                onClick={() => { const v = videoRefs.current[i]; if (!v) return; v.paused ? v.play() : v.pause(); }}
+                className="max-h-full max-w-full object-contain"
+              />
+            ) : r.imagen_url ? (
+              <img src={r.imagen_url} alt={r.titulo || ""} className="h-full w-full object-cover" />
+            ) : null}
 
             {/* Overlay info */}
             <div className="absolute inset-x-0 bottom-0 flex items-end gap-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent p-4 text-white">

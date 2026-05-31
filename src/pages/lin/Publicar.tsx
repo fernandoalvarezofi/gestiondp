@@ -63,6 +63,7 @@ export default function Publicar() {
 
   const addImagenes = (files: FileList | null) => {
     if (!files) return;
+    setVideo(null);
     const restantes = 4 - imagenes.length;
     const arr = Array.from(files).slice(0, restantes).map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
     setImagenes((s) => [...s, ...arr]);
@@ -78,6 +79,10 @@ export default function Publicar() {
   const submit = async () => {
     if (!user) return toast.error("Iniciá sesión");
     if (!cuerpo && !titulo) return toast.error("Escribí algo");
+    const opcionesValidas = encuesta.filter((o) => o.trim());
+    if (tipo === "encuesta" && opcionesValidas.length < 2) {
+      return toast.error("La encuesta necesita al menos 2 opciones");
+    }
     const { data: miPerfilCheck } = await (supabase as any)
       .from("perfiles").select("id").eq("id", user.id).maybeSingle();
     if (!miPerfilCheck) return toast.error("Completá tu perfil antes de publicar");
@@ -115,7 +120,7 @@ export default function Publicar() {
         es_reel: !!video_url && tipo === "video_corto",
         tags: tags ? tags.split(",").map((t) => t.trim().replace(/^#/, "")).filter(Boolean) : null,
       };
-      if (tipo === "encuesta") payload.encuesta_opciones = encuesta.filter((o) => o.trim());
+      if (tipo === "encuesta") payload.encuesta_opciones = opcionesValidas;
       if (tipo === "hiring" || tipo === "oportunidad") {
         payload.rol_buscado = rolBuscado || null;
         payload.modalidad = modalidad || null;
@@ -278,7 +283,7 @@ export default function Publicar() {
           </label>
           <label className="cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10" aria-label="Agregar video">
             <Video className="h-5 w-5" />
-            <input type="file" accept="video/*" className="hidden" onChange={(e) => setVideo(e.target.files?.[0] || null)} />
+            <input type="file" accept="video/*" className="hidden" onChange={(e) => { setVideo(e.target.files?.[0] || null); setImagenes([]); }} />
           </label>
           {imagenes.length > 0 && (
             <span className="text-xs text-muted-foreground">{imagenes.length}/4</span>

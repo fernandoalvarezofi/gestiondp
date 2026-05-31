@@ -152,6 +152,7 @@ function ProductForm({ initial, cats, onSaved }: { initial: any; cats: any[]; on
     const slug = initial?.slug || `${slugify(titulo)}-${Math.random().toString(36).slice(2, 6)}`;
     const payload: any = {
       vendedor_id: user.id,
+      estado: "activo",
       titulo: titulo.trim(),
       slug,
       resumen: resumen.trim() || null,

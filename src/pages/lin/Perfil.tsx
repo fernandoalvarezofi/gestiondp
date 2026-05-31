@@ -276,7 +276,7 @@ export default function Perfil() {
               <TabTrigger value="reels" icon={Play} label="Reels" count={reels.length} active={tab === "reels"} />
               <TabTrigger value="articulos" icon={FileText} label="Artículos" count={articulos.length} active={tab === "articulos"} />
               <TabTrigger value="resenas" icon={Star} label="Reseñas" count={resenas.length} active={tab === "resenas"} />
-              <TabTrigger value="likes" icon={Heart} label="Me gusta" count={likedPubs.length} active={tab === "likes"} />
+              {isMine && <TabTrigger value="likes" icon={Heart} label="Me gusta" count={likedPubs.length} active={tab === "likes"} />}
               {isMine && <TabTrigger value="repostes" icon={Repeat2} label="Repostes" count={repostesPubs.length} active={tab === "repostes"} />}
             </TabsList>
             {tab === "publicaciones" && (
@@ -312,9 +312,11 @@ export default function Perfil() {
                 </CardContent></Card>
               ))}
           </TabsContent>
-          <TabsContent value="likes" className="mt-4 -mx-4 sm:-mx-6">
-            {likedPubs.length === 0 ? <EmptyTab text="Aún no hay publicaciones con me gusta." /> : likedPubs.map((p) => <PostCard key={p.id} pub={p} />)}
-          </TabsContent>
+          {isMine && (
+            <TabsContent value="likes" className="mt-4 -mx-4 sm:-mx-6">
+              {likedPubs.length === 0 ? <EmptyTab text="Aún no hay publicaciones con me gusta." /> : likedPubs.map((p) => <PostCard key={p.id} pub={p} />)}
+            </TabsContent>
+          )}
           {isMine && (
             <TabsContent value="repostes" className="mt-4 -mx-4 sm:-mx-6">
               {repostesPubs.length === 0 ? <EmptyTab text="Aún no reposteaste nada." /> : repostesPubs.map((p) => <PostCard key={p.id} pub={p} />)}

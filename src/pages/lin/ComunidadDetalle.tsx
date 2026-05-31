@@ -50,7 +50,7 @@ export default function ComunidadDetalle() {
   };
 
   const borrarMsg = async (postId: string) => {
-    const { error } = await (supabase as any).from("comunidad_posts").delete().eq("id", postId);
+    const { error } = await (supabase as any).from("comunidad_posts").delete().eq("id", postId).eq("perfil_id", user?.id);
     if (error) return toast.error(error.message);
     toast.success("Mensaje eliminado");
   };

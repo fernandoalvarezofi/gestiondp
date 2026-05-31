@@ -47,7 +47,6 @@ export function FeedRail() {
     // Top launches de la semana
     const { data: proys } = await (supabase as any).from("proyectos")
       .select("id,nombre,descripcion,slug,portada_url,categoria,perfil:perfiles!perfil_id(nombre,username,avatar_url)")
-      .gte("created_at", desde)
       .order("created_at", { ascending: false })
       .limit(4);
     setLaunches(proys || []);

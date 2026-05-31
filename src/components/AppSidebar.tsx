@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import {
   Home, Compass, Play, Rocket, Store, Users, MessageCircle, Bell, UserCircle,
-  Settings, LogOut, Plus,
+  Settings, LogOut, Plus, Film, BarChart3, Bookmark,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -12,7 +12,7 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { NavLink } from "react-router-dom";
-import worefLogo from "@/assets/woref-logo-full.png";
+import { WorefLogo } from "@/components/lin/WorefLogo";
 
 type NavItem = {
   title: string;
@@ -28,6 +28,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { title: "Feed", icon: Home, to: "/lin", end: true },
       { title: "Explorar", icon: Compass, to: "/lin/explorar" },
+      { title: "Reels", icon: Film, to: "/lin/reels" },
     ],
 
   },
@@ -96,7 +97,7 @@ export function AppSidebar() {
     <Sidebar className="hidden md:flex border-r-0">
       <SidebarHeader className="px-4 py-5">
         <NavLink to="/" className="group flex items-center gap-2">
-          <img src={worefLogo} alt="Woref" className="h-7 w-auto" />
+          <WorefLogo variant="full" size={24} />
         </NavLink>
         <NavLink
           to="/lin/publicar"
@@ -134,6 +135,8 @@ export function AppSidebar() {
 
       <SidebarFooter className="space-y-2 p-4">
         <SidebarMenu>
+          <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/panel"><BarChart3 className="h-4 w-4" /><span>Mi panel</span></NavLink></SidebarMenuButton></SidebarMenuItem>
+          <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/favoritos"><Bookmark className="h-4 w-4" /><span>Guardados</span></NavLink></SidebarMenuButton></SidebarMenuItem>
           <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/configuracion"><Settings className="h-4 w-4" /><span>Configuración</span></NavLink></SidebarMenuButton></SidebarMenuItem>
           <SidebarMenuItem><SidebarMenuButton onClick={signOut}><LogOut className="h-4 w-4" /><span>Cerrar sesión</span></SidebarMenuButton></SidebarMenuItem>
         </SidebarMenu>
