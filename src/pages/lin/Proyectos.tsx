@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,20 @@ export default function Proyectos() {
   const [periodo, setPeriodo] = useState<Periodo>("all");
   const [categoria, setCategoria] = useState("Todas");
   const [q, setQ] = useState("");
-  const [tab, setTab] = useState<"todos" | "mios">("todos");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [tab, setTab] = useState<"todos" | "mios">(searchParams.get("tab") === "mios" ? "mios" : "todos");
+
+  useEffect(() => {
+    const t = searchParams.get("tab");
+    if (t === "mios" && tab !== "mios") setTab("mios");
+    if (t !== "mios" && tab !== "todos") setTab("todos");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  const switchTab = (t: "todos" | "mios") => {
+    setTab(t);
+    if (t === "mios") setSearchParams({ tab: "mios" }); else setSearchParams({});
+  };
 
   useEffect(() => {
     (async () => {
@@ -133,7 +146,7 @@ export default function Proyectos() {
             ] as const).map((t) => (
               <button
                 key={t.k}
-                onClick={() => setTab(t.k)}
+                onClick={() => switchTab(t.k)}
                 className={cn(
                   "relative px-4 py-2 text-sm font-semibold transition-colors",
                   tab === t.k ? "text-foreground" : "text-muted-foreground hover:text-foreground"
