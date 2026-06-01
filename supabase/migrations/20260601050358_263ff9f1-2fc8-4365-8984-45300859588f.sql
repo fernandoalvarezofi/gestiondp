@@ -1,0 +1,1 @@
+CREATE POLICY "comunidades_delete_creador" ON public.comunidades FOR DELETE USING (auth.uid() = creador_id);
