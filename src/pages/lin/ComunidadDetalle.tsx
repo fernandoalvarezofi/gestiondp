@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { useConfirm } from "@/components/lin/ConfirmDialog";
 import { cn } from "@/lib/utils";
 
 const QUICK_EMOJI = ["👍", "❤️", "🔥", "🎉", "😂", "😮", "😢", "🙏"];
 
 export default function ComunidadDetalle() {
   const { slug } = useParams();
+  const navigate = useNavigate();
+  const confirm = useConfirm();
   const { user } = useAuth();
   const [c, setC] = useState<any>(null);
   const [categorias, setCategorias] = useState<any[]>([]);
@@ -56,6 +59,21 @@ export default function ComunidadDetalle() {
   };
 
   const esCreador = user?.id === c?.creador_id;
+
+  const eliminarComunidad = async () => {
+    if (!esCreador) return;
+    const ok = await confirm({
+      title: `¿Eliminar "${c.nombre}"?`,
+      description: "Se eliminarán todos los canales, posts y miembros. Esta acción no se puede deshacer.",
+      confirmText: "Eliminar comunidad",
+      destructive: true,
+    });
+    if (!ok) return;
+    const { error } = await (supabase as any).from("comunidades").delete().eq("id", c.id).eq("creador_id", user!.id);
+    if (error) return toast.error(error.message);
+    toast.success("Comunidad eliminada");
+    navigate("/lin/hub?tab=comunidades");
+  };
 
   const load = async () => {
     const { data } = await (supabase as any).from("comunidades").select("*").eq("slug", slug).single();
@@ -211,7 +229,11 @@ export default function ComunidadDetalle() {
             <h2 className="truncate text-sm font-bold leading-tight">{c.nombre}</h2>
             <p className="truncate text-[10px] text-muted-foreground">{c.total_miembros} miembros</p>
           </div>
-          {esCreador && <Settings className="h-4 w-4 text-muted-foreground" />}
+          {esCreador && (
+            <button onClick={eliminarComunidad} title="Eliminar comunidad" className="rounded-md p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600">
+              <Trash2 className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 
