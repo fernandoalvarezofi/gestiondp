@@ -69,7 +69,7 @@ export default function ComunidadDetalle() {
       destructive: true,
     });
     if (!ok) return;
-    const { error } = await (supabase as any).from("comunidades").delete().eq("id", c.id).eq("creador_id", user!.id);
+    const { error } = await (supabase as any).rpc("delete_community_as_owner", { _community_id: c.id });
     if (error) return toast.error(error.message);
     toast.success("Comunidad eliminada");
     navigate("/lin/hub?tab=comunidades");
@@ -326,6 +326,11 @@ export default function ComunidadDetalle() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            {esCreador && (
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={eliminarComunidad} aria-label="Eliminar comunidad">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
             <Sheet>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8 xl:hidden" aria-label="Miembros"><Users className="h-4 w-4" /></Button>
