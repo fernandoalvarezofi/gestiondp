@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, TrendingUp, Sparkles, Loader2, Play } from "lucide-react";
+import { Search, TrendingUp, Sparkles, Loader2, Play, Rocket, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -9,6 +9,25 @@ const CHIPS = ["Todos", "Trending", "Para vos", "Proyectos", "Video", "Recursos"
 const SELECT = `id,titulo,cuerpo,imagen_url,video_url,thumbnail_url,tipo,total_likes,total_comentarios,vistas,created_at,
   perfil:perfiles!perfil_id(id,nombre,username,avatar_url),
   media:media_publicacion(url,es_portada)`;
+
+type ExploreItem = {
+  id: string;
+  kind: "publicacion" | "proyecto" | "comunidad";
+  href: string;
+  title?: string | null;
+  text?: string | null;
+  image?: string | null;
+  video?: string | null;
+  tipo?: string | null;
+  author?: string | null;
+  likes?: number;
+  comments?: number;
+  members?: number;
+  created_at: string;
+  score: number;
+};
+
+const recencyScore = (date: string) => Math.max(0, 14 - (Date.now() - new Date(date).getTime()) / 86_400_000);
 
 export default function Explorar() {
   const navigate = useNavigate();
