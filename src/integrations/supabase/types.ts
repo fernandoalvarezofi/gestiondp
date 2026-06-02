@@ -3546,6 +3546,10 @@ export type Database = {
       }
     }
     Functions: {
+      delete_community_as_owner: {
+        Args: { _community_id: string }
+        Returns: undefined
+      }
       es_miembro_grupo: {
         Args: { _grupo_id: string; _perfil_id: string }
         Returns: boolean
