@@ -2908,6 +2908,7 @@ export type Database = {
           repo_url: string | null
           sitio_web: string | null
           slug: string | null
+          tagline: string | null
           tags: string[] | null
           total_comentarios: number
           total_miembros: number
@@ -2934,6 +2935,7 @@ export type Database = {
           repo_url?: string | null
           sitio_web?: string | null
           slug?: string | null
+          tagline?: string | null
           tags?: string[] | null
           total_comentarios?: number
           total_miembros?: number
@@ -2960,6 +2962,7 @@ export type Database = {
           repo_url?: string | null
           sitio_web?: string | null
           slug?: string | null
+          tagline?: string | null
           tags?: string[] | null
           total_comentarios?: number
           total_miembros?: number
