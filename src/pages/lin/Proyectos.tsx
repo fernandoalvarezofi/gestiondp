@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -242,6 +242,7 @@ export default function Proyectos() {
 /* ---------------------- Row ---------------------- */
 
 function ProjectRow({ p, rank }: { p: any; rank: number }) {
+  const navigate = useNavigate();
   const detalleHref = `/lin/proyectos/${p.slug || p.id}`;
   const makers: any[] = [p.perfil, ...((p.miembros || []).map((m: any) => m.perfil).filter(Boolean))]
     .filter(Boolean)
@@ -250,8 +251,11 @@ function ProjectRow({ p, rank }: { p: any; rank: number }) {
   const tag = p.tagline || p.descripcion;
 
   return (
-    <Link
-      to={detalleHref}
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={() => navigate(detalleHref)}
+      onKeyDown={(e) => { if (e.key === "Enter") navigate(detalleHref); }}
       className="mb-3 flex cursor-pointer items-stretch overflow-hidden rounded-2xl border border-border/60 bg-card transition-shadow hover:shadow-md"
     >
       {/* PORTADA */}
@@ -317,7 +321,7 @@ function ProjectRow({ p, rank }: { p: any; rank: number }) {
           )}
         </div>
       </div>
-    </Link>
+    </article>
   );
 }
 
