@@ -31,7 +31,7 @@ const recencyScore = (date: string) => Math.max(0, 14 - (Date.now() - new Date(d
 
 export default function Explorar() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ExploreItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [chip, setChip] = useState("Trending");
@@ -39,27 +39,82 @@ export default function Explorar() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // Trending = más interacciones últimos 7 días
-      const since = new Date(Date.now() - 7 * 86400_000).toISOString();
-      const { data } = await (supabase as any).from("publicaciones").select(SELECT)
-        .eq("estado", "activa").gte("created_at", since)
-        .order("total_likes", { ascending: false })
-        .order("vistas", { ascending: false })
-        .limit(60);
-      setItems(data || []);
+      const [{ data: pubs }, { data: proys }, { data: coms }] = await Promise.all([
+        (supabase as any).from("publicaciones").select(SELECT)
+          .eq("estado", "activa")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        (supabase as any).from("proyectos")
+          .select("id,slug,nombre,tagline,descripcion,portada_url,logo_url,categoria,tags,total_comentarios,total_seguidores,created_at,perfil:perfiles!perfil_id(nombre,username)")
+          .order("created_at", { ascending: false })
+          .limit(60),
+        (supabase as any).from("comunidades")
+          .select("id,slug,nombre,descripcion,avatar_url,portada_url,tematica,total_miembros,created_at")
+          .eq("privada", false)
+          .order("created_at", { ascending: false })
+          .limit(40),
+      ]);
+
+      const mapped: ExploreItem[] = [
+        ...((pubs || []).map((p: any) => {
+          const portada = p.media?.find((m: any) => m.es_portada)?.url || p.media?.[0]?.url || p.imagen_url || p.thumbnail_url;
+          return {
+            id: p.id,
+            kind: "publicacion" as const,
+            href: `/lin/publicacion/${p.id}`,
+            title: p.titulo,
+            text: p.cuerpo,
+            image: portada,
+            video: p.video_url,
+            tipo: p.tipo,
+            author: p.perfil?.nombre,
+            likes: p.total_likes || 0,
+            comments: p.total_comentarios || 0,
+            created_at: p.created_at,
+            score: (p.total_likes || 0) * 2 + (p.total_comentarios || 0) * 3 + (p.vistas || 0) * 0.05 + recencyScore(p.created_at),
+          };
+        })),
+        ...((proys || []).map((p: any) => ({
+          id: p.id,
+          kind: "proyecto" as const,
+          href: `/lin/proyectos/${p.slug || p.id}`,
+          title: p.nombre,
+          text: p.tagline || p.descripcion,
+          image: p.portada_url || p.logo_url,
+          tipo: "proyecto",
+          author: p.perfil?.nombre,
+          comments: p.total_comentarios || 0,
+          created_at: p.created_at,
+          score: 10 + (p.total_seguidores || 0) * 2 + (p.total_comentarios || 0) * 3 + recencyScore(p.created_at),
+        }))),
+        ...((coms || []).map((c: any) => ({
+          id: c.id,
+          kind: "comunidad" as const,
+          href: `/lin/comunidades/${c.slug}`,
+          title: c.nombre,
+          text: c.descripcion,
+          image: c.portada_url || c.avatar_url,
+          tipo: "comunidad",
+          members: c.total_miembros || 0,
+          created_at: c.created_at,
+          score: 8 + (c.total_miembros || 0) * 2 + recencyScore(c.created_at),
+        }))),
+      ].sort((a, b) => b.score - a.score);
+
+      setItems(mapped);
       setLoading(false);
     })();
   }, []);
 
   const filtered = useMemo(() => items.filter((p) => {
-    if (chip === "Video" && !p.video_url) return false;
-    if (chip === "Proyectos" && p.tipo !== "proyecto") return false;
+    if (chip === "Video" && !p.video) return false;
+    if (chip === "Proyectos" && p.kind !== "proyecto") return false;
     if (chip === "Recursos" && p.tipo !== "recurso") return false;
     if (chip === "Hiring" && p.tipo !== "hiring") return false;
     if (chip === "Logros" && p.tipo !== "logro") return false;
     if (!q.trim()) return true;
     const t = q.toLowerCase();
-    return p.titulo?.toLowerCase().includes(t) || p.cuerpo?.toLowerCase().includes(t) || p.perfil?.nombre?.toLowerCase().includes(t);
+    return p.title?.toLowerCase().includes(t) || p.text?.toLowerCase().includes(t) || p.author?.toLowerCase().includes(t) || p.tipo?.toLowerCase().includes(t);
   }), [items, chip, q]);
 
   return (
