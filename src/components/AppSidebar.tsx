@@ -36,7 +36,6 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Construir",
     items: [
       { title: "Proyectos", icon: Rocket, to: "/lin/proyectos" },
-      { title: "Mis proyectos", icon: FolderOpen, to: "/lin/proyectos?tab=mios" },
       { title: "Mercado", icon: Store, to: "/lin/mercado" },
       { title: "Comunidad", icon: Users, to: "/lin/hub" },
     ],
@@ -47,6 +46,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { title: "Mensajes", icon: MessageCircle, to: "/lin/mensajes", badgeKey: "msg" },
       { title: "Notificaciones", icon: Bell, to: "/lin/notificaciones", badgeKey: "notif" },
       { title: "Mi perfil", icon: UserCircle, to: "/lin/perfil" },
+      { title: "Mis proyectos", icon: FolderOpen, to: "/lin/proyectos?tab=mios" },
     ],
   },
 ];
