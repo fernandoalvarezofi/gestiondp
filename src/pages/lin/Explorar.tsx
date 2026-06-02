@@ -148,24 +148,26 @@ export default function Explorar() {
       ) : (
         <div className="grid grid-cols-3 gap-0.5 pt-3 sm:gap-1">
           {filtered.map((p, i) => {
-            const portada = p.media?.find((m: any) => m.es_portada)?.url || p.media?.[0]?.url || p.imagen_url || p.thumbnail_url;
-            const esVideo = !!p.video_url;
+            const portada = p.image;
+            const esVideo = !!p.video;
             // Layout estilo IG con algunos items grandes
             const grande = i % 7 === 0;
             return (
-              <button key={p.id} onClick={() => navigate(`/lin/publicacion/${p.id}`)}
+              <button key={`${p.kind}-${p.id}`} onClick={() => navigate(p.href)}
                 className={`group relative aspect-square overflow-hidden bg-secondary/50 ${grande ? "col-span-2 row-span-2 aspect-auto" : ""}`}>
                 {portada ? (
-                  <img src={portada} alt="" loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                  <img src={portada} alt={p.title || ""} loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center p-3 text-center">
-                    <p className="line-clamp-4 text-xs font-medium text-foreground/80">{p.titulo || p.cuerpo}</p>
+                    <p className="line-clamp-4 text-xs font-medium text-foreground/80">{p.title || p.text}</p>
                   </div>
                 )}
                 {esVideo && <Play className="absolute right-2 top-2 h-4 w-4 fill-white text-white drop-shadow" />}
+                {p.kind === "proyecto" && <Rocket className="absolute right-2 top-2 h-4 w-4 text-white drop-shadow" />}
+                {p.kind === "comunidad" && <Users className="absolute right-2 top-2 h-4 w-4 text-white drop-shadow" />}
                 <div className="absolute inset-0 hidden items-center justify-center gap-3 bg-black/40 text-sm font-semibold text-white group-hover:flex">
-                  <span>❤ {p.total_likes || 0}</span>
-                  <span>💬 {p.total_comentarios || 0}</span>
+                  {p.kind === "comunidad" ? <span>👥 {p.members || 0}</span> : <span>❤ {p.likes || 0}</span>}
+                  <span>💬 {p.comments || 0}</span>
                 </div>
               </button>
             );
