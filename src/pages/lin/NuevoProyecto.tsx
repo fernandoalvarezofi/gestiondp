@@ -55,7 +55,7 @@ export default function NuevoProyecto() {
   const [tagline, setTagline] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [categoria, setCategoria] = useState<string>("");
-  const [estado, setEstado] = useState("en_desarrollo");
+  const [estado, setEstado] = useState("lanzado");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
 
@@ -194,7 +194,8 @@ export default function NuevoProyecto() {
         perfil_id: user.id,
         nombre: nombre.trim(),
         slug,
-        descripcion: descripcion.trim() ? `${tagline.trim()}\n\n${descripcion.trim()}` : tagline.trim(),
+        tagline: tagline.trim(),
+        descripcion: descripcion.trim() || tagline.trim(),
         categoria: categoria || null,
         estado,
         tags: tags.length ? tags : null,
@@ -220,6 +221,18 @@ export default function NuevoProyecto() {
       // Add creator as founder member
       await (supabase as any).from("proyecto_miembros").insert({
         proyecto_id: proy.id, perfil_id: user.id, es_fundador: true, rol: "fundador",
+      });
+
+      // Publicación automática para que el lanzamiento aparezca en Feed/Explorar.
+      await (supabase as any).from("publicaciones").insert({
+        perfil_id: user.id,
+        tipo: "proyecto",
+        formato: "proyecto",
+        estado: "activa",
+        titulo: nombre.trim(),
+        cuerpo: descripcion.trim() || tagline.trim(),
+        imagen_url: portada?.url || logo?.url || null,
+        tags: tags.length ? tags : null,
       });
 
       toast.success("Proyecto lanzado");

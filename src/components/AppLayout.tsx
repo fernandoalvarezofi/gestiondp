@@ -82,6 +82,7 @@ export function AppLayout() {
       label: "Mi cuenta",
       items: [
         { to: "/lin/notificaciones", icon: Bell, label: "Notificaciones" },
+        { to: "/lin/proyectos?tab=mios", icon: Rocket, label: "Mis proyectos" },
         { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
         { to: "/lin/mis-compras", icon: ShoppingBag, label: "Mis compras" },
         { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Search, TrendingUp, Sparkles, Loader2, Play } from "lucide-react";
+import { Search, TrendingUp, Sparkles, Loader2, Play, Rocket, Users } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
@@ -10,9 +10,28 @@ const SELECT = `id,titulo,cuerpo,imagen_url,video_url,thumbnail_url,tipo,total_l
   perfil:perfiles!perfil_id(id,nombre,username,avatar_url),
   media:media_publicacion(url,es_portada)`;
 
+type ExploreItem = {
+  id: string;
+  kind: "publicacion" | "proyecto" | "comunidad";
+  href: string;
+  title?: string | null;
+  text?: string | null;
+  image?: string | null;
+  video?: string | null;
+  tipo?: string | null;
+  author?: string | null;
+  likes?: number;
+  comments?: number;
+  members?: number;
+  created_at: string;
+  score: number;
+};
+
+const recencyScore = (date: string) => Math.max(0, 14 - (Date.now() - new Date(date).getTime()) / 86_400_000);
+
 export default function Explorar() {
   const navigate = useNavigate();
-  const [items, setItems] = useState<any[]>([]);
+  const [items, setItems] = useState<ExploreItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [chip, setChip] = useState("Trending");
@@ -20,27 +39,82 @@ export default function Explorar() {
   useEffect(() => {
     (async () => {
       setLoading(true);
-      // Trending = más interacciones últimos 7 días
-      const since = new Date(Date.now() - 7 * 86400_000).toISOString();
-      const { data } = await (supabase as any).from("publicaciones").select(SELECT)
-        .eq("estado", "activa").gte("created_at", since)
-        .order("total_likes", { ascending: false })
-        .order("vistas", { ascending: false })
-        .limit(60);
-      setItems(data || []);
+      const [{ data: pubs }, { data: proys }, { data: coms }] = await Promise.all([
+        (supabase as any).from("publicaciones").select(SELECT)
+          .eq("estado", "activa")
+          .order("created_at", { ascending: false })
+          .limit(80),
+        (supabase as any).from("proyectos")
+          .select("id,slug,nombre,tagline,descripcion,portada_url,logo_url,categoria,tags,total_comentarios,total_seguidores,created_at,perfil:perfiles!perfil_id(nombre,username)")
+          .order("created_at", { ascending: false })
+          .limit(60),
+        (supabase as any).from("comunidades")
+          .select("id,slug,nombre,descripcion,avatar_url,portada_url,tematica,total_miembros,created_at")
+          .eq("privada", false)
+          .order("created_at", { ascending: false })
+          .limit(40),
+      ]);
+
+      const mapped: ExploreItem[] = [
+        ...((pubs || []).map((p: any) => {
+          const portada = p.media?.find((m: any) => m.es_portada)?.url || p.media?.[0]?.url || p.imagen_url || p.thumbnail_url;
+          return {
+            id: p.id,
+            kind: "publicacion" as const,
+            href: `/lin/publicacion/${p.id}`,
+            title: p.titulo,
+            text: p.cuerpo,
+            image: portada,
+            video: p.video_url,
+            tipo: p.tipo,
+            author: p.perfil?.nombre,
+            likes: p.total_likes || 0,
+            comments: p.total_comentarios || 0,
+            created_at: p.created_at,
+            score: (p.total_likes || 0) * 2 + (p.total_comentarios || 0) * 3 + (p.vistas || 0) * 0.05 + recencyScore(p.created_at),
+          };
+        })),
+        ...((proys || []).map((p: any) => ({
+          id: p.id,
+          kind: "proyecto" as const,
+          href: `/lin/proyectos/${p.slug || p.id}`,
+          title: p.nombre,
+          text: p.tagline || p.descripcion,
+          image: p.portada_url || p.logo_url,
+          tipo: "proyecto",
+          author: p.perfil?.nombre,
+          comments: p.total_comentarios || 0,
+          created_at: p.created_at,
+          score: 10 + (p.total_seguidores || 0) * 2 + (p.total_comentarios || 0) * 3 + recencyScore(p.created_at),
+        }))),
+        ...((coms || []).map((c: any) => ({
+          id: c.id,
+          kind: "comunidad" as const,
+          href: `/lin/comunidades/${c.slug}`,
+          title: c.nombre,
+          text: c.descripcion,
+          image: c.portada_url || c.avatar_url,
+          tipo: "comunidad",
+          members: c.total_miembros || 0,
+          created_at: c.created_at,
+          score: 8 + (c.total_miembros || 0) * 2 + recencyScore(c.created_at),
+        }))),
+      ].sort((a, b) => b.score - a.score);
+
+      setItems(mapped);
       setLoading(false);
     })();
   }, []);
 
   const filtered = useMemo(() => items.filter((p) => {
-    if (chip === "Video" && !p.video_url) return false;
-    if (chip === "Proyectos" && p.tipo !== "proyecto") return false;
+    if (chip === "Video" && !p.video) return false;
+    if (chip === "Proyectos" && p.kind !== "proyecto") return false;
     if (chip === "Recursos" && p.tipo !== "recurso") return false;
     if (chip === "Hiring" && p.tipo !== "hiring") return false;
     if (chip === "Logros" && p.tipo !== "logro") return false;
     if (!q.trim()) return true;
     const t = q.toLowerCase();
-    return p.titulo?.toLowerCase().includes(t) || p.cuerpo?.toLowerCase().includes(t) || p.perfil?.nombre?.toLowerCase().includes(t);
+    return p.title?.toLowerCase().includes(t) || p.text?.toLowerCase().includes(t) || p.author?.toLowerCase().includes(t) || p.tipo?.toLowerCase().includes(t);
   }), [items, chip, q]);
 
   return (
@@ -74,24 +148,26 @@ export default function Explorar() {
       ) : (
         <div className="grid grid-cols-3 gap-0.5 pt-3 sm:gap-1">
           {filtered.map((p, i) => {
-            const portada = p.media?.find((m: any) => m.es_portada)?.url || p.media?.[0]?.url || p.imagen_url || p.thumbnail_url;
-            const esVideo = !!p.video_url;
+            const portada = p.image;
+            const esVideo = !!p.video;
             // Layout estilo IG con algunos items grandes
             const grande = i % 7 === 0;
             return (
-              <button key={p.id} onClick={() => navigate(`/lin/publicacion/${p.id}`)}
+              <button key={`${p.kind}-${p.id}`} onClick={() => navigate(p.href)}
                 className={`group relative aspect-square overflow-hidden bg-secondary/50 ${grande ? "col-span-2 row-span-2 aspect-auto" : ""}`}>
                 {portada ? (
-                  <img src={portada} alt="" loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                  <img src={portada} alt={p.title || ""} loading="lazy" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center p-3 text-center">
-                    <p className="line-clamp-4 text-xs font-medium text-foreground/80">{p.titulo || p.cuerpo}</p>
+                    <p className="line-clamp-4 text-xs font-medium text-foreground/80">{p.title || p.text}</p>
                   </div>
                 )}
                 {esVideo && <Play className="absolute right-2 top-2 h-4 w-4 fill-white text-white drop-shadow" />}
+                {p.kind === "proyecto" && <Rocket className="absolute right-2 top-2 h-4 w-4 text-white drop-shadow" />}
+                {p.kind === "comunidad" && <Users className="absolute right-2 top-2 h-4 w-4 text-white drop-shadow" />}
                 <div className="absolute inset-0 hidden items-center justify-center gap-3 bg-black/40 text-sm font-semibold text-white group-hover:flex">
-                  <span>❤ {p.total_likes || 0}</span>
-                  <span>💬 {p.total_comentarios || 0}</span>
+                  {p.kind === "comunidad" ? <span>👥 {p.members || 0}</span> : <span>❤ {p.likes || 0}</span>}
+                  <span>💬 {p.comments || 0}</span>
                 </div>
               </button>
             );

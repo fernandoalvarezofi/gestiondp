@@ -26,7 +26,7 @@ export default function Reels() {
   useEffect(() => {
     (async () => {
       const { data } = await (supabase as any).from("publicaciones").select(SELECT)
-        .eq("estado", "activa").or("video_url.not.is.null,imagen_url.not.is.null")
+        .eq("estado", "activa").not("video_url", "is", null)
         .order("created_at", { ascending: false }).limit(30);
       setReels(data || []);
       if (user && data?.length) {
@@ -107,8 +107,6 @@ export default function Reels() {
                 onClick={() => { const v = videoRefs.current[i]; if (!v) return; v.paused ? v.play() : v.pause(); }}
                 className="max-h-full max-w-full object-contain"
               />
-            ) : r.imagen_url ? (
-              <img src={r.imagen_url} alt={r.titulo || ""} className="h-full w-full object-cover" />
             ) : null}
 
             {/* Overlay info */}
