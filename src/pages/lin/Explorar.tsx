@@ -106,6 +106,21 @@ export default function Explorar() {
     })();
   }, []);
 
+  useEffect(() => {
+    const ch = (supabase as any)
+      .channel("explorar_rt_deletes")
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "publicaciones" }, (payload: any) => {
+        setItems((arr) => arr.filter((p) => p.id !== payload.old?.id));
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "publicaciones" }, (payload: any) => {
+        if (payload.new?.estado && payload.new.estado !== "activa") {
+          setItems((arr) => arr.filter((p) => p.id !== payload.new.id));
+        }
+      })
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+  }, []);
+
   const filtered = useMemo(() => items.filter((p) => {
     if (chip === "Video" && !p.video) return false;
     if (chip === "Proyectos" && p.kind !== "proyecto") return false;
