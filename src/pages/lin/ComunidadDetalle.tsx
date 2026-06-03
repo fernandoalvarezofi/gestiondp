@@ -539,6 +539,7 @@ export default function ComunidadDetalle() {
         <Roster />
       </aside>
     </div>
+    </div>
 
     {/* Sheet de administración (solo creador) */}
     <Sheet open={adminOpen} onOpenChange={setAdminOpen}>
