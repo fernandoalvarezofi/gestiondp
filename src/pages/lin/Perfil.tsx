@@ -131,8 +131,6 @@ export default function Perfil() {
   };
 
 
-  const reels = pubs.filter((p) => p.video_url);
-  const articulos = pubs.filter((p) => p.tipo === "contenido_largo" || p.formato === "articulo");
   const conMedia = pubs.filter((p) => p.imagen_url || p.video_url);
 
   if (!perfil) return (
