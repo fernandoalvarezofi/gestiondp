@@ -37,6 +37,21 @@ export default function Buscador() {
     return () => clearTimeout(t);
   }, [q]);
 
+  useEffect(() => {
+    const ch = (supabase as any)
+      .channel("buscador_rt_deletes")
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "publicaciones" }, (payload: any) => {
+        setPubs((arr) => arr.filter((p) => p.id !== payload.old?.id));
+      })
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "publicaciones" }, (payload: any) => {
+        if (payload.new?.estado !== "activa") {
+          setPubs((arr) => arr.filter((p) => p.id !== payload.new.id));
+        }
+      })
+      .subscribe();
+    return () => { (supabase as any).removeChannel(ch); };
+  }, []);
+
   return (
     <>
       <BackHeader title="Buscar" />
