@@ -81,6 +81,34 @@ export default function ComunidadDetalle() {
     navigate("/lin/hub?tab=comunidades");
   };
 
+  const abrirAdmin = () => {
+    setAdminForm({
+      nombre: c.nombre || "",
+      descripcion: c.descripcion || "",
+      tematica: c.tematica || "otro",
+      privada: !!c.privada,
+    });
+    setAdminOpen(true);
+  };
+
+  const guardarAdmin = async () => {
+    if (!esCreador) return;
+    setSavingAdmin(true);
+    const { error } = await (supabase as any).from("comunidades")
+      .update({
+        nombre: adminForm.nombre,
+        descripcion: adminForm.descripcion,
+        tematica: adminForm.tematica,
+        privada: adminForm.privada,
+      })
+      .eq("id", c.id)
+      .eq("creador_id", user!.id);
+    setSavingAdmin(false);
+    if (error) return toast.error(error.message);
+    setC({ ...c, ...adminForm });
+    toast.success("Cambios guardados");
+  };
+
   const load = async () => {
     const { data } = await (supabase as any).from("comunidades").select("*").eq("slug", slug).single();
     if (!data) return;
