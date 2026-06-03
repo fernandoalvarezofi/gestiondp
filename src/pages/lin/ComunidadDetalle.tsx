@@ -538,7 +538,63 @@ export default function ComunidadDetalle() {
         <Roster />
       </aside>
     </div>
-    </div>
+
+    {/* Sheet de administración (solo creador) */}
+    <Sheet open={adminOpen} onOpenChange={setAdminOpen}>
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+        <SheetHeader><SheetTitle>Administrar comunidad</SheetTitle></SheetHeader>
+        <div className="mt-4 space-y-5">
+          <section className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Información</p>
+            <div className="space-y-1.5">
+              <Label htmlFor="adm-nombre" className="text-xs">Nombre</Label>
+              <Input id="adm-nombre" value={adminForm.nombre} onChange={(e) => setAdminForm({ ...adminForm, nombre: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="adm-desc" className="text-xs">Descripción</Label>
+              <Textarea id="adm-desc" rows={3} value={adminForm.descripcion} onChange={(e) => setAdminForm({ ...adminForm, descripcion: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Temática</Label>
+              <Select value={adminForm.tematica} onValueChange={(v) => setAdminForm({ ...adminForm, tematica: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["tecnologia","emprendimiento","diseño","marketing","finanzas","salud","educacion","entretenimiento","otro"].map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label htmlFor="adm-priv" className="text-sm">Comunidad privada</Label>
+                <p className="text-xs text-muted-foreground">Solo miembros aprobados pueden ver el contenido.</p>
+              </div>
+              <Switch id="adm-priv" checked={adminForm.privada} onCheckedChange={(v) => setAdminForm({ ...adminForm, privada: v })} />
+            </div>
+            <Button onClick={guardarAdmin} disabled={savingAdmin} className="w-full">
+              {savingAdmin ? "Guardando…" : "Guardar cambios"}
+            </Button>
+          </section>
+
+          <div className="h-px bg-border" />
+
+          <section className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-destructive">Zona de peligro</p>
+            <div className="space-y-3 rounded-xl border border-destructive/30 p-4">
+              <div>
+                <p className="text-sm font-semibold">Eliminar comunidad</p>
+                <p className="text-xs text-muted-foreground">Se eliminarán todos los canales, posts y miembros permanentemente.</p>
+              </div>
+              <Button variant="destructive" className="w-full" onClick={eliminarComunidad}>
+                <Trash2 className="h-4 w-4" />Eliminar comunidad
+              </Button>
+            </div>
+          </section>
+        </div>
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
 
