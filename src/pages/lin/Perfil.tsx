@@ -36,7 +36,6 @@ export default function Perfil() {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
-  const [resenas, setResenas] = useState<any[]>([]);
   const [likedPubs, setLikedPubs] = useState<any[]>([]);
   const [repostesPubs, setRepostesPubs] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
