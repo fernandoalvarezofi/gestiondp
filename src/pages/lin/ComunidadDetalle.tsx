@@ -331,6 +331,7 @@ export default function ComunidadDetalle() {
   );
 
   return (
+    <>
     <div className="-mx-4 -my-4 md:-mx-6 md:-my-6">
     <div className="mx-auto grid h-[calc(100vh-3.5rem)] max-w-[1600px] grid-cols-1 gap-0 overflow-hidden border-y bg-background lg:h-[calc(100vh-3.5rem)] lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_260px]">
       {/* Sidebar canales — visible desde lg */}
