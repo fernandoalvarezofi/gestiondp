@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin,
-  Star, UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, FileText, Play, Share2, MoreHorizontal,
+  UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, Play, Share2, MoreHorizontal,
   Calendar, Briefcase, Heart, Repeat2, Info,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
