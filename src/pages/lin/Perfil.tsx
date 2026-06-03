@@ -56,17 +56,15 @@ export default function Perfil() {
       if (error || !p) { toast.error("Perfil no encontrado"); navigate("/lin"); return; }
       setPerfil(p);
 
-      const [{ data: posts }, { data: rs }, { data: hist }, { data: likedData }, { data: repostesData }] = await Promise.all([
+      const [{ data: posts }, { data: hist }, { data: likedData }, { data: repostesData }] = await Promise.all([
         (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
-        (supabase as any).from("resenas").select("*, autor:perfiles!autor_id(nombre,username,avatar_url)").eq("perfil_id", p.id).order("created_at", { ascending: false }),
         (supabase as any).from("historias").select("id").eq("perfil_id", p.id).gt("expira_at", new Date().toISOString()).limit(1),
         (supabase as any).from("likes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
         (supabase as any).from("repostes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
       ]);
       setPubs(posts || []);
-      setResenas(rs || []);
-      setLikedPubs((likedData || []).map((l: any) => l.publicacion).filter(Boolean));
-      setRepostesPubs((repostesData || []).map((r: any) => r.publicacion).filter(Boolean));
+      setLikedPubs((likedData || []).map((l: any) => l.publicacion).filter(Boolean).filter((p: any) => p.estado === "activa"));
+      setRepostesPubs((repostesData || []).map((r: any) => r.publicacion).filter(Boolean).filter((p: any) => p.estado === "activa"));
       setTieneHistoria((hist || []).length > 0);
 
       if (user && user.id !== p.id) {
