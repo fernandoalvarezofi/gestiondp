@@ -263,11 +263,6 @@ export default function ComunidadDetalle() {
             <h2 className="truncate text-sm font-bold leading-tight">{c.nombre}</h2>
             <p className="truncate text-[10px] text-muted-foreground">{c.total_miembros} miembros</p>
           </div>
-          {esCreador && (
-            <button onClick={eliminarComunidad} title="Eliminar comunidad" className="rounded-md p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600">
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
         </div>
       </div>
 
