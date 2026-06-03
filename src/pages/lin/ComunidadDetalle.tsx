@@ -356,8 +356,8 @@ export default function ComunidadDetalle() {
           </div>
           <div className="flex items-center gap-1">
             {esCreador && (
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={eliminarComunidad} aria-label="Eliminar comunidad">
-                <Trash2 className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-foreground" onClick={abrirAdmin} aria-label="Administrar comunidad">
+                <Settings className="h-4 w-4" /><span className="hidden sm:inline">Administrar</span>
               </Button>
             )}
             <Sheet>
