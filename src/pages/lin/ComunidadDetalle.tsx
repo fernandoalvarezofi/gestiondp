@@ -43,6 +43,9 @@ export default function ComunidadDetalle() {
   const [nuevoCanal, setNuevoCanal] = useState({ open: false, nombre: "", topic: "", categoria_id: "" });
   const [editandoMsg, setEditandoMsg] = useState<string | null>(null);
   const [editMsgTxt, setEditMsgTxt] = useState("");
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminForm, setAdminForm] = useState({ nombre: "", descripcion: "", tematica: "otro", privada: false });
+  const [savingAdmin, setSavingAdmin] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   const editarMsg = async (postId: string) => {
