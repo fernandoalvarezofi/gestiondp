@@ -78,13 +78,16 @@ export default function Perfil() {
     if (!perfil?.id) return;
     const refrescarStats = async () => {
       const { data } = await (supabase as any).from("perfiles")
-        .select("total_seguidores,total_siguiendo,total_publicaciones,score").eq("id", perfil.id).single();
+        .select("total_seguidores,total_siguiendo,total_publicaciones").eq("id", perfil.id).single();
       if (data) setPerfil((p: any) => p ? { ...p, ...data } : p);
     };
     const refrescarPubs = async () => {
       const { data } = await (supabase as any).from("publicaciones").select(SELECT)
         .eq("perfil_id", perfil.id).eq("estado", "activa").order("created_at", { ascending: false });
-      setPubs(data || []); refrescarStats();
+      setPubs(data || []);
+      setLikedPubs((prev) => prev.filter((p: any) => p.estado === "activa"));
+      setRepostesPubs((prev) => prev.filter((p: any) => p.estado === "activa"));
+      refrescarStats();
     };
     const ch = (supabase as any).channel(`perfil-rt-${perfil.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "seguidos", filter: `seguido_id=eq.${perfil.id}` }, refrescarStats)
