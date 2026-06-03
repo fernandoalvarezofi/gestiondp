@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { ImagePlus, X, Users, Hash, Plus, Send, Settings, Crown, ChevronDown, ChevronRight, Volume2, SmilePlus, Pin, Reply, Megaphone, Shield, Pencil, Trash2, Check } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
@@ -40,6 +43,9 @@ export default function ComunidadDetalle() {
   const [nuevoCanal, setNuevoCanal] = useState({ open: false, nombre: "", topic: "", categoria_id: "" });
   const [editandoMsg, setEditandoMsg] = useState<string | null>(null);
   const [editMsgTxt, setEditMsgTxt] = useState("");
+  const [adminOpen, setAdminOpen] = useState(false);
+  const [adminForm, setAdminForm] = useState({ nombre: "", descripcion: "", tematica: "otro", privada: false });
+  const [savingAdmin, setSavingAdmin] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
 
   const editarMsg = async (postId: string) => {
@@ -73,6 +79,34 @@ export default function ComunidadDetalle() {
     if (error) return toast.error(error.message);
     toast.success("Comunidad eliminada");
     navigate("/lin/hub?tab=comunidades");
+  };
+
+  const abrirAdmin = () => {
+    setAdminForm({
+      nombre: c.nombre || "",
+      descripcion: c.descripcion || "",
+      tematica: c.tematica || "otro",
+      privada: !!c.privada,
+    });
+    setAdminOpen(true);
+  };
+
+  const guardarAdmin = async () => {
+    if (!esCreador) return;
+    setSavingAdmin(true);
+    const { error } = await (supabase as any).from("comunidades")
+      .update({
+        nombre: adminForm.nombre,
+        descripcion: adminForm.descripcion,
+        tematica: adminForm.tematica,
+        privada: adminForm.privada,
+      })
+      .eq("id", c.id)
+      .eq("creador_id", user!.id);
+    setSavingAdmin(false);
+    if (error) return toast.error(error.message);
+    setC({ ...c, ...adminForm });
+    toast.success("Cambios guardados");
   };
 
   const load = async () => {
@@ -229,11 +263,6 @@ export default function ComunidadDetalle() {
             <h2 className="truncate text-sm font-bold leading-tight">{c.nombre}</h2>
             <p className="truncate text-[10px] text-muted-foreground">{c.total_miembros} miembros</p>
           </div>
-          {esCreador && (
-            <button onClick={eliminarComunidad} title="Eliminar comunidad" className="rounded-md p-1 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600">
-              <Trash2 className="h-4 w-4" />
-            </button>
-          )}
         </div>
       </div>
 
@@ -302,6 +331,7 @@ export default function ComunidadDetalle() {
   );
 
   return (
+    <>
     <div className="-mx-4 -my-4 md:-mx-6 md:-my-6">
     <div className="mx-auto grid h-[calc(100vh-3.5rem)] max-w-[1600px] grid-cols-1 gap-0 overflow-hidden border-y bg-background lg:h-[calc(100vh-3.5rem)] lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_260px]">
       {/* Sidebar canales — visible desde lg */}
@@ -327,8 +357,8 @@ export default function ComunidadDetalle() {
           </div>
           <div className="flex items-center gap-1">
             {esCreador && (
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={eliminarComunidad} aria-label="Eliminar comunidad">
-                <Trash2 className="h-4 w-4" />
+              <Button variant="ghost" size="sm" className="h-8 gap-1.5 px-2 text-muted-foreground hover:text-foreground" onClick={abrirAdmin} aria-label="Administrar comunidad">
+                <Settings className="h-4 w-4" /><span className="hidden sm:inline">Administrar</span>
               </Button>
             )}
             <Sheet>
@@ -510,6 +540,63 @@ export default function ComunidadDetalle() {
       </aside>
     </div>
     </div>
+
+    {/* Sheet de administración (solo creador) */}
+    <Sheet open={adminOpen} onOpenChange={setAdminOpen}>
+      <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-md">
+        <SheetHeader><SheetTitle>Administrar comunidad</SheetTitle></SheetHeader>
+        <div className="mt-4 space-y-5">
+          <section className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Información</p>
+            <div className="space-y-1.5">
+              <Label htmlFor="adm-nombre" className="text-xs">Nombre</Label>
+              <Input id="adm-nombre" value={adminForm.nombre} onChange={(e) => setAdminForm({ ...adminForm, nombre: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="adm-desc" className="text-xs">Descripción</Label>
+              <Textarea id="adm-desc" rows={3} value={adminForm.descripcion} onChange={(e) => setAdminForm({ ...adminForm, descripcion: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Temática</Label>
+              <Select value={adminForm.tematica} onValueChange={(v) => setAdminForm({ ...adminForm, tematica: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["tecnologia","emprendimiento","diseño","marketing","finanzas","salud","educacion","entretenimiento","otro"].map((t) => (
+                    <SelectItem key={t} value={t}>{t}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div>
+                <Label htmlFor="adm-priv" className="text-sm">Comunidad privada</Label>
+                <p className="text-xs text-muted-foreground">Solo miembros aprobados pueden ver el contenido.</p>
+              </div>
+              <Switch id="adm-priv" checked={adminForm.privada} onCheckedChange={(v) => setAdminForm({ ...adminForm, privada: v })} />
+            </div>
+            <Button onClick={guardarAdmin} disabled={savingAdmin} className="w-full">
+              {savingAdmin ? "Guardando…" : "Guardar cambios"}
+            </Button>
+          </section>
+
+          <div className="h-px bg-border" />
+
+          <section className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-destructive">Zona de peligro</p>
+            <div className="space-y-3 rounded-xl border border-destructive/30 p-4">
+              <div>
+                <p className="text-sm font-semibold">Eliminar comunidad</p>
+                <p className="text-xs text-muted-foreground">Se eliminarán todos los canales, posts y miembros permanentemente.</p>
+              </div>
+              <Button variant="destructive" className="w-full" onClick={eliminarComunidad}>
+                <Trash2 className="h-4 w-4" />Eliminar comunidad
+              </Button>
+            </div>
+          </section>
+        </div>
+      </SheetContent>
+    </Sheet>
+    </>
   );
 }
 

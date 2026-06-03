@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin,
-  Star, UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, FileText, Play, Share2, MoreHorizontal,
+  UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, Play, Share2, MoreHorizontal,
   Calendar, Briefcase, Heart, Repeat2, Info,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -36,7 +36,6 @@ export default function Perfil() {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<any>(null);
   const [pubs, setPubs] = useState<any[]>([]);
-  const [resenas, setResenas] = useState<any[]>([]);
   const [likedPubs, setLikedPubs] = useState<any[]>([]);
   const [repostesPubs, setRepostesPubs] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
@@ -57,17 +56,15 @@ export default function Perfil() {
       if (error || !p) { toast.error("Perfil no encontrado"); navigate("/lin"); return; }
       setPerfil(p);
 
-      const [{ data: posts }, { data: rs }, { data: hist }, { data: likedData }, { data: repostesData }] = await Promise.all([
+      const [{ data: posts }, { data: hist }, { data: likedData }, { data: repostesData }] = await Promise.all([
         (supabase as any).from("publicaciones").select(SELECT).eq("perfil_id", p.id).eq("estado", "activa").order("created_at", { ascending: false }),
-        (supabase as any).from("resenas").select("*, autor:perfiles!autor_id(nombre,username,avatar_url)").eq("perfil_id", p.id).order("created_at", { ascending: false }),
         (supabase as any).from("historias").select("id").eq("perfil_id", p.id).gt("expira_at", new Date().toISOString()).limit(1),
         (supabase as any).from("likes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
         (supabase as any).from("repostes").select(`publicacion:publicaciones!publicacion_id(${SELECT})`).eq("perfil_id", p.id).order("created_at", { ascending: false }).limit(50),
       ]);
       setPubs(posts || []);
-      setResenas(rs || []);
-      setLikedPubs((likedData || []).map((l: any) => l.publicacion).filter(Boolean));
-      setRepostesPubs((repostesData || []).map((r: any) => r.publicacion).filter(Boolean));
+      setLikedPubs((likedData || []).map((l: any) => l.publicacion).filter(Boolean).filter((p: any) => p.estado === "activa"));
+      setRepostesPubs((repostesData || []).map((r: any) => r.publicacion).filter(Boolean).filter((p: any) => p.estado === "activa"));
       setTieneHistoria((hist || []).length > 0);
 
       if (user && user.id !== p.id) {
@@ -81,13 +78,16 @@ export default function Perfil() {
     if (!perfil?.id) return;
     const refrescarStats = async () => {
       const { data } = await (supabase as any).from("perfiles")
-        .select("total_seguidores,total_siguiendo,total_publicaciones,score").eq("id", perfil.id).single();
+        .select("total_seguidores,total_siguiendo,total_publicaciones").eq("id", perfil.id).single();
       if (data) setPerfil((p: any) => p ? { ...p, ...data } : p);
     };
     const refrescarPubs = async () => {
       const { data } = await (supabase as any).from("publicaciones").select(SELECT)
         .eq("perfil_id", perfil.id).eq("estado", "activa").order("created_at", { ascending: false });
-      setPubs(data || []); refrescarStats();
+      setPubs(data || []);
+      setLikedPubs((prev) => prev.filter((p: any) => p.estado === "activa"));
+      setRepostesPubs((prev) => prev.filter((p: any) => p.estado === "activa"));
+      refrescarStats();
     };
     const ch = (supabase as any).channel(`perfil-rt-${perfil.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "seguidos", filter: `seguido_id=eq.${perfil.id}` }, refrescarStats)
@@ -134,8 +134,6 @@ export default function Perfil() {
   };
 
 
-  const reels = pubs.filter((p) => p.video_url);
-  const articulos = pubs.filter((p) => p.tipo === "contenido_largo" || p.formato === "articulo");
   const conMedia = pubs.filter((p) => p.imagen_url || p.video_url);
 
   if (!perfil) return (
@@ -260,11 +258,10 @@ export default function Perfil() {
             {perfil.youtube && <a href={perfil.youtube} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Youtube className="h-3 w-3" />YouTube</a>}
           </div>
 
-          <div className="mt-4 grid grid-cols-4 divide-x rounded-2xl border bg-card">
+          <div className="mt-4 grid grid-cols-3 divide-x rounded-2xl border bg-card">
             <StatCell n={perfil.total_publicaciones} label="Posts" />
             <StatCell n={perfil.total_seguidores} label="Seguidores" to={`/lin/perfil/${perfil.username}/red?tab=seguidores`} />
             <StatCell n={perfil.total_siguiendo} label="Siguiendo" to={`/lin/perfil/${perfil.username}/red?tab=siguiendo`} />
-            <StatCell n={perfil.score} label="Score" tooltip="El score refleja tu actividad en Woref: publicaciones, seguidores, likes y comentarios." />
           </div>
         </div>
 
@@ -273,9 +270,6 @@ export default function Perfil() {
           <div className="flex items-center justify-between border-b">
             <TabsList className="h-auto justify-start gap-0 rounded-none border-0 bg-transparent p-0">
               <TabTrigger value="publicaciones" icon={Grid3x3} label="Posts" count={pubs.length} active={tab === "publicaciones"} />
-              <TabTrigger value="reels" icon={Play} label="Reels" count={reels.length} active={tab === "reels"} />
-              <TabTrigger value="articulos" icon={FileText} label="Artículos" count={articulos.length} active={tab === "articulos"} />
-              <TabTrigger value="resenas" icon={Star} label="Reseñas" count={resenas.length} active={tab === "resenas"} />
               {isMine && <TabTrigger value="likes" icon={Heart} label="Me gusta" count={likedPubs.length} active={tab === "likes"} />}
               {isMine && <TabTrigger value="repostes" icon={Repeat2} label="Repostes" count={repostesPubs.length} active={tab === "repostes"} />}
             </TabsList>
@@ -291,27 +285,6 @@ export default function Perfil() {
             {pubs.length === 0 ? <EmptyTab text="Aún no tiene publicaciones." />
               : vista === "grid" ? <PostGrid items={conMedia} navigate={navigate} /> : <div className="-mx-4 sm:-mx-6">{pubs.map((p) => <PostCard key={p.id} pub={p} />)}</div>}
           </TabsContent>
-          <TabsContent value="reels" className="mt-4">
-            {reels.length === 0 ? <EmptyTab text="Sin reels todavía." /> : <PostGrid items={reels} navigate={navigate} aspect="9/16" />}
-          </TabsContent>
-          <TabsContent value="articulos" className="mt-4 -mx-4 sm:-mx-6">
-            {articulos.length === 0 ? <EmptyTab text="Sin artículos publicados." /> : articulos.map((p) => <PostCard key={p.id} pub={p} />)}
-          </TabsContent>
-          <TabsContent value="resenas" className="mt-4 space-y-3">
-            {resenas.length === 0 ? <EmptyTab text="Sin reseñas aún." />
-              : resenas.map((r) => (
-                <Card key={r.id}><CardContent className="space-y-2 p-4">
-                  <div className="flex items-center justify-between">
-                    <Link to={`/lin/perfil/${r.autor.username}`} className="flex items-center gap-2">
-                      <Avatar className="h-7 w-7"><AvatarImage src={r.autor.avatar_url || ""} /><AvatarFallback>{initials(r.autor.nombre)}</AvatarFallback></Avatar>
-                      <span className="text-sm font-medium">{r.autor.nombre}</span>
-                    </Link>
-                    <div className="flex">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-4 w-4 ${i < r.puntuacion ? "fill-amber-400 text-amber-400" : "text-muted"}`} />)}</div>
-                  </div>
-                  {r.comentario && <p className="text-sm">{r.comentario}</p>}
-                </CardContent></Card>
-              ))}
-          </TabsContent>
           {isMine && (
             <TabsContent value="likes" className="mt-4 -mx-4 sm:-mx-6">
               {likedPubs.length === 0 ? <EmptyTab text="Aún no hay publicaciones con me gusta." /> : likedPubs.map((p) => <PostCard key={p.id} pub={p} />)}
@@ -322,6 +295,7 @@ export default function Perfil() {
               {repostesPubs.length === 0 ? <EmptyTab text="Aún no reposteaste nada." /> : repostesPubs.map((p) => <PostCard key={p.id} pub={p} />)}
             </TabsContent>
           )}
+
         </Tabs>
       </div>
     </div>
