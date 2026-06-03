@@ -302,7 +302,36 @@ export default function ProyectoDetalle() {
               <Button variant={siguiendo ? "outline" : "default"} onClick={toggleSeguir} size="sm">
                 {siguiendo ? "Siguiendo" : "Seguir"}
               </Button>
+              {user?.id === p.perfil_id && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="h-9 w-9" aria-label="Opciones del proyecto">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem onClick={() => navigate(`/lin/proyectos/${p.id}/editar`)}>
+                      <Pencil className="h-4 w-4" />Editar proyecto
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {p.estado !== "pausado" ? (
+                      <DropdownMenuItem onClick={pausarProyecto}>
+                        <Pause className="h-4 w-4" />Pausar proyecto
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem onClick={reactivarProyecto}>
+                        <Play className="h-4 w-4" />Reactivar proyecto
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={eliminarProyecto} className="text-destructive focus:text-destructive">
+                      <Trash2 className="h-4 w-4" />Eliminar proyecto
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
             </div>
+
           </div>
 
           {/* Progreso */}
