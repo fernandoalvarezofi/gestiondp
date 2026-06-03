@@ -204,6 +204,35 @@ export default function ProyectoDetalle() {
     toast.success("Archivo eliminado");
   };
 
+  const pausarProyecto = async () => {
+    const { error } = await (supabase as any).from("proyectos").update({ estado: "pausado" }).eq("id", p.id).eq("perfil_id", user!.id);
+    if (error) { toast.error("No se pudo pausar"); return; }
+    setP((prev: any) => ({ ...prev, estado: "pausado" }));
+    toast.success("Proyecto pausado");
+  };
+
+  const reactivarProyecto = async () => {
+    const { error } = await (supabase as any).from("proyectos").update({ estado: "en_desarrollo" }).eq("id", p.id).eq("perfil_id", user!.id);
+    if (error) { toast.error("No se pudo reactivar"); return; }
+    setP((prev: any) => ({ ...prev, estado: "en_desarrollo" }));
+    toast.success("Proyecto reactivado");
+  };
+
+  const eliminarProyecto = async () => {
+    const ok = await confirm({
+      title: "¿Eliminar proyecto?",
+      description: "Se eliminarán todos los datos, comentarios y archivos del proyecto. Esta acción no se puede deshacer.",
+      confirmText: "Eliminar",
+      destructive: true,
+    });
+    if (!ok) return;
+    const { error } = await (supabase as any).from("proyectos").delete().eq("id", p.id).eq("perfil_id", user!.id);
+    if (error) { toast.error("No se pudo eliminar: " + error.message); return; }
+    toast.success("Proyecto eliminado");
+    navigate("/lin/proyectos");
+  };
+
+
 
   const tareasPorEstado = useMemo(() => {
     return ESTADOS_TAREA.map((e) => ({ ...e, tareas: tareas.filter((t) => t.estado === e.id) }));
