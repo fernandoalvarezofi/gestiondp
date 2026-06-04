@@ -238,9 +238,16 @@ export default function MercadoProducto() {
               </Button>
 
               <div className="mt-4 space-y-2 text-sm">
-                <div className="flex items-start gap-2"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" /><span>Entrega digital protegida tras confirmación de pago</span></div>
-                <div className="flex items-start gap-2"><Zap className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" /><span>Acceso inmediato a la descarga o link de entrega</span></div>
-                <div className="flex items-start gap-2"><Store className="mt-0.5 h-4 w-4 shrink-0 text-primary" /><span>Soporte directo del creador por DM</span></div>
+                <div className="flex items-center gap-2 font-semibold">
+                  <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                  Pago directo y seguro
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  El vendedor configura sus propios métodos de cobro. Woref no interviene en el pago ni cobra comisión.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Trato directo entre compradores y vendedores. Cero intermediarios.
+                </p>
               </div>
             </CardContent>
           </Card>
