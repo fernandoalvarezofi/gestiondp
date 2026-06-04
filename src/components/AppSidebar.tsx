@@ -28,7 +28,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { title: "Feed", icon: Home, to: "/lin", end: true },
       { title: "Explorar", icon: Compass, to: "/lin/explorar" },
-      { title: "Videos", icon: Film, to: "/lin/reels" },
+      { title: "Conectar", icon: UserPlus, to: "/lin/conectar" },
     ],
 
   },
