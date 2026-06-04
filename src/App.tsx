@@ -70,6 +70,7 @@ const App = () => (
                   <Route path="/lin" element={<Feed />} />
                   <Route path="/lin/explorar" element={<Explorar />} />
                   <Route path="/lin/reels" element={<Reels />} />
+                  <Route path="/lin/conectar" element={<Conectar />} />
                   <Route path="/lin/publicar" element={<Publicar />} />
                   <Route path="/lin/buscar" element={<Buscador />} />
                   
