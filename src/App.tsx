@@ -37,6 +37,7 @@ import Hub from "./pages/lin/Hub";
 import NuevaHistoria from "./pages/lin/NuevaHistoria";
 import HistoriaViewer from "./pages/lin/HistoriaViewer";
 import Reels from "./pages/lin/Reels";
+import Conectar from "./pages/lin/Conectar";
 import Explorar from "./pages/lin/Explorar";
 import Mercado from "./pages/lin/Mercado";
 import MercadoProducto from "./pages/lin/MercadoProducto";
