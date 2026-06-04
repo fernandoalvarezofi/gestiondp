@@ -233,6 +233,15 @@ export default function Perfil() {
                 <Button onClick={toggleSeguir} disabled={loadingSeguir} variant={siguiendo ? "outline" : "default"} size="sm" className={cn(!siguiendo && "shadow-ember")}>
                   {loadingSeguir ? <Loader2 className="h-4 w-4 animate-spin" /> : siguiendo ? <><UserCheck className="h-4 w-4" />Siguiendo</> : <><UserPlus className="h-4 w-4" />Seguir</>}
                 </Button>
+                {conectado ? (
+                  <Button variant="outline" size="sm" disabled><UserCheck className="h-4 w-4" />Conectado</Button>
+                ) : estadoSolicitud === "enviada" ? (
+                  <Button variant="outline" size="sm" disabled><Clock className="h-4 w-4" />Solicitud enviada</Button>
+                ) : estadoSolicitud === "recibida" ? (
+                  <Button size="sm" onClick={aceptarConexion}><UserCheck className="h-4 w-4" />Aceptar conexión</Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setOpenConectar(true)}><Users2 className="h-4 w-4" />Conectar</Button>
+                )}
                 <Button onClick={abrirChat} variant="outline" size="sm"><MessageCircleMore className="h-4 w-4" />Mensaje</Button>
                 <Button variant="outline" size="icon" className="h-9 w-9" onClick={compartirPerfil}><Share2 className="h-4 w-4" /></Button>
                 <DropdownMenu>
