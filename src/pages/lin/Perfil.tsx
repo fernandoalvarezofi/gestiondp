@@ -76,6 +76,15 @@ export default function Perfil() {
       if (user && user.id !== p.id) {
         const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", p.id).maybeSingle();
         setSiguiendo(!!s);
+        const _a = user.id < p.id ? user.id : p.id;
+        const _b = user.id < p.id ? p.id : user.id;
+        const [{ data: conn }, { data: solE }, { data: solR }] = await Promise.all([
+          (supabase as any).from("matches").select("id").eq("perfil_a_id", _a).eq("perfil_b_id", _b).maybeSingle(),
+          (supabase as any).from("match_acciones").select("id").eq("perfil_id", user.id).eq("objetivo_id", p.id).eq("accion", "solicitud_enviada").maybeSingle(),
+          (supabase as any).from("match_acciones").select("id").eq("perfil_id", p.id).eq("objetivo_id", user.id).eq("accion", "solicitud_enviada").maybeSingle(),
+        ]);
+        setConectado(!!conn);
+        setEstadoSolicitud(solE ? "enviada" : solR ? "recibida" : null);
       }
     })();
   }, [slug, user]);
