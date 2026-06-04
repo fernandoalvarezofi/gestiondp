@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin,
   UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, Play, Share2, MoreHorizontal,
-  Calendar, Briefcase, Heart, Repeat2, Info,
+  Calendar, Briefcase, Heart, Repeat2, Info, Clock, Users2,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { PostCard } from "@/components/lin/PostCard";
@@ -19,6 +19,8 @@ import { TIPO_USUARIO, initials, formatNumber } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
 
 
@@ -43,6 +45,10 @@ export default function Perfil() {
   const [tab, setTab] = useState("publicaciones");
   const [vista, setVista] = useState<"lista" | "grid">("grid");
   const [tieneHistoria, setTieneHistoria] = useState(false);
+  const [conectado, setConectado] = useState(false);
+  const [estadoSolicitud, setEstadoSolicitud] = useState<"enviada" | "recibida" | null>(null);
+  const [openConectar, setOpenConectar] = useState(false);
+  const [notaConectar, setNotaConectar] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -70,6 +76,15 @@ export default function Perfil() {
       if (user && user.id !== p.id) {
         const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", p.id).maybeSingle();
         setSiguiendo(!!s);
+        const _a = user.id < p.id ? user.id : p.id;
+        const _b = user.id < p.id ? p.id : user.id;
+        const [{ data: conn }, { data: solE }, { data: solR }] = await Promise.all([
+          (supabase as any).from("matches").select("id").eq("perfil_a_id", _a).eq("perfil_b_id", _b).maybeSingle(),
+          (supabase as any).from("match_acciones").select("id").eq("perfil_id", user.id).eq("objetivo_id", p.id).eq("accion", "solicitud_enviada").maybeSingle(),
+          (supabase as any).from("match_acciones").select("id").eq("perfil_id", p.id).eq("objetivo_id", user.id).eq("accion", "solicitud_enviada").maybeSingle(),
+        ]);
+        setConectado(!!conn);
+        setEstadoSolicitud(solE ? "enviada" : solR ? "recibida" : null);
       }
     })();
   }, [slug, user]);
@@ -115,6 +130,24 @@ export default function Perfil() {
     if (!user || !perfil) return toast.error("Iniciá sesión");
     const { data } = await (supabase as any).rpc("get_or_create_conversacion", { user_a: user.id, user_b: perfil.id });
     navigate(`/lin/mensajes/${data}`);
+  };
+
+  const enviarConexion = async () => {
+    if (!user || !perfil) return;
+    const { error } = await (supabase as any).from("match_acciones").insert({
+      perfil_id: user.id, objetivo_id: perfil.id, accion: "solicitud_enviada",
+      nota: notaConectar.trim() || null,
+    });
+    if (error) { toast.error(error.message); return; }
+    setEstadoSolicitud("enviada"); setOpenConectar(false); setNotaConectar("");
+    toast.success(`Solicitud enviada a ${perfil.nombre}`);
+  };
+  const aceptarConexion = async () => {
+    if (!perfil) return;
+    const { error } = await (supabase as any).rpc("aceptar_conexion", { _solicitante_id: perfil.id });
+    if (error) { toast.error(error.message); return; }
+    setConectado(true); setEstadoSolicitud(null);
+    toast.success(`Conectado con ${perfil.nombre}`);
   };
 
   const compartirPerfil = async () => {
@@ -200,6 +233,15 @@ export default function Perfil() {
                 <Button onClick={toggleSeguir} disabled={loadingSeguir} variant={siguiendo ? "outline" : "default"} size="sm" className={cn(!siguiendo && "shadow-ember")}>
                   {loadingSeguir ? <Loader2 className="h-4 w-4 animate-spin" /> : siguiendo ? <><UserCheck className="h-4 w-4" />Siguiendo</> : <><UserPlus className="h-4 w-4" />Seguir</>}
                 </Button>
+                {conectado ? (
+                  <Button variant="outline" size="sm" disabled><UserCheck className="h-4 w-4" />Conectado</Button>
+                ) : estadoSolicitud === "enviada" ? (
+                  <Button variant="outline" size="sm" disabled><Clock className="h-4 w-4" />Solicitud enviada</Button>
+                ) : estadoSolicitud === "recibida" ? (
+                  <Button size="sm" onClick={aceptarConexion}><UserCheck className="h-4 w-4" />Aceptar conexión</Button>
+                ) : (
+                  <Button variant="outline" size="sm" onClick={() => setOpenConectar(true)}><Users2 className="h-4 w-4" />Conectar</Button>
+                )}
                 <Button onClick={abrirChat} variant="outline" size="sm"><MessageCircleMore className="h-4 w-4" />Mensaje</Button>
                 <Button variant="outline" size="icon" className="h-9 w-9" onClick={compartirPerfil}><Share2 className="h-4 w-4" /></Button>
                 <DropdownMenu>
@@ -298,6 +340,21 @@ export default function Perfil() {
 
         </Tabs>
       </div>
+
+      <Dialog open={openConectar} onOpenChange={setOpenConectar}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Conectar con {perfil?.nombre}</DialogTitle></DialogHeader>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Agregá una nota (opcional)</label>
+            <Textarea value={notaConectar} onChange={(e) => setNotaConectar(e.target.value)} maxLength={200} placeholder="Hola, me interesa conectar..." />
+            <p className="mt-1 text-right text-[10px] text-muted-foreground">{notaConectar.length}/200</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenConectar(false)}>Cancelar</Button>
+            <Button onClick={enviarConexion}>Enviar solicitud</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

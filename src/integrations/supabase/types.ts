@@ -1850,6 +1850,7 @@ export type Database = {
           accion: string
           created_at: string
           id: string
+          nota: string | null
           objetivo_id: string
           perfil_id: string
         }
@@ -1857,6 +1858,7 @@ export type Database = {
           accion: string
           created_at?: string
           id?: string
+          nota?: string | null
           objetivo_id: string
           perfil_id: string
         }
@@ -1864,6 +1866,7 @@ export type Database = {
           accion?: string
           created_at?: string
           id?: string
+          nota?: string | null
           objetivo_id?: string
           perfil_id?: string
         }
@@ -3549,6 +3552,11 @@ export type Database = {
       }
     }
     Functions: {
+      aceptar_conexion: {
+        Args: { _solicitante_id: string }
+        Returns: undefined
+      }
+      cancelar_conexion: { Args: { _otro_id: string }; Returns: undefined }
       delete_community_as_owner: {
         Args: { _community_id: string }
         Returns: undefined
@@ -3610,6 +3618,10 @@ export type Database = {
           id: string
           score: number
         }[]
+      }
+      rechazar_conexion: {
+        Args: { _solicitante_id: string }
+        Returns: undefined
       }
       registrar_vista: {
         Args: { p_publicacion_id: string }

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import {
   Home, Compass, Play, Rocket, Store, Users, MessageCircle, Bell, UserCircle,
-  Settings, LogOut, Plus, Film, BarChart3, Bookmark, FolderOpen,
+  Settings, LogOut, Plus, Film, BarChart3, Bookmark, FolderOpen, UserPlus,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -28,7 +28,7 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     items: [
       { title: "Feed", icon: Home, to: "/lin", end: true },
       { title: "Explorar", icon: Compass, to: "/lin/explorar" },
-      { title: "Videos", icon: Film, to: "/lin/reels" },
+      { title: "Conectar", icon: UserPlus, to: "/lin/conectar" },
     ],
 
   },

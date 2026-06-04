@@ -47,10 +47,12 @@ export default function VendedorProductos() {
   };
 
   const remove = async (p: any) => {
-    const ok = await confirm({ title: `¿Eliminar "${p.titulo}"?`, description: "Esta acción no se puede deshacer.", confirmText: "Eliminar", destructive: true });
+    const ok = await confirm({ title: `¿Eliminar "${p.titulo}"?`, description: "Se eliminará permanentemente y no se podrá recuperar.", confirmText: "Eliminar", destructive: true });
     if (!ok) return;
-    await (supabase as any).from("marketplace_productos").delete().eq("id", p.id);
-    load();
+    const { error } = await (supabase as any).from("marketplace_productos").delete().eq("id", p.id).eq("vendedor_id", user?.id);
+    if (error) { toast.error(error.message); return; }
+    setItems((prev) => prev.filter((x) => x.id !== p.id));
+    toast.success("Producto eliminado");
   };
 
 
