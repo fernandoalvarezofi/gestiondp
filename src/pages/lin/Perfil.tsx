@@ -45,6 +45,10 @@ export default function Perfil() {
   const [tab, setTab] = useState("publicaciones");
   const [vista, setVista] = useState<"lista" | "grid">("grid");
   const [tieneHistoria, setTieneHistoria] = useState(false);
+  const [conectado, setConectado] = useState(false);
+  const [estadoSolicitud, setEstadoSolicitud] = useState<"enviada" | "recibida" | null>(null);
+  const [openConectar, setOpenConectar] = useState(false);
+  const [notaConectar, setNotaConectar] = useState("");
 
   useEffect(() => {
     (async () => {
