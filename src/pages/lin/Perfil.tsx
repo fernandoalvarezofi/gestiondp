@@ -19,6 +19,8 @@ import { TIPO_USUARIO, initials, formatNumber } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
 
 
