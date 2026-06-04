@@ -340,6 +340,21 @@ export default function Perfil() {
 
         </Tabs>
       </div>
+
+      <Dialog open={openConectar} onOpenChange={setOpenConectar}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Conectar con {perfil?.nombre}</DialogTitle></DialogHeader>
+          <div>
+            <label className="mb-1 block text-sm font-medium">Agregá una nota (opcional)</label>
+            <Textarea value={notaConectar} onChange={(e) => setNotaConectar(e.target.value)} maxLength={200} placeholder="Hola, me interesa conectar..." />
+            <p className="mt-1 text-right text-[10px] text-muted-foreground">{notaConectar.length}/200</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenConectar(false)}>Cancelar</Button>
+            <Button onClick={enviarConexion}>Enviar solicitud</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
