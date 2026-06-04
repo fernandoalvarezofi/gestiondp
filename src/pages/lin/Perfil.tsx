@@ -132,6 +132,24 @@ export default function Perfil() {
     navigate(`/lin/mensajes/${data}`);
   };
 
+  const enviarConexion = async () => {
+    if (!user || !perfil) return;
+    const { error } = await (supabase as any).from("match_acciones").insert({
+      perfil_id: user.id, objetivo_id: perfil.id, accion: "solicitud_enviada",
+      nota: notaConectar.trim() || null,
+    });
+    if (error) { toast.error(error.message); return; }
+    setEstadoSolicitud("enviada"); setOpenConectar(false); setNotaConectar("");
+    toast.success(`Solicitud enviada a ${perfil.nombre}`);
+  };
+  const aceptarConexion = async () => {
+    if (!perfil) return;
+    const { error } = await (supabase as any).rpc("aceptar_conexion", { _solicitante_id: perfil.id });
+    if (error) { toast.error(error.message); return; }
+    setConectado(true); setEstadoSolicitud(null);
+    toast.success(`Conectado con ${perfil.nombre}`);
+  };
+
   const compartirPerfil = async () => {
     const url = `${window.location.origin}/lin/perfil/${perfil.username}`;
     try {
