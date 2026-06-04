@@ -90,8 +90,8 @@ export default function Conectar() {
     const { data: perfs } = await (supabase as any).from("perfiles")
       .select("id, nombre, username, avatar_url, tipo, industria, actualmente, verificado")
       .in("id", otros.map((o: any) => o.otroId));
-    const map = new Map((perfs || []).map((p: any) => [p.id, p]));
-    setConexiones(otros.map((o: any) => ({ ...(map.get(o.otroId) || {}), created_at: o.created_at })).filter((p: any) => p.id));
+    const map = new Map<string, any>((perfs || []).map((p: any) => [p.id, p]));
+    setConexiones(otros.map((o: any) => ({ ...(map.get(o.otroId) || {} as any), created_at: o.created_at })).filter((p: any) => p.id));
   };
 
   const cargarSolicitudes = async () => {
