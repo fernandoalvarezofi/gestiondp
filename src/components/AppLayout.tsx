@@ -158,10 +158,10 @@ export function AppLayout() {
               <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Inicio</span>
             </>)}
           </NavLink>
-          <NavLink to="/lin/explorar" className={linkCls}>
+          <NavLink to="/lin/conectar" className={linkCls}>
             {({ isActive }) => (<>
-              <Compass className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
-              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Explorar</span>
+              <UserPlus className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Conectar</span>
             </>)}
           </NavLink>
           <NavLink to="/lin/publicar" className="min-h-[44px] flex flex-col items-center justify-center" aria-label="Publicar">
