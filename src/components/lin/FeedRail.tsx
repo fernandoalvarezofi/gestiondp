@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { TrendingUp, UserPlus, Search, Hash, BadgeCheck, Sparkles, ArrowRight, Rocket, Trophy } from "lucide-react";
+import { TrendingUp, UserPlus, Search, Hash, BadgeCheck, Sparkles, ArrowRight, Rocket, Trophy, Users } from "lucide-react";
 import { initials, TIPO_USUARIO } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
