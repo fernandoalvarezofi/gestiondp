@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Compass, Plus, MessageCircle, UserCircle,
   Menu, Rocket, Users, Bookmark, BarChart3, Settings, Film, Store, ShoppingBag, Bell, UserPlus,
+  Users2, PenSquare,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
