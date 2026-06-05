@@ -11,7 +11,7 @@ import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { WorefLogo } from "@/components/lin/WorefLogo";
 
 type NavItem = {
@@ -53,10 +53,12 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
 
 export function AppSidebar() {
   const { signOut, user } = useAuth();
+  const location = useLocation();
+  const isHome = location.pathname === "/lin";
   const { data: profile } = useQuery({
     queryKey: ["sidebar-perfil", user?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("perfiles").select("avatar_url, nombre, username").eq("id", user!.id).single();
+      const { data } = await (supabase as any).from("perfiles").select("avatar_url, nombre, username, bio, actualmente, tipo, portada_url, total_seguidores, total_publicaciones").eq("id", user!.id).single();
       return data;
     },
     enabled: !!user,
@@ -95,11 +97,55 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className="hidden md:flex border-r-0">
+    <Sidebar className={`border-r-0 ${isHome ? "hidden" : "hidden md:flex"}`}>
       <SidebarHeader className="px-4 py-5">
         <NavLink to="/" className="group flex items-center gap-2">
           <WorefLogo variant="full" size={24} />
         </NavLink>
+
+        {profile && (
+          <div className="mt-3 mb-1 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar-accent/30">
+            <div className="h-12 w-full overflow-hidden">
+              {profile.portada_url ? (
+                <img src={profile.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
+              ) : (
+                <div className="h-full w-full bg-gradient-to-br from-sidebar-border to-sidebar-accent" />
+              )}
+            </div>
+            <div className="px-3 pb-3">
+              <div className="-mt-6 mb-1.5">
+                <Avatar className="h-12 w-12 border-4 border-sidebar ring-1 ring-sidebar-border">
+                  <AvatarImage src={profile.avatar_url || ""} className="object-cover" />
+                  <AvatarFallback className="text-xs">
+                    {(profile.nombre || user?.email || "U").slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              <NavLink to="/lin/perfil" className="block text-[14px] font-bold leading-tight text-sidebar-foreground hover:underline">
+                {profile.nombre}
+              </NavLink>
+              <p className="mt-0.5 line-clamp-1 text-[11px] text-sidebar-foreground/60">
+                {profile.actualmente || profile.tipo || ""}
+              </p>
+              {profile.bio && (
+                <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-sidebar-foreground/50">
+                  {profile.bio}
+                </p>
+              )}
+              <div className="mt-2.5 grid grid-cols-2 gap-1 border-t border-sidebar-border pt-2.5">
+                <div>
+                  <p className="text-[13px] font-bold text-sidebar-foreground">{profile.total_seguidores ?? 0}</p>
+                  <p className="text-[10px] text-sidebar-foreground/60">Conexiones</p>
+                </div>
+                <div>
+                  <p className="text-[13px] font-bold text-sidebar-foreground">{profile.total_publicaciones ?? 0}</p>
+                  <p className="text-[10px] text-sidebar-foreground/60">Publicaciones</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <NavLink
           to="/lin/publicar"
           className="mt-2 mb-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-ember transition-transform hover:scale-[1.02]"
@@ -107,6 +153,7 @@ export function AppSidebar() {
           <Plus className="h-4 w-4" /> Publicar
         </NavLink>
       </SidebarHeader>
+
 
       <SidebarContent>
         {GROUPS.map((group, gi) => (

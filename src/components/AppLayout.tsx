@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Compass, Plus, MessageCircle, UserCircle,
   Menu, Rocket, Users, Bookmark, BarChart3, Settings, Film, Store, ShoppingBag, Bell, UserPlus,
+  Users2, PenSquare,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
@@ -154,41 +155,70 @@ export function AppLayout() {
         <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border/60 bg-background/90 backdrop-blur-xl px-2 py-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-pop md:hidden">
           <NavLink to="/lin" end className={linkCls}>
             {({ isActive }) => (<>
-              <Home className={`h-6 w-6 ${isActive ? "fill-primary/10 stroke-primary" : ""}`} />
-              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Inicio</span>
+              <div className="relative">
+                <Home className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
+                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
+              </div>
+              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Inicio</span>
             </>)}
           </NavLink>
           <NavLink to="/lin/conectar" className={linkCls}>
             {({ isActive }) => (<>
-              <UserPlus className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
-              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Conectar</span>
+              <div className="relative">
+                <Users2 className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
+                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
+              </div>
+              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Mi red</span>
             </>)}
-          </NavLink>
-          <NavLink to="/lin/publicar" className="min-h-[44px] flex flex-col items-center justify-center" aria-label="Publicar">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-ember ring-2 ring-background">
-              <Plus className="h-5 w-5" strokeWidth={2.5} />
-            </div>
           </NavLink>
           <NavLink to="/lin/mensajes" className={linkCls}>
             {({ isActive }) => (<>
               <div className="relative">
-                <MessageCircle className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
+                <MessageCircle className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
                 {noLeidos > 0 && (
-                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-ember px-1 text-[9px] font-bold text-primary-foreground ring-2 ring-background">
+                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background ring-2 ring-background">
                     {noLeidos > 9 ? "9+" : noLeidos}
                   </span>
                 )}
+                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
               </div>
-              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Mensajes</span>
+              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Mensajes</span>
+            </>)}
+          </NavLink>
+          <NavLink to="/lin/notificaciones" className={linkCls}>
+            {({ isActive }) => (<>
+              <div className="relative">
+                <Bell className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
+                {notifSinLeer > 0 && (
+                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background ring-2 ring-background">
+                    {notifSinLeer > 9 ? "9+" : notifSinLeer}
+                  </span>
+                )}
+                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
+              </div>
+              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Avisos</span>
             </>)}
           </NavLink>
           <NavLink to="/lin/perfil" className={linkCls}>
             {({ isActive }) => (<>
-              <UserCircle className={`h-6 w-6 ${isActive ? "stroke-primary" : ""}`} />
-              <span className={`text-[10px] ${isActive ? "font-semibold text-primary" : ""}`}>Perfil</span>
+              <div className="relative">
+                <UserCircle className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
+                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
+              </div>
+              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Perfil</span>
             </>)}
           </NavLink>
         </nav>
+
+        {/* FAB Publicar — flotante sobre el bottom nav */}
+        <NavLink
+          to="/lin/publicar"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop ring-2 ring-background md:hidden"
+          aria-label="Publicar"
+        >
+          <PenSquare className="h-5 w-5" strokeWidth={2.2} />
+        </NavLink>
+
 
         <ChatDock />
       </div>
