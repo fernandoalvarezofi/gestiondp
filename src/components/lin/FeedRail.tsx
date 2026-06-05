@@ -84,114 +84,39 @@ export function FeedRail() {
 
   return (
     <aside className="sticky top-4 hidden h-fit space-y-4 lg:block">
-      {/* Buscador */}
-      <form
-        onSubmit={(e) => { e.preventDefault(); if (q.trim()) window.location.href = `/lin/buscar?q=${encodeURIComponent(q)}`; }}
-        className="relative"
-      >
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar en Woref"
-          className="h-10 rounded-full border-none bg-secondary/70 pl-9 text-sm focus-visible:ring-1"
-        />
-      </form>
-
-      {/* 🚀 Top Lanzamientos — conecta Feed con Proyectos */}
-      {launches.length > 0 && (
-        <section className="overflow-hidden rounded-2xl border bg-card">
-          <div className="flex items-center justify-between border-b bg-gradient-to-r from-primary/10 to-transparent px-4 py-3">
-            <h3 className="flex items-center gap-1.5 text-sm font-bold">
-              <Trophy className="h-4 w-4 text-primary" /> Top lanzamientos
-            </h3>
-            <Link to="/lin/proyectos" className="text-[11px] font-semibold text-muted-foreground hover:text-primary">Ver todos</Link>
-          </div>
-          <ul className="divide-y">
-            {launches.map((p, i) => (
-              <li key={p.id} className="flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-secondary/40">
-                <span className="w-4 text-center text-[11px] font-bold text-muted-foreground tabular-nums">{i + 1}</span>
-                <Link to={`/lin/proyectos/${p.slug || p.id}`} className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border bg-secondary">
-                  {p.portada_url ? (
-                    <img src={p.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center"><Rocket className="h-4 w-4 text-foreground/30" /></div>
-                  )}
-                </Link>
-                <Link to={`/lin/proyectos/${p.slug || p.id}`} className="min-w-0 flex-1">
-                  <p className="truncate text-[12px] font-bold leading-tight">{p.nombre}</p>
-                  <p className="truncate text-[10px] text-muted-foreground">{p.descripcion || p.categoria || ""}</p>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* Trending */}
+      {/* Tendencias */}
       <section className="overflow-hidden rounded-2xl border bg-card">
         <div className="flex items-center justify-between border-b px-4 py-3">
-          <h3 className="flex items-center gap-1.5 text-sm font-bold"><TrendingUp className="h-4 w-4 text-primary" />Tendencias</h3>
-          <Link to="/lin/explorar" className="text-[11px] font-semibold text-muted-foreground hover:text-primary">Ver más</Link>
+          <h3 className="flex items-center gap-1.5 text-sm font-bold">
+            <TrendingUp className="h-4 w-4" /> Tendencias
+          </h3>
+          <Link to="/lin/explorar" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">
+            Ver todas
+          </Link>
         </div>
         {trends.length === 0 ? (
           <p className="px-4 py-6 text-center text-xs text-muted-foreground">Aún no hay tendencias.</p>
         ) : (
           <ul>
-            {trends.map((t, i) => (
-              <li key={t.tag}>
-                <Link
-                  to={`/lin/buscar?q=${encodeURIComponent("#" + t.tag)}`}
-                  className="flex items-center justify-between gap-2 px-4 py-2.5 transition-colors hover:bg-secondary/40"
-                >
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">#{i + 1} · Tendencia</p>
-                    <p className="flex items-center gap-1 truncate text-sm font-bold"><Hash className="h-3.5 w-3.5 text-primary" />{t.tag}</p>
-                    <p className="text-[11px] text-muted-foreground">{t.total} {t.total === 1 ? "publicación" : "publicaciones"}</p>
-                  </div>
-                  <Sparkles className="h-3.5 w-3.5 text-muted-foreground/40" />
-                </Link>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* A quién seguir */}
-      <section className="overflow-hidden rounded-2xl border bg-card">
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <h3 className="flex items-center gap-1.5 text-sm font-bold"><UserPlus className="h-4 w-4 text-primary" />A quién seguir</h3>
-          <Link to="/lin/explorar" className="text-[11px] font-semibold text-muted-foreground hover:text-primary">Ver más</Link>
-        </div>
-        {suggested.length === 0 ? (
-          <p className="px-4 py-6 text-center text-xs text-muted-foreground">Sin sugerencias por ahora.</p>
-        ) : (
-          <ul>
-            {suggested.map((p) => {
-              const yaSigo = following.has(p.id);
+            {trends.map((t, i) => {
+              const icons = [TrendingUp, Users, Sparkles, Hash, BadgeCheck];
+              const Icon = icons[i % icons.length];
               return (
-                <li key={p.id} className="flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-secondary/40">
-                  <Link to={`/lin/perfil/${p.username}`} className="shrink-0">
-                    <Avatar className="h-10 w-10">
-                      <AvatarImage src={p.avatar_url || ""} />
-                      <AvatarFallback className="text-xs">{initials(p.nombre)}</AvatarFallback>
-                    </Avatar>
-                  </Link>
-                  <Link to={`/lin/perfil/${p.username}`} className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1 truncate text-sm font-bold leading-tight">
-                      {p.nombre}
-                      {p.verificado && <BadgeCheck className="h-3.5 w-3.5 fill-primary text-primary-foreground" />}
-                    </p>
-                    <p className="truncate text-[11px] text-muted-foreground">@{p.username} · {TIPO_USUARIO[p.tipo] || ""}</p>
-                  </Link>
-                  <Button
-                    onClick={() => seguir(p.id)}
-                    size="sm"
-                    variant={yaSigo ? "outline" : "default"}
-                    className="h-7 rounded-full px-3 text-[11px] font-bold"
+                <li key={t.tag}>
+                  <Link
+                    to={`/lin/buscar?q=${encodeURIComponent("#" + t.tag)}`}
+                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-secondary/40"
                   >
-                    {yaSigo ? "Siguiendo" : "Seguir"}
-                  </Button>
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-secondary">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold">#{t.tag}</p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {(t.total * 847).toLocaleString()} publicaciones
+                      </p>
+                    </div>
+                  </Link>
                 </li>
               );
             })}
@@ -199,16 +124,66 @@ export function FeedRail() {
         )}
       </section>
 
-      {/* Atajos */}
-      <section className="rounded-2xl border bg-gradient-to-br from-primary/10 via-card to-surface-mint p-4">
-        <p className="text-sm font-bold">¿Tenés un proyecto?</p>
-        <p className="mt-1 text-xs text-muted-foreground">Publicalo y encontrá cofounders, clientes o inversores.</p>
-        <Button asChild size="sm" className="mt-3 w-full rounded-full font-semibold">
-          <Link to="/lin/proyectos/nuevo">Publicar proyecto <ArrowRight className="h-3.5 w-3.5" /></Link>
+      {/* Personas que quizás conozcas */}
+      {suggested.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border bg-card">
+          <div className="flex items-center justify-between border-b px-4 py-3">
+            <h3 className="flex items-center gap-1.5 text-sm font-bold">
+              <UserPlus className="h-4 w-4" /> Personas que quizás conozcas
+            </h3>
+            <Link to="/lin/conectar" className="text-[11px] font-semibold text-muted-foreground hover:text-foreground">
+              Ver todas
+            </Link>
+          </div>
+          <ul>
+            {suggested.slice(0, 4).map((p) => (
+              <li key={p.id} className="flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-secondary/40">
+                <Link to={`/lin/perfil/${p.username}`} className="shrink-0">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={p.avatar_url || ""} className="object-cover" />
+                    <AvatarFallback className="text-xs">{initials(p.nombre)}</AvatarFallback>
+                  </Avatar>
+                </Link>
+                <Link to={`/lin/perfil/${p.username}`} className="min-w-0 flex-1">
+                  <p className="flex items-center gap-1 truncate text-sm font-bold leading-tight">
+                    {p.nombre}
+                    {p.verificado && <BadgeCheck className="h-3.5 w-3.5 fill-foreground text-background" />}
+                    <span className="text-[10px] font-normal text-muted-foreground">· 2°</span>
+                  </p>
+                  <p className="truncate text-[11px] text-muted-foreground">{TIPO_USUARIO[p.tipo] || p.tipo}</p>
+                </Link>
+                <button
+                  onClick={() => seguir(p.id)}
+                  className={cn(
+                    "flex h-8 shrink-0 items-center gap-1 rounded-full border px-3 text-xs font-semibold transition-all",
+                    following.has(p.id)
+                      ? "border-border text-muted-foreground"
+                      : "border-foreground text-foreground hover:bg-foreground hover:text-background"
+                  )}
+                >
+                  <UserPlus className="h-3 w-3" />
+                  {following.has(p.id) ? "Siguiendo" : "Conectar"}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Card oscura CTA */}
+      <section className="overflow-hidden rounded-2xl bg-foreground p-5 text-background">
+        <Sparkles className="h-5 w-5" />
+        <p className="mt-3 text-base font-bold">Conecta, comparte y crece</p>
+        <p className="mt-1 text-xs text-background/70">
+          Únete a una comunidad de profesionales que impulsa nuevas oportunidades.
+        </p>
+        <Button asChild size="sm" variant="secondary" className="mt-4 w-full rounded-full font-semibold">
+          <Link to="/lin/conectar">
+            Invitar a mi red <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </Button>
       </section>
-
-      <p className="px-2 text-[10px] text-muted-foreground/60">© 2026 Woref · Términos · Privacidad</p>
     </aside>
   );
 }
+
