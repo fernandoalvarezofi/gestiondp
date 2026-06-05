@@ -53,10 +53,12 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
 
 export function AppSidebar() {
   const { signOut, user } = useAuth();
+  const location = useLocation();
+  const isHome = location.pathname === "/lin";
   const { data: profile } = useQuery({
     queryKey: ["sidebar-perfil", user?.id],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("perfiles").select("avatar_url, nombre, username").eq("id", user!.id).single();
+      const { data } = await (supabase as any).from("perfiles").select("avatar_url, nombre, username, bio, actualmente, tipo, portada_url, total_seguidores, total_publicaciones").eq("id", user!.id).single();
       return data;
     },
     enabled: !!user,
