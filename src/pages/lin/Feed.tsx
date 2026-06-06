@@ -174,19 +174,6 @@ export default function Feed() {
       {/* COLUMNA CENTRAL */}
       <div className="min-w-0 max-w-2xl lg:mx-0 lg:max-w-none">
         <header className="sticky top-0 z-30 -mx-4 border-b border-border/60 bg-background/80 backdrop-blur-md md:-mx-6 lg:mx-0">
-          <div className="flex items-center justify-between px-4 py-2.5 sm:px-5">
-            <h1 className="font-display text-xl font-bold tracking-tight">
-              Inicio<span className="text-primary">.</span>
-            </h1>
-            {miPerfil && (
-              <Link to="/lin/perfil" className="lg:hidden">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={miPerfil?.avatar_url || ""} className="object-cover" />
-                  <AvatarFallback className="text-[11px]">{initials(miPerfil?.nombre)}</AvatarFallback>
-                </Avatar>
-              </Link>
-            )}
-          </div>
           <div className="flex">
             <TabBtn active={tab === "para-vos"} onClick={() => setTab("para-vos")}>Para ti</TabBtn>
             <TabBtn active={tab === "siguiendo"} onClick={() => setTab("siguiendo")}>Siguiendo</TabBtn>
