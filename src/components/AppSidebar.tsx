@@ -97,7 +97,7 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar className={`border-r-0 ${isHome ? "hidden" : "hidden md:flex"}`}>
+    <Sidebar className="hidden border-r-0 md:flex">
       <SidebarHeader className="px-4 py-5">
         <NavLink to="/" className="group flex items-center gap-2">
           <WorefLogo variant="full" size={24} />
