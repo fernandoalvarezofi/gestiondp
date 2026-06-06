@@ -47,6 +47,8 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { title: "Notificaciones", icon: Bell, to: "/lin/notificaciones", badgeKey: "notif" },
       { title: "Mi perfil", icon: UserCircle, to: "/lin/perfil" },
       { title: "Mis proyectos", icon: FolderOpen, to: "/lin/proyectos?tab=mios" },
+      { title: "Mi panel", icon: BarChart3, to: "/lin/panel" },
+      { title: "Guardados", icon: Bookmark, to: "/lin/favoritos" },
     ],
   },
 ];
