@@ -29,7 +29,21 @@ export function AppLayout() {
   const [noLeidos, setNoLeidos] = useState(0);
   const [notifSinLeer, setNotifSinLeer] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
   usePresenciaHeartbeat();
+
+  const { data: miPerfil } = useQuery({
+    queryKey: ["layout-perfil", user?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("perfiles")
+        .select("nombre,avatar_url")
+        .eq("id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const recalcNoLeidos = async () => {
     if (!user) return;
