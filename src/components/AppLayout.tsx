@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, NavLink } from "react-router-dom";
+import { Navigate, Outlet, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
@@ -11,12 +11,16 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Loader2, Home, Compass, Plus, MessageCircle, UserCircle,
   Menu, Rocket, Users, Bookmark, BarChart3, Settings, Film, Store, ShoppingBag, Bell, UserPlus,
-  Users2, PenSquare,
+  Users2, PenSquare, Search, ChevronDown,
 } from "lucide-react";
 import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
 import { InstallAppCTA } from "@/components/InstallAppCTA";
 import ChatDock from "@/components/lin/ChatDock";
 import { WorefLogo } from "@/components/lin/WorefLogo";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useQuery } from "@tanstack/react-query";
+import { initials } from "@/lib/worefHelpers";
 
 export function AppLayout() {
   const { session, user, loading } = useAuth();
@@ -25,7 +29,21 @@ export function AppLayout() {
   const [noLeidos, setNoLeidos] = useState(0);
   const [notifSinLeer, setNotifSinLeer] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
   usePresenciaHeartbeat();
+
+  const { data: miPerfil } = useQuery({
+    queryKey: ["layout-perfil", user?.id],
+    queryFn: async () => {
+      const { data } = await (supabase as any)
+        .from("perfiles")
+        .select("nombre,avatar_url")
+        .eq("id", user!.id)
+        .single();
+      return data;
+    },
+    enabled: !!user,
+  });
 
   const recalcNoLeidos = async () => {
     if (!user) return;
@@ -97,54 +115,124 @@ export function AppLayout() {
       <div className="flex min-h-screen w-full">
         <AppSidebar />
         <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="sticky top-0 z-30 flex items-center gap-2 border-b border-border/60 bg-background/85 px-4 py-3 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
-            <div className="hidden md:flex"><SidebarTrigger /></div>
-            <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-              <SheetTrigger asChild>
-                <button className="rounded-md p-2 hover:bg-secondary md:hidden" aria-label="Menú">
-                  <Menu className="h-5 w-5" />
-                </button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-72 overflow-y-auto bg-sidebar text-sidebar-foreground border-sidebar-border">
-                <div className="mb-6 flex items-center gap-2.5">
-                  <WorefLogo variant="full" size={22} />
-                </div>
-                <nav>
-                  {sheetGroups.map((group, gi) => (
-                    <div key={group.label}>
-                      <p className="px-3 mt-4 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                        {group.label}
-                      </p>
-                      <div className="space-y-0.5">
-                        {group.items.map(({ to, icon: Icon, label }) => (
-                          <NavLink
-                            key={to}
-                            to={to}
-                            onClick={() => setMenuOpen(false)}
-                            className={({ isActive }) =>
-                              `flex items-center gap-3 rounded-xl px-3 py-2.5 min-h-[44px] text-sm transition-colors ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
-                            }
-                          >
-                            <Icon className="h-5 w-5" />
-                            {label}
-                          </NavLink>
-                        ))}
-                      </div>
-                      {gi < sheetGroups.length - 1 && <div className="mx-3 mt-3 h-px bg-border" />}
-                    </div>
-                  ))}
-                  <div className="mt-6 px-1 py-1" onClick={() => setMenuOpen(false)}>
-                    <InstallAppCTA variant="card" className="!p-4" />
+          <div className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
+            {/* MOBILE: logo + hamburger */}
+            <div className="flex items-center gap-2 px-4 py-3 md:hidden">
+              <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+                <SheetTrigger asChild>
+                  <button className="rounded-md p-2 hover:bg-secondary" aria-label="Menú">
+                    <Menu className="h-5 w-5" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-72 overflow-y-auto bg-sidebar text-sidebar-foreground border-sidebar-border">
+                  <div className="mb-6 flex items-center gap-2.5">
+                    <WorefLogo variant="full" size={22} />
                   </div>
-                </nav>
-              </SheetContent>
-            </Sheet>
-            <NavLink to="/lin" className="flex items-center gap-2 md:hidden">
-              <WorefLogo variant="full" size={20} />
-            </NavLink>
-            <div className="ml-auto flex items-center gap-1">
-              <InstallAppCTA variant="icon" />
-              <ThemeToggle />
+                  <nav>
+                    {sheetGroups.map((group, gi) => (
+                      <div key={group.label}>
+                        <p className="px-3 mt-4 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                          {group.label}
+                        </p>
+                        <div className="space-y-0.5">
+                          {group.items.map(({ to, icon: Icon, label }) => (
+                            <NavLink
+                              key={to}
+                              to={to}
+                              onClick={() => setMenuOpen(false)}
+                              className={({ isActive }) =>
+                                `flex items-center gap-3 rounded-xl px-3 py-2.5 min-h-[44px] text-sm transition-colors ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
+                              }
+                            >
+                              <Icon className="h-5 w-5" />
+                              {label}
+                            </NavLink>
+                          ))}
+                        </div>
+                        {gi < sheetGroups.length - 1 && <div className="mx-3 mt-3 h-px bg-border" />}
+                      </div>
+                    ))}
+                    <div className="mt-6 px-1 py-1" onClick={() => setMenuOpen(false)}>
+                      <InstallAppCTA variant="card" className="!p-4" />
+                    </div>
+                  </nav>
+                </SheetContent>
+              </Sheet>
+              <NavLink to="/lin" className="flex items-center gap-2">
+                <WorefLogo variant="full" size={20} />
+              </NavLink>
+              <div className="ml-auto flex items-center gap-1">
+                <InstallAppCTA variant="icon" />
+                <ThemeToggle />
+              </div>
+            </div>
+
+            {/* DESKTOP: logo + buscador + nav */}
+            <div className="hidden h-14 items-center gap-4 px-4 md:flex">
+              <SidebarTrigger />
+              <NavLink to="/lin" className="flex items-center gap-2">
+                <WorefLogo variant="full" size={22} />
+              </NavLink>
+
+              {/* Buscador */}
+              <div className="relative max-w-sm flex-1">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  readOnly
+                  placeholder="Buscar en Woref…"
+                  onClick={() => navigate("/lin/buscar")}
+                  className="pl-9 pr-16 h-9 rounded-full bg-secondary/60 border-0 cursor-pointer focus-visible:ring-1 focus-visible:ring-border hover:bg-secondary transition-colors text-sm"
+                />
+                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  ⌘ K
+                </kbd>
+              </div>
+
+              {/* Nav horizontal desktop */}
+              <nav className="ml-auto flex h-full items-stretch">
+                {[
+                  { icon: Home, label: "Inicio", to: "/lin", end: true, badge: 0 },
+                  { icon: Users2, label: "Mi red", to: "/lin/conectar", badge: 0 },
+                  { icon: MessageCircle, label: "Mensajes", to: "/lin/mensajes", badge: noLeidos },
+                  { icon: Bell, label: "Notificaciones", to: "/lin/notificaciones", badge: notifSinLeer },
+                ].map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.end}
+                    className={({ isActive }) =>
+                      `relative flex flex-col items-center justify-center gap-0.5 px-5 h-full text-[11px] font-medium transition-colors border-b-2 ${
+                        isActive
+                          ? "border-foreground text-foreground"
+                          : "border-transparent text-muted-foreground hover:text-foreground"
+                      }`
+                    }
+                  >
+                    <div className="relative">
+                      <item.icon className="h-5 w-5" />
+                      {item.badge > 0 && (
+                        <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background ring-2 ring-background">
+                          {item.badge > 9 ? "9+" : item.badge}
+                        </span>
+                      )}
+                    </div>
+                    {item.label}
+                  </NavLink>
+                ))}
+
+                {/* Separador + Avatar */}
+                <div className="ml-2 flex items-center gap-1 border-l pl-3">
+                  <NavLink to="/lin/perfil" className="flex items-center gap-1">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={miPerfil?.avatar_url || ""} className="object-cover" />
+                      <AvatarFallback className="text-[11px]">{initials(miPerfil?.nombre)}</AvatarFallback>
+                    </Avatar>
+                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                  </NavLink>
+                  <InstallAppCTA variant="icon" />
+                  <ThemeToggle />
+                </div>
+              </nav>
             </div>
           </div>
           <div className="px-0 pt-0 pb-0 md:p-6">
