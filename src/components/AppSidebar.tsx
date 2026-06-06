@@ -47,6 +47,8 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
       { title: "Notificaciones", icon: Bell, to: "/lin/notificaciones", badgeKey: "notif" },
       { title: "Mi perfil", icon: UserCircle, to: "/lin/perfil" },
       { title: "Mis proyectos", icon: FolderOpen, to: "/lin/proyectos?tab=mios" },
+      { title: "Mi panel", icon: BarChart3, to: "/lin/panel" },
+      { title: "Guardados", icon: Bookmark, to: "/lin/favoritos" },
     ],
   },
 ];
@@ -181,19 +183,11 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="space-y-2 p-4">
+      <SidebarFooter className="space-y-2 p-3">
         <SidebarMenu>
-          <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/panel"><BarChart3 className="h-4 w-4" /><span>Mi panel</span></NavLink></SidebarMenuButton></SidebarMenuItem>
-          <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/favoritos"><Bookmark className="h-4 w-4" /><span>Guardados</span></NavLink></SidebarMenuButton></SidebarMenuItem>
           <SidebarMenuItem><SidebarMenuButton asChild><NavLink to="/lin/configuracion"><Settings className="h-4 w-4" /><span>Configuración</span></NavLink></SidebarMenuButton></SidebarMenuItem>
           <SidebarMenuItem><SidebarMenuButton onClick={signOut}><LogOut className="h-4 w-4" /><span>Cerrar sesión</span></SidebarMenuButton></SidebarMenuItem>
         </SidebarMenu>
-        {user && (
-          <div className="flex items-center gap-2 px-2">
-            <Avatar className="h-6 w-6"><AvatarImage src={profile?.avatar_url || ""} className="object-cover" /><AvatarFallback className="text-[10px]">{(profile?.nombre || user.email || "U").slice(0, 2).toUpperCase()}</AvatarFallback></Avatar>
-            <p className="truncate text-xs text-sidebar-foreground/60">{profile?.username ? `@${profile.username}` : user.email}</p>
-          </div>
-        )}
       </SidebarFooter>
     </Sidebar>
   );
