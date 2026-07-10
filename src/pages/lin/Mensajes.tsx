@@ -92,6 +92,8 @@ export default function Mensajes() {
         (p: any) => setMsgs((s) => s.some((x) => x.id === p.new.id) ? s : [...s, p.new]))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
         (p: any) => setMsgs((prev) => prev.map((m) => m.id === p.new.id ? { ...m, ...p.new } : m)))
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
+        (p: any) => setMsgs((prev) => prev.filter((m) => m.id !== p.old.id)))
       .on("postgres_changes", { event: "*", schema: "public", table: "mensaje_reacciones" },
         () => { setMsgs((curr) => { cargarReacciones(curr.map((x: any) => x.id)); return curr; }); })
       .subscribe();
@@ -299,9 +301,10 @@ export default function Mensajes() {
                       <Avatar className="h-7 w-7 shrink-0"><AvatarImage src={otro?.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(otro?.nombre)}</AvatarFallback></Avatar>
                     )}
 
-                    {/* Acciones (reply + react) — solo hover */}
+                    {/* Acciones (reply + react + delete) — solo hover */}
                     {mio && (
                       <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/m:opacity-100">
+                        <button onClick={() => eliminarMensaje(m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Eliminar"><Trash2 className="h-4 w-4" /></button>
                         <button onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Reaccionar"><Smile className="h-4 w-4" /></button>
                         <button onClick={() => setReplyA(m)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Responder"><Reply className="h-4 w-4" /></button>
                       </div>
