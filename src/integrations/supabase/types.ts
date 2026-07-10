@@ -3436,7 +3436,6 @@ export type Database = {
           created_at: string
           entrega_automatica: boolean
           id: string
-          payout_methods: Json
           rating_promedio: number
           total_productos: number
           total_reviews: number
@@ -3450,7 +3449,6 @@ export type Database = {
           created_at?: string
           entrega_automatica?: boolean
           id: string
-          payout_methods?: Json
           rating_promedio?: number
           total_productos?: number
           total_reviews?: number
@@ -3464,7 +3462,6 @@ export type Database = {
           created_at?: string
           entrega_automatica?: boolean
           id?: string
-          payout_methods?: Json
           rating_promedio?: number
           total_productos?: number
           total_reviews?: number

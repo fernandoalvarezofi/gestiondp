@@ -13,6 +13,12 @@ import { BackHeader } from "@/components/lin/BackHeader";
 import { ArrowLeft, X, Plus, Image as ImageIcon, Video, Loader2 } from "lucide-react";
 import { initials, TIPO_PUBLICACION } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { sanitizarErrorEs } from "@/lib/sanitize";
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50 MB
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 const TIPOS_VISUALES = [
   "update","lanzamiento","logro","busco_socio","oportunidad","hiring",
@@ -63,10 +69,36 @@ export default function Publicar() {
 
   const addImagenes = (files: FileList | null) => {
     if (!files) return;
-    setVideo(null);
     const restantes = 4 - imagenes.length;
-    const arr = Array.from(files).slice(0, restantes).map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
-    setImagenes((s) => [...s, ...arr]);
+    const validos: Img[] = [];
+    for (const f of Array.from(files).slice(0, restantes)) {
+      if (!ALLOWED_IMAGE_TYPES.includes(f.type)) {
+        toast.error(`Tipo no permitido: ${f.name}. Usá JPG, PNG, GIF o WebP.`);
+        continue;
+      }
+      if (f.size > MAX_IMAGE_BYTES) {
+        toast.error(`${f.name} supera los 10 MB.`);
+        continue;
+      }
+      validos.push({ file: f, preview: URL.createObjectURL(f) });
+    }
+    if (validos.length === 0) return;
+    setVideo(null);
+    setImagenes((s) => [...s, ...validos]);
+  };
+
+  const setVideoValidado = (f: File | null) => {
+    if (!f) { setVideo(null); return; }
+    if (!ALLOWED_VIDEO_TYPES.includes(f.type)) {
+      toast.error("Tipo de video no permitido. Usá MP4, WebM o MOV.");
+      return;
+    }
+    if (f.size > MAX_VIDEO_BYTES) {
+      toast.error("El video supera los 50 MB.");
+      return;
+    }
+    setVideo(f);
+    setImagenes([]);
   };
 
   const quitarImagen = (i: number) => {
@@ -140,7 +172,7 @@ export default function Publicar() {
       toast.success("Publicado");
       navigate(`/lin/publicacion/${data.id}`);
     } catch (e: any) {
-      toast.error(e.message || "Error al publicar");
+      toast.error(sanitizarErrorEs(e?.message || ""));
     } finally { setLoading(false); }
   };
 
@@ -283,7 +315,7 @@ export default function Publicar() {
           </label>
           <label className="cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10" aria-label="Agregar video">
             <Video className="h-5 w-5" />
-            <input type="file" accept="video/*" className="hidden" onChange={(e) => { setVideo(e.target.files?.[0] || null); setImagenes([]); }} />
+            <input type="file" accept="video/*" className="hidden" onChange={(e) => { setVideoValidado(e.target.files?.[0] || null); }} />
           </label>
           {imagenes.length > 0 && (
             <span className="text-xs text-muted-foreground">{imagenes.length}/4</span>

@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PostCard } from "@/components/lin/PostCard";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { sanitizarErrorEs } from "@/lib/sanitize";
 import { BackHeader } from "@/components/lin/BackHeader";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
 import { Trash2, Pencil, Check, X } from "lucide-react";
@@ -46,7 +47,7 @@ export default function PublicacionDetalle() {
   const enviar = async () => {
     if (!user || !nuevo.trim()) return;
     const { error } = await (supabase as any).from("comentarios").insert({ publicacion_id: id, perfil_id: user.id, contenido: nuevo });
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(sanitizarErrorEs(error.message));
     setNuevo(""); load();
   };
 

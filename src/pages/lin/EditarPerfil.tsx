@@ -12,6 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TIPO_USUARIO } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/lin/BackHeader";
+import { sanitizarErrorEs } from "@/lib/sanitize";
+
+const ALLOWED_IMG = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const MAX_IMG_BYTES = 5 * 1024 * 1024;
 
 export default function EditarPerfil() {
   const { user } = useAuth();
@@ -30,14 +34,16 @@ export default function EditarPerfil() {
   const upd = (k: string, v: any) => setP((s: any) => ({ ...s, [k]: v }));
 
   const uploadFile = async (bucket: string, file: File) => {
+    if (!ALLOWED_IMG.includes(file.type)) throw new Error("Tipo de archivo no permitido. Usá JPG, PNG, GIF o WebP.");
+    if (file.size > MAX_IMG_BYTES) throw new Error("La imagen supera los 5 MB.");
     const path = `${user!.id}/${Date.now()}-${file.name}`;
     const { error } = await (supabase as any).storage.from(bucket).upload(path, file, { upsert: true });
     if (error) throw error;
     return (supabase as any).storage.from(bucket).getPublicUrl(path).data.publicUrl;
   };
 
-  const onAvatar = async (f: File | null) => { if (!f) return; try { upd("avatar_url", await uploadFile("avatares", f)); } catch (e: any) { toast.error(e.message); } };
-  const onPortada = async (f: File | null) => { if (!f) return; try { upd("portada_url", await uploadFile("portadas", f)); } catch (e: any) { toast.error(e.message); } };
+  const onAvatar = async (f: File | null) => { if (!f) return; try { upd("avatar_url", await uploadFile("avatares", f)); } catch (e: any) { toast.error(sanitizarErrorEs(e?.message || "")); } };
+  const onPortada = async (f: File | null) => { if (!f) return; try { upd("portada_url", await uploadFile("portadas", f)); } catch (e: any) { toast.error(sanitizarErrorEs(e?.message || "")); } };
 
   const save = async () => {
     setLoading(true);
@@ -52,7 +58,7 @@ export default function EditarPerfil() {
       mensajes_privados: p.mensajes_privados, mostrar_ubicacion: p.mostrar_ubicacion,
     }).eq("id", user!.id);
     setLoading(false);
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(sanitizarErrorEs(error.message));
     toast.success("Perfil actualizado");
     navigate(`/lin/perfil/${p.username}`);
   };
