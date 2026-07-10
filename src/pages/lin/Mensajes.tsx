@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import {
   Send, ArrowLeft, Phone, Video, Info, Pencil, ImageIcon, Loader2, X,
-  Mic, Smile, Reply, Heart, Check, CheckCheck,
+  Mic, Smile, Reply, Heart, Check, CheckCheck, Trash2,
 } from "lucide-react";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ export default function Mensajes() {
   const [enviando, setEnviando] = useState(false);
   const [grabandoAudio, setGrabandoAudio] = useState(false);
   const [replyA, setReplyA] = useState<any>(null);
+  const [pendingImg, setPendingImg] = useState<{ file: File; preview: string } | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
   const presenceRef = useRef<any>(null);
@@ -140,18 +141,40 @@ export default function Mensajes() {
     else setMsgs((s) => s.map((m) => m.id === tmpId ? data : m));
   };
 
-  const subirImagen = async (file: File) => {
-    if (!user || !convId) return;
+  const seleccionarImagen = (file: File) => {
+    const ALLOWED = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!ALLOWED.includes(file.type)) return toast.error("Tipo no permitido. Usá JPG, PNG, GIF o WebP.");
+    if (file.size > 10 * 1024 * 1024) return toast.error("La imagen supera los 10 MB.");
+    setPendingImg({ file, preview: URL.createObjectURL(file) });
+  };
+
+  const cancelarImagen = () => {
+    if (pendingImg) URL.revokeObjectURL(pendingImg.preview);
+    setPendingImg(null);
+  };
+
+  const subirYEnviarImagen = async () => {
+    if (!user || !convId || !pendingImg) return;
     setSubiendoImg(true);
     try {
-      const ext = file.name.split(".").pop();
+      const ext = pendingImg.file.name.split(".").pop() || "jpg";
       const path = `${user.id}/${convId}/${Date.now()}.${ext}`;
-      const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, file);
+      const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, pendingImg.file);
       if (error) throw error;
       const { data } = (supabase as any).storage.from("mensajes-media").getPublicUrl(path);
       await enviar({ imagen_url: data.publicUrl });
+      URL.revokeObjectURL(pendingImg.preview);
+      setPendingImg(null);
     } catch (e: any) { toast.error(e.message || "Error subiendo imagen"); }
     finally { setSubiendoImg(false); }
+  };
+
+  const eliminarMensaje = async (id: string) => {
+    if (!confirm("¿Eliminar este mensaje?")) return;
+    const backup = msgs;
+    setMsgs((s) => s.filter((m) => m.id !== id));
+    const { error } = await (supabase as any).from("mensajes").delete().eq("id", id);
+    if (error) { setMsgs(backup); toast.error("No se pudo eliminar"); }
   };
 
   const subirAudio = async (blob: Blob, segs: number) => {
