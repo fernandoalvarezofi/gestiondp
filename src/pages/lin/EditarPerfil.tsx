@@ -12,6 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TIPO_USUARIO } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/lin/BackHeader";
+import { sanitizarErrorEs } from "@/lib/sanitize";
+
+const ALLOWED_IMG = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const MAX_IMG_BYTES = 5 * 1024 * 1024;
 
 export default function EditarPerfil() {
   const { user } = useAuth();
