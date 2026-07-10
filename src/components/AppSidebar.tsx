@@ -12,7 +12,7 @@ import {
   SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { NavLink, useLocation } from "react-router-dom";
-import { WorefLogo } from "@/components/lin/WorefLogo";
+
 
 type NavItem = {
   title: string;
