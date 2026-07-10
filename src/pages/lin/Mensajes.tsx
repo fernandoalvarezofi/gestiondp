@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import {
   Send, ArrowLeft, Phone, Video, Info, Pencil, ImageIcon, Loader2, X,
-  Mic, Smile, Reply, Heart, Check, CheckCheck,
+  Mic, Smile, Reply, Heart, Check, CheckCheck, Trash2,
 } from "lucide-react";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ export default function Mensajes() {
   const [enviando, setEnviando] = useState(false);
   const [grabandoAudio, setGrabandoAudio] = useState(false);
   const [replyA, setReplyA] = useState<any>(null);
+  const [pendingImg, setPendingImg] = useState<{ file: File; preview: string } | null>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
   const presenceRef = useRef<any>(null);
@@ -91,6 +92,8 @@ export default function Mensajes() {
         (p: any) => setMsgs((s) => s.some((x) => x.id === p.new.id) ? s : [...s, p.new]))
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
         (p: any) => setMsgs((prev) => prev.map((m) => m.id === p.new.id ? { ...m, ...p.new } : m)))
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
+        (p: any) => setMsgs((prev) => prev.filter((m) => m.id !== p.old.id)))
       .on("postgres_changes", { event: "*", schema: "public", table: "mensaje_reacciones" },
         () => { setMsgs((curr) => { cargarReacciones(curr.map((x: any) => x.id)); return curr; }); })
       .subscribe();
@@ -140,18 +143,40 @@ export default function Mensajes() {
     else setMsgs((s) => s.map((m) => m.id === tmpId ? data : m));
   };
 
-  const subirImagen = async (file: File) => {
-    if (!user || !convId) return;
+  const seleccionarImagen = (file: File) => {
+    const ALLOWED = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!ALLOWED.includes(file.type)) return toast.error("Tipo no permitido. Usá JPG, PNG, GIF o WebP.");
+    if (file.size > 10 * 1024 * 1024) return toast.error("La imagen supera los 10 MB.");
+    setPendingImg({ file, preview: URL.createObjectURL(file) });
+  };
+
+  const cancelarImagen = () => {
+    if (pendingImg) URL.revokeObjectURL(pendingImg.preview);
+    setPendingImg(null);
+  };
+
+  const subirYEnviarImagen = async () => {
+    if (!user || !convId || !pendingImg) return;
     setSubiendoImg(true);
     try {
-      const ext = file.name.split(".").pop();
+      const ext = pendingImg.file.name.split(".").pop() || "jpg";
       const path = `${user.id}/${convId}/${Date.now()}.${ext}`;
-      const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, file);
+      const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, pendingImg.file);
       if (error) throw error;
       const { data } = (supabase as any).storage.from("mensajes-media").getPublicUrl(path);
       await enviar({ imagen_url: data.publicUrl });
+      URL.revokeObjectURL(pendingImg.preview);
+      setPendingImg(null);
     } catch (e: any) { toast.error(e.message || "Error subiendo imagen"); }
     finally { setSubiendoImg(false); }
+  };
+
+  const eliminarMensaje = async (id: string) => {
+    if (!confirm("¿Eliminar este mensaje?")) return;
+    const backup = msgs;
+    setMsgs((s) => s.filter((m) => m.id !== id));
+    const { error } = await (supabase as any).from("mensajes").delete().eq("id", id);
+    if (error) { setMsgs(backup); toast.error("No se pudo eliminar"); }
   };
 
   const subirAudio = async (blob: Blob, segs: number) => {
@@ -276,9 +301,10 @@ export default function Mensajes() {
                       <Avatar className="h-7 w-7 shrink-0"><AvatarImage src={otro?.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(otro?.nombre)}</AvatarFallback></Avatar>
                     )}
 
-                    {/* Acciones (reply + react) — solo hover */}
+                    {/* Acciones (reply + react + delete) — solo hover */}
                     {mio && (
                       <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/m:opacity-100">
+                        <button onClick={() => eliminarMensaje(m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Eliminar"><Trash2 className="h-4 w-4" /></button>
                         <button onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Reaccionar"><Smile className="h-4 w-4" /></button>
                         <button onClick={() => setReplyA(m)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Responder"><Reply className="h-4 w-4" /></button>
                       </div>
@@ -386,16 +412,44 @@ export default function Mensajes() {
               </div>
             )}
 
+            {/* Image preview antes de enviar */}
+            {pendingImg && (
+              <div className="flex items-center gap-3 border-t bg-secondary/30 px-3 py-2.5">
+                <div className="relative">
+                  <img src={pendingImg.preview} alt="preview" className="h-16 w-16 rounded-xl object-cover" />
+                  <button
+                    onClick={cancelarImagen}
+                    className="absolute -right-1.5 -top-1.5 rounded-full bg-background p-0.5 shadow ring-1 ring-border hover:bg-secondary"
+                    aria-label="Descartar imagen"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="min-w-0 flex-1 text-xs">
+                  <p className="font-medium">Imagen lista para enviar</p>
+                  <p className="truncate text-muted-foreground">{pendingImg.file.name}</p>
+                </div>
+                <button
+                  onClick={subirYEnviarImagen}
+                  disabled={subiendoImg}
+                  className="flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                >
+                  {subiendoImg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  Enviar
+                </button>
+              </div>
+            )}
+
             {/* Composer */}
             <div className="flex items-center gap-2 border-t px-3 py-2.5">
               {grabandoAudio ? (
                 <AudioRecorder onSend={subirAudio} onCancel={() => setGrabandoAudio(false)} />
               ) : (
                 <>
-                  <button onClick={() => fileRef.current?.click()} disabled={subiendoImg} className="rounded-full p-2 text-primary hover:bg-primary/10 disabled:opacity-50" aria-label="Imagen">
+                  <button onClick={() => fileRef.current?.click()} disabled={subiendoImg || !!pendingImg} className="rounded-full p-2 text-primary hover:bg-primary/10 disabled:opacity-50" aria-label="Imagen">
                     {subiendoImg ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
                   </button>
-                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && subirImagen(e.target.files[0])} />
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) seleccionarImagen(f); e.target.value = ""; }} />
                   <Input
                     value={txt} onChange={handleTyping}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
