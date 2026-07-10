@@ -47,7 +47,7 @@ export default function PublicacionDetalle() {
   const enviar = async () => {
     if (!user || !nuevo.trim()) return;
     const { error } = await (supabase as any).from("comentarios").insert({ publicacion_id: id, perfil_id: user.id, contenido: nuevo });
-    if (error) return toast.error(error.message);
+    if (error) return toast.error(sanitizarErrorEs(error.message));
     setNuevo(""); load();
   };
 
