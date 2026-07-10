@@ -69,10 +69,36 @@ export default function Publicar() {
 
   const addImagenes = (files: FileList | null) => {
     if (!files) return;
-    setVideo(null);
     const restantes = 4 - imagenes.length;
-    const arr = Array.from(files).slice(0, restantes).map((f) => ({ file: f, preview: URL.createObjectURL(f) }));
-    setImagenes((s) => [...s, ...arr]);
+    const validos: Img[] = [];
+    for (const f of Array.from(files).slice(0, restantes)) {
+      if (!ALLOWED_IMAGE_TYPES.includes(f.type)) {
+        toast.error(`Tipo no permitido: ${f.name}. Usá JPG, PNG, GIF o WebP.`);
+        continue;
+      }
+      if (f.size > MAX_IMAGE_BYTES) {
+        toast.error(`${f.name} supera los 10 MB.`);
+        continue;
+      }
+      validos.push({ file: f, preview: URL.createObjectURL(f) });
+    }
+    if (validos.length === 0) return;
+    setVideo(null);
+    setImagenes((s) => [...s, ...validos]);
+  };
+
+  const setVideoValidado = (f: File | null) => {
+    if (!f) { setVideo(null); return; }
+    if (!ALLOWED_VIDEO_TYPES.includes(f.type)) {
+      toast.error("Tipo de video no permitido. Usá MP4, WebM o MOV.");
+      return;
+    }
+    if (f.size > MAX_VIDEO_BYTES) {
+      toast.error("El video supera los 50 MB.");
+      return;
+    }
+    setVideo(f);
+    setImagenes([]);
   };
 
   const quitarImagen = (i: number) => {
