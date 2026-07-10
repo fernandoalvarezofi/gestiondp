@@ -172,7 +172,7 @@ export default function Publicar() {
       toast.success("Publicado");
       navigate(`/lin/publicacion/${data.id}`);
     } catch (e: any) {
-      toast.error(e.message || "Error al publicar");
+      toast.error(sanitizarErrorEs(e?.message || ""));
     } finally { setLoading(false); }
   };
 
