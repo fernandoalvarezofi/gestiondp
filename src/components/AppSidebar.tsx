@@ -100,57 +100,29 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="hidden border-r-0 md:flex">
-      <SidebarHeader className="px-4 py-5">
-        <NavLink to="/" className="group flex items-center gap-2">
-          <WorefLogo variant="full" size={24} />
-        </NavLink>
-
+      <SidebarHeader className="px-3 pb-2 pt-3">
         {profile && (
-          <div className="mt-3 mb-1 overflow-hidden rounded-2xl border border-sidebar-border bg-sidebar-accent/30">
-            <div className="h-12 w-full overflow-hidden">
-              {profile.portada_url ? (
-                <img src={profile.portada_url} alt="" loading="lazy" className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full bg-gradient-to-br from-sidebar-border to-sidebar-accent" />
-              )}
-            </div>
-            <div className="px-3 pb-3">
-              <div className="-mt-6 mb-1.5">
-                <Avatar className="h-12 w-12 border-4 border-sidebar ring-1 ring-sidebar-border">
-                  <AvatarImage src={profile.avatar_url || ""} className="object-cover" />
-                  <AvatarFallback className="text-xs">
-                    {(profile.nombre || user?.email || "U").slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
-              <NavLink to="/lin/perfil" className="block text-[14px] font-bold leading-tight text-sidebar-foreground hover:underline">
-                {profile.nombre}
-              </NavLink>
-              <p className="mt-0.5 line-clamp-1 text-[11px] text-sidebar-foreground/60">
-                {profile.actualmente || profile.tipo || ""}
+          <NavLink
+            to="/lin/perfil"
+            className="mb-2 flex items-center gap-2.5 rounded-xl px-2 py-1.5 hover:bg-sidebar-accent/40"
+          >
+            <Avatar className="h-9 w-9 ring-1 ring-sidebar-border">
+              <AvatarImage src={profile.avatar_url || ""} className="object-cover" />
+              <AvatarFallback className="text-[11px]">
+                {(profile.nombre || user?.email || "U").slice(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[13px] font-semibold leading-tight">{profile.nombre}</p>
+              <p className="truncate text-[11px] text-sidebar-foreground/60">
+                {profile.actualmente || profile.tipo || `@${profile.username || ""}`}
               </p>
-              {profile.bio && (
-                <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-sidebar-foreground/50">
-                  {profile.bio}
-                </p>
-              )}
-              <div className="mt-2.5 grid grid-cols-2 gap-1 border-t border-sidebar-border pt-2.5">
-                <div>
-                  <p className="text-[13px] font-bold text-sidebar-foreground">{profile.total_seguidores ?? 0}</p>
-                  <p className="text-[10px] text-sidebar-foreground/60">Conexiones</p>
-                </div>
-                <div>
-                  <p className="text-[13px] font-bold text-sidebar-foreground">{profile.total_publicaciones ?? 0}</p>
-                  <p className="text-[10px] text-sidebar-foreground/60">Publicaciones</p>
-                </div>
-              </div>
             </div>
-          </div>
+          </NavLink>
         )}
-
         <NavLink
           to="/lin/publicar"
-          className="mt-2 mb-4 inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-ember transition-transform hover:scale-[1.02]"
+          className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground shadow-ember transition-transform hover:scale-[1.02]"
         >
           <Plus className="h-4 w-4" /> Publicar
         </NavLink>
