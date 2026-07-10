@@ -315,7 +315,7 @@ export default function Publicar() {
           </label>
           <label className="cursor-pointer rounded-full p-2 text-primary transition-colors hover:bg-primary/10" aria-label="Agregar video">
             <Video className="h-5 w-5" />
-            <input type="file" accept="video/*" className="hidden" onChange={(e) => { setVideo(e.target.files?.[0] || null); setImagenes([]); }} />
+            <input type="file" accept="video/*" className="hidden" onChange={(e) => { setVideoValidado(e.target.files?.[0] || null); }} />
           </label>
           {imagenes.length > 0 && (
             <span className="text-xs text-muted-foreground">{imagenes.length}/4</span>
