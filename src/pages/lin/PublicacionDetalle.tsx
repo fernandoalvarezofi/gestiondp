@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { PostCard } from "@/components/lin/PostCard";
 import { initials, formatTime } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { sanitizarErrorEs } from "@/lib/sanitize";
 import { BackHeader } from "@/components/lin/BackHeader";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
 import { Trash2, Pencil, Check, X } from "lucide-react";
