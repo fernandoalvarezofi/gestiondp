@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -178,7 +178,11 @@ export default function ChatDock() {
     toast.success("Chats locales limpiados");
   };
 
-  if (!user) return null;
+  const location = useLocation();
+  const hiddenRoutes = ["/lin/mensajes", "/lin/publicar", "/lin/reels", "/lin/nueva-historia", "/lin/historia"];
+  const shouldHide = hiddenRoutes.some((r) => location.pathname.startsWith(r));
+
+  if (!user || shouldHide) return null;
 
   return (
     <div className="hidden md:block">
