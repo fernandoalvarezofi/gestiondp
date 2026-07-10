@@ -13,6 +13,12 @@ import { BackHeader } from "@/components/lin/BackHeader";
 import { ArrowLeft, X, Plus, Image as ImageIcon, Video, Loader2 } from "lucide-react";
 import { initials, TIPO_PUBLICACION } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { sanitizarErrorEs } from "@/lib/sanitize";
+
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024; // 50 MB
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 const TIPOS_VISUALES = [
   "update","lanzamiento","logro","busco_socio","oportunidad","hiring",
