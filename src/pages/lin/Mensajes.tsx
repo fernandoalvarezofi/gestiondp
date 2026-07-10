@@ -409,16 +409,44 @@ export default function Mensajes() {
               </div>
             )}
 
+            {/* Image preview antes de enviar */}
+            {pendingImg && (
+              <div className="flex items-center gap-3 border-t bg-secondary/30 px-3 py-2.5">
+                <div className="relative">
+                  <img src={pendingImg.preview} alt="preview" className="h-16 w-16 rounded-xl object-cover" />
+                  <button
+                    onClick={cancelarImagen}
+                    className="absolute -right-1.5 -top-1.5 rounded-full bg-background p-0.5 shadow ring-1 ring-border hover:bg-secondary"
+                    aria-label="Descartar imagen"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <div className="min-w-0 flex-1 text-xs">
+                  <p className="font-medium">Imagen lista para enviar</p>
+                  <p className="truncate text-muted-foreground">{pendingImg.file.name}</p>
+                </div>
+                <button
+                  onClick={subirYEnviarImagen}
+                  disabled={subiendoImg}
+                  className="flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-xs font-semibold text-primary-foreground disabled:opacity-50"
+                >
+                  {subiendoImg ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+                  Enviar
+                </button>
+              </div>
+            )}
+
             {/* Composer */}
             <div className="flex items-center gap-2 border-t px-3 py-2.5">
               {grabandoAudio ? (
                 <AudioRecorder onSend={subirAudio} onCancel={() => setGrabandoAudio(false)} />
               ) : (
                 <>
-                  <button onClick={() => fileRef.current?.click()} disabled={subiendoImg} className="rounded-full p-2 text-primary hover:bg-primary/10 disabled:opacity-50" aria-label="Imagen">
+                  <button onClick={() => fileRef.current?.click()} disabled={subiendoImg || !!pendingImg} className="rounded-full p-2 text-primary hover:bg-primary/10 disabled:opacity-50" aria-label="Imagen">
                     {subiendoImg ? <Loader2 className="h-5 w-5 animate-spin" /> : <ImageIcon className="h-5 w-5" />}
                   </button>
-                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && subirImagen(e.target.files[0])} />
+                  <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) seleccionarImagen(f); e.target.value = ""; }} />
                   <Input
                     value={txt} onChange={handleTyping}
                     onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), enviar())}
