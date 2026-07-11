@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Trash2, Plus, Save, ArrowLeft, ShieldCheck } from "lucide-react";
 import { PAYMENT_METHOD_OPTIONS, findMethodMeta, type PayoutMethod } from "@/lib/marketplace";
 import { toast } from "sonner";
+import { MarketplacePaymentIcon } from "@/components/lin/MarketplaceIcons";
 
 export default function VendedorConfigurar() {
   const { user } = useAuth();
@@ -92,7 +93,7 @@ export default function VendedorConfigurar() {
               const meta = findMethodMeta(m.id);
               return (
                 <div key={i} className="flex items-center gap-2 rounded-lg border bg-card p-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-xl">{meta.icon}</span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"><MarketplacePaymentIcon method={m.id} /></span>
                   <div className="min-w-0 flex-1 space-y-1">
                     <p className="text-xs font-semibold">{meta.label}</p>
                     {m.id !== "coordinar" && (
@@ -118,7 +119,7 @@ export default function VendedorConfigurar() {
             <div className="flex flex-wrap gap-2">
               {PAYMENT_METHOD_OPTIONS.filter((o) => !methods.find((m) => m.id === o.id)).map((o) => (
                 <Button key={o.id} variant="outline" size="sm" onClick={() => addMethod(o.id)} className="gap-1.5">
-                  <span>{o.icon}</span> {o.label} <Plus className="h-3 w-3" />
+                  <MarketplacePaymentIcon method={o.id} className="h-4 w-4" /> {o.label} <Plus className="h-3 w-3" />
                 </Button>
               ))}
             </div>

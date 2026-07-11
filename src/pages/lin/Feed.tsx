@@ -16,15 +16,6 @@ import { FeedRail } from "@/components/lin/FeedRail";
 import { initials } from "@/lib/worefHelpers";
 import { toast } from "sonner";
 
-const FILTROS = [
-  { key: "all", label: "Para vos" },
-  { key: "update", label: "Updates" },
-  { key: "proyecto", label: "Proyectos" },
-  { key: "oportunidad", label: "Oportunidades" },
-  { key: "hiring", label: "Hiring" },
-  { key: "logro", label: "Logros" },
-];
-
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,thumbnail_url,
   encuesta_opciones,rol_buscado,modalidad,pais,tags,
   vistas,total_likes,total_comentarios,total_repostes,destacada,estado,created_at,
@@ -49,7 +40,6 @@ export default function Feed() {
   const { user, signOut } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [tab, setTab] = useState<"para-vos" | "siguiendo" | "tendencias">("para-vos");
-  const [filtroTipo, setFiltroTipo] = useState("all");
   const [q, setQ] = useState("");
   const [loading, setLoading] = useState(true);
   const [seguidos, setSeguidos] = useState<string[]>([]);
@@ -160,11 +150,10 @@ export default function Feed() {
 
   const filtered = useMemo(() => items.filter((p) => {
     if (tab === "siguiendo" && !seguidos.includes(p.perfil?.id)) return false;
-    if (filtroTipo !== "all" && p.tipo !== filtroTipo) return false;
     if (!q.trim()) return true;
     const t = q.toLowerCase();
     return p.titulo?.toLowerCase().includes(t) || p.cuerpo?.toLowerCase().includes(t) || p.perfil?.nombre?.toLowerCase().includes(t);
-  }), [items, tab, seguidos, filtroTipo, q]);
+  }), [items, tab, seguidos, q]);
 
   return (
     <div className="mx-auto -mt-4 grid max-w-7xl gap-6 md:-mt-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -255,9 +244,9 @@ export default function Feed() {
           </div>
         )}
 
-        {/* Filtros */}
+        {/* Búsqueda */}
         <div className="border-b px-4 py-2.5 sm:px-5">
-          <div className="relative mb-2">
+          <div className="relative">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={q}
@@ -266,16 +255,6 @@ export default function Feed() {
               className="h-9 rounded-full border-none bg-secondary/60 pl-9 text-sm focus-visible:ring-1"
             />
           </div>
-          <ScrollArea className="w-full whitespace-nowrap">
-            <div className="flex gap-1.5 pb-1">
-              {FILTROS.map((f) => (
-                <Chip key={f.key} active={filtroTipo === f.key} onClick={() => setFiltroTipo(f.key)}>
-                  {f.label}
-                </Chip>
-              ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
         </div>
 
         {nuevasIds.length > 0 && (
@@ -330,13 +309,3 @@ function TabBtn({ active, onClick, icon: Icon, children }: any) {
   );
 }
 
-function Chip({ active, onClick, children }: any) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:bg-secondary"}`}
-    >
-      {children}
-    </button>
-  );
-}

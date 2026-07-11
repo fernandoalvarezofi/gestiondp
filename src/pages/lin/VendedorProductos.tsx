@@ -14,6 +14,7 @@ import { PRODUCT_TYPES, slugify, formatPrice } from "@/lib/marketplace";
 import { toast } from "sonner";
 import { BackHeader } from "@/components/lin/BackHeader";
 import { useConfirm } from "@/components/lin/ConfirmDialog";
+import { MarketplaceProductIcon } from "@/components/lin/MarketplaceIcons";
 
 
 export default function VendedorProductos() {
@@ -86,7 +87,7 @@ export default function VendedorProductos() {
           <Card key={p.id}>
             <CardContent className="flex items-center gap-4 p-4">
               <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-secondary">
-                {p.portada_url ? <img src={p.portada_url} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-2xl opacity-30">📦</div>}
+                {p.portada_url ? <img src={p.portada_url} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center opacity-40"><MarketplaceProductIcon type={p.tipo} /></div>}
               </div>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -231,7 +232,7 @@ function ProductForm({ initial, cats, onSaved }: { initial: any; cats: any[]; on
           <Select value={tipo} onValueChange={setTipo}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              {PRODUCT_TYPES.map((t) => <SelectItem key={t.id} value={t.id}>{t.icon} {t.label}</SelectItem>)}
+              {PRODUCT_TYPES.map((t) => <SelectItem key={t.id} value={t.id}><span className="inline-flex items-center gap-2"><MarketplaceProductIcon type={t.id} className="h-4 w-4" />{t.label}</span></SelectItem>)}
             </SelectContent>
           </Select>
         </div>

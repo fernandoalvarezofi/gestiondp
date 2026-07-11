@@ -13,6 +13,7 @@ import { formatPrice, findMethodMeta } from "@/lib/marketplace";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { toast } from "sonner";
+import { MarketplacePaymentIcon, MarketplaceProductIcon } from "@/components/lin/MarketplaceIcons";
 
 const estadoColor = (e: string) => ({
   pendiente: "bg-amber-500/15 text-amber-700",
@@ -103,7 +104,7 @@ export default function MisCompras() {
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-secondary">
-                      {o.producto?.portada_url ? <img src={o.producto.portada_url} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xl opacity-30">📦</div>}
+                      {o.producto?.portada_url ? <img src={o.producto.portada_url} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center opacity-40"><MarketplaceProductIcon /></div>}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
@@ -121,7 +122,7 @@ export default function MisCompras() {
                         <Avatar className="h-6 w-6"><AvatarImage src={o.vendedor?.avatar_url} /><AvatarFallback>{(o.vendedor?.nombre || "U").slice(0, 1)}</AvatarFallback></Avatar>
                         <span className="font-medium">{o.vendedor?.nombre}</span>
                         <span className="text-muted-foreground">·</span>
-                        <span className="inline-flex items-center gap-1"><span>{meta.icon}</span>{meta.label}</span>
+                        <span className="inline-flex items-center gap-1"><MarketplacePaymentIcon method={o.metodo_pago} className="h-3.5 w-3.5" />{meta.label}</span>
                       </div>
 
                       <div className="mt-3 flex flex-wrap gap-2">

@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Star, ArrowLeft, Heart, ShieldCheck, Zap, ChevronRight, MessageCircle, Store, ExternalLink } from "lucide-react";
 import { formatPrice, findMethodMeta, PRODUCT_TYPES, type PayoutMethod } from "@/lib/marketplace";
 import { toast } from "sonner";
+import { MarketplacePaymentIcon, MarketplaceProductIcon } from "@/components/lin/MarketplaceIcons";
 
 export default function MercadoProducto() {
   const { slug } = useParams();
@@ -138,7 +139,7 @@ export default function MercadoProducto() {
                 <img src={cover} alt={p.titulo} className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full items-center justify-center text-7xl opacity-30">
-                  {PRODUCT_TYPES.find((t) => t.id === p.tipo)?.icon ?? "📦"}
+                  <MarketplaceProductIcon type={p.tipo} className="h-20 w-20" />
                 </div>
               )}
             </div>
@@ -157,7 +158,7 @@ export default function MercadoProducto() {
             <div className="flex flex-wrap items-center gap-2">
               {p.categoria && <Badge style={{ background: p.categoria.color, color: "white" }}>{p.categoria.nombre}</Badge>}
               <Badge variant="outline" className="gap-1">
-                {PRODUCT_TYPES.find((t) => t.id === p.tipo)?.icon} {PRODUCT_TYPES.find((t) => t.id === p.tipo)?.label}
+                <MarketplaceProductIcon type={p.tipo} className="h-3.5 w-3.5" /> {PRODUCT_TYPES.find((t) => t.id === p.tipo)?.label}
               </Badge>
               {p.destacado && <Badge className="gap-1 bg-amber-500"><Star className="h-3 w-3 fill-current" /> Destacado</Badge>}
             </div>
@@ -301,7 +302,7 @@ export default function MercadoProducto() {
                       onClick={() => handleBuy(m)}
                       className="flex w-full items-center gap-3 rounded-xl border bg-card p-3 text-left transition hover:border-primary hover:bg-primary/5"
                     >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-xl">{meta.icon}</span>
+                      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><MarketplacePaymentIcon method={m.id} className="h-5 w-5" /></span>
                       <div className="min-w-0 flex-1">
                         <p className="font-semibold">{m.label || meta.label}</p>
                         {m.link && <p className="truncate text-xs text-muted-foreground">{m.link}</p>}

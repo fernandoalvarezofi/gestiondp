@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,10 +17,25 @@ import { usePresenciaDe } from "@/hooks/usePresencia";
 import { cn } from "@/lib/utils";
 
 const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🔥"];
+const PRIVATE_IMAGE_BUCKET = "mensajes-media";
+
+const getStoragePath = (value?: string | null, bucket = PRIVATE_IMAGE_BUCKET) => {
+  if (!value) return null;
+  if (!/^https?:\/\//i.test(value)) return value.replace(/^\/+/, "");
+  try {
+    const url = new URL(value);
+    const publicMarker = `/storage/v1/object/public/${bucket}/`;
+    const signedMarker = `/storage/v1/object/sign/${bucket}/`;
+    if (url.pathname.includes(publicMarker)) return decodeURIComponent(url.pathname.split(publicMarker)[1] || "");
+    if (url.pathname.includes(signedMarker)) return decodeURIComponent((url.pathname.split(signedMarker)[1] || "").split("?")[0]);
+  } catch {}
+  return null;
+};
 
 export default function Mensajes() {
   const { user } = useAuth();
   const { id: convId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { iniciarLlamada } = useCallCtx();
 
@@ -44,6 +59,16 @@ export default function Mensajes() {
   const presencia = usePresenciaDe(otro?.id);
 
   useEffect(() => { setShowChat(!!convId); }, [convId]);
+
+  useEffect(() => {
+    const to = searchParams.get("to");
+    if (!to || !user || convId) return;
+    (async () => {
+      const { data, error } = await (supabase as any).rpc("get_or_create_conversacion", { user_a: user.id, user_b: to });
+      if (error || !data) { toast.error(error?.message || "No se pudo abrir el chat"); return; }
+      navigate(`/lin/mensajes/${data}`, { replace: true });
+    })();
+  }, [searchParams, user, convId, navigate]);
 
   const cargarConvs = async () => {
     if (!user) return;
@@ -74,11 +99,22 @@ export default function Mensajes() {
     setReacciones(map);
   };
 
+  const firmarImagenes = async (list: any[]) => {
+    const out = await Promise.all((list || []).map(async (m: any) => {
+      if (!m?.imagen_url) return m;
+      const path = getStoragePath(m.imagen_url);
+      if (!path || m.imagen_url.includes("/storage/v1/object/sign/")) return m;
+      const { data } = await (supabase as any).storage.from(PRIVATE_IMAGE_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 365);
+      return data?.signedUrl ? { ...m, imagen_url: data.signedUrl } : m;
+    }));
+    return out;
+  };
+
   useEffect(() => {
     if (!convId || !user) return;
     (async () => {
       const { data: m } = await (supabase as any).from("mensajes").select("*").eq("conversacion_id", convId).order("created_at", { ascending: true });
-      const list = m || [];
+      const list = await firmarImagenes(m || []);
       setMsgs(list);
       cargarReacciones(list.map((x: any) => x.id));
       const { data: c } = await (supabase as any).from("conversaciones")
@@ -89,7 +125,10 @@ export default function Mensajes() {
 
     const ch = (supabase as any).channel(`m-${convId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
-        (p: any) => setMsgs((s) => s.some((x) => x.id === p.new.id) ? s : [...s, p.new]))
+        async (p: any) => {
+          const [msg] = await firmarImagenes([p.new]);
+          setMsgs((s) => s.some((x) => x.id === msg.id) ? s : [...s, msg]);
+        })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
         (p: any) => setMsgs((prev) => prev.map((m) => m.id === p.new.id ? { ...m, ...p.new } : m)))
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
@@ -163,8 +202,9 @@ export default function Mensajes() {
       const path = `${user.id}/${convId}/${Date.now()}.${ext}`;
       const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, pendingImg.file);
       if (error) throw error;
-      const { data } = (supabase as any).storage.from("mensajes-media").getPublicUrl(path);
-      await enviar({ imagen_url: data.publicUrl });
+      const { data } = await (supabase as any).storage.from(PRIVATE_IMAGE_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 365);
+      if (!data?.signedUrl) throw new Error("No se pudo preparar la vista previa");
+      await enviar({ imagen_url: data.signedUrl });
       URL.revokeObjectURL(pendingImg.preview);
       setPendingImg(null);
     } catch (e: any) { toast.error(e.message || "Error subiendo imagen"); }
@@ -175,8 +215,9 @@ export default function Mensajes() {
     if (!confirm("¿Eliminar este mensaje?")) return;
     const backup = msgs;
     setMsgs((s) => s.filter((m) => m.id !== id));
-    const { error } = await (supabase as any).from("mensajes").delete().eq("id", id);
-    if (error) { setMsgs(backup); toast.error("No se pudo eliminar"); }
+    const { error } = await (supabase as any).from("mensajes").delete().eq("id", id).eq("remitente_id", user?.id);
+    if (error) { setMsgs(backup); toast.error(error.message || "No se pudo eliminar"); }
+    else toast.success("Mensaje eliminado");
   };
 
   const subirAudio = async (blob: Blob, segs: number) => {
@@ -303,10 +344,10 @@ export default function Mensajes() {
 
                     {/* Acciones propias — siempre visibles (mobile-friendly) */}
                     {mio && !String(m.id).startsWith("tmp-") && (
-                      <div className="flex items-center gap-0.5 opacity-40 transition-opacity group-hover/m:opacity-100 md:opacity-0">
-                        <button onClick={() => eliminarMensaje(m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Eliminar mensaje"><Trash2 className="h-4 w-4" /></button>
-                        <button onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Reaccionar"><Smile className="h-4 w-4" /></button>
-                        <button onClick={() => setReplyA(m)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Responder"><Reply className="h-4 w-4" /></button>
+                      <div className="flex shrink-0 items-center gap-1 opacity-100 md:opacity-70 md:transition-opacity md:group-hover/m:opacity-100">
+                        <button onClick={() => eliminarMensaje(m.id)} className="flex h-8 w-8 items-center justify-center rounded-full border bg-background text-destructive shadow-sm hover:bg-destructive/10" aria-label="Eliminar mensaje"><Trash2 className="h-4 w-4" /></button>
+                        <button onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)} className="flex h-8 w-8 items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm hover:bg-secondary" aria-label="Reaccionar"><Smile className="h-4 w-4" /></button>
+                        <button onClick={() => setReplyA(m)} className="flex h-8 w-8 items-center justify-center rounded-full border bg-background text-muted-foreground shadow-sm hover:bg-secondary" aria-label="Responder"><Reply className="h-4 w-4" /></button>
                       </div>
                     )}
 
@@ -323,13 +364,7 @@ export default function Mensajes() {
                       ) : (
                         <>
                           {m.imagen_url && (
-                            <img
-                              src={m.imagen_url}
-                              loading="lazy"
-                              onClick={(e) => { e.stopPropagation(); window.open(m.imagen_url, "_blank", "noopener,noreferrer"); }}
-                              className="mb-1 max-h-72 cursor-pointer rounded-2xl object-cover transition hover:opacity-90"
-                              alt=""
-                            />
+                            <ChatImage src={m.imagen_url} />
                           )}
                           {m.contenido && (
                             <div className={cn(
@@ -484,5 +519,26 @@ export default function Mensajes() {
         )}
       </section>
     </div>
+  );
+}
+
+function ChatImage({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div className="mb-1 rounded-2xl border bg-secondary/60 px-4 py-3 text-sm text-muted-foreground">
+        Imagen no disponible
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      loading="lazy"
+      onError={() => setFailed(true)}
+      onClick={(e) => { e.stopPropagation(); window.open(src, "_blank", "noopener,noreferrer"); }}
+      className="mb-1 max-h-72 max-w-full cursor-pointer rounded-2xl object-cover transition hover:opacity-90"
+      alt="Imagen enviada"
+    />
   );
 }

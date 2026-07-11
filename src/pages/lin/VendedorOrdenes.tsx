@@ -11,6 +11,7 @@ import { formatPrice, findMethodMeta } from "@/lib/marketplace";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { MarketplacePaymentIcon, MarketplaceProductIcon } from "@/components/lin/MarketplaceIcons";
 
 const ESTADOS = [
   { id: "todas", label: "Todas" },
@@ -80,7 +81,7 @@ export default function VendedorOrdenes() {
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-secondary">
-                      {o.producto?.portada_url ? <img src={o.producto.portada_url} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xl opacity-30">📦</div>}
+                      {o.producto?.portada_url ? <img src={o.producto.portada_url} className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center opacity-40"><MarketplaceProductIcon /></div>}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
@@ -99,7 +100,7 @@ export default function VendedorOrdenes() {
                         <span className="font-medium">{o.comprador?.nombre}</span>
                         <span className="text-muted-foreground">@{o.comprador?.username}</span>
                         <span className="text-muted-foreground">·</span>
-                        <span className="inline-flex items-center gap-1"><span>{meta.icon}</span>{meta.label}</span>
+                        <span className="inline-flex items-center gap-1"><MarketplacePaymentIcon method={o.metodo_pago} className="h-3.5 w-3.5" />{meta.label}</span>
                       </div>
 
                       {o.comprador_nota && <p className="mt-2 rounded-md bg-secondary/50 p-2 text-xs">"{o.comprador_nota}"</p>}
