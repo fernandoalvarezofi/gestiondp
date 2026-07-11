@@ -1,8 +1,9 @@
 import { cn } from "@/lib/utils";
+import type { ReactNode } from "react";
 
 type IconProps = { className?: string };
 
-const paths: Record<string, JSX.Element> = {
+const paths: Record<string, ReactNode> = {
   archive: <><path d="M4 7.5h16" /><path d="M6 7.5v10A2.5 2.5 0 0 0 8.5 20h7a2.5 2.5 0 0 0 2.5-2.5v-10" /><path d="M7 4h10l3 3.5H4L7 4Z" /><path d="M9.5 11h5" /></>,
   key: <><circle cx="8" cy="13" r="3.5" /><path d="M11.5 13H20" /><path d="M17 13v2.5" /><path d="M14.5 13v2" /></>,
   handshake: <><path d="m7 12 3-3 3 3" /><path d="m10 9 2-2 5 5" /><path d="M5 10 3 12l5 5a2 2 0 0 0 2.8 0l.2-.2" /><path d="m17 12 2 2-5 5a2 2 0 0 1-2.8 0L8 15.8" /><path d="M3 12V7h4" /><path d="M21 14V9h-4" /></>,
