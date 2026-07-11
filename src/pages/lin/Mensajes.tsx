@@ -376,7 +376,7 @@ export default function Mensajes() {
                     </div>
 
                     {!mio && (
-                      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/m:opacity-100">
+                      <div className="flex items-center gap-0.5 opacity-40 transition-opacity group-hover/m:opacity-100 md:opacity-0">
                         <button onClick={() => setReplyA(m)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Responder"><Reply className="h-4 w-4" /></button>
                         <button onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Reaccionar"><Smile className="h-4 w-4" /></button>
                       </div>
