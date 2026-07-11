@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
   Globe, Instagram, Twitter, Linkedin, Youtube, BadgeCheck, MessageCircleMore, Settings, MapPin,
   UserPlus, UserCheck, Loader2, Camera, Grid3x3, Rows3, Play, Share2, MoreHorizontal,
-  Calendar, Briefcase, Heart, Repeat2, Info, Clock, Users2,
+  Calendar, Briefcase, Heart, Repeat2, Info, Clock, Users2, Lock,
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { PostCard } from "@/components/lin/PostCard";
@@ -177,6 +177,7 @@ export default function Perfil() {
   );
   const isMine = user?.id === perfil.id;
   const fechaUnion = new Date(perfil.created_at).toLocaleDateString("es-AR", { month: "long", year: "numeric" });
+  const perfilPrivado = !!perfil.perfil_privado && !isMine && !siguiendo;
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -196,7 +197,7 @@ export default function Perfil() {
 
       {/* IDENTIDAD */}
       <div className="px-4 sm:px-6">
-        <div className="-mt-14 flex items-end justify-between sm:-mt-16">
+        <div className="-mt-14 flex flex-col gap-3 sm:-mt-16 sm:flex-row sm:items-end sm:justify-between">
           {tieneHistoria ? (
             <button onClick={() => navigate(`/lin/historias/${perfil.id}`)} className="rounded-full bg-gradient-to-tr from-primary via-pink-500 to-amber-400 p-[3px]">
               <div className="rounded-full bg-background p-[3px]">
@@ -221,13 +222,17 @@ export default function Perfil() {
             </div>
           )}
 
-          <div className="flex gap-1.5 pb-2">
+          <div className="flex flex-wrap gap-1.5 pb-2 sm:justify-end">
             {isMine ? (
               <>
                 <Button variant="outline" size="sm" onClick={() => navigate("/lin/perfil/editar")}><Settings className="h-4 w-4" />Editar perfil</Button>
                 <Button variant="outline" size="icon" className="h-9 w-9" onClick={compartirPerfil}><Share2 className="h-4 w-4" /></Button>
                 <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigate("/lin/configuracion")}><Settings className="h-4 w-4" /></Button>
               </>
+            ) : perfilPrivado ? (
+              <Button onClick={toggleSeguir} disabled={loadingSeguir} size="sm" className="shadow-ember">
+                {loadingSeguir ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="h-4 w-4" />Seguir</>}
+              </Button>
             ) : (
               <>
                 <Button onClick={toggleSeguir} disabled={loadingSeguir} variant={siguiendo ? "outline" : "default"} size="sm" className={cn(!siguiendo && "shadow-ember")}>
@@ -264,51 +269,62 @@ export default function Perfil() {
             {perfil.verificado && <BadgeCheck className="h-5 w-5 text-primary" />}
           </div>
           <p className="text-sm text-muted-foreground">@{perfil.username}</p>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <Badge variant="outline" className="rounded-full font-medium">{TIPO_USUARIO[perfil.tipo]}</Badge>
-            {perfil.industria && <span className="inline-flex items-center gap-1"><Briefcase className="h-3 w-3" />{perfil.industria}</span>}
-            {perfil.ubicacion && perfil.mostrar_ubicacion && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{perfil.ubicacion}</span>}
-            <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />Se unió en {fechaUnion}</span>
-          </div>
+          {!perfilPrivado && (
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <Badge variant="outline" className="rounded-full font-medium">{TIPO_USUARIO[perfil.tipo]}</Badge>
+              {perfil.industria && <span className="inline-flex items-center gap-1"><Briefcase className="h-3 w-3" />{perfil.industria}</span>}
+              {perfil.ubicacion && perfil.mostrar_ubicacion && <span className="inline-flex items-center gap-1"><MapPin className="h-3 w-3" />{perfil.ubicacion}</span>}
+              <span className="inline-flex items-center gap-1"><Calendar className="h-3 w-3" />Se unió en {fechaUnion}</span>
+            </div>
+          )}
 
           {perfil.bio && <p className="mt-3 max-w-2xl whitespace-pre-wrap text-[15px] leading-relaxed">{perfil.bio}</p>}
-          {perfil.actualmente && (
+          {perfilPrivado && (
+            <div className="mt-4 inline-flex items-center gap-2 rounded-full border bg-secondary/40 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+              <Lock className="h-3.5 w-3.5" /> Perfil privado
+            </div>
+          )}
+          {!perfilPrivado && perfil.actualmente && (
             <p className="mt-2 text-sm">
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">● Actualmente</span>
               <span className="ml-2">{perfil.actualmente}</span>
             </p>
           )}
 
-          {(perfil.que_ofrece || perfil.que_busca) && (
+          {!perfilPrivado && (perfil.que_ofrece || perfil.que_busca) && (
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
               {perfil.que_ofrece && <div className="rounded-xl border bg-secondary/40 p-3 text-xs"><p className="font-semibold uppercase tracking-wider text-muted-foreground mb-1">Ofrece</p><p>{perfil.que_ofrece}</p></div>}
               {perfil.que_busca && <div className="rounded-xl border bg-secondary/40 p-3 text-xs"><p className="font-semibold uppercase tracking-wider text-muted-foreground mb-1">Busca</p><p>{perfil.que_busca}</p></div>}
             </div>
           )}
 
-          {perfil.skills?.length > 0 && (
+          {!perfilPrivado && perfil.skills?.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1">
               {perfil.skills.map((s: string) => <Badge key={s} variant="secondary" className="rounded-full text-xs font-medium">{s}</Badge>)}
             </div>
           )}
 
-          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-            {perfil.sitio_web && <a href={perfil.sitio_web} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Globe className="h-3 w-3" />Sitio</a>}
-            {perfil.instagram && <a href={`https://instagram.com/${perfil.instagram}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Instagram className="h-3 w-3" />@{perfil.instagram}</a>}
-            {perfil.twitter && <a href={`https://twitter.com/${perfil.twitter}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Twitter className="h-3 w-3" />@{perfil.twitter}</a>}
-            {perfil.linkedin && <a href={perfil.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Linkedin className="h-3 w-3" />LinkedIn</a>}
-            {perfil.youtube && <a href={perfil.youtube} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Youtube className="h-3 w-3" />YouTube</a>}
-          </div>
+          {!perfilPrivado && (
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+              {perfil.sitio_web && <a href={perfil.sitio_web} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Globe className="h-3 w-3" />Sitio</a>}
+              {perfil.instagram && <a href={`https://instagram.com/${perfil.instagram}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Instagram className="h-3 w-3" />@{perfil.instagram}</a>}
+              {perfil.twitter && <a href={`https://twitter.com/${perfil.twitter}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Twitter className="h-3 w-3" />@{perfil.twitter}</a>}
+              {perfil.linkedin && <a href={perfil.linkedin} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Linkedin className="h-3 w-3" />LinkedIn</a>}
+              {perfil.youtube && <a href={perfil.youtube} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-primary"><Youtube className="h-3 w-3" />YouTube</a>}
+            </div>
+          )}
 
-          <div className="mt-4 grid grid-cols-3 divide-x rounded-2xl border bg-card">
-            <StatCell n={perfil.total_publicaciones} label="Posts" />
-            <StatCell n={perfil.total_seguidores} label="Seguidores" to={`/lin/perfil/${perfil.username}/red?tab=seguidores`} />
-            <StatCell n={perfil.total_siguiendo} label="Siguiendo" to={`/lin/perfil/${perfil.username}/red?tab=siguiendo`} />
-          </div>
+          {!perfilPrivado && (
+            <div className="mt-4 grid grid-cols-3 divide-x rounded-2xl border bg-card">
+              <StatCell n={perfil.total_publicaciones} label="Posts" />
+              <StatCell n={perfil.total_seguidores} label="Seguidores" to={`/lin/perfil/${perfil.username}/red?tab=seguidores`} />
+              <StatCell n={perfil.total_siguiendo} label="Siguiendo" to={`/lin/perfil/${perfil.username}/red?tab=siguiendo`} />
+            </div>
+          )}
         </div>
 
         {/* TABS */}
-        <Tabs value={tab} onValueChange={setTab} className="mt-5">
+        {!perfilPrivado && <Tabs value={tab} onValueChange={setTab} className="mt-5">
           <div className="flex items-center justify-between border-b">
             <TabsList className="h-auto justify-start gap-0 rounded-none border-0 bg-transparent p-0">
               <TabTrigger value="publicaciones" icon={Grid3x3} label="Posts" count={pubs.length} active={tab === "publicaciones"} />
@@ -338,7 +354,7 @@ export default function Perfil() {
             </TabsContent>
           )}
 
-        </Tabs>
+        </Tabs>}
       </div>
 
       <Dialog open={openConectar} onOpenChange={setOpenConectar}>
