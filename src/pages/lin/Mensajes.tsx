@@ -301,10 +301,10 @@ export default function Mensajes() {
                       <Avatar className="h-7 w-7 shrink-0"><AvatarImage src={otro?.avatar_url || ""} /><AvatarFallback className="text-[10px]">{initials(otro?.nombre)}</AvatarFallback></Avatar>
                     )}
 
-                    {/* Acciones (reply + react + delete) — solo hover */}
-                    {mio && (
-                      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover/m:opacity-100">
-                        <button onClick={() => eliminarMensaje(m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Eliminar"><Trash2 className="h-4 w-4" /></button>
+                    {/* Acciones propias — siempre visibles (mobile-friendly) */}
+                    {mio && !String(m.id).startsWith("tmp-") && (
+                      <div className="flex items-center gap-0.5 opacity-40 transition-opacity group-hover/m:opacity-100 md:opacity-0">
+                        <button onClick={() => eliminarMensaje(m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label="Eliminar mensaje"><Trash2 className="h-4 w-4" /></button>
                         <button onClick={() => setPickerMsg(pickerMsg === m.id ? null : m.id)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Reaccionar"><Smile className="h-4 w-4" /></button>
                         <button onClick={() => setReplyA(m)} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" aria-label="Responder"><Reply className="h-4 w-4" /></button>
                       </div>
