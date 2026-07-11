@@ -23,9 +23,6 @@ const FILTROS = [
   { key: "oportunidad", label: "Oportunidades" },
   { key: "hiring", label: "Hiring" },
   { key: "logro", label: "Logros" },
-  { key: "lanzamiento", label: "Lanzamientos" },
-  { key: "busco_socio", label: "Busco socio" },
-  { key: "recurso", label: "Recursos" },
 ];
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,thumbnail_url,
