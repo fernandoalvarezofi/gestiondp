@@ -10,11 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
   MessageSquare, Minus, X, Send, Paperclip, Settings as SettingsIcon,
-  Search, ChevronUp, Trash2, Pencil, Circle, ArrowLeft,
+  Search, ChevronUp, Trash2, Pencil, Circle, ArrowLeft, Mic,
 } from "lucide-react";
 import { initials } from "@/lib/worefHelpers";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { AudioRecorder } from "@/components/lin/AudioRecorder";
+import { AudioPlayer } from "@/components/lin/AudioPlayer";
 
 /**
  * ChatDock — barra estilo LinkedIn (desktop). Mobile usa /lin/mensajes (no se renderiza aquí).
@@ -47,6 +49,30 @@ const presenceLabel: Record<Presence, string> = {
   online: "Disponible",
   away: "Ausente",
   offline: "Sin conexión",
+};
+const PRIVATE_IMAGE_BUCKET = "mensajes-media";
+const PRIVATE_AUDIO_BUCKET = "audio-mensajes";
+
+const getStoragePath = (value?: string | null, bucket = PRIVATE_IMAGE_BUCKET) => {
+  if (!value) return null;
+  if (/^(blob:|data:)/i.test(value)) return null;
+  if (!/^https?:\/\//i.test(value)) return value.replace(/^\/+/, "");
+  try {
+    const url = new URL(value);
+    const publicMarker = `/storage/v1/object/public/${bucket}/`;
+    const signedMarker = `/storage/v1/object/sign/${bucket}/`;
+    if (url.pathname.includes(publicMarker)) return decodeURIComponent(url.pathname.split(publicMarker)[1] || "");
+    if (url.pathname.includes(signedMarker)) return decodeURIComponent((url.pathname.split(signedMarker)[1] || "").split("?")[0]);
+  } catch {}
+  return null;
+};
+
+const signedMediaUrl = async (value?: string | null, bucket = PRIVATE_IMAGE_BUCKET) => {
+  if (!value) return null;
+  const path = getStoragePath(value, bucket);
+  if (!path) return value;
+  const { data } = await (supabase as any).storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
+  return data?.signedUrl || value;
 };
 
 function loadLS<T>(k: string, fallback: T): T {
@@ -408,8 +434,18 @@ function ConvWindow({
   const [txt, setTxt] = useState("");
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [pendingImg, setPendingImg] = useState<{ file: File; preview: string } | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const signMessages = useCallback(async (list: any[]) => {
+    return Promise.all((list || []).map(async (m: any) => ({
+      ...m,
+      imagen_url: m?.imagen_url ? await signedMediaUrl(m.imagen_url, PRIVATE_IMAGE_BUCKET) : m?.imagen_url,
+      audio_url: m?.audio_url ? await signedMediaUrl(m.audio_url, PRIVATE_AUDIO_BUCKET) : m?.audio_url,
+    })));
+  }, []);
 
   // Load + subscribe
   useEffect(() => {
@@ -418,70 +454,131 @@ function ConvWindow({
       const { data } = await (supabase as any).from("mensajes")
         .select("*").eq("conversacion_id", conv.id)
         .order("created_at", { ascending: true }).limit(80);
-      if (!cancel) setMsgs(data || []);
+      const signed = await signMessages(data || []);
+      if (!cancel) setMsgs(signed);
       await (supabase as any).rpc("marcar_conversacion_leida", { p_conversacion_id: conv.id });
     })();
     const ch = (supabase as any).channel(`cw-${conv.id}`)
       .on("postgres_changes",
         { event: "INSERT", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${conv.id}` },
-        (p: any) => {
-          setMsgs((s) => s.some((x) => x.id === p.new.id) ? s : [...s, p.new]);
+        async (p: any) => {
+          const [msg] = await signMessages([p.new]);
+          setMsgs((s) => s.some((x) => x.id === msg.id) ? s : [...s, msg]);
           if (p.new.remitente_id !== meId) {
             if (soundOn) playPing();
             if (!minimized) (supabase as any).rpc("marcar_conversacion_leida", { p_conversacion_id: conv.id });
           }
         }
+      )
+      .on("postgres_changes",
+        { event: "UPDATE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${conv.id}` },
+        async (p: any) => {
+          const [msg] = await signMessages([p.new]);
+          setMsgs((s) => s.map((m) => m.id === msg.id ? { ...m, ...msg } : m));
+        }
+      )
+      .on("postgres_changes",
+        { event: "DELETE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${conv.id}` },
+        (p: any) => setMsgs((s) => s.filter((m) => m.id !== p.old.id))
       ).subscribe();
     return () => { cancel = true; (supabase as any).removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conv.id, meId]);
+  }, [conv.id, meId, signMessages]);
 
   useEffect(() => {
     if (!minimized) endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [msgs, minimized]);
 
-  const send = async (opts?: { imagen_url?: string }) => {
+  const send = async (opts?: { imagen_url?: string; imagen_preview?: string; audio_url?: string; audio_preview?: string; audio_dur?: number }) => {
     const contenido = txt.trim();
-    if ((!contenido && !opts?.imagen_url) || sending) return;
+    if ((!contenido && !opts?.imagen_url && !opts?.audio_url) || sending) return;
     setSending(true);
-    const tipo = opts?.imagen_url ? "imagen" : "texto";
+    const tipo = opts?.audio_url ? "audio" : opts?.imagen_url ? "imagen" : "texto";
     const tmp: any = {
       id: `tmp-${Date.now()}`, conversacion_id: conv.id, remitente_id: meId,
-      tipo, contenido, imagen_url: opts?.imagen_url || null,
+      tipo, contenido: opts?.audio_url ? "" : contenido,
+      imagen_url: opts?.imagen_preview || opts?.imagen_url || null,
+      audio_url: opts?.audio_preview || opts?.audio_url || null,
+      audio_duracion: opts?.audio_dur || null,
       created_at: new Date().toISOString(),
     };
     setMsgs((s) => [...s, tmp]);
     setTxt("");
     const { data, error } = await (supabase as any).from("mensajes").insert({
-      conversacion_id: conv.id, remitente_id: meId, tipo, contenido,
+      conversacion_id: conv.id, remitente_id: meId, tipo, contenido: opts?.audio_url ? "" : contenido,
       imagen_url: opts?.imagen_url || null,
+      audio_url: opts?.audio_url || null,
+      audio_duracion: opts?.audio_dur || null,
     }).select().single();
     setSending(false);
     if (error) {
       setMsgs((s) => s.filter((m) => m.id !== tmp.id));
       toast.error("No se pudo enviar");
     } else {
-      setMsgs((s) => s.map((m) => m.id === tmp.id ? data : m));
+      const [msg] = await signMessages([data]);
+      setMsgs((s) => s.map((m) => m.id === tmp.id ? msg : m));
     }
   };
 
-  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onPickFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { toast.error("Máximo 5MB"); return; }
+    const allowed = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (!allowed.includes(file.type)) { toast.error("Usá JPG, PNG, GIF o WebP"); return; }
+    if (file.size > 10 * 1024 * 1024) { toast.error("Máximo 10MB"); return; }
+    if (pendingImg) URL.revokeObjectURL(pendingImg.preview);
+    setPendingImg({ file, preview: URL.createObjectURL(file) });
+  };
+
+  const cancelPendingImage = () => {
+    if (pendingImg) URL.revokeObjectURL(pendingImg.preview);
+    setPendingImg(null);
+  };
+
+  const uploadPendingImage = async () => {
+    if (!pendingImg) return;
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
+      const ext = pendingImg.file.name.split(".").pop() || "jpg";
       const path = `${meId}/${conv.id}/${Date.now()}.${ext}`;
-      const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, file);
+      const { error } = await (supabase as any).storage.from(PRIVATE_IMAGE_BUCKET).upload(path, pendingImg.file);
       if (error) throw error;
-      const { data } = (supabase as any).storage.from("mensajes-media").getPublicUrl(path);
-      await send({ imagen_url: data.publicUrl });
+      await send({ imagen_url: path, imagen_preview: pendingImg.preview });
+      URL.revokeObjectURL(pendingImg.preview);
+      setPendingImg(null);
     } catch (err: any) {
       toast.error(err.message || "Error subiendo");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const uploadAudio = async (blob: Blob, seconds: number) => {
+    setRecording(false);
+    setUploading(true);
+    try {
+      const path = `${meId}/${conv.id}/${Date.now()}.webm`;
+      const { error } = await (supabase as any).storage.from(PRIVATE_AUDIO_BUCKET).upload(path, blob, { contentType: blob.type });
+      if (error) throw error;
+      const preview = URL.createObjectURL(blob);
+      await send({ audio_url: path, audio_preview: preview, audio_dur: seconds });
+      URL.revokeObjectURL(preview);
+    } catch (err: any) {
+      toast.error(err.message || "Error subiendo audio");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const deleteMsg = async (id: string) => {
+    if (!confirm("¿Eliminar este mensaje?")) return;
+    const backup = msgs;
+    setMsgs((s) => s.filter((m) => m.id !== id));
+    const { error } = await (supabase as any).from("mensajes").delete().eq("id", id).eq("remitente_id", meId);
+    if (error) {
+      setMsgs(backup);
+      toast.error(error.message || "No se pudo eliminar");
     }
   };
 
@@ -524,20 +621,32 @@ function ConvWindow({
             ) : msgs.map((m) => {
               const mio = m.remitente_id === meId;
               return (
-                <div key={m.id} className={cn("flex", mio ? "justify-end" : "justify-start")}>
+                <div key={m.id} className={cn("group/cw flex items-end gap-1", mio ? "justify-end" : "justify-start")}>
+                  {mio && !String(m.id).startsWith("tmp-") && (
+                    <button
+                      onClick={() => deleteMsg(m.id)}
+                      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-background text-destructive opacity-80 shadow-sm hover:bg-destructive/10"
+                      title="Eliminar"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  )}
                   <div className={cn(
-                    "max-w-[80%] rounded-2xl px-3 py-1.5 text-[12px] leading-snug",
+                    "max-w-[80%] rounded-2xl text-[12px] leading-snug",
+                    m.audio_url ? "p-0" : "px-3 py-1.5",
                     mio ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground"
                   )}>
-                    {m.imagen_url && (
+                    {m.audio_url ? (
+                      <AudioPlayer url={m.audio_url} duracion={m.audio_duracion} mio={mio} />
+                    ) : m.imagen_url ? (
                       <img
                         src={m.imagen_url}
-                        alt=""
+                        alt="Imagen enviada"
                         loading="lazy"
                         onClick={() => window.open(m.imagen_url, "_blank", "noopener,noreferrer")}
                         className="mb-1 max-h-40 cursor-pointer rounded-lg object-cover"
                       />
-                    )}
+                    ) : null}
                     {m.contenido && (
                       <p className="whitespace-pre-wrap break-words">{m.contenido}</p>
                     )}
@@ -548,32 +657,65 @@ function ConvWindow({
             <div ref={endRef} />
           </div>
 
+          {pendingImg && (
+            <div className="flex items-center gap-2 border-t border-border bg-card px-2 py-1.5">
+              <img src={pendingImg.preview} alt="Vista previa" className="h-10 w-10 rounded-lg object-cover" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[11px] font-medium">Imagen lista</p>
+                <p className="truncate text-[10px] text-muted-foreground">{pendingImg.file.name}</p>
+              </div>
+              <button onClick={cancelPendingImage} className="rounded-full p-1 text-muted-foreground hover:bg-secondary" title="Descartar">
+                <X className="h-3.5 w-3.5" />
+              </button>
+              <button onClick={uploadPendingImage} disabled={uploading} className="rounded-full bg-primary p-1.5 text-primary-foreground disabled:opacity-40" title="Enviar imagen">
+                <Send className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           {/* Composer */}
           <div className="flex shrink-0 items-center gap-1.5 border-t border-border bg-card px-2 py-1.5">
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="rounded p-1.5 text-muted-foreground hover:bg-secondary disabled:opacity-50"
-              title="Adjuntar imagen (máx 5MB)"
-            >
-              <Paperclip className="h-4 w-4" />
-            </button>
-            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
-            <Input
-              value={txt}
-              onChange={(e) => setTxt(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              placeholder="Escribí un mensaje…"
-              className="h-7 rounded-full border-border bg-secondary/40 text-xs"
-            />
-            <button
-              onClick={() => send()}
-              disabled={!txt.trim() || sending}
-              className="rounded-full bg-primary p-1.5 text-primary-foreground transition-opacity disabled:opacity-40"
-              title="Enviar"
-            >
-              <Send className="h-3.5 w-3.5" />
-            </button>
+            {recording ? (
+              <AudioRecorder onSend={uploadAudio} onCancel={() => setRecording(false)} />
+            ) : (
+              <>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading || !!pendingImg}
+                  className="rounded p-1.5 text-muted-foreground hover:bg-secondary disabled:opacity-50"
+                  title="Adjuntar imagen"
+                >
+                  <Paperclip className="h-4 w-4" />
+                </button>
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/gif,image/webp" className="hidden" onChange={onPickFile} />
+                <Input
+                  value={txt}
+                  onChange={(e) => setTxt(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+                  placeholder="Escribí un mensaje…"
+                  className="h-7 rounded-full border-border bg-secondary/40 text-xs"
+                />
+                {txt.trim() ? (
+                  <button
+                    onClick={() => send()}
+                    disabled={sending}
+                    className="rounded-full bg-primary p-1.5 text-primary-foreground transition-opacity disabled:opacity-40"
+                    title="Enviar"
+                  >
+                    <Send className="h-3.5 w-3.5" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setRecording(true)}
+                    disabled={uploading}
+                    className="rounded-full p-1.5 text-primary hover:bg-primary/10 disabled:opacity-50"
+                    title="Grabar audio"
+                  >
+                    <Mic className="h-4 w-4" />
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </>
       )}
