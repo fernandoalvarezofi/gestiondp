@@ -18,9 +18,11 @@ import { cn } from "@/lib/utils";
 
 const EMOJIS = ["❤️", "😂", "😮", "😢", "👍", "🔥"];
 const PRIVATE_IMAGE_BUCKET = "mensajes-media";
+const PRIVATE_AUDIO_BUCKET = "audio-mensajes";
 
 const getStoragePath = (value?: string | null, bucket = PRIVATE_IMAGE_BUCKET) => {
   if (!value) return null;
+  if (/^(blob:|data:)/i.test(value)) return null;
   if (!/^https?:\/\//i.test(value)) return value.replace(/^\/+/, "");
   try {
     const url = new URL(value);
@@ -30,6 +32,14 @@ const getStoragePath = (value?: string | null, bucket = PRIVATE_IMAGE_BUCKET) =>
     if (url.pathname.includes(signedMarker)) return decodeURIComponent((url.pathname.split(signedMarker)[1] || "").split("?")[0]);
   } catch {}
   return null;
+};
+
+const signedMediaUrl = async (value?: string | null, bucket = PRIVATE_IMAGE_BUCKET) => {
+  if (!value) return null;
+  const path = getStoragePath(value, bucket);
+  if (!path) return value;
+  const { data } = await (supabase as any).storage.from(bucket).createSignedUrl(path, 60 * 60 * 24 * 7);
+  return data?.signedUrl || value;
 };
 
 export default function Mensajes() {
@@ -99,13 +109,11 @@ export default function Mensajes() {
     setReacciones(map);
   };
 
-  const firmarImagenes = async (list: any[]) => {
+  const firmarMedios = async (list: any[]) => {
     const out = await Promise.all((list || []).map(async (m: any) => {
-      if (!m?.imagen_url) return m;
-      const path = getStoragePath(m.imagen_url);
-      if (!path || m.imagen_url.includes("/storage/v1/object/sign/")) return m;
-      const { data } = await (supabase as any).storage.from(PRIVATE_IMAGE_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 365);
-      return data?.signedUrl ? { ...m, imagen_url: data.signedUrl } : m;
+      const imagen_url = m?.imagen_url ? await signedMediaUrl(m.imagen_url, PRIVATE_IMAGE_BUCKET) : m?.imagen_url;
+      const audio_url = m?.audio_url ? await signedMediaUrl(m.audio_url, PRIVATE_AUDIO_BUCKET) : m?.audio_url;
+      return { ...m, imagen_url, audio_url };
     }));
     return out;
   };
@@ -114,7 +122,7 @@ export default function Mensajes() {
     if (!convId || !user) return;
     (async () => {
       const { data: m } = await (supabase as any).from("mensajes").select("*").eq("conversacion_id", convId).order("created_at", { ascending: true });
-      const list = await firmarImagenes(m || []);
+      const list = await firmarMedios(m || []);
       setMsgs(list);
       cargarReacciones(list.map((x: any) => x.id));
       const { data: c } = await (supabase as any).from("conversaciones")
@@ -126,11 +134,14 @@ export default function Mensajes() {
     const ch = (supabase as any).channel(`m-${convId}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
         async (p: any) => {
-          const [msg] = await firmarImagenes([p.new]);
+          const [msg] = await firmarMedios([p.new]);
           setMsgs((s) => s.some((x) => x.id === msg.id) ? s : [...s, msg]);
         })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
-        (p: any) => setMsgs((prev) => prev.map((m) => m.id === p.new.id ? { ...m, ...p.new } : m)))
+        async (p: any) => {
+          const [msg] = await firmarMedios([p.new]);
+          setMsgs((prev) => prev.map((m) => m.id === msg.id ? { ...m, ...msg } : m));
+        })
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "mensajes", filter: `conversacion_id=eq.${convId}` },
         (p: any) => setMsgs((prev) => prev.filter((m) => m.id !== p.old.id)))
       .on("postgres_changes", { event: "*", schema: "public", table: "mensaje_reacciones" },
@@ -156,7 +167,7 @@ export default function Mensajes() {
     presenceRef.current?.track({ typing: e.target.value.length > 0 });
   };
 
-  const enviar = async (opts?: { imagen_url?: string; audio_url?: string; audio_dur?: number }) => {
+  const enviar = async (opts?: { imagen_url?: string; audio_url?: string; audio_dur?: number; imagen_preview?: string; audio_preview?: string }) => {
     if ((!txt.trim() && !opts?.imagen_url && !opts?.audio_url) || !user || !convId) return;
     presenceRef.current?.track({ typing: false });
     const tipo = opts?.audio_url ? "audio" : opts?.imagen_url ? "imagen" : "texto";
@@ -164,7 +175,7 @@ export default function Mensajes() {
     const tmpId = `tmp-${Date.now()}`;
     const optimistic: any = {
       id: tmpId, conversacion_id: convId, remitente_id: user.id, tipo,
-      contenido, imagen_url: opts?.imagen_url || null, audio_url: opts?.audio_url || null,
+      contenido, imagen_url: opts?.imagen_preview || opts?.imagen_url || null, audio_url: opts?.audio_preview || opts?.audio_url || null,
       audio_duracion: opts?.audio_dur || null, respuesta_a: replyA?.id || null,
       created_at: new Date().toISOString(), leido: false,
     };
@@ -179,7 +190,10 @@ export default function Mensajes() {
     }).select().single();
     setEnviando(false);
     if (error) { setMsgs((s) => s.filter((m) => m.id !== tmpId)); toast.error("No se pudo enviar"); }
-    else setMsgs((s) => s.map((m) => m.id === tmpId ? data : m));
+    else {
+      const [msg] = await firmarMedios([data]);
+      setMsgs((s) => s.map((m) => m.id === tmpId ? msg : m));
+    }
   };
 
   const seleccionarImagen = (file: File) => {
@@ -202,9 +216,7 @@ export default function Mensajes() {
       const path = `${user.id}/${convId}/${Date.now()}.${ext}`;
       const { error } = await (supabase as any).storage.from("mensajes-media").upload(path, pendingImg.file);
       if (error) throw error;
-      const { data } = await (supabase as any).storage.from(PRIVATE_IMAGE_BUCKET).createSignedUrl(path, 60 * 60 * 24 * 365);
-      if (!data?.signedUrl) throw new Error("No se pudo preparar la vista previa");
-      await enviar({ imagen_url: data.signedUrl });
+      await enviar({ imagen_url: path, imagen_preview: pendingImg.preview });
       URL.revokeObjectURL(pendingImg.preview);
       setPendingImg(null);
     } catch (e: any) { toast.error(e.message || "Error subiendo imagen"); }
@@ -227,8 +239,9 @@ export default function Mensajes() {
       const path = `${user.id}/${convId}/${Date.now()}.webm`;
       const { error } = await (supabase as any).storage.from("audio-mensajes").upload(path, blob, { contentType: blob.type });
       if (error) throw error;
-      const { data: signed } = await (supabase as any).storage.from("audio-mensajes").createSignedUrl(path, 60 * 60 * 24 * 365);
-      await enviar({ audio_url: signed.signedUrl, audio_dur: segs });
+      const localPreview = URL.createObjectURL(blob);
+      await enviar({ audio_url: path, audio_preview: localPreview, audio_dur: segs });
+      URL.revokeObjectURL(localPreview);
     } catch (e: any) { toast.error(e.message || "Error subiendo audio"); }
   };
 
