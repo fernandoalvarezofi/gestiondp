@@ -143,7 +143,7 @@ export default function Mercado() {
               style={c.id === cat ? { borderColor: c.color, background: `${c.color}10` } : {}}
               className="flex flex-col items-center gap-2 rounded-xl border p-3 transition hover:border-primary/40 hover:bg-secondary/40">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10">
-                <MarketplaceCategoryIcon slug={c.slug} name={c.nombre} className="h-4 w-4" />
+                <MarketplaceCategoryIcon slug={c.slug} name={c.nombre} icono={c.icono} className="h-4 w-4" />
               </div>
               <span className="line-clamp-1 text-xs font-medium">{c.nombre}</span>
             </button>
