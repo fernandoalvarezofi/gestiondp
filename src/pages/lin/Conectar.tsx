@@ -61,6 +61,7 @@ export default function Conectar() {
   // SOLICITUDES
   const [recibidas, setRecibidas] = useState<any[]>([]);
   const [enviadas, setEnviadas] = useState<any[]>([]);
+  const [seguirRecibidas, setSeguirRecibidas] = useState<any[]>([]);
 
   // DESCUBRIR
   const [tipoFiltro, setTipoFiltro] = useState<string | null>(null);
@@ -96,7 +97,7 @@ export default function Conectar() {
 
   const cargarSolicitudes = async () => {
     if (!user) return;
-    const [{ data: rec }, { data: env }] = await Promise.all([
+    const [{ data: rec }, { data: env }, { data: segRec }] = await Promise.all([
       (supabase as any).from("match_acciones")
         .select("id, perfil_id, nota, created_at, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,tipo,industria,verificado)")
         .eq("objetivo_id", user.id).eq("accion", "solicitud_enviada")
@@ -105,10 +106,29 @@ export default function Conectar() {
         .select("id, objetivo_id, created_at, perfil:perfiles!objetivo_id(id,nombre,username,avatar_url,tipo,industria)")
         .eq("perfil_id", user.id).eq("accion", "solicitud_enviada")
         .order("created_at", { ascending: false }),
+      (supabase as any).from("seguidos_solicitudes")
+        .select("id, solicitante_id, created_at, perfil:perfiles!solicitante_id(id,nombre,username,avatar_url,tipo,industria,verificado)")
+        .eq("destinatario_id", user.id)
+        .order("created_at", { ascending: false }),
     ]);
     setRecibidas(rec || []);
     setEnviadas(env || []);
+    setSeguirRecibidas(segRec || []);
   };
+
+  const aceptarSeguir = async (solicitanteId: string, nombre?: string) => {
+    const { error } = await (supabase as any).rpc("aceptar_seguir", { _solicitante: solicitanteId });
+    if (error) return toast.error(error.message);
+    setSeguirRecibidas((s) => s.filter((x) => x.solicitante_id !== solicitanteId));
+    toast.success(`${nombre || "Usuario"} ahora te sigue`);
+  };
+  const rechazarSeguir = async (solicitanteId: string) => {
+    const { error } = await (supabase as any).rpc("rechazar_seguir", { _solicitante: solicitanteId });
+    if (error) return toast.error(error.message);
+    setSeguirRecibidas((s) => s.filter((x) => x.solicitante_id !== solicitanteId));
+    toast.success("Solicitud rechazada");
+  };
+
 
   const cargarDescubrir = async () => {
     if (!user) return;
@@ -412,6 +432,29 @@ export default function Conectar() {
 
           {tab === "solicitudes" && (
             <div className="space-y-6">
+              {seguirRecibidas.length > 0 && (
+                <div>
+                  <h2 className="mb-3 text-xl font-bold">Solicitudes de seguimiento <span className="text-sm font-normal text-muted-foreground">({seguirRecibidas.length})</span></h2>
+                  <div className="divide-y rounded-xl border bg-card">
+                    {seguirRecibidas.map((s) => (
+                      <div key={s.id} className="flex items-center gap-3 p-4">
+                        <Avatar className="h-11 w-11"><AvatarImage src={s.perfil?.avatar_url || ""} className="object-cover" /><AvatarFallback>{initials(s.perfil?.nombre)}</AvatarFallback></Avatar>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <Link to={`/lin/perfil/${s.perfil?.username}`} className="font-semibold hover:text-primary">{s.perfil?.nombre}</Link>
+                            {s.perfil?.verificado && <BadgeCheck className="h-4 w-4 text-primary" />}
+                          </div>
+                          <p className="text-xs text-muted-foreground">Quiere seguirte · Hace {timeAgo(s.created_at)}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" className="rounded-full" onClick={() => aceptarSeguir(s.solicitante_id, s.perfil?.nombre)}>Aceptar</Button>
+                          <Button size="sm" variant="outline" className="rounded-full" onClick={() => rechazarSeguir(s.solicitante_id)}>Rechazar</Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
                 <h2 className="mb-3 text-xl font-bold">Recibidas {recibidas.length > 0 && <span className="text-sm font-normal text-muted-foreground">({recibidas.length})</span>}</h2>
                 {recibidas.length === 0 ? (
