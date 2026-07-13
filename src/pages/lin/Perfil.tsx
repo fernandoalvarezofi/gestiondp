@@ -244,8 +244,8 @@ export default function Perfil() {
                 <Button variant="outline" size="icon" className="h-9 w-9" onClick={() => navigate("/lin/configuracion")}><Settings className="h-4 w-4" /></Button>
               </>
             ) : perfilPrivado ? (
-              <Button onClick={toggleSeguir} disabled={loadingSeguir} size="sm" className="shadow-ember">
-                {loadingSeguir ? <Loader2 className="h-4 w-4 animate-spin" /> : <><UserPlus className="h-4 w-4" />Seguir</>}
+              <Button onClick={toggleSeguir} disabled={loadingSeguir} size="sm" variant={seguirPendiente ? "outline" : "default"} className={cn(!seguirPendiente && "shadow-ember")}>
+                {loadingSeguir ? <Loader2 className="h-4 w-4 animate-spin" /> : seguirPendiente ? <><Clock className="h-4 w-4" />Solicitud enviada</> : <><Lock className="h-4 w-4" />Solicitar seguir</>}
               </Button>
             ) : (
               <>
