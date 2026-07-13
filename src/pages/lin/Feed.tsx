@@ -15,6 +15,7 @@ import { PostCard } from "@/components/lin/PostCard";
 import { FeedRail } from "@/components/lin/FeedRail";
 import { initials } from "@/lib/worefHelpers";
 import { toast } from "sonner";
+import { useHiddenIds } from "@/hooks/useHiddenIds";
 
 const SELECT = `id,tipo,formato,titulo,cuerpo,imagen_url,video_url,thumbnail_url,
   encuesta_opciones,rol_buscado,modalidad,pais,tags,
@@ -38,6 +39,7 @@ const NAV_ITEMS = [
 
 export default function Feed() {
   const { user, signOut } = useAuth();
+  const hiddenIds = useHiddenIds();
   const [items, setItems] = useState<any[]>([]);
   const [tab, setTab] = useState<"para-vos" | "siguiendo" | "tendencias">("para-vos");
   const [q, setQ] = useState("");
@@ -149,11 +151,12 @@ export default function Feed() {
   };
 
   const filtered = useMemo(() => items.filter((p) => {
+    if (p.perfil?.id && hiddenIds.has(p.perfil.id)) return false;
     if (tab === "siguiendo" && !seguidos.includes(p.perfil?.id)) return false;
     if (!q.trim()) return true;
     const t = q.toLowerCase();
     return p.titulo?.toLowerCase().includes(t) || p.cuerpo?.toLowerCase().includes(t) || p.perfil?.nombre?.toLowerCase().includes(t);
-  }), [items, tab, seguidos, q]);
+  }), [items, tab, seguidos, q, hiddenIds]);
 
   return (
     <div className="mx-auto -mt-4 grid max-w-7xl gap-6 md:-mt-6 lg:grid-cols-[minmax(0,1fr)_320px]">
