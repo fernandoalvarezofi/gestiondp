@@ -3209,6 +3209,42 @@ export type Database = {
           },
         ]
       }
+      seguidos_solicitudes: {
+        Row: {
+          created_at: string
+          destinatario_id: string
+          id: string
+          solicitante_id: string
+        }
+        Insert: {
+          created_at?: string
+          destinatario_id: string
+          id?: string
+          solicitante_id: string
+        }
+        Update: {
+          created_at?: string
+          destinatario_id?: string
+          id?: string
+          solicitante_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seguidos_solicitudes_destinatario_id_fkey"
+            columns: ["destinatario_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "seguidos_solicitudes_solicitante_id_fkey"
+            columns: ["solicitante_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       senales_webrtc: {
         Row: {
           created_at: string
@@ -3553,6 +3589,7 @@ export type Database = {
         Args: { _solicitante_id: string }
         Returns: undefined
       }
+      aceptar_seguir: { Args: { _solicitante: string }; Returns: undefined }
       cancelar_conexion: { Args: { _otro_id: string }; Returns: undefined }
       delete_community_as_owner: {
         Args: { _community_id: string }
@@ -3592,6 +3629,8 @@ export type Database = {
         }
         Returns: boolean
       }
+      hay_bloqueo: { Args: { _a: string; _b: string }; Returns: boolean }
+      ids_ocultos_para: { Args: { _perfil: string }; Returns: string[] }
       incrementar_vistas: {
         Args: { p_publicacion_id: string }
         Returns: undefined
@@ -3620,6 +3659,7 @@ export type Database = {
         Args: { _solicitante_id: string }
         Returns: undefined
       }
+      rechazar_seguir: { Args: { _solicitante: string }; Returns: undefined }
       registrar_vista: {
         Args: { p_publicacion_id: string }
         Returns: undefined
@@ -3627,6 +3667,7 @@ export type Database = {
       seed_default_pipeline: { Args: { p_user_id: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      solicitar_seguir: { Args: { _destino: string }; Returns: string }
     }
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
