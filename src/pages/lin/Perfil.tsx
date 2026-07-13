@@ -41,6 +41,7 @@ export default function Perfil() {
   const [likedPubs, setLikedPubs] = useState<any[]>([]);
   const [repostesPubs, setRepostesPubs] = useState<any[]>([]);
   const [siguiendo, setSiguiendo] = useState(false);
+  const [seguirPendiente, setSeguirPendiente] = useState(false);
   const [loadingSeguir, setLoadingSeguir] = useState(false);
   const [tab, setTab] = useState("publicaciones");
   const [vista, setVista] = useState<"lista" | "grid">("grid");
@@ -76,6 +77,8 @@ export default function Perfil() {
       if (user && user.id !== p.id) {
         const { data: s } = await (supabase as any).from("seguidos").select("id").eq("seguidor_id", user.id).eq("seguido_id", p.id).maybeSingle();
         setSiguiendo(!!s);
+        const { data: pend } = await (supabase as any).from("seguidos_solicitudes").select("id").eq("solicitante_id", user.id).eq("destinatario_id", p.id).maybeSingle();
+        setSeguirPendiente(!!pend);
         const _a = user.id < p.id ? user.id : p.id;
         const _b = user.id < p.id ? p.id : user.id;
         const [{ data: conn }, { data: solE }, { data: solR }] = await Promise.all([
@@ -119,9 +122,20 @@ export default function Perfil() {
       if (siguiendo) {
         await (supabase as any).from("seguidos").delete().eq("seguidor_id", user.id).eq("seguido_id", perfil.id);
         setSiguiendo(false);
+      } else if (seguirPendiente) {
+        await (supabase as any).from("seguidos_solicitudes").delete().eq("solicitante_id", user.id).eq("destinatario_id", perfil.id);
+        setSeguirPendiente(false);
+        toast.success("Solicitud cancelada");
       } else {
-        await (supabase as any).from("seguidos").insert({ seguidor_id: user.id, seguido_id: perfil.id });
-        setSiguiendo(true); toast.success(`Ahora seguís a ${perfil.nombre}`);
+        const { data, error } = await (supabase as any).rpc("solicitar_seguir", { _destino: perfil.id });
+        if (error) { toast.error(error.message || "No se pudo seguir"); return; }
+        if (data === "solicitada") {
+          setSeguirPendiente(true);
+          toast.success(`Solicitud enviada a ${perfil.nombre}`);
+        } else {
+          setSiguiendo(true);
+          toast.success(`Ahora seguís a ${perfil.nombre}`);
+        }
       }
     } finally { setLoadingSeguir(false); }
   };
