@@ -61,6 +61,7 @@ export default function Conectar() {
   // SOLICITUDES
   const [recibidas, setRecibidas] = useState<any[]>([]);
   const [enviadas, setEnviadas] = useState<any[]>([]);
+  const [seguirRecibidas, setSeguirRecibidas] = useState<any[]>([]);
 
   // DESCUBRIR
   const [tipoFiltro, setTipoFiltro] = useState<string | null>(null);
@@ -96,7 +97,7 @@ export default function Conectar() {
 
   const cargarSolicitudes = async () => {
     if (!user) return;
-    const [{ data: rec }, { data: env }] = await Promise.all([
+    const [{ data: rec }, { data: env }, { data: segRec }] = await Promise.all([
       (supabase as any).from("match_acciones")
         .select("id, perfil_id, nota, created_at, perfil:perfiles!perfil_id(id,nombre,username,avatar_url,tipo,industria,verificado)")
         .eq("objetivo_id", user.id).eq("accion", "solicitud_enviada")
@@ -105,10 +106,29 @@ export default function Conectar() {
         .select("id, objetivo_id, created_at, perfil:perfiles!objetivo_id(id,nombre,username,avatar_url,tipo,industria)")
         .eq("perfil_id", user.id).eq("accion", "solicitud_enviada")
         .order("created_at", { ascending: false }),
+      (supabase as any).from("seguidos_solicitudes")
+        .select("id, solicitante_id, created_at, perfil:perfiles!solicitante_id(id,nombre,username,avatar_url,tipo,industria,verificado)")
+        .eq("destinatario_id", user.id)
+        .order("created_at", { ascending: false }),
     ]);
     setRecibidas(rec || []);
     setEnviadas(env || []);
+    setSeguirRecibidas(segRec || []);
   };
+
+  const aceptarSeguir = async (solicitanteId: string, nombre?: string) => {
+    const { error } = await (supabase as any).rpc("aceptar_seguir", { _solicitante: solicitanteId });
+    if (error) return toast.error(error.message);
+    setSeguirRecibidas((s) => s.filter((x) => x.solicitante_id !== solicitanteId));
+    toast.success(`${nombre || "Usuario"} ahora te sigue`);
+  };
+  const rechazarSeguir = async (solicitanteId: string) => {
+    const { error } = await (supabase as any).rpc("rechazar_seguir", { _solicitante: solicitanteId });
+    if (error) return toast.error(error.message);
+    setSeguirRecibidas((s) => s.filter((x) => x.solicitante_id !== solicitanteId));
+    toast.success("Solicitud rechazada");
+  };
+
 
   const cargarDescubrir = async () => {
     if (!user) return;
