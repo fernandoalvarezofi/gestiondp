@@ -3507,6 +3507,125 @@ export type Database = {
         }
         Relationships: []
       }
+      video_assets: {
+        Row: {
+          alto: number | null
+          ancho: number | null
+          created_at: string
+          duracion_s: number | null
+          id: string
+          mime: string | null
+          nombre: string
+          perfil_id: string
+          proyecto_id: string | null
+          storage_path: string
+          tamano_bytes: number | null
+          tipo: string
+          url: string
+        }
+        Insert: {
+          alto?: number | null
+          ancho?: number | null
+          created_at?: string
+          duracion_s?: number | null
+          id?: string
+          mime?: string | null
+          nombre: string
+          perfil_id: string
+          proyecto_id?: string | null
+          storage_path: string
+          tamano_bytes?: number | null
+          tipo: string
+          url: string
+        }
+        Update: {
+          alto?: number | null
+          ancho?: number | null
+          created_at?: string
+          duracion_s?: number | null
+          id?: string
+          mime?: string | null
+          nombre?: string
+          perfil_id?: string
+          proyecto_id?: string | null
+          storage_path?: string
+          tamano_bytes?: number | null
+          tipo?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_assets_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_assets_proyecto_id_fkey"
+            columns: ["proyecto_id"]
+            isOneToOne: false
+            referencedRelation: "video_proyectos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_proyectos: {
+        Row: {
+          alto: number
+          ancho: number
+          aspect_ratio: string
+          created_at: string
+          duracion_s: number
+          eliminado: boolean
+          fps: number
+          id: string
+          nombre: string
+          perfil_id: string
+          thumbnail_url: string | null
+          timeline: Json
+          updated_at: string
+        }
+        Insert: {
+          alto?: number
+          ancho?: number
+          aspect_ratio?: string
+          created_at?: string
+          duracion_s?: number
+          eliminado?: boolean
+          fps?: number
+          id?: string
+          nombre?: string
+          perfil_id: string
+          thumbnail_url?: string | null
+          timeline?: Json
+          updated_at?: string
+        }
+        Update: {
+          alto?: number
+          ancho?: number
+          aspect_ratio?: string
+          created_at?: string
+          duracion_s?: number
+          eliminado?: boolean
+          fps?: number
+          id?: string
+          nombre?: string
+          perfil_id?: string
+          thumbnail_url?: string | null
+          timeline?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_proyectos_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       feed_woref: {
