@@ -46,6 +46,8 @@ import VendedorProductos from "./pages/lin/VendedorProductos";
 import VendedorOrdenes from "./pages/lin/VendedorOrdenes";
 import MisCompras from "./pages/lin/MisCompras";
 import Configuracion from "./pages/lin/Configuracion";
+import Editor from "./pages/lin/Editor";
+import EditorProyecto from "./pages/lin/EditorProyecto";
 import RedDePerfil from "./pages/lin/RedDePerfil";
 import NotFound from "./pages/NotFound";
 
@@ -102,6 +104,8 @@ const App = () => (
                   <Route path="/lin/vendedor/ordenes" element={<VendedorOrdenes />} />
                   <Route path="/lin/mis-compras" element={<MisCompras />} />
                   <Route path="/lin/configuracion" element={<Configuracion />} />
+                  <Route path="/lin/editor" element={<Editor />} />
+                  <Route path="/lin/editor/:id" element={<EditorProyecto />} />
                   <Route path="/lin/perfil/:slug/red" element={<RedDePerfil />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
