@@ -80,7 +80,7 @@ export async function exportarTimeline(opts: {
     const buf = new Uint8Array(data);
     onProgress?.(100);
     return new Blob([buf.buffer as ArrayBuffer], { type: "video/mp4" });
-    return new Blob([data], { type: "video/mp4" });
+    
   } catch (e) {
     console.warn("FFmpeg fallback a WebM:", e);
     onProgress?.(100);
