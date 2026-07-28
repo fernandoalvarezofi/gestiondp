@@ -32,7 +32,6 @@ import NuevaComunidad from "./pages/lin/NuevaComunidad";
 import Foro from "./pages/lin/Foro";
 import ForoPost from "./pages/lin/ForoPost";
 import NuevoForoPost from "./pages/lin/NuevoForoPost";
-import Hub from "./pages/lin/Hub";
 
 import NuevaHistoria from "./pages/lin/NuevaHistoria";
 import HistoriaViewer from "./pages/lin/HistoriaViewer";
@@ -46,8 +45,6 @@ import VendedorProductos from "./pages/lin/VendedorProductos";
 import VendedorOrdenes from "./pages/lin/VendedorOrdenes";
 import MisCompras from "./pages/lin/MisCompras";
 import Configuracion from "./pages/lin/Configuracion";
-import Editor from "./pages/lin/Editor";
-import EditorProyecto from "./pages/lin/EditorProyecto";
 import RedDePerfil from "./pages/lin/RedDePerfil";
 import NotFound from "./pages/NotFound";
 
@@ -88,11 +85,11 @@ const App = () => (
                   <Route path="/lin/proyectos" element={<Proyectos />} />
                   <Route path="/lin/proyectos/nuevo" element={<NuevoProyecto />} />
                   <Route path="/lin/proyectos/:slug" element={<ProyectoDetalle />} />
-                  <Route path="/lin/hub" element={<Hub />} />
-                  <Route path="/lin/comunidades" element={<Navigate to="/lin/hub?tab=comunidades" replace />} />
+                  <Route path="/lin/hub" element={<Navigate to="/lin/foro" replace />} />
+                  <Route path="/lin/comunidades" element={<Comunidades />} />
                   <Route path="/lin/comunidades/nueva" element={<NuevaComunidad />} />
                   <Route path="/lin/comunidades/:slug" element={<ComunidadDetalle />} />
-                  <Route path="/lin/foro" element={<Navigate to="/lin/hub?tab=foro" replace />} />
+                  <Route path="/lin/foro" element={<Foro />} />
                   <Route path="/lin/foro/nuevo" element={<NuevoForoPost />} />
                   <Route path="/lin/foro/post/:id" element={<ForoPost />} />
                   <Route path="/lin/historias/nueva" element={<NuevaHistoria />} />
@@ -104,8 +101,6 @@ const App = () => (
                   <Route path="/lin/vendedor/ordenes" element={<VendedorOrdenes />} />
                   <Route path="/lin/mis-compras" element={<MisCompras />} />
                   <Route path="/lin/configuracion" element={<Configuracion />} />
-                  <Route path="/lin/editor" element={<Editor />} />
-                  <Route path="/lin/editor/:id" element={<EditorProyecto />} />
                   <Route path="/lin/perfil/:slug/red" element={<RedDePerfil />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
