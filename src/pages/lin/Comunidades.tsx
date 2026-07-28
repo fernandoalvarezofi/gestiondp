@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Plus, Users, Search, Hash, Sparkles, Flame, Crown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Comunidades() {
   const { user } = useAuth();
