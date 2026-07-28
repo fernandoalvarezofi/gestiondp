@@ -8,7 +8,9 @@ import { Plus, Users, Search, Hash, Sparkles, Flame, Crown, Loader2 } from "luci
 import { cn } from "@/lib/utils";
 
 export default function Comunidades() {
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
+  const [mias, setMias] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [tema, setTema] = useState("all");
@@ -23,6 +25,17 @@ export default function Comunidades() {
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!user) { setMias([]); return; }
+    (async () => {
+      const { data } = await (supabase as any).from("comunidad_miembros")
+        .select("comunidad:comunidades!comunidad_id(*)")
+        .eq("perfil_id", user.id);
+      setMias((data || []).map((r: any) => r.comunidad).filter(Boolean));
+    })();
+  }, [user?.id]);
+
 
   const tematicas = useMemo(() => {
     const set = new Set<string>();
