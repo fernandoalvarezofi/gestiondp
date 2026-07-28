@@ -269,7 +269,7 @@ export default function Conectar() {
         </nav>
         <div className="my-3 h-px bg-border" />
         <nav className="space-y-0.5">
-          <Link to="/lin/hub?tab=comunidades" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-secondary">
+          <Link to="/lin/comunidades" className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-secondary">
             <Users className="h-4 w-4" /> Grupos
           </Link>
           <button onClick={() => toast.info("Próximamente")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-secondary">

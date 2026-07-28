@@ -31,7 +31,7 @@ const NAV_ITEMS = [
   { icon: MessageCircle, label: "Mensajes", to: "/lin/mensajes" },
   { icon: Bell, label: "Notificaciones", to: "/lin/notificaciones" },
   { icon: Rocket, label: "Proyectos", to: "/lin/proyectos" },
-  { icon: Users, label: "Comunidad", to: "/lin/hub" },
+  { icon: Users, label: "Comunidades", to: "/lin/comunidades" },
   { icon: ShoppingBag, label: "Mercado", to: "/lin/mercado" },
   { icon: BarChart3Icon, label: "Mi panel", to: "/lin/panel" },
   { icon: Bookmark, label: "Guardados", to: "/lin/favoritos" },

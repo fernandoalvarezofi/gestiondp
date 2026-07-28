@@ -78,7 +78,7 @@ export default function ComunidadDetalle() {
     const { error } = await (supabase as any).rpc("delete_community_as_owner", { _community_id: c.id });
     if (error) return toast.error(error.message);
     toast.success("Comunidad eliminada");
-    navigate("/lin/hub?tab=comunidades");
+    navigate("/lin/comunidades");
   };
 
   const abrirAdmin = () => {
