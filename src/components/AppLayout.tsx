@@ -94,7 +94,7 @@ export function AppLayout() {
       items: [
         { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
         { to: "/lin/mercado", icon: Store, label: "Mercado" },
-        { to: "/lin/hub", icon: Users, label: "Comunidad" },
+        { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
       ],
     },
     {

@@ -6,9 +6,12 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Plus, Users, Search, Hash, Sparkles, Flame, Crown, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function Comunidades() {
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
+  const [mias, setMias] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState("");
   const [tema, setTema] = useState("all");
@@ -23,6 +26,17 @@ export default function Comunidades() {
       setLoading(false);
     })();
   }, []);
+
+  useEffect(() => {
+    if (!user) { setMias([]); return; }
+    (async () => {
+      const { data } = await (supabase as any).from("comunidad_miembros")
+        .select("comunidad:comunidades!comunidad_id(*)")
+        .eq("perfil_id", user.id);
+      setMias((data || []).map((r: any) => r.comunidad).filter(Boolean));
+    })();
+  }, [user?.id]);
+
 
   const tematicas = useMemo(() => {
     const set = new Set<string>();
@@ -70,6 +84,31 @@ export default function Comunidades() {
           </div>
         </div>
       </section>
+
+      {/* MIS COMUNIDADES */}
+      {mias.length > 0 && (
+        <section>
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-bold">
+            <Users className="h-5 w-5 text-primary" />Mis comunidades
+          </h2>
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-3 pb-2">
+              {mias.map((c) => (
+                <Link key={c.id} to={`/lin/comunidades/${c.slug}`}
+                  className="flex w-32 shrink-0 flex-col items-center gap-2 rounded-2xl border bg-card p-3 transition-colors hover:border-primary/40">
+                  {c.avatar_url
+                    ? <img src={c.avatar_url} alt="" className="h-12 w-12 rounded-xl object-cover" />
+                    : <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary text-base font-bold">{c.nombre?.[0] || "C"}</div>}
+                  <span className="w-full truncate text-center text-xs font-semibold">{c.nombre}</span>
+                </Link>
+              ))}
+            </div>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
+        </section>
+      )}
+
+
 
       {/* TOP 3 */}
       {top3.length > 0 && (

@@ -112,7 +112,7 @@ export default function ForoPost() {
     const { error } = await (supabase as any).from("foro_posts").delete().eq("id", post.id);
     if (error) return toast.error(error.message);
     toast.success("Publicación eliminada");
-    navigate("/lin/hub?tab=foro");
+    navigate("/lin/foro");
   };
 
   const iniciarEditPost = () => {
@@ -156,7 +156,7 @@ export default function ForoPost() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
-      <Link to="/lin/hub?tab=foro" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+      <Link to="/lin/foro" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
         <ArrowLeft className="h-3 w-3" /> Volver al foro
       </Link>
 
