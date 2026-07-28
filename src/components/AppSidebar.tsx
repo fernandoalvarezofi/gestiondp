@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 import {
   Home, Compass, Play, Rocket, Store, Users, MessageCircle, Bell, UserCircle,
-  Settings, LogOut, Plus, Film, BarChart3, Bookmark, FolderOpen, UserPlus, Scissors,
+  Settings, LogOut, Plus, Film, BarChart3, Bookmark, FolderOpen, UserPlus, MessagesSquare,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
