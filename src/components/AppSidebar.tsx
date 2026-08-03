@@ -36,7 +36,8 @@ const GROUPS: { label: string; items: NavItem[] }[] = [
     label: "Construir",
     items: [
       { title: "Proyectos", icon: Rocket, to: "/lin/proyectos" },
-      { title: "Mercado", icon: Store, to: "/lin/mercado" },
+      { title: "Propiedades", icon: Store, to: "/lin/propiedades" },
+      { title: "Mis propiedades", icon: Store, to: "/lin/mis-propiedades" },
       { title: "Foro", icon: MessagesSquare, to: "/lin/foro" },
       { title: "Comunidades", icon: Users, to: "/lin/comunidades" },
     ],
