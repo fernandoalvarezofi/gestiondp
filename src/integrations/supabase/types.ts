@@ -2522,6 +2522,247 @@ export type Database = {
         }
         Relationships: []
       }
+      propiedad_consultas: {
+        Row: {
+          created_at: string
+          id: string
+          mensaje: string
+          perfil_id: string
+          propiedad_id: string
+          telefono: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mensaje: string
+          perfil_id: string
+          propiedad_id: string
+          telefono?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mensaje?: string
+          perfil_id?: string
+          propiedad_id?: string
+          telefono?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propiedad_consultas_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propiedad_consultas_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propiedad_favoritos: {
+        Row: {
+          created_at: string
+          id: string
+          perfil_id: string
+          propiedad_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          perfil_id: string
+          propiedad_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          perfil_id?: string
+          propiedad_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propiedad_favoritos_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "propiedad_favoritos_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propiedad_media: {
+        Row: {
+          created_at: string
+          id: string
+          orden: number
+          propiedad_id: string
+          tipo: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          orden?: number
+          propiedad_id: string
+          tipo?: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          orden?: number
+          propiedad_id?: string
+          tipo?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propiedad_media_propiedad_id_fkey"
+            columns: ["propiedad_id"]
+            isOneToOne: false
+            referencedRelation: "propiedades"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      propiedades: {
+        Row: {
+          agente_id: string
+          ambientes: number | null
+          amenities: string[]
+          antiguedad: number | null
+          banos: number | null
+          barrio: string | null
+          ciudad: string | null
+          cocheras: number | null
+          created_at: string
+          descripcion: string | null
+          destacada: boolean
+          direccion: string | null
+          dormitorios: number | null
+          estado: Database["public"]["Enums"]["estado_propiedad"]
+          expensas: number | null
+          id: string
+          lat: number | null
+          lng: number | null
+          m2_cubiertos: number | null
+          m2_totales: number | null
+          moneda: string
+          operacion: Database["public"]["Enums"]["operacion_inmueble"]
+          pais: string | null
+          portada_url: string | null
+          precio: number
+          provincia: string | null
+          slug: string
+          tipo: Database["public"]["Enums"]["tipo_inmueble"]
+          titulo: string
+          total_consultas: number
+          total_favoritos: number
+          total_vistas: number
+          tour_estado: Database["public"]["Enums"]["tour_estado"]
+          tour_job_id: string | null
+          tour_url: string | null
+          tour_video_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          agente_id: string
+          ambientes?: number | null
+          amenities?: string[]
+          antiguedad?: number | null
+          banos?: number | null
+          barrio?: string | null
+          ciudad?: string | null
+          cocheras?: number | null
+          created_at?: string
+          descripcion?: string | null
+          destacada?: boolean
+          direccion?: string | null
+          dormitorios?: number | null
+          estado?: Database["public"]["Enums"]["estado_propiedad"]
+          expensas?: number | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          m2_cubiertos?: number | null
+          m2_totales?: number | null
+          moneda?: string
+          operacion?: Database["public"]["Enums"]["operacion_inmueble"]
+          pais?: string | null
+          portada_url?: string | null
+          precio?: number
+          provincia?: string | null
+          slug: string
+          tipo?: Database["public"]["Enums"]["tipo_inmueble"]
+          titulo: string
+          total_consultas?: number
+          total_favoritos?: number
+          total_vistas?: number
+          tour_estado?: Database["public"]["Enums"]["tour_estado"]
+          tour_job_id?: string | null
+          tour_url?: string | null
+          tour_video_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agente_id?: string
+          ambientes?: number | null
+          amenities?: string[]
+          antiguedad?: number | null
+          banos?: number | null
+          barrio?: string | null
+          ciudad?: string | null
+          cocheras?: number | null
+          created_at?: string
+          descripcion?: string | null
+          destacada?: boolean
+          direccion?: string | null
+          dormitorios?: number | null
+          estado?: Database["public"]["Enums"]["estado_propiedad"]
+          expensas?: number | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          m2_cubiertos?: number | null
+          m2_totales?: number | null
+          moneda?: string
+          operacion?: Database["public"]["Enums"]["operacion_inmueble"]
+          pais?: string | null
+          portada_url?: string | null
+          precio?: number
+          provincia?: string | null
+          slug?: string
+          tipo?: Database["public"]["Enums"]["tipo_inmueble"]
+          titulo?: string
+          total_consultas?: number
+          total_favoritos?: number
+          total_vistas?: number
+          tour_estado?: Database["public"]["Enums"]["tour_estado"]
+          tour_job_id?: string | null
+          tour_url?: string | null
+          tour_video_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "propiedades_agente_id_fkey"
+            columns: ["agente_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proyecto_actividad: {
         Row: {
           accion: string
@@ -3783,6 +4024,10 @@ export type Database = {
         Args: { p_publicacion_id: string }
         Returns: undefined
       }
+      registrar_vista_propiedad: {
+        Args: { p_propiedad_id: string }
+        Returns: undefined
+      }
       seed_default_pipeline: { Args: { p_user_id: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
@@ -3791,6 +4036,13 @@ export type Database = {
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
       app_role: "admin" | "manager" | "rep"
+      estado_propiedad:
+        | "borrador"
+        | "activa"
+        | "reservada"
+        | "vendida"
+        | "alquilada"
+        | "pausada"
       estado_proyecto:
         | "idea"
         | "en_desarrollo"
@@ -3809,12 +4061,24 @@ export type Database = {
         | "proyecto"
         | "encuesta"
         | "recurso"
+      operacion_inmueble: "venta" | "alquiler" | "alquiler_temporal"
       proyecto_tarea_estado:
         | "backlog"
         | "en_progreso"
         | "revision"
         | "completada"
       proyecto_tarea_prioridad: "baja" | "media" | "alta" | "urgente"
+      tipo_inmueble:
+        | "casa"
+        | "departamento"
+        | "ph"
+        | "terreno"
+        | "local"
+        | "oficina"
+        | "galpon"
+        | "cochera"
+        | "campo"
+        | "otro"
       tipo_miembro_comunidad: "miembro" | "moderador" | "admin"
       tipo_notificacion:
         | "nuevo_seguidor"
@@ -3856,6 +4120,7 @@ export type Database = {
         | "creador"
         | "profesional"
         | "institucion"
+      tour_estado: "sin_tour" | "procesando" | "listo" | "error"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -3985,6 +4250,14 @@ export const Constants = {
     Enums: {
       activity_type: ["call", "email", "meeting", "note"],
       app_role: ["admin", "manager", "rep"],
+      estado_propiedad: [
+        "borrador",
+        "activa",
+        "reservada",
+        "vendida",
+        "alquilada",
+        "pausada",
+      ],
       estado_proyecto: [
         "idea",
         "en_desarrollo",
@@ -4005,6 +4278,7 @@ export const Constants = {
         "encuesta",
         "recurso",
       ],
+      operacion_inmueble: ["venta", "alquiler", "alquiler_temporal"],
       proyecto_tarea_estado: [
         "backlog",
         "en_progreso",
@@ -4012,6 +4286,18 @@ export const Constants = {
         "completada",
       ],
       proyecto_tarea_prioridad: ["baja", "media", "alta", "urgente"],
+      tipo_inmueble: [
+        "casa",
+        "departamento",
+        "ph",
+        "terreno",
+        "local",
+        "oficina",
+        "galpon",
+        "cochera",
+        "campo",
+        "otro",
+      ],
       tipo_miembro_comunidad: ["miembro", "moderador", "admin"],
       tipo_notificacion: [
         "nuevo_seguidor",
@@ -4056,6 +4342,7 @@ export const Constants = {
         "profesional",
         "institucion",
       ],
+      tour_estado: ["sin_tour", "procesando", "listo", "error"],
     },
   },
 } as const

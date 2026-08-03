@@ -40,6 +40,10 @@ import Conectar from "./pages/lin/Conectar";
 import Explorar from "./pages/lin/Explorar";
 import Mercado from "./pages/lin/Mercado";
 import MercadoProducto from "./pages/lin/MercadoProducto";
+import Propiedades from "./pages/lin/Propiedades";
+import PropiedadDetalle from "./pages/lin/PropiedadDetalle";
+import NuevaPropiedad from "./pages/lin/NuevaPropiedad";
+import MisPropiedades from "./pages/lin/MisPropiedades";
 import VendedorConfigurar from "./pages/lin/VendedorConfigurar";
 import VendedorProductos from "./pages/lin/VendedorProductos";
 import VendedorOrdenes from "./pages/lin/VendedorOrdenes";
@@ -96,6 +100,10 @@ const App = () => (
                   <Route path="/lin/historias/:perfilId" element={<HistoriaViewer />} />
                   <Route path="/lin/mercado" element={<Mercado />} />
                   <Route path="/lin/mercado/:slug" element={<MercadoProducto />} />
+                  <Route path="/lin/propiedades" element={<Propiedades />} />
+                  <Route path="/lin/propiedades/nueva" element={<NuevaPropiedad />} />
+                  <Route path="/lin/mis-propiedades" element={<MisPropiedades />} />
+                  <Route path="/lin/propiedades/:slug" element={<PropiedadDetalle />} />
                   <Route path="/lin/vendedor/configurar" element={<VendedorConfigurar />} />
                   <Route path="/lin/vendedor/productos" element={<VendedorProductos />} />
                   <Route path="/lin/vendedor/ordenes" element={<VendedorOrdenes />} />

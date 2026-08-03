@@ -32,7 +32,7 @@ const NAV_ITEMS = [
   { icon: Bell, label: "Notificaciones", to: "/lin/notificaciones" },
   { icon: Rocket, label: "Proyectos", to: "/lin/proyectos" },
   { icon: Users, label: "Comunidades", to: "/lin/comunidades" },
-  { icon: ShoppingBag, label: "Mercado", to: "/lin/mercado" },
+  { icon: Home, label: "Propiedades", to: "/lin/propiedades" },
   { icon: BarChart3Icon, label: "Mi panel", to: "/lin/panel" },
   { icon: Bookmark, label: "Guardados", to: "/lin/favoritos" },
 ];
