@@ -25,11 +25,12 @@ import { initials } from "@/lib/worefHelpers";
 export function AppLayout() {
   const { session, user, loading } = useAuth();
   const { data: onboardingStatus, isLoading: onboardingLoading } = useOnboardingStatus();
-  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [noLeidos, setNoLeidos] = useState(0);
   const [notifSinLeer, setNotifSinLeer] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
   usePresenciaHeartbeat();
 
   const { data: miPerfil } = useQuery({
