@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
-import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AppSidebar } from "./AppSidebar";
