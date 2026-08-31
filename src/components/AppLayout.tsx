@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
-import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
+
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { AppSidebar } from "./AppSidebar";
@@ -25,11 +25,12 @@ import { initials } from "@/lib/worefHelpers";
 export function AppLayout() {
   const { session, user, loading } = useAuth();
   const { data: onboardingStatus, isLoading: onboardingLoading } = useOnboardingStatus();
-  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
   const [noLeidos, setNoLeidos] = useState(0);
   const [notifSinLeer, setNotifSinLeer] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+
   usePresenciaHeartbeat();
 
   const { data: miPerfil } = useQuery({
@@ -80,9 +81,10 @@ export function AppLayout() {
 
   if (!session) return <Navigate to="/auth" replace />;
 
-  if (onboardingStatus?.needsOnboarding && !onboardingDismissed) {
-    return <OnboardingWizard onComplete={() => setOnboardingDismissed(true)} />;
+  if (onboardingStatus?.needsOnboarding && location.pathname !== "/lin/perfil/editar") {
+    return <Navigate to="/lin/perfil/editar" replace />;
   }
+
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
     `min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg transition-all ${isActive ? "text-foreground" : "text-muted-foreground"}`;
