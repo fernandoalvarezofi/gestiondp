@@ -81,9 +81,10 @@ export function AppLayout() {
 
   if (!session) return <Navigate to="/auth" replace />;
 
-  if (onboardingStatus?.needsOnboarding && !onboardingDismissed) {
-    return <OnboardingWizard onComplete={() => setOnboardingDismissed(true)} />;
+  if (onboardingStatus?.needsOnboarding && location.pathname !== "/lin/perfil/editar") {
+    return <Navigate to="/lin/perfil/editar" replace />;
   }
+
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
     `min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg transition-all ${isActive ? "text-foreground" : "text-muted-foreground"}`;
