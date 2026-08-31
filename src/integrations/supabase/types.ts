@@ -45,22 +45,7 @@ export type Database = {
           type?: Database["public"]["Enums"]["activity_type"]
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "activities_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "activities_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "deals"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       bloqueos: {
         Row: {
@@ -524,56 +509,6 @@ export type Database = {
           },
         ]
       }
-      contacts: {
-        Row: {
-          company_id: string | null
-          created_at: string
-          created_by: string
-          email: string | null
-          first_name: string
-          id: string
-          last_name: string
-          phone: string | null
-          position: string | null
-          tags: string[] | null
-          updated_at: string
-        }
-        Insert: {
-          company_id?: string | null
-          created_at?: string
-          created_by: string
-          email?: string | null
-          first_name: string
-          id?: string
-          last_name: string
-          phone?: string | null
-          position?: string | null
-          tags?: string[] | null
-          updated_at?: string
-        }
-        Update: {
-          company_id?: string | null
-          created_at?: string
-          created_by?: string
-          email?: string | null
-          first_name?: string
-          id?: string
-          last_name?: string
-          phone?: string | null
-          position?: string | null
-          tags?: string[] | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contacts_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       conversaciones: {
         Row: {
           created_at: string
@@ -618,86 +553,6 @@ export type Database = {
             columns: ["perfil_b_id"]
             isOneToOne: false
             referencedRelation: "perfiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      deals: {
-        Row: {
-          close_date: string | null
-          company_id: string | null
-          contact_id: string | null
-          created_at: string
-          created_by: string
-          id: string
-          notes: string | null
-          owner_id: string
-          pipeline_id: string
-          probability: number | null
-          stage_id: string
-          title: string
-          updated_at: string
-          value: number | null
-        }
-        Insert: {
-          close_date?: string | null
-          company_id?: string | null
-          contact_id?: string | null
-          created_at?: string
-          created_by: string
-          id?: string
-          notes?: string | null
-          owner_id: string
-          pipeline_id: string
-          probability?: number | null
-          stage_id: string
-          title: string
-          updated_at?: string
-          value?: number | null
-        }
-        Update: {
-          close_date?: string | null
-          company_id?: string | null
-          contact_id?: string | null
-          created_at?: string
-          created_by?: string
-          id?: string
-          notes?: string | null
-          owner_id?: string
-          pipeline_id?: string
-          probability?: number | null
-          stage_id?: string
-          title?: string
-          updated_at?: string
-          value?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "deals_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deals_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deals_pipeline_id_fkey"
-            columns: ["pipeline_id"]
-            isOneToOne: false
-            referencedRelation: "pipelines"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "deals_stage_id_fkey"
-            columns: ["stage_id"]
-            isOneToOne: false
-            referencedRelation: "pipeline_stages"
             referencedColumns: ["id"]
           },
         ]
@@ -2404,76 +2259,6 @@ export type Database = {
         }
         Relationships: []
       }
-      pipeline_stages: {
-        Row: {
-          color: string
-          created_at: string
-          id: string
-          name: string
-          pipeline_id: string
-          position: number
-        }
-        Insert: {
-          color?: string
-          created_at?: string
-          id?: string
-          name: string
-          pipeline_id: string
-          position?: number
-        }
-        Update: {
-          color?: string
-          created_at?: string
-          id?: string
-          name?: string
-          pipeline_id?: string
-          position?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pipeline_stages_pipeline_id_fkey"
-            columns: ["pipeline_id"]
-            isOneToOne: false
-            referencedRelation: "pipelines"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      pipelines: {
-        Row: {
-          created_at: string
-          created_by: string
-          id: string
-          name: string
-          team_id: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by: string
-          id?: string
-          name: string
-          team_id?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string
-          id?: string
-          name?: string
-          team_id?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "pipelines_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       presencia: {
         Row: {
           online: boolean
@@ -3600,22 +3385,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "tasks_contact_id_fkey"
-            columns: ["contact_id"]
-            isOneToOne: false
-            referencedRelation: "contacts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tasks_deal_id_fkey"
-            columns: ["deal_id"]
-            isOneToOne: false
-            referencedRelation: "deals"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       team_members: {
         Row: {
@@ -4028,7 +3798,6 @@ export type Database = {
         Args: { p_propiedad_id: string }
         Returns: undefined
       }
-      seed_default_pipeline: { Args: { p_user_id: string }; Returns: string }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       solicitar_seguir: { Args: { _destino: string }; Returns: string }
