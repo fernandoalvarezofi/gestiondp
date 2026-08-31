@@ -1,0 +1,15 @@
+# Woref
+
+> Red profesional inmobiliaria: propiedades con tours 3D, proyectos, comunidades y foro para agentes, desarrolladores e inversores.
+
+Woref conecta a quienes construyen y comercializan proyectos inmobiliarios. Las propiedades pueden mostrarse con recorridos 3D generados desde video, y la comunidad comparte proyectos, oportunidades y conocimiento.
+
+## Pages
+
+- [Inicio](/): Qué es Woref y para quién.
+- [Propiedades](/lin/propiedades): Buscador de propiedades en venta y alquiler, con filtros y tours 3D.
+- [Explorar](/lin/explorar): Descubrimiento de publicaciones, proyectos y comunidades.
+- [Proyectos](/lin/proyectos): Proyectos inmobiliarios y emprendimientos publicados por la comunidad.
+- [Comunidades](/lin/comunidades): Comunidades públicas por temática.
+- [Foro](/lin/foro): Preguntas y respuestas de la comunidad.
+- [Mercado](/lin/mercado): Productos y servicios ofrecidos por vendedores.
