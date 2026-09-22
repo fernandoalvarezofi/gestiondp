@@ -271,6 +271,40 @@ export default function MisPropiedades() {
                 </div>
                 <Button onClick={guardarUrl} className="gap-1.5"><Check className="h-4 w-4" /> Guardar</Button>
               </div>
+              <div className="rounded-lg border p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        salud?.estado === "ok"
+                          ? "bg-emerald-500"
+                          : salud?.estado === "error"
+                          ? "bg-destructive"
+                          : "bg-muted-foreground/40"
+                      } ${verificando ? "animate-pulse" : ""}`}
+                    />
+                    <p className="text-sm font-semibold">
+                      {salud?.estado === "ok"
+                        ? "Servicio disponible"
+                        : salud?.estado === "error"
+                        ? "Servicio no disponible"
+                        : "Sin servicio configurado"}
+                    </p>
+                    {salud?.estado === "ok" && salud.latenciaMs != null && (
+                      <Badge variant="secondary">{salud.latenciaMs} ms</Badge>
+                    )}
+                  </div>
+                  <Button size="sm" variant="outline" className="gap-1.5" disabled={verificando} onClick={chequear}>
+                    <RefreshCw className={`h-3.5 w-3.5 ${verificando ? "animate-spin" : ""}`} /> Verificar ahora
+                  </Button>
+                </div>
+                {salud?.detalle && <p className="mt-2 text-xs text-destructive">{salud.detalle}</p>}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {salud
+                    ? `Última comprobación: ${new Date(salud.verificadoAt).toLocaleTimeString("es-AR")} · se revisa cada 60 segundos`
+                    : "Comprobando…"}
+                </p>
+              </div>
               <div className="rounded-lg border bg-secondary/30 p-3 text-xs text-muted-foreground">
                 <p className="font-semibold text-foreground">Cómo grabar un buen video</p>
                 <p className="mt-1">Caminá lento alrededor y dentro del ambiente, cubriendo cada pared. 60–120 segundos, luz uniforme, sin movimientos bruscos.</p>
