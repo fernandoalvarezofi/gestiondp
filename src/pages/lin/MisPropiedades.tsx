@@ -14,7 +14,10 @@ import {
   Plus, Pencil, Trash2, Box, Loader2, RefreshCw, Upload, Eye, MessageCircle, Home, Check, Settings2,
 } from "lucide-react";
 import { formatPrecio, labelEstado, labelOperacion, ubicacionCorta } from "@/lib/inmobiliaria";
-import { crearTourJob, obtenerTourJob, getSplatServiceUrl, setSplatServiceUrl } from "@/lib/splatService";
+import {
+  crearTourJob, obtenerTourJob, getSplatServiceUrl, setSplatServiceUrl,
+  verificarSaludServicio, type SaludServicio,
+} from "@/lib/splatService";
 import { toast } from "sonner";
 
 const MAX_VIDEO = 400 * 1024 * 1024;
@@ -27,6 +30,25 @@ export default function MisPropiedades() {
   const [loading, setLoading] = useState(true);
   const [serviceUrl, setServiceUrlState] = useState(getSplatServiceUrl());
   const [procesando, setProcesando] = useState<string | null>(null);
+  const [salud, setSalud] = useState<SaludServicio | null>(null);
+  const [verificando, setVerificando] = useState(false);
+
+  const chequear = async () => {
+    setVerificando(true);
+    try {
+      setSalud(await verificarSaludServicio());
+    } finally {
+      setVerificando(false);
+    }
+  };
+
+  useEffect(() => {
+    chequear();
+    const id = setInterval(chequear, 60000);
+    const onVisible = () => { if (document.visibilityState === "visible") chequear(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
+  }, [serviceUrl]);
 
   const cargar = async () => {
     if (!user) return;
@@ -58,6 +80,7 @@ export default function MisPropiedades() {
     setSplatServiceUrl(serviceUrl);
     setServiceUrlState(getSplatServiceUrl());
     toast.success(getSplatServiceUrl() ? "Servicio 3D configurado" : "Servicio 3D desconectado");
+    chequear();
   };
 
   const subirVideo = async (propiedad: any, file: File | null) => {
@@ -247,6 +270,40 @@ export default function MisPropiedades() {
                   />
                 </div>
                 <Button onClick={guardarUrl} className="gap-1.5"><Check className="h-4 w-4" /> Guardar</Button>
+              </div>
+              <div className="rounded-lg border p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        salud?.estado === "ok"
+                          ? "bg-emerald-500"
+                          : salud?.estado === "error"
+                          ? "bg-destructive"
+                          : "bg-muted-foreground/40"
+                      } ${verificando ? "animate-pulse" : ""}`}
+                    />
+                    <p className="text-sm font-semibold">
+                      {salud?.estado === "ok"
+                        ? "Servicio disponible"
+                        : salud?.estado === "error"
+                        ? "Servicio no disponible"
+                        : "Sin servicio configurado"}
+                    </p>
+                    {salud?.estado === "ok" && salud.latenciaMs != null && (
+                      <Badge variant="secondary">{salud.latenciaMs} ms</Badge>
+                    )}
+                  </div>
+                  <Button size="sm" variant="outline" className="gap-1.5" disabled={verificando} onClick={chequear}>
+                    <RefreshCw className={`h-3.5 w-3.5 ${verificando ? "animate-spin" : ""}`} /> Verificar ahora
+                  </Button>
+                </div>
+                {salud?.detalle && <p className="mt-2 text-xs text-destructive">{salud.detalle}</p>}
+                <p className="mt-2 text-xs text-muted-foreground">
+                  {salud
+                    ? `Última comprobación: ${new Date(salud.verificadoAt).toLocaleTimeString("es-AR")} · se revisa cada 60 segundos`
+                    : "Comprobando…"}
+                </p>
               </div>
               <div className="rounded-lg border bg-secondary/30 p-3 text-xs text-muted-foreground">
                 <p className="font-semibold text-foreground">Cómo grabar un buen video</p>
