@@ -30,6 +30,25 @@ export default function MisPropiedades() {
   const [loading, setLoading] = useState(true);
   const [serviceUrl, setServiceUrlState] = useState(getSplatServiceUrl());
   const [procesando, setProcesando] = useState<string | null>(null);
+  const [salud, setSalud] = useState<SaludServicio | null>(null);
+  const [verificando, setVerificando] = useState(false);
+
+  const chequear = async () => {
+    setVerificando(true);
+    try {
+      setSalud(await verificarSaludServicio());
+    } finally {
+      setVerificando(false);
+    }
+  };
+
+  useEffect(() => {
+    chequear();
+    const id = setInterval(chequear, 60000);
+    const onVisible = () => { if (document.visibilityState === "visible") chequear(); };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", onVisible); };
+  }, [serviceUrl]);
 
   const cargar = async () => {
     if (!user) return;
@@ -61,6 +80,7 @@ export default function MisPropiedades() {
     setSplatServiceUrl(serviceUrl);
     setServiceUrlState(getSplatServiceUrl());
     toast.success(getSplatServiceUrl() ? "Servicio 3D configurado" : "Servicio 3D desconectado");
+    chequear();
   };
 
   const subirVideo = async (propiedad: any, file: File | null) => {
