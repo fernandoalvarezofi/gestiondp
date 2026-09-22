@@ -14,7 +14,10 @@ import {
   Plus, Pencil, Trash2, Box, Loader2, RefreshCw, Upload, Eye, MessageCircle, Home, Check, Settings2,
 } from "lucide-react";
 import { formatPrecio, labelEstado, labelOperacion, ubicacionCorta } from "@/lib/inmobiliaria";
-import { crearTourJob, obtenerTourJob, getSplatServiceUrl, setSplatServiceUrl } from "@/lib/splatService";
+import {
+  crearTourJob, obtenerTourJob, getSplatServiceUrl, setSplatServiceUrl,
+  verificarSaludServicio, type SaludServicio,
+} from "@/lib/splatService";
 import { toast } from "sonner";
 
 const MAX_VIDEO = 400 * 1024 * 1024;
