@@ -557,6 +557,307 @@ export type Database = {
           },
         ]
       }
+      delivery_comercios: {
+        Row: {
+          categoria: Database["public"]["Enums"]["delivery_categoria"]
+          costo_envio: number
+          created_at: string
+          descripcion: string | null
+          destacado: boolean
+          direccion: string
+          esta_abierto: boolean
+          id: string
+          imagen_url: string | null
+          logo_url: string | null
+          nombre: string
+          pedido_minimo: number
+          propietario_id: string | null
+          rating: number
+          slug: string
+          tiempo_max: number
+          tiempo_min: number
+          updated_at: string
+        }
+        Insert: {
+          categoria: Database["public"]["Enums"]["delivery_categoria"]
+          costo_envio?: number
+          created_at?: string
+          descripcion?: string | null
+          destacado?: boolean
+          direccion: string
+          esta_abierto?: boolean
+          id?: string
+          imagen_url?: string | null
+          logo_url?: string | null
+          nombre: string
+          pedido_minimo?: number
+          propietario_id?: string | null
+          rating?: number
+          slug: string
+          tiempo_max?: number
+          tiempo_min?: number
+          updated_at?: string
+        }
+        Update: {
+          categoria?: Database["public"]["Enums"]["delivery_categoria"]
+          costo_envio?: number
+          created_at?: string
+          descripcion?: string | null
+          destacado?: boolean
+          direccion?: string
+          esta_abierto?: boolean
+          id?: string
+          imagen_url?: string | null
+          logo_url?: string | null
+          nombre?: string
+          pedido_minimo?: number
+          propietario_id?: string | null
+          rating?: number
+          slug?: string
+          tiempo_max?: number
+          tiempo_min?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_comercios_propietario_id_fkey"
+            columns: ["propietario_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_direcciones: {
+        Row: {
+          alias: string
+          ciudad: string
+          created_at: string
+          detalle: string | null
+          direccion: string
+          id: string
+          instrucciones: string | null
+          latitud: number | null
+          longitud: number | null
+          perfil_id: string
+          predeterminada: boolean
+          updated_at: string
+        }
+        Insert: {
+          alias?: string
+          ciudad?: string
+          created_at?: string
+          detalle?: string | null
+          direccion: string
+          id?: string
+          instrucciones?: string | null
+          latitud?: number | null
+          longitud?: number | null
+          perfil_id: string
+          predeterminada?: boolean
+          updated_at?: string
+        }
+        Update: {
+          alias?: string
+          ciudad?: string
+          created_at?: string
+          detalle?: string | null
+          direccion?: string
+          id?: string
+          instrucciones?: string | null
+          latitud?: number | null
+          longitud?: number | null
+          perfil_id?: string
+          predeterminada?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_direcciones_perfil_id_fkey"
+            columns: ["perfil_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_pedido_items: {
+        Row: {
+          cantidad: number
+          created_at: string
+          id: string
+          nombre: string
+          notas: string | null
+          pedido_id: string
+          precio_unitario: number
+          producto_id: string | null
+        }
+        Insert: {
+          cantidad: number
+          created_at?: string
+          id?: string
+          nombre: string
+          notas?: string | null
+          pedido_id: string
+          precio_unitario: number
+          producto_id?: string | null
+        }
+        Update: {
+          cantidad?: number
+          created_at?: string
+          id?: string
+          nombre?: string
+          notas?: string | null
+          pedido_id?: string
+          precio_unitario?: number
+          producto_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_pedido_items_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_pedido_items_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_pedidos: {
+        Row: {
+          cliente_id: string
+          comercio_id: string
+          costo_envio: number
+          created_at: string
+          direccion_entrega: string
+          direccion_id: string | null
+          entrega_estimada: string | null
+          estado: Database["public"]["Enums"]["delivery_estado_pedido"]
+          id: string
+          metodo_pago: string
+          notas: string | null
+          subtotal: number
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          comercio_id: string
+          costo_envio?: number
+          created_at?: string
+          direccion_entrega: string
+          direccion_id?: string | null
+          entrega_estimada?: string | null
+          estado?: Database["public"]["Enums"]["delivery_estado_pedido"]
+          id?: string
+          metodo_pago?: string
+          notas?: string | null
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          comercio_id?: string
+          costo_envio?: number
+          created_at?: string
+          direccion_entrega?: string
+          direccion_id?: string | null
+          entrega_estimada?: string | null
+          estado?: Database["public"]["Enums"]["delivery_estado_pedido"]
+          id?: string
+          metodo_pago?: string
+          notas?: string | null
+          subtotal?: number
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_pedidos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "perfiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_pedidos_comercio_id_fkey"
+            columns: ["comercio_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_comercios"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_pedidos_direccion_id_fkey"
+            columns: ["direccion_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_direcciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_productos: {
+        Row: {
+          categoria: string
+          comercio_id: string
+          created_at: string
+          descripcion: string | null
+          destacado: boolean
+          disponible: boolean
+          id: string
+          imagen_url: string | null
+          nombre: string
+          precio: number
+          precio_anterior: number | null
+          stock: number | null
+          updated_at: string
+        }
+        Insert: {
+          categoria?: string
+          comercio_id: string
+          created_at?: string
+          descripcion?: string | null
+          destacado?: boolean
+          disponible?: boolean
+          id?: string
+          imagen_url?: string | null
+          nombre: string
+          precio: number
+          precio_anterior?: number | null
+          stock?: number | null
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          comercio_id?: string
+          created_at?: string
+          descripcion?: string | null
+          destacado?: boolean
+          disponible?: boolean
+          id?: string
+          imagen_url?: string | null
+          nombre?: string
+          precio?: number
+          precio_anterior?: number | null
+          stock?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_productos_comercio_id_fkey"
+            columns: ["comercio_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_comercios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_templates: {
         Row: {
           body: string
@@ -3805,6 +4106,14 @@ export type Database = {
     Enums: {
       activity_type: "call" | "email" | "meeting" | "note"
       app_role: "admin" | "manager" | "rep"
+      delivery_categoria: "comida" | "supermercado" | "farmacia" | "tiendas"
+      delivery_estado_pedido:
+        | "pendiente"
+        | "confirmado"
+        | "preparando"
+        | "en_camino"
+        | "entregado"
+        | "cancelado"
       estado_propiedad:
         | "borrador"
         | "activa"
@@ -4019,6 +4328,15 @@ export const Constants = {
     Enums: {
       activity_type: ["call", "email", "meeting", "note"],
       app_role: ["admin", "manager", "rep"],
+      delivery_categoria: ["comida", "supermercado", "farmacia", "tiendas"],
+      delivery_estado_pedido: [
+        "pendiente",
+        "confirmado",
+        "preparando",
+        "en_camino",
+        "entregado",
+        "cancelado",
+      ],
       estado_propiedad: [
         "borrador",
         "activa",
