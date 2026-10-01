@@ -3,7 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { Store } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
-import { db, DeliveryStore, matchesVertical, verticals } from "@/lib/delivery";
+import { db, DeliveryStore, isOpenNow, matchesVertical, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 type Sort = "recomendados" | "rating" | "rapido" | "envio";
@@ -42,7 +42,7 @@ export default function Category() {
     if (sort === "rating") sorted.sort((a, b) => b.rating - a.rating);
     if (sort === "rapido") sorted.sort((a, b) => a.tiempo_max - b.tiempo_max);
     if (sort === "envio") sorted.sort((a, b) => a.costo_envio - b.costo_envio);
-    return sorted.sort((a, b) => Number(b.esta_abierto) - Number(a.esta_abierto));
+    return sorted.sort((a, b) => Number(isOpenNow(b)) - Number(isOpenNow(a)));
   }, [stores, sort, rubro]);
 
   if (!vertical) return <Navigate to="/app" replace />;

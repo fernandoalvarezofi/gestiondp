@@ -6,7 +6,7 @@ import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { EmptyState, Rail } from "@/components/delivery/Common";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
-import { db, DeliveryOrder, DeliveryStore, estadoLabel, img, verticals } from "@/lib/delivery";
+import { db, DeliveryOrder, DeliveryStore, estadoLabel, isOpenNow, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 const banners = [
@@ -53,7 +53,7 @@ export default function DeliveryHome() {
     return () => window.clearInterval(timer);
   }, []);
 
-  const open = useMemo(() => stores.filter((store) => store.esta_abierto), [stores]);
+  const open = useMemo(() => stores.filter((store) => isOpenNow(store)), [stores]);
   const popular = useMemo(() => [...open].sort((a, b) => b.total_resenas - a.total_resenas).slice(0, 10), [open]);
   const promos = useMemo(() => open.filter((store) => store.promo_texto), [open]);
   const fast = useMemo(() => [...open].sort((a, b) => a.tiempo_max - b.tiempo_max).slice(0, 10), [open]);
@@ -61,7 +61,7 @@ export default function DeliveryHome() {
 
   const all = useMemo(() => {
     const list = [...stores];
-    if (filter === "abiertos") return list.filter((store) => store.esta_abierto);
+    if (filter === "abiertos") return list.filter((store) => isOpenNow(store));
     if (filter === "gratis") return list.filter((store) => Number(store.costo_envio) === 0 || (store.envio_gratis_desde ?? Infinity) <= 1);
     if (filter === "rating") return list.sort((a, b) => b.rating - a.rating);
     if (filter === "rapido") return list.sort((a, b) => a.tiempo_max - b.tiempo_max);

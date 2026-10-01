@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/delivery/ProductCard";
 import { deliveryFeeLabel, RatingBadge, StoreLogo } from "@/components/delivery/StoreCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CartStore } from "@/contexts/CartContext";
-import { db, DeliveryProduct, DeliveryStore, formatDateTime, img, money } from "@/lib/delivery";
+import { db, DeliveryProduct, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, scheduleSummary } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 type Review = { id: string; puntaje: number; comentario?: string | null; respuesta?: string | null; created_at: string; cliente?: { nombre: string } | null };
@@ -50,6 +50,7 @@ export default function StoreDetail() {
   if (notFound) return <div className="mx-auto max-w-3xl px-4 py-16"><EmptyState icon={<StoreIcon className="h-7 w-7" />} title="No encontramos este comercio" text="Puede que ya no esté disponible." /></div>;
   if (!store) return <div className="mx-auto max-w-6xl px-4 py-6"><div className="aspect-[16/6] animate-pulse rounded-3xl bg-muted" /><div className="mt-6 h-8 w-1/3 animate-pulse rounded bg-muted" /></div>;
 
+  const open = isOpenNow(store);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
   const scrollTo = (name: string) => {
     setActiveSection(name);
@@ -88,7 +89,7 @@ export default function StoreDetail() {
           {Number(store.pedido_minimo) > 0 && <span className="rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">Pedido mínimo {money(store.pedido_minimo)}</span>}
         </div>
 
-        {!store.esta_abierto && <div className="mt-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm font-semibold">Este comercio está cerrado ahora. Podés mirar el menú y pedir cuando abra ({store.horario}).</div>}
+        {!open && <div className="mt-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Cerrado ahora.</span> {store.esta_abierto ? nextOpening(store.horarios) || "" : "El comercio pausó los pedidos por un rato."} Podés mirar el menú mientras tanto.</div>}
 
         <div className="sticky top-16 z-30 -mx-4 mt-6 border-b bg-background/95 px-4 pb-3 pt-3 backdrop-blur sm:mx-0 sm:px-0">
           <label className="flex h-11 items-center gap-2 rounded-full bg-muted px-4">
@@ -107,7 +108,7 @@ export default function StoreDetail() {
           <section key={section.name} id={`sec-${section.name}`} className="scroll-mt-44 pt-7">
             <h2 className="mb-3 text-xl font-extrabold">{section.name}</h2>
             <div className="grid gap-3 md:grid-cols-2">
-              {section.items.map((product) => <ProductCard key={`${section.name}-${product.id}`} product={product} store={cartStore} disabled={!store.esta_abierto} />)}
+              {section.items.map((product) => <ProductCard key={`${section.name}-${product.id}`} product={product} store={cartStore} disabled={!open} />)}
             </div>
           </section>
         ))}
@@ -147,7 +148,7 @@ function StoreInfoDialog({ store }: { store: DeliveryStore }) {
         <DialogHeader><DialogTitle className="text-xl font-extrabold">{store.nombre}</DialogTitle></DialogHeader>
         <dl className="space-y-4 text-sm">
           <div className="flex gap-3"><MapPin className="h-5 w-5 shrink-0 text-primary" /><div><dt className="font-bold">Dirección</dt><dd className="text-muted-foreground">{store.direccion}</dd></div></div>
-          <div className="flex gap-3"><Clock3 className="h-5 w-5 shrink-0 text-primary" /><div><dt className="font-bold">Horario</dt><dd className="text-muted-foreground">{store.horario}</dd></div></div>
+          <div className="flex gap-3"><Clock3 className="h-5 w-5 shrink-0 text-primary" /><div><dt className="font-bold">Horario</dt><dd className="text-muted-foreground">{scheduleSummary(store.horarios) || store.horario}</dd></div></div>
           <div className="flex gap-3"><Bike className="h-5 w-5 shrink-0 text-primary" /><div><dt className="font-bold">Envío</dt><dd className="text-muted-foreground">{deliveryFeeLabel(store)} · {store.tiempo_min}-{store.tiempo_max} min · Pedido mínimo {money(store.pedido_minimo)}</dd></div></div>
           {store.telefono && <div className="flex gap-3"><Info className="h-5 w-5 shrink-0 text-primary" /><div><dt className="font-bold">Teléfono</dt><dd className="text-muted-foreground">{store.telefono}</dd></div></div>}
         </dl>

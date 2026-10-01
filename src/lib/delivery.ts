@@ -31,10 +31,80 @@ export type DeliveryStore = {
   envio_gratis_desde?: number | null;
   promo_texto?: string | null;
   esta_abierto: boolean;
+  horarios?: Horarios | null;
+  aprobado?: boolean;
+  motivo_rechazo?: string | null;
   destacado?: boolean;
   activo?: boolean;
   created_at?: string;
 };
+
+/** Turnos por día de la semana: "0" = domingo … "6" = sábado. Un día sin turnos está cerrado. */
+export type Turno = { abre: string; cierra: string };
+export type Horarios = Record<string, Turno[]>;
+
+export const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+export const defaultSchedule: Horarios = Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((day) => [String(day), [{ abre: "10:00", cierra: "23:00" }]]));
+
+/** Hora actual en Argentina, independiente de la zona horaria del dispositivo. */
+function argentinaNow(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Buenos_Aires", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date);
+  const get = (type: string) => parts.find((part) => part.type === type)?.value || "";
+  const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(get("weekday"));
+  return { day, minutes: Number(get("hour")) * 60 + Number(get("minute")) };
+}
+
+const toMinutes = (value: string) => {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + (minutes || 0);
+};
+
+/** Misma regla que delivery_abierto_ahora en la base: turnos que cruzan la medianoche siguen abiertos al día siguiente. */
+export function withinSchedule(horarios: Horarios | null | undefined, date = new Date()) {
+  if (!horarios) return true;
+  const { day, minutes } = argentinaNow(date);
+  const today = horarios[String(day)] || [];
+  const yesterday = horarios[String((day + 6) % 7)] || [];
+  for (const turno of today) {
+    const abre = toMinutes(turno.abre);
+    const cierra = toMinutes(turno.cierra);
+    if (cierra > abre && minutes >= abre && minutes < cierra) return true;
+    if (cierra <= abre && minutes >= abre) return true;
+  }
+  return yesterday.some((turno) => toMinutes(turno.cierra) <= toMinutes(turno.abre) && minutes < toMinutes(turno.cierra));
+}
+
+/** Abierto = el comercio no está pausado y está dentro de su horario. */
+export const isOpenNow = (store: Pick<DeliveryStore, "esta_abierto" | "horarios">) => store.esta_abierto && withinSchedule(store.horarios);
+
+/** Próxima apertura para mostrar "Abre hoy a las 10:00" / "Abre el lunes a las 12:00". */
+export function nextOpening(horarios: Horarios | null | undefined) {
+  if (!horarios) return null;
+  const { day, minutes } = argentinaNow();
+  for (let offset = 0; offset < 7; offset += 1) {
+    const current = (day + offset) % 7;
+    const turnos = [...(horarios[String(current)] || [])].sort((a, b) => toMinutes(a.abre) - toMinutes(b.abre));
+    const next = turnos.find((turno) => offset > 0 || toMinutes(turno.abre) > minutes);
+    if (next) return offset === 0 ? `Abre hoy a las ${next.abre}` : offset === 1 ? `Abre mañana a las ${next.abre}` : `Abre el ${diasSemana[current].toLowerCase()} a las ${next.abre}`;
+  }
+  return null;
+}
+
+/** Resumen legible: "Lun a vie 10:00–23:00 · Sáb y dom 12:00–00:00". */
+export function scheduleSummary(horarios: Horarios | null | undefined) {
+  if (!horarios) return "";
+  const short = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+  const label = (day: number) => (horarios[String(day)] || []).map((turno) => `${turno.abre}–${turno.cierra}`).join(", ") || "Cerrado";
+  const order = [1, 2, 3, 4, 5, 6, 0];
+  const groups: { days: number[]; text: string }[] = [];
+  for (const day of order) {
+    const text = label(day);
+    const last = groups[groups.length - 1];
+    if (last && last.text === text) last.days.push(day); else groups.push({ days: [day], text });
+  }
+  if (groups.length === 1) return groups[0].text === "Cerrado" ? "Cerrado" : `Todos los días ${groups[0].text}`;
+  return groups.map(({ days, text }) => `${days.length > 2 ? `${short[days[0]]} a ${short[days[days.length - 1]].toLowerCase()}` : days.map((day) => short[day]).join(" y ")} ${text}`).join(" · ");
+}
 
 export type DeliveryProduct = {
   id: string;
@@ -67,6 +137,7 @@ export type DeliveryOrder = {
   total: number;
   metodo_pago: MetodoPago;
   notas?: string | null;
+  telefono_contacto?: string | null;
   cupon_codigo?: string | null;
   motivo_cancelacion?: string | null;
   calificado: boolean;

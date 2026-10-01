@@ -2,6 +2,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { Loader2, Pencil, Plus, Search, Star, Trash2, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
+import { ImageUpload } from "@/components/delivery/ImageUpload";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -127,8 +128,7 @@ function ProductEditor({ storeId, draft, categories, onClose, onSaved }: { store
           <div className="space-y-1.5"><Label htmlFor="p-stock">Stock (vacío = ilimitado)</Label><Input id="p-stock" type="number" min={0} value={values.stock} onChange={(event) => set("stock", event.target.value)} /></div>
           <div className="space-y-1.5"><Label htmlFor="p-precio">Precio ($)</Label><Input id="p-precio" type="number" min={1} required value={values.precio} onChange={(event) => set("precio", event.target.value)} /></div>
           <div className="space-y-1.5"><Label htmlFor="p-antes">Precio anterior (para mostrar oferta)</Label><Input id="p-antes" type="number" min={0} value={values.precio_anterior} onChange={(event) => set("precio_anterior", event.target.value)} /></div>
-          <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="p-img">Foto (URL)</Label><Input id="p-img" type="url" value={values.imagen_url} onChange={(event) => set("imagen_url", event.target.value)} placeholder="https://…" /></div>
-          {values.imagen_url && <img src={img(values.imagen_url, 400)} alt="Vista previa" className="aspect-[4/3] w-40 rounded-xl object-cover" />}
+          <ImageUpload label="Foto del producto" folder="productos" shape="square" value={values.imagen_url} onChange={(url) => set("imagen_url", url)} className="sm:col-span-2" />
           <div className="flex flex-col justify-center gap-3 sm:col-span-2 sm:flex-row sm:justify-start sm:gap-6">
             <label className="flex items-center gap-2 text-sm font-semibold"><Switch checked={values.disponible} onCheckedChange={(checked) => set("disponible", checked)} />Disponible</label>
             <label className="flex items-center gap-2 text-sm font-semibold"><Switch checked={values.destacado} onCheckedChange={(checked) => set("destacado", checked)} />Destacado</label>

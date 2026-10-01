@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
-import { Bike, ChevronRight, Heart, HelpCircle, LogOut, MapPin, Moon, Receipt, ShieldCheck, Store, Ticket, UserCircle } from "lucide-react";
+import { Bike, ChevronRight, Heart, HelpCircle, KeyRound, LogOut, MapPin, Moon, Receipt, ShieldCheck, Store, Ticket, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AddressForm, AddressList, useSavedAddresses } from "@/components/delivery/AddressDialog";
 import { PageHeader } from "@/components/delivery/Common";
@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { supabase } from "@/integrations/supabase/client";
+import { authErrorMessage } from "@/lib/authErrors";
 import { db, errorMessage } from "@/lib/delivery";
 
 const faqs = [
@@ -27,20 +29,44 @@ export default function Profile() {
   const { theme, setTheme } = useTheme();
   const { addresses, reload } = useSavedAddresses();
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [savedPhone, setSavedPhone] = useState("");
   const [savingName, setSavingName] = useState(false);
   const [addingAddress, setAddingAddress] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   useEffect(() => { setName(roles.nombre); }, [roles.nombre]);
+  useEffect(() => {
+    if (!user) return;
+    db.from("perfiles").select("telefono").eq("id", user.id).maybeSingle().then(({ data }: { data: { telefono: string | null } | null }) => {
+      setPhone(data?.telefono || "");
+      setSavedPhone(data?.telefono || "");
+    });
+  }, [user]);
 
   const saveName = async (event: FormEvent) => {
     event.preventDefault();
     if (!user || !name.trim()) return;
+    if (phone.trim() && phone.replace(/\D/g, "").length < 8) return toast.error("Revisá el teléfono: parece incompleto");
     setSavingName(true);
-    const { error } = await db.from("perfiles").update({ nombre: name.trim() }).eq("id", user.id);
+    const { error } = await db.from("perfiles").update({ nombre: name.trim(), telefono: phone.trim() || null }).eq("id", user.id);
     setSavingName(false);
     if (error) return toast.error(errorMessage(error));
-    toast.success("Nombre actualizado");
+    toast.success("Datos actualizados");
+    setSavedPhone(phone.trim());
     roles.refresh();
+  };
+
+  const changePassword = async (event: FormEvent) => {
+    event.preventDefault();
+    if (newPassword.length < 8) return toast.error("La contraseña tiene que tener al menos 8 caracteres");
+    setSavingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setSavingPassword(false);
+    if (error) return toast.error(authErrorMessage(error.message));
+    setNewPassword("");
+    toast.success("Contraseña actualizada");
   };
 
   const links = [
@@ -58,9 +84,14 @@ export default function Profile() {
 
       <section className="mt-6 rounded-3xl border bg-card p-4 sm:p-5">
         <h2 className="flex items-center gap-2 text-lg font-extrabold"><UserCircle className="h-5 w-5 text-primary" />Datos personales</h2>
-        <form onSubmit={saveName} className="mt-3 flex gap-2">
-          <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={100} placeholder="Tu nombre" />
-          <Button type="submit" variant="outline" disabled={savingName || name.trim() === roles.nombre}>Guardar</Button>
+        <form onSubmit={saveName} className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+          <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={100} placeholder="Tu nombre" aria-label="Nombre" />
+          <Input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="Teléfono" aria-label="Teléfono" />
+          <Button type="submit" variant="outline" disabled={savingName || (name.trim() === roles.nombre && phone.trim() === savedPhone)}>Guardar</Button>
+        </form>
+        <form onSubmit={changePassword} className="mt-4 flex gap-2 border-t pt-4">
+          <Input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} maxLength={128} placeholder="Contraseña nueva" aria-label="Contraseña nueva" />
+          <Button type="submit" variant="outline" disabled={savingPassword || !newPassword}><KeyRound className="h-4 w-4" />Cambiar</Button>
         </form>
       </section>
 
@@ -104,6 +135,7 @@ export default function Profile() {
       </section>
 
       <Button variant="outline" className="mt-6 w-full rounded-full text-destructive" onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</Button>
+      <p className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground"><Link to="/terminos" className="hover:text-foreground">Términos y condiciones</Link><Link to="/privacidad" className="hover:text-foreground">Política de privacidad</Link></p>
     </div>
   );
 }

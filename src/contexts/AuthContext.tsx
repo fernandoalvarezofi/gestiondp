@@ -24,9 +24,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         setSession(session);
         setLoading(false);
+        // El link de "olvidé mi contraseña" puede caer en cualquier página: llevamos al formulario de contraseña nueva.
+        if (event === "PASSWORD_RECOVERY" && window.location.pathname !== "/restablecer") {
+          window.location.replace("/restablecer");
+        }
       }
     );
 

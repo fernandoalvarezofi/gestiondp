@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { Bike, Car, Footprints, KeyRound, Loader2, MapPin, Navigation, PackageCheck, Store, Wallet } from "lucide-react";
+import { Bike, Car, Footprints, KeyRound, Loader2, MapPin, Navigation, PackageCheck, Phone, Store, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, PageHeader, StatCard } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
@@ -184,6 +184,10 @@ function CurrentDelivery({ order, onChange }: { order: DeliveryOrder; onChange: 
         <p className="text-muted-foreground">{(order.items || []).map((item) => `${item.cantidad}× ${item.nombre}`).join(" · ")}</p>
         <p className="mt-2"><span className="font-bold">Cobro: </span>{order.metodo_pago === "efectivo" ? `Cobrá ${money(order.total)} en efectivo` : metodoPagoLabel[order.metodo_pago]}</p>
         {order.notas && <p className="mt-1"><span className="font-bold">Nota: </span>{order.notas}</p>}
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {order.telefono_contacto && <Button asChild variant="outline" className="rounded-full"><a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`}><Phone className="h-4 w-4" />Llamar al cliente</a></Button>}
+        {order.comercio?.telefono && <Button asChild variant="outline" className="rounded-full"><a href={`tel:${order.comercio.telefono.replace(/\s/g, "")}`}><Store className="h-4 w-4" />Llamar al comercio</a></Button>}
       </div>
 
       {!pickedUp ? (

@@ -8,12 +8,12 @@ import { MerchantMenu } from "@/components/merchant/MerchantMenu";
 import { MerchantOrders, NewOrderAlert } from "@/components/merchant/MerchantOrders";
 import { MerchantOverview } from "@/components/merchant/MerchantOverview";
 import { MerchantReviews, StoreReview } from "@/components/merchant/MerchantReviews";
-import { emptyStore, StoreFormValues, StoreSettingsForm } from "@/components/merchant/StoreSettingsForm";
+import { emptyStore, StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, slugify } from "@/lib/delivery";
+import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, nextOpening, slugify } from "@/lib/delivery";
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 
@@ -98,7 +98,7 @@ export default function MerchantDashboard() {
     if (!user) return;
     const { error } = await db.from("delivery_comercios").insert({ ...values, propietario_id: user.id, slug: `${slugify(values.nombre)}-${user.id.slice(0, 6)}` });
     if (error) { toast.error(errorMessage(error)); return; }
-    toast.success("¡Tu comercio está listo! Ahora cargá tu menú.");
+    toast.success("¡Listo! Tu comercio quedó en revisión. Mientras tanto, cargá tu menú.");
     const found = await loadStore();
     if (found) setTab("menu");
   };
@@ -137,11 +137,8 @@ export default function MerchantDashboard() {
   }
 
   const pendingCount = orders.filter((order) => order.estado === "pendiente").length;
-  const formValues: StoreFormValues = {
-    nombre: store.nombre, categoria: store.categoria, rubro: store.rubro || "", descripcion: store.descripcion || "", direccion: store.direccion, telefono: store.telefono || "",
-    horario: store.horario || "", imagen_url: store.imagen_url || "", logo_url: store.logo_url || "", tiempo_min: store.tiempo_min, tiempo_max: store.tiempo_max,
-    costo_envio: Number(store.costo_envio), pedido_minimo: Number(store.pedido_minimo), envio_gratis_desde: store.envio_gratis_desde ?? null, promo_texto: store.promo_texto || "", esta_abierto: store.esta_abierto,
-  };
+  const formValues = storeToFormValues(store);
+
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-16 pt-5 sm:px-6 lg:px-8">
@@ -150,12 +147,14 @@ export default function MerchantDashboard() {
         title={store.nombre}
         subtitle={<Link to={`/app/tienda/${store.slug}`} className="inline-flex items-center gap-1 font-bold text-primary">Ver como cliente<ExternalLink className="h-3.5 w-3.5" /></Link>}
         actions={
-          <label className={`flex items-center gap-3 rounded-full border px-4 py-2 font-bold ${store.esta_abierto ? "border-success/40 bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
-            {store.esta_abierto ? "Abierto · recibiendo pedidos" : "Cerrado"}
+          <label className={`flex items-center gap-3 rounded-full border px-4 py-2 font-bold ${isOpenNow(store) ? "border-success/40 bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+            {!store.esta_abierto ? "Pausado" : isOpenNow(store) ? "Abierto · recibiendo pedidos" : nextOpening(store.horarios) || "Fuera de horario"}
             <Switch checked={store.esta_abierto} onCheckedChange={toggleOpen} />
           </label>
         }
       />
+      {store.aprobado === false && !store.motivo_rechazo && <p className="mt-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Cuando lo aprobemos, aparece para los clientes.</p>}
+      {store.aprobado === false && store.motivo_rechazo && <p className="mt-4 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive"><span className="font-bold">Tu comercio no fue aprobado:</span> {store.motivo_rechazo}. Corregilo en Configuración y escribinos para revisarlo de nuevo.</p>}
       {store.activo === false && <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Tu comercio fue pausado por administración y no aparece para los clientes. Escribinos para revisarlo.</p>}
       <div className="mt-4"><NewOrderAlert count={pendingCount} /></div>
 

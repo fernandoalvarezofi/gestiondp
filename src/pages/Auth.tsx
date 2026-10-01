@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useLocation, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight } from "lucide-react";
 import { z } from "zod";
-import { sanitizeErrorMessage } from "@/lib/sanitize";
+import { authErrorMessage } from "@/lib/authErrors";
+import { toast as notify } from "sonner";
 import { lovable } from "@/integrations/lovable/index";
 import { Separator } from "@/components/ui/separator";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
@@ -39,6 +40,7 @@ export default function Auth() {
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [authStyle] = useState<AuthStyle>("photo");
+  const [forgot, setForgot] = useState(false);
   const { toast } = useToast();
 
   if (loading) {
@@ -74,24 +76,27 @@ export default function Auth() {
         if (error) throw error;
       } else {
         const data = parsed.data as z.infer<typeof signupSchema>;
-        const { error } = await supabase.auth.signUp({
+        const { data: result, error } = await supabase.auth.signUp({
           email: data.email,
           password: data.password,
           options: {
             data: { full_name: data.fullName },
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: `${window.location.origin}/app`,
           },
         });
         if (error) throw error;
-        toast({
-          title: "Revisá tu email",
-          description: "Te enviamos un link para confirmar tu cuenta.",
-        });
+        // Si la confirmación por email está desactivada, la sesión llega en el acto y se entra directo.
+        if (!result.session) {
+          toast({
+            title: "Revisá tu email",
+            description: "Te enviamos un link para confirmar tu cuenta. Puede tardar unos minutos o llegar a spam.",
+          });
+        }
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
-        title: "Error",
-        description: sanitizeErrorMessage(error.message || "Error desconocido"),
+        title: "No pudimos continuar",
+        description: authErrorMessage((error as Error).message || ""),
         variant: "destructive",
       });
     } finally {
@@ -174,6 +179,7 @@ export default function Auth() {
             {isLogin ? "Iniciá sesión para pedir en Woref" : "Creá tu cuenta y hacé tu primer pedido"}
           </p>
 
+          {forgot ? <ForgotPassword initialEmail={email} onBack={() => setForgot(false)} /> : (
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="space-y-2">
@@ -203,7 +209,10 @@ export default function Auth() {
               {fieldErrors.email && <p className="text-xs text-destructive">{fieldErrors.email}</p>}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Contraseña</Label>
+                {isLogin && <button type="button" onClick={() => setForgot(true)} className="text-xs font-semibold text-primary hover:underline">¿Olvidaste tu contraseña?</button>}
+              </div>
               <Input
                 id="password"
                 type="password"
@@ -226,7 +235,13 @@ export default function Auth() {
                 </>
               )}
             </Button>
+            {!isLogin && (
+              <p className="text-center text-xs text-muted-foreground">
+                Al crear tu cuenta aceptás los <Link to="/terminos" className="font-semibold text-primary hover:underline">Términos y condiciones</Link> y la <Link to="/privacidad" className="font-semibold text-primary hover:underline">Política de privacidad</Link>.
+              </p>
+            )}
           </form>
+          )}
 
           {googleAvailable && (<>
           <div className="relative my-6">
@@ -267,5 +282,43 @@ export default function Auth() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ForgotPassword({ initialEmail, onBack }: { initialEmail: string; onBack: () => void }) {
+  const [email, setEmail] = useState(initialEmail);
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const send = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const parsed = z.string().trim().email().safeParse(email);
+    if (!parsed.success) return notify.error("Escribí un email válido");
+    setSending(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, { redirectTo: `${window.location.origin}/restablecer` });
+    setSending(false);
+    if (error) return notify.error(authErrorMessage(error.message));
+    setSent(true);
+  };
+
+  if (sent) {
+    return (
+      <div className="space-y-4 text-center">
+        <p className="rounded-2xl bg-success/10 p-4 text-sm">Si existe una cuenta con <span className="font-bold">{email}</span>, te llega un email con un link para crear una contraseña nueva. Revisá también spam.</p>
+        <Button variant="outline" className="w-full" onClick={onBack}>Volver a iniciar sesión</Button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={send} className="space-y-4">
+      <p className="text-sm text-muted-foreground">Escribí el email de tu cuenta y te mandamos un link para crear una contraseña nueva.</p>
+      <div className="space-y-2">
+        <Label htmlFor="reset-email">Email</Label>
+        <Input id="reset-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="tu@email.com" required maxLength={255} autoFocus />
+      </div>
+      <Button type="submit" className="w-full" disabled={sending}>{sending ? <Loader2 className="h-4 w-4 animate-spin" /> : "Enviar link"}</Button>
+      <button type="button" onClick={onBack} className="w-full text-center text-sm font-medium text-primary hover:underline">Volver</button>
+    </form>
   );
 }

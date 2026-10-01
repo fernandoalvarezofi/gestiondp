@@ -114,7 +114,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6 lg:px-8">
           <DeliveryBrand />
           <p className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" />Seguimiento en vivo · Código de entrega en cada pedido</p>
-          <p>© {new Date().getFullYear()} Woref</p>
+          <p className="flex gap-4"><Link to="/terminos" className="hover:text-foreground">Términos</Link><Link to="/privacidad" className="hover:text-foreground">Privacidad</Link><span>© {new Date().getFullYear()} Woref</span></p>
         </div>
       </footer>
     </div>

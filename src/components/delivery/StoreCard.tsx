@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Bike, Clock3, Star } from "lucide-react";
-import { DeliveryStore, img, money } from "@/lib/delivery";
+import { DeliveryStore, img, isOpenNow, money, nextOpening } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { FavoriteButton } from "./FavoriteButton";
 
@@ -35,13 +35,14 @@ export function deliveryFeeLabel(store: Pick<DeliveryStore, "costo_envio" | "env
 
 export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; variant?: "grid" | "row" }) {
   const free = deliveryFeeLabel(store) === "Envío gratis";
+  const open = isOpenNow(store);
   return (
     <Link to={`/app/tienda/${store.slug}`} className={cn("group block min-w-0", variant === "row" && "w-[260px] shrink-0 sm:w-[300px]")}>
       <div className="relative">
         <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted">
-          <img src={img(store.imagen_url, 640)} alt={store.nombre} loading="lazy" className={cn("h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]", !store.esta_abierto && "grayscale")} />
+          <img src={img(store.imagen_url, 640)} alt={store.nombre} loading="lazy" className={cn("h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]", !open && "grayscale")} />
           {store.promo_texto && <span className="absolute left-2.5 top-2.5 rounded-lg bg-primary px-2 py-1 text-[11px] font-bold text-primary-foreground shadow-soft">{store.promo_texto}</span>}
-          {!store.esta_abierto && <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-sm font-bold text-white">Cerrado por ahora</span>}
+          {!open && <span className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center text-sm font-bold text-white">Cerrado<span className="text-xs font-semibold text-white/80">{store.esta_abierto ? nextOpening(store.horarios) : "Pausado por el local"}</span></span>}
           <FavoriteButton storeId={store.id} className="absolute right-2.5 top-2.5" />
         </div>
         <StoreLogo store={store} className="absolute -bottom-5 left-3 h-12 w-12 text-sm shadow-soft" />

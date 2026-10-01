@@ -7,6 +7,7 @@ import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { db, errorMessage, img, MetodoPago, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,15 @@ export default function Cart() {
   const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [addingAddress, setAddingAddress] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [phone, setPhone] = useState("");
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user) return;
+    db.from("perfiles").select("telefono").eq("id", user.id).maybeSingle().then(({ data }: { data: { telefono: string | null } | null }) => {
+      if (data?.telefono) setPhone((current) => current || data.telefono || "");
+    });
+  }, [user]);
 
   useEffect(() => {
     if (!address && addresses.length) {
@@ -77,6 +87,7 @@ export default function Cart() {
 
   const checkout = async () => {
     if (!address?.direccion) return toast.error("Elegí una dirección de entrega");
+    if (phone.replace(/\D/g, "").length < 8) return toast.error("Dejanos un teléfono de contacto para coordinar la entrega");
     if (summary.missing > 0) return toast.error(`Te faltan ${money(summary.missing)} para el pedido mínimo`);
     setSubmitting(true);
     const { data: orderId, error } = await db.rpc("delivery_crear_pedido", {
@@ -88,6 +99,7 @@ export default function Cart() {
       p_propina: tip,
       p_cupon: coupon?.valido ? coupon.codigo : null,
       p_notas: notes.trim() || null,
+      p_telefono: phone.trim(),
     });
     setSubmitting(false);
     if (error || !orderId) return toast.error(errorMessage(error, "No pudimos crear el pedido"));
@@ -137,6 +149,9 @@ export default function Cart() {
                 <Button variant="outline" className="mt-3 rounded-full" onClick={() => setAddingAddress(true)}><Plus className="h-4 w-4" />Nueva dirección</Button>
               )}
             </div>
+            <label htmlFor="order-phone" className="mt-5 block text-sm font-bold">Teléfono de contacto</label>
+            <p className="text-xs text-muted-foreground">Solo lo ven el comercio y el repartidor de este pedido.</p>
+            <Input id="order-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={30} onChange={(event) => setPhone(event.target.value)} placeholder="11 5555-5555" className="mt-2 max-w-xs" />
           </section>
 
           <section className="rounded-3xl border bg-card p-4 sm:p-5">

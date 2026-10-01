@@ -27,6 +27,8 @@ const Profile = lazy(() => import("./pages/delivery/Profile"));
 const MerchantDashboard = lazy(() => import("./pages/delivery/MerchantDashboard"));
 const CourierDashboard = lazy(() => import("./pages/delivery/CourierDashboard"));
 const AdminDashboard = lazy(() => import("./pages/delivery/AdminDashboard"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Legal = lazy(() => import("./pages/Legal"));
 
 const queryClient = new QueryClient();
 
@@ -54,6 +56,9 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<Landing />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/restablecer" element={<ResetPassword />} />
+                    <Route path="/terminos" element={<Legal doc="terminos" />} />
+                    <Route path="/privacidad" element={<Legal doc="privacidad" />} />
                     <Route path="/app" element={<AppLayout />}>
                       <Route index element={<DeliveryHome />} />
                       <Route path="buscar" element={<Search />} />

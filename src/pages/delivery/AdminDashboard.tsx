@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bike, Loader2, Pencil, Receipt, ShieldAlert, Store, Wallet } from "lucide-react";
+import { Bike, Check, Loader2, Pencil, Receipt, ShieldAlert, Store, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, PageHeader, StatCard } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
-import { StoreFormValues, StoreSettingsForm } from "@/components/merchant/StoreSettingsForm";
+import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
-import { categoriaLabel, Coupon, db, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, estadoCorto, formatDateTime, img, money, pedidoActivo, shortId } from "@/lib/delivery";
+import { categoriaLabel, Coupon, db, isOpenNow, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, estadoCorto, formatDateTime, img, money, pedidoActivo, shortId } from "@/lib/delivery";
 
 type CourierRow = { perfil_id: string; vehiculo: string; telefono?: string | null; disponible: boolean; activo: boolean; created_at: string; perfil?: { nombre: string } | null };
 const adminOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario), comercio:delivery_comercios(nombre,slug,imagen_url,direccion), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
@@ -63,6 +63,7 @@ export default function AdminDashboard() {
     };
   }, [orders, stores, couriers]);
 
+  const pending = stores.filter((store) => store.aprobado === false);
   const filteredOrders = orders.filter((order) => statusFilter === "todos" || (statusFilter === "activos" ? pedidoActivo(order.estado) : order.estado === statusFilter));
 
   if (roles.loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -79,6 +80,14 @@ export default function AdminDashboard() {
     const { error } = await db.from("delivery_repartidores").update({ activo, disponible: activo ? courier.disponible : false }).eq("perfil_id", courier.perfil_id);
     if (error) return toast.error(errorMessage(error));
     loadCouriers();
+  };
+  const moderate = async (store: DeliveryStore, approve: boolean) => {
+    const motivo = approve ? null : window.prompt("¿Por qué lo rechazás? (lo verá el dueño del comercio)", "Faltan fotos o datos del local");
+    if (!approve && motivo === null) return;
+    const { error } = await db.rpc("delivery_moderar_comercio", { p_comercio: store.id, p_aprobado: approve, p_motivo: motivo });
+    if (error) return toast.error(errorMessage(error));
+    toast.success(approve ? `${store.nombre} ya está visible para los clientes` : "Comercio rechazado");
+    loadStores();
   };
   const advance = async (order: DeliveryOrder, estado: EstadoPedido) => {
     const motivo = estado === "cancelado" ? window.prompt("Motivo de la cancelación (lo verá el cliente)", "Cancelado por soporte") : undefined;
@@ -97,6 +106,26 @@ export default function AdminDashboard() {
         <StatCard label="Comercios activos" value={stats.stores} icon={<Store className="h-4 w-4" />} />
         <StatCard label="Repartidores conectados" value={stats.online} icon={<Bike className="h-4 w-4" />} />
       </div>
+
+      {pending.length > 0 && (
+        <section className="mt-6 rounded-3xl border border-warning/40 bg-warning/10 p-4 sm:p-5">
+          <h2 className="font-extrabold">Comercios esperando aprobación ({pending.length})</h2>
+          <ul className="mt-3 space-y-2">
+            {pending.map((store) => (
+              <li key={store.id} className="flex flex-wrap items-center gap-3 rounded-2xl bg-card p-3">
+                <img src={img(store.imagen_url, 160)} alt="" className="h-12 w-16 rounded-xl object-cover" />
+                <div className="min-w-0 flex-1">
+                  <Link to={`/app/tienda/${store.slug}`} className="font-bold hover:underline">{store.nombre}</Link>
+                  <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion}{store.telefono && ` · ${store.telefono}`}</p>
+                  {store.motivo_rechazo && <p className="text-xs text-destructive">Rechazado: {store.motivo_rechazo}</p>}
+                </div>
+                <Button size="sm" className="rounded-full" onClick={() => moderate(store, true)}><Check className="h-4 w-4" />Aprobar</Button>
+                {!store.motivo_rechazo && <Button size="sm" variant="outline" className="rounded-full" onClick={() => moderate(store, false)}><X className="h-4 w-4" />Rechazar</Button>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <Tabs defaultValue="pedidos" className="mt-6">
         <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">
@@ -148,7 +177,7 @@ export default function AdminDashboard() {
                 <img src={img(store.imagen_url, 160)} alt="" className="h-12 w-16 rounded-xl object-cover" />
                 <div className="min-w-0 flex-1">
                   <Link to={`/app/tienda/${store.slug}`} className="font-bold hover:underline">{store.nombre}</Link>
-                  <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion} · {store.esta_abierto ? "Abierto" : "Cerrado"}</p>
+                  <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion} · {isOpenNow(store) ? "Abierto" : "Cerrado"}{store.aprobado === false && " · Pendiente de aprobación"}</p>
                 </div>
                 <label className="flex items-center gap-2 text-xs font-semibold">Destacado<Switch checked={Boolean(store.destacado)} onCheckedChange={(checked) => updateStore(store, { destacado: checked })} /></label>
                 <label className="flex items-center gap-2 text-xs font-semibold">Visible<Switch checked={store.activo !== false} onCheckedChange={(checked) => updateStore(store, { activo: checked })} /></label>
@@ -182,11 +211,7 @@ export default function AdminDashboard() {
           {editing && (
             <StoreSettingsForm
               key={editing.id}
-              initial={{
-                nombre: editing.nombre, categoria: editing.categoria, rubro: editing.rubro || "", descripcion: editing.descripcion || "", direccion: editing.direccion, telefono: editing.telefono || "",
-                horario: editing.horario || "", imagen_url: editing.imagen_url || "", logo_url: editing.logo_url || "", tiempo_min: editing.tiempo_min, tiempo_max: editing.tiempo_max,
-                costo_envio: Number(editing.costo_envio), pedido_minimo: Number(editing.pedido_minimo), envio_gratis_desde: editing.envio_gratis_desde ?? null, promo_texto: editing.promo_texto || "", esta_abierto: editing.esta_abierto,
-              }}
+              initial={storeToFormValues(editing)}
               submitLabel="Guardar"
               onSubmit={async (values: StoreFormValues) => { await updateStore(editing, values); setEditing(null); toast.success("Comercio actualizado"); }}
             />

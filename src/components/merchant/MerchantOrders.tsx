@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BellRing, Bike, Check, ChefHat, Clock3, PackageCheck, X } from "lucide-react";
+import { BellRing, Bike, Check, ChefHat, Clock3, PackageCheck, Phone, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
@@ -96,6 +96,7 @@ function OrderCard({ order, onChange }: { order: DeliveryOrder; onChange: () => 
       </ul>
       {order.notas && <p className="mt-2 rounded-lg bg-warning/15 p-2 text-xs"><span className="font-bold">Nota: </span>{order.notas}</p>}
       <p className="mt-2 text-xs text-muted-foreground">{metodoPagoLabel[order.metodo_pago]} · {order.direccion_entrega}</p>
+      {order.telefono_contacto && <a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`} className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary"><Phone className="h-3.5 w-3.5" />{order.telefono_contacto}</a>}
       {order.repartidor_id && <p className="mt-1 flex items-center gap-1 text-xs font-bold text-success"><Bike className="h-3.5 w-3.5" />Repartidor asignado</p>}
       {order.entrega_estimada && order.estado !== "pendiente" && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />Entrega estimada {formatTime(order.entrega_estimada)}</p>}
 
