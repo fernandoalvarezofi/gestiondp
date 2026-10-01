@@ -1,62 +1,181 @@
-import { FormEvent, useEffect, useState } from "react";
-import { Check, PackageOpen, Plus, Store } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { ExternalLink, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/delivery/Common";
+import { CouponManager } from "@/components/merchant/CouponManager";
+import { MerchantMenu } from "@/components/merchant/MerchantMenu";
+import { MerchantOrders, NewOrderAlert } from "@/components/merchant/MerchantOrders";
+import { MerchantOverview } from "@/components/merchant/MerchantOverview";
+import { MerchantReviews, StoreReview } from "@/components/merchant/MerchantReviews";
+import { emptyStore, StoreFormValues, StoreSettingsForm } from "@/components/merchant/StoreSettingsForm";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, slugify } from "@/lib/delivery";
 
-const states = ["pendiente", "confirmado", "preparando", "en_camino", "entregado", "cancelado"];
-const labels: Record<string, string> = { pendiente: "Pendiente", confirmado: "Confirmado", preparando: "Preparando", en_camino: "En camino", entregado: "Entregado", cancelado: "Cancelado" };
-const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
+
+/** Aviso sonoro corto para pedidos nuevos (sin archivos de audio). */
+function beep() {
+  try {
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.frequency.value = 880;
+    gain.gain.setValueAtTime(0.15, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
+    oscillator.connect(gain).connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.5);
+  } catch {
+    // Sin audio disponible: alcanza con el aviso visual.
+  }
+}
 
 export default function MerchantDashboard() {
   const { user } = useAuth();
-  const [store, setStore] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
+  const [store, setStore] = useState<DeliveryStore | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState<DeliveryProduct[]>([]);
+  const [orders, setOrders] = useState<DeliveryOrder[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [reviews, setReviews] = useState<StoreReview[]>([]);
+  const [tab, setTab] = useState("pedidos");
+  const knownPending = useRef<Set<string> | null>(null);
 
-  const load = async () => {
+  const loadStore = useCallback(async () => {
+    if (!user) return null;
+    const { data } = await db.from("delivery_comercios").select("*").eq("propietario_id", user.id).order("created_at").limit(1).maybeSingle();
+    setStore(data || null);
+    setLoading(false);
+    return data as DeliveryStore | null;
+  }, [user]);
+
+  const loadOrders = useCallback(async (storeId: string) => {
+    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    const { data } = await db.from("delivery_pedidos").select(merchantOrderSelect).eq("comercio_id", storeId).gte("created_at", since).order("created_at", { ascending: false }).limit(300);
+    const list: DeliveryOrder[] = data || [];
+    const pending = list.filter((order) => order.estado === "pendiente").map((order) => order.id);
+    if (knownPending.current && pending.some((id) => !knownPending.current!.has(id))) {
+      beep();
+      toast.success("¡Entró un pedido nuevo!");
+    }
+    knownPending.current = new Set(pending);
+    setOrders(list);
+  }, []);
+
+  const loadProducts = useCallback(async (storeId: string) => {
+    const { data } = await db.from("delivery_productos").select("*").eq("comercio_id", storeId).order("categoria").order("nombre");
+    setProducts(data || []);
+  }, []);
+
+  const loadCoupons = useCallback(async (storeId: string) => {
+    const { data } = await db.from("delivery_cupones").select("*").eq("comercio_id", storeId).order("created_at", { ascending: false });
+    setCoupons(data || []);
+  }, []);
+
+  const loadReviews = useCallback(async (storeId: string) => {
+    const { data } = await db.from("delivery_resenas").select("id,puntaje,comentario,respuesta,created_at,cliente:perfiles(nombre)").eq("comercio_id", storeId).order("created_at", { ascending: false }).limit(100);
+    setReviews(data || []);
+  }, []);
+
+  useEffect(() => {
+    let channel: { unsubscribe: () => void } | null = null;
+    (async () => {
+      const found = await loadStore();
+      if (!found) return;
+      await Promise.all([loadOrders(found.id), loadProducts(found.id), loadCoupons(found.id), loadReviews(found.id)]);
+      channel = db.channel(`comercio-${found.id}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos", filter: `comercio_id=eq.${found.id}` }, () => loadOrders(found.id))
+        .subscribe();
+    })();
+    return () => { if (channel) db.removeChannel(channel); };
+  }, [loadStore, loadOrders, loadProducts, loadCoupons, loadReviews]);
+
+  const createStore = async (values: StoreFormValues) => {
     if (!user) return;
-    const { data: owned } = await (supabase as any).from("delivery_comercios").select("*").eq("propietario_id", user.id).limit(1).maybeSingle();
-    setStore(owned || null);
-    if (!owned) return;
-    const [{ data: catalog }, { data: received }] = await Promise.all([
-      (supabase as any).from("delivery_productos").select("*").eq("comercio_id", owned.id).order("created_at", { ascending: false }),
-      (supabase as any).from("delivery_pedidos").select("*, items:delivery_pedido_items(nombre,cantidad)").eq("comercio_id", owned.id).order("created_at", { ascending: false }),
-    ]);
-    setProducts(catalog || []);
-    setOrders(received || []);
+    const { error } = await db.from("delivery_comercios").insert({ ...values, propietario_id: user.id, slug: `${slugify(values.nombre)}-${user.id.slice(0, 6)}` });
+    if (error) { toast.error(errorMessage(error)); return; }
+    toast.success("¡Tu comercio está listo! Ahora cargá tu menú.");
+    const found = await loadStore();
+    if (found) setTab("menu");
   };
 
-  useEffect(() => { load(); }, [user]);
-
-  const createStore = async () => {
-    if (!user) return;
-    const slug = `mi-comercio-${user.id.slice(0, 8)}`;
-    const { error } = await (supabase as any).from("delivery_comercios").insert({ propietario_id: user.id, nombre: "Mi comercio", slug, categoria: "comida", descripcion: "Comercio listo para recibir pedidos.", direccion: "Buenos Aires", imagen_url: "/delivery/store.jpg" });
-    if (error) return toast.error("No pudimos crear el comercio");
-    toast.success("Comercio creado");
-    load();
+  const saveSettings = async (values: StoreFormValues) => {
+    if (!store) return;
+    const { error } = await db.from("delivery_comercios").update(values).eq("id", store.id);
+    if (error) { toast.error(errorMessage(error)); return; }
+    toast.success("Cambios guardados");
+    loadStore();
   };
 
-  const addProduct = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!store || !name.trim() || Number(price) <= 0) return;
-    const { error } = await (supabase as any).from("delivery_productos").insert({ comercio_id: store.id, nombre: name.trim(), categoria: "Destacados", precio: Number(price), disponible: true });
-    if (error) return toast.error("No pudimos agregar el producto");
-    setName(""); setPrice(""); toast.success("Producto agregado"); load();
+  const toggleOpen = async (open: boolean) => {
+    if (!store) return;
+    setStore({ ...store, esta_abierto: open });
+    const { error } = await db.from("delivery_comercios").update({ esta_abierto: open }).eq("id", store.id);
+    if (error) { toast.error(errorMessage(error)); loadStore(); return; }
+    toast.success(open ? "Tu comercio está abierto" : "Pausaste la recepción de pedidos");
   };
 
-  const updateStatus = async (id: string, estado: string) => {
-    const { error } = await (supabase as any).from("delivery_pedidos").update({ estado }).eq("id", id);
-    if (error) return toast.error("No pudimos actualizar el pedido");
-    load();
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+
+  if (!store) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 pb-16 pt-5 sm:px-6">
+        <div className="flex flex-col items-center rounded-3xl bg-brand-deep px-6 py-10 text-center text-white">
+          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10"><Store className="h-8 w-8" /></span>
+          <h1 className="mt-4 text-3xl font-extrabold">Sumá tu comercio a Woref</h1>
+          <p className="mt-2 max-w-md text-white/75">Recibí pedidos en tiempo real, gestioná tu menú y llegá a miles de clientes cerca tuyo.</p>
+        </div>
+        <section className="mt-6 rounded-3xl border bg-card p-4 sm:p-6">
+          <StoreSettingsForm initial={emptyStore} submitLabel="Crear mi comercio" onSubmit={createStore} />
+        </section>
+      </div>
+    );
+  }
+
+  const pendingCount = orders.filter((order) => order.estado === "pendiente").length;
+  const formValues: StoreFormValues = {
+    nombre: store.nombre, categoria: store.categoria, rubro: store.rubro || "", descripcion: store.descripcion || "", direccion: store.direccion, telefono: store.telefono || "",
+    horario: store.horario || "", imagen_url: store.imagen_url || "", logo_url: store.logo_url || "", tiempo_min: store.tiempo_min, tiempo_max: store.tiempo_max,
+    costo_envio: Number(store.costo_envio), pedido_minimo: Number(store.pedido_minimo), envio_gratis_desde: store.envio_gratis_desde ?? null, promo_texto: store.promo_texto || "", esta_abierto: store.esta_abierto,
   };
 
-  if (!store) return <div className="mx-auto flex max-w-xl flex-col items-center px-4 py-20 text-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"><Store className="h-7 w-7" /></span><h1 className="mt-5 text-3xl font-extrabold">Abrí tu comercio</h1><p className="mt-2 text-sm text-muted-foreground">Creá el espacio de tu negocio, cargá productos y empezá a recibir pedidos.</p><Button className="mt-6" onClick={createStore}><Plus className="h-4 w-4" /> Crear mi comercio</Button></div>;
+  return (
+    <div className="mx-auto max-w-7xl px-4 pb-16 pt-5 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Panel del comercio"
+        title={store.nombre}
+        subtitle={<Link to={`/app/tienda/${store.slug}`} className="inline-flex items-center gap-1 font-bold text-primary">Ver como cliente<ExternalLink className="h-3.5 w-3.5" /></Link>}
+        actions={
+          <label className={`flex items-center gap-3 rounded-full border px-4 py-2 font-bold ${store.esta_abierto ? "border-success/40 bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
+            {store.esta_abierto ? "Abierto · recibiendo pedidos" : "Cerrado"}
+            <Switch checked={store.esta_abierto} onCheckedChange={toggleOpen} />
+          </label>
+        }
+      />
+      {store.activo === false && <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Tu comercio fue pausado por administración y no aparece para los clientes. Escribinos para revisarlo.</p>}
+      <div className="mt-4"><NewOrderAlert count={pendingCount} /></div>
 
-  return <div className="mx-auto max-w-6xl px-4 py-7 sm:px-6"><div className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Panel comercial</p><h1 className="mt-1 text-3xl font-extrabold">{store.nombre}</h1></div><span className="flex items-center gap-1.5 rounded-md bg-success/10 px-3 py-1.5 text-xs font-bold text-success"><Check className="h-4 w-4" /> Recibiendo pedidos</span></div><div className="mt-7 grid gap-6 lg:grid-cols-[0.8fr_1.2fr]"><section className="rounded-lg border bg-card p-5"><h2 className="text-xl font-extrabold">Catálogo</h2><form onSubmit={addProduct} className="mt-4 grid grid-cols-[1fr_120px_auto] gap-2"><Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre del producto" /><Input value={price} onChange={(e) => setPrice(e.target.value)} type="number" min="1" placeholder="Precio" /><Button type="submit" size="icon"><Plus className="h-4 w-4" /></Button></form><div className="mt-5 space-y-2">{products.map((product) => <div key={product.id} className="flex items-center justify-between rounded-md bg-muted p-3"><span className="font-semibold">{product.nombre}</span><span className="font-bold">{money.format(product.precio)}</span></div>)}</div></section><section className="rounded-lg border bg-card p-5"><h2 className="text-xl font-extrabold">Pedidos recibidos</h2>{orders.length ? <div className="mt-4 space-y-3">{orders.map((order) => <article key={order.id} className="rounded-md border p-4"><div className="flex flex-wrap justify-between gap-3"><div><p className="font-bold">Pedido #{order.id.slice(0, 6).toUpperCase()}</p><p className="mt-1 text-sm text-muted-foreground">{order.items?.map((item: any) => `${item.cantidad}× ${item.nombre}`).join(" · ")}</p></div><p className="font-extrabold">{money.format(order.total)}</p></div><div className="mt-4 flex flex-wrap gap-2">{states.map((state) => <Button key={state} size="sm" variant={order.estado === state ? "default" : "outline"} onClick={() => updateStatus(order.id, state)}>{labels[state]}</Button>)}</div></article>)}</div> : <div className="mt-8 text-center text-muted-foreground"><PackageOpen className="mx-auto h-8 w-8" /><p className="mt-2 text-sm">Todavía no recibiste pedidos.</p></div>}</section></div></div>;
+      <Tabs value={tab} onValueChange={setTab} className="mt-6">
+        <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">
+          {[["resumen", "Resumen"], ["pedidos", `Pedidos${pendingCount ? ` (${pendingCount})` : ""}`], ["menu", "Menú"], ["cupones", "Cupones"], ["opiniones", "Opiniones"], ["ajustes", "Configuración"]].map(([value, label]) => (
+            <TabsTrigger key={value} value={value} className="shrink-0 rounded-full px-4 py-2 font-bold data-[state=active]:bg-card">{label}</TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="resumen" className="mt-6"><MerchantOverview store={store} orders={orders} /></TabsContent>
+        <TabsContent value="pedidos" className="mt-6"><MerchantOrders orders={orders} onChange={() => loadOrders(store.id)} /></TabsContent>
+        <TabsContent value="menu" className="mt-6"><MerchantMenu storeId={store.id} products={products} onChange={() => loadProducts(store.id)} /></TabsContent>
+        <TabsContent value="cupones" className="mt-6"><CouponManager storeId={store.id} coupons={coupons} onChange={() => loadCoupons(store.id)} /></TabsContent>
+        <TabsContent value="opiniones" className="mt-6"><MerchantReviews reviews={reviews} onChange={() => loadReviews(store.id)} /></TabsContent>
+        <TabsContent value="ajustes" className="mt-6">
+          <section className="rounded-3xl border bg-card p-4 sm:p-6"><StoreSettingsForm key={store.id + store.nombre} initial={formValues} submitLabel="Guardar cambios" onSubmit={saveSettings} /></section>
+        </TabsContent>
+      </Tabs>
+
+      <p className="mt-10 text-center text-xs text-muted-foreground">¿Necesitás ayuda con tu comercio? <Button asChild variant="link" className="h-auto p-0 text-xs"><Link to="/app/perfil">Centro de ayuda</Link></Button></p>
+    </div>
+  );
 }

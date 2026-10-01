@@ -1,0 +1,45 @@
+import { Bike, Check, ChefHat, ClipboardCheck, Home, Receipt } from "lucide-react";
+import { DeliveryOrder, EstadoPedido, estadoCorto, estadoTone, formatTime, pasosPedido } from "@/lib/delivery";
+import { cn } from "@/lib/utils";
+
+export function StatusBadge({ estado, className }: { estado: EstadoPedido; className?: string }) {
+  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold", estadoTone[estado], className)}>{estadoCorto[estado]}</span>;
+}
+
+const stepIcons = { pendiente: Receipt, confirmado: ClipboardCheck, preparando: ChefHat, en_camino: Bike, entregado: Home } as const;
+const stepLabels = { pendiente: "Pedido enviado", confirmado: "Confirmado", preparando: "Preparando", en_camino: "En camino", entregado: "Entregado" } as const;
+
+export function OrderTimeline({ order }: { order: DeliveryOrder }) {
+  const current = pasosPedido.indexOf(order.estado);
+  const times: Record<string, string | null | undefined> = {
+    pendiente: order.created_at,
+    confirmado: order.confirmado_at,
+    preparando: order.preparando_at,
+    en_camino: order.en_camino_at,
+    entregado: order.entregado_at,
+  };
+
+  return (
+    <ol className="grid grid-cols-5 gap-1">
+      {pasosPedido.map((step, index) => {
+        const Icon = stepIcons[step as keyof typeof stepIcons];
+        const done = current >= index;
+        const active = current === index && order.estado !== "entregado";
+        return (
+          <li key={step} className="flex flex-col items-center text-center">
+            <div className="flex w-full items-center">
+              <span className={cn("h-1 flex-1 rounded-full", index === 0 ? "bg-transparent" : done ? "bg-primary" : "bg-muted")} />
+              <span className={cn("relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors", done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
+                {active && <span className="absolute inset-0 animate-ping rounded-full bg-primary/40" />}
+                {done && !active ? <Check className="h-5 w-5" /> : <Icon className={cn("h-5 w-5", active && step === "en_camino" && "animate-ride")} />}
+              </span>
+              <span className={cn("h-1 flex-1 rounded-full", index === pasosPedido.length - 1 ? "bg-transparent" : current > index ? "bg-primary" : "bg-muted")} />
+            </div>
+            <span className={cn("mt-2 text-[11px] font-bold leading-tight sm:text-xs", done ? "text-foreground" : "text-muted-foreground")}>{stepLabels[step as keyof typeof stepLabels]}</span>
+            <span className="text-[10px] text-muted-foreground">{formatTime(times[step])}</span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { z } from "zod";
 import { sanitizeErrorMessage } from "@/lib/sanitize";
 import { lovable } from "@/integrations/lovable/index";
 import { Separator } from "@/components/ui/separator";
-import { WorefLogo } from "@/components/lin/WorefLogo";
+import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
 
 const loginSchema = z.object({
   email: z.string().trim().email("Ingresá un email válido").max(255),
@@ -27,13 +27,15 @@ type AuthStyle = "mint" | "dark" | "photo";
 export default function Auth() {
   const { session, loading } = useAuth();
 
-  const [isLogin, setIsLogin] = useState(true);
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const [isLogin, setIsLogin] = useState(searchParams.get("registro") !== "1");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [authStyle] = useState<AuthStyle>("mint");
+  const [authStyle] = useState<AuthStyle>("photo");
   const { toast } = useToast();
 
   if (loading) {
@@ -44,7 +46,10 @@ export default function Auth() {
     );
   }
 
-  if (session) return <Navigate to="/lin" replace />;
+  if (session) {
+    const from = (location.state as { from?: string } | null)?.from;
+    return <Navigate to={from && from.startsWith("/app") ? from : "/app"} replace />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,8 +107,8 @@ export default function Auth() {
     : "relative";
 
   const textColor = isMint ? "text-foreground" : "text-white";
-  const subtextColor = isMint ? "text-muted-foreground" : "text-white/60";
-  const footerColor = isMint ? "text-muted-foreground/60" : "text-white/30";
+  const subtextColor = isMint ? "text-muted-foreground" : "text-white/85";
+  const footerColor = isMint ? "text-muted-foreground/60" : "text-white/60";
 
   return (
     <div className="flex min-h-screen">
@@ -114,12 +119,12 @@ export default function Auth() {
             <div
               className="absolute inset-0"
               style={{
-                backgroundImage: `url()`,
+                backgroundImage: "url(https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1400&q=80&auto=format&fit=crop)",
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/75" />
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/80 to-black/60" />
           </>
         )}
 
@@ -133,29 +138,25 @@ export default function Auth() {
         )}
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <div className="flex items-center gap-2.5">
-            <WorefLogo variant="symbol" size={48} className="text-primary" />
-            <WorefLogo variant="wordmark" size={36} className="text-foreground" />
-          </div>
+          <DeliveryBrand inverted />
 
           <div className="space-y-6">
             <h1 className={`font-display text-5xl lg:text-6xl font-bold leading-[1.02] tracking-tight ${textColor}`}>
-              Donde los que construyen<br />
-              <span className="text-ember">se encuentran.</span>
+              Lo que necesitás,<br />
+              llega hoy.
             </h1>
             <p className={`text-lg max-w-md leading-relaxed ${subtextColor}`}>
-              La red de emprendedores, creadores, inversores y empresas.
-              Publicá, conectá, vendé y encontrá tu próximo socio, cliente o proyecto.
+              Comida, supermercado, farmacia y tiendas cerca tuyo, con seguimiento en tiempo real.
             </p>
             <ul className={`space-y-2 text-sm ${subtextColor}`}>
-              <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-primary" /> Feed profesional con historias, reels y comunidades</li>
-              <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-primary" /> Mercado, mensajería y videollamadas integradas</li>
-              <li className="flex items-center gap-2"><span className="h-1 w-1 rounded-full bg-primary" /> Proyectos colaborativos y foro pro</li>
+              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-white" /> Cientos de comercios en tu zona</li>
+              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-white" /> Cupones y envíos gratis todas las semanas</li>
+              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-white" /> Sumá tu comercio o repartí con nosotros</li>
             </ul>
           </div>
 
           <p className={`text-sm ${footerColor}`}>
-            © 2026 Woref. Construido para quienes hacen.
+            © {new Date().getFullYear()} Woref.
           </p>
         </div>
       </div>
@@ -167,7 +168,7 @@ export default function Auth() {
             {isLogin ? "Bienvenido de nuevo" : "Crear cuenta"}
           </h2>
           <p className="text-sm text-muted-foreground mb-8">
-            {isLogin ? "Iniciá sesión en Woref" : "Empezá a publicar y conectar en minutos"}
+            {isLogin ? "Iniciá sesión para pedir en Woref" : "Creá tu cuenta y hacé tu primer pedido"}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">

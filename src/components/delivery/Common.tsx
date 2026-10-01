@@ -1,0 +1,61 @@
+import { ReactNode } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+export function Rail({ title, subtitle, to, children }: { title: string; subtitle?: string; to?: string; children: ReactNode }) {
+  return (
+    <section className="pt-9">
+      <div className="mb-4 flex items-end justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-extrabold sm:text-2xl">{title}</h2>
+          {subtitle && <p className="mt-0.5 text-sm text-muted-foreground">{subtitle}</p>}
+        </div>
+        {to && <Link to={to} className="flex shrink-0 items-center gap-0.5 text-sm font-bold text-primary">Ver todo<ChevronRight className="h-4 w-4" /></Link>}
+      </div>
+      <div className="scrollbar-none -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">{children}</div>
+    </section>
+  );
+}
+
+export function EmptyState({ icon, title, text, action, className }: { icon?: ReactNode; title: string; text?: string; action?: ReactNode; className?: string }) {
+  return (
+    <div className={cn("flex flex-col items-center rounded-3xl border border-dashed bg-card px-6 py-14 text-center", className)}>
+      {icon && <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>}
+      <p className="font-display text-lg font-bold">{title}</p>
+      {text && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{text}</p>}
+      {action && <div className="mt-5">{action}</div>}
+    </div>
+  );
+}
+
+export function PageHeader({ eyebrow, title, subtitle, back, actions }: { eyebrow?: string; title: string; subtitle?: ReactNode; back?: boolean | string; actions?: ReactNode }) {
+  const navigate = useNavigate();
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="flex min-w-0 items-start gap-3">
+        {back && (
+          <button type="button" aria-label="Volver" onClick={() => (typeof back === "string" ? navigate(back) : navigate(-1))} className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted hover:bg-muted/70">
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+        )}
+        <div className="min-w-0">
+          {eyebrow && <p className="text-xs font-bold uppercase tracking-wide text-primary">{eyebrow}</p>}
+          <h1 className="mt-0.5 text-2xl font-extrabold sm:text-3xl">{title}</h1>
+          {subtitle && <div className="mt-1 text-sm text-muted-foreground">{subtitle}</div>}
+        </div>
+      </div>
+      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
+    </div>
+  );
+}
+
+export function StatCard({ label, value, hint, icon }: { label: string; value: ReactNode; hint?: ReactNode; icon?: ReactNode }) {
+  return (
+    <div className="rounded-2xl border bg-card p-4">
+      <div className="flex items-center justify-between gap-2 text-sm font-semibold text-muted-foreground">{label}{icon}</div>
+      <p className="mt-2 font-display text-2xl font-extrabold tabular-nums">{value}</p>
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    </div>
+  );
+}

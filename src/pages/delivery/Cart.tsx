@@ -1,42 +1,208 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Minus, Plus, ShoppingBag } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
-import { supabase } from "@/integrations/supabase/client";
+import { Banknote, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Tag, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
+import { AddressForm, AddressList, fullAddress, SavedAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
+import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import { useCart } from "@/contexts/CartContext";
+import { db, errorMessage, img, MetodoPago, money } from "@/lib/delivery";
+import { cn } from "@/lib/utils";
 
-const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+type CouponResult = { valido: boolean; codigo?: string; descuento?: number; envio_gratis?: boolean; mensaje: string };
+
+const payments: { id: MetodoPago; label: string; hint: string; icon: typeof Banknote }[] = [
+  { id: "efectivo", label: "Efectivo", hint: "Pagás al recibir", icon: Banknote },
+  { id: "tarjeta", label: "Tarjeta", hint: "Débito o crédito al recibir (posnet)", icon: CreditCard },
+  { id: "transferencia", label: "Transferencia", hint: "Te pasamos el alias al confirmar", icon: Landmark },
+];
+const tips = [0, 500, 1000, 1500];
 
 export default function Cart() {
-  const { user } = useAuth();
-  const { store, items, subtotal, updateQuantity, clearCart } = useCart();
-  const [address, setAddress] = useState("Av. Corrientes 1234, CABA");
-  const [notes, setNotes] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const { store, items, subtotal, updateQuantity, clearCart, address, setAddress } = useCart();
+  const { addresses, reload } = useSavedAddresses();
   const navigate = useNavigate();
+  const [notes, setNotes] = useState("");
+  const [payment, setPayment] = useState<MetodoPago>("efectivo");
+  const [tip, setTip] = useState(500);
+  const [couponInput, setCouponInput] = useState("");
+  const [coupon, setCoupon] = useState<CouponResult | null>(null);
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const [addingAddress, setAddingAddress] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const checkout = async () => {
-    if (!user || !store || !items.length || !address.trim()) return;
-    setSubmitting(true);
-    const total = subtotal + store.costo_envio;
-    const { data: order, error } = await (supabase as any).from("delivery_pedidos").insert({ cliente_id: user.id, comercio_id: store.id, direccion_entrega: address.trim(), subtotal, costo_envio: store.costo_envio, total, metodo_pago: "efectivo", notas: notes.trim() || null, entrega_estimada: new Date(Date.now() + 40 * 60 * 1000).toISOString() }).select("id").single();
-    if (error || !order) { toast.error("No pudimos crear el pedido"); setSubmitting(false); return; }
-    const { error: itemError } = await (supabase as any).from("delivery_pedido_items").insert(items.map((item) => ({ pedido_id: order.id, producto_id: item.id, nombre: item.nombre, precio_unitario: item.precio, cantidad: item.cantidad })));
-    if (itemError) { toast.error("El pedido quedó incompleto. Contactá soporte."); setSubmitting(false); return; }
-    clearCart();
-    toast.success("Pedido confirmado");
-    navigate(`/lin/pedidos?pedido=${order.id}`);
+  useEffect(() => {
+    if (!address && addresses.length) {
+      const preferred = addresses.find((item) => item.predeterminada) || addresses[0];
+      setAddress({ id: preferred.id, alias: preferred.alias, direccion: fullAddress(preferred) });
+    }
+  }, [address, addresses, setAddress]);
+
+  // Si cambia el carrito, el cupón aplicado puede dejar de ser válido: se vuelve a validar.
+  useEffect(() => {
+    if (!coupon?.valido || !store || !coupon.codigo) return;
+    db.rpc("delivery_validar_cupon", { p_codigo: coupon.codigo, p_comercio: store.id, p_subtotal: subtotal }).then(({ data }: { data: CouponResult | null }) => {
+      if (data) setCoupon(data);
+    });
+  }, [subtotal]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const summary = useMemo(() => {
+    if (!store) return null;
+    const freeByStore = store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && subtotal >= Number(store.envio_gratis_desde);
+    const shipping = freeByStore || (coupon?.valido && coupon.envio_gratis) ? 0 : Number(store.costo_envio);
+    const service = Math.round(subtotal * 0.05);
+    const discount = coupon?.valido ? Number(coupon.descuento || 0) : 0;
+    return { shipping, service, discount, total: Math.max(subtotal + shipping + service + tip - discount, 0), missing: Math.max(Number(store.pedido_minimo || 0) - subtotal, 0) };
+  }, [store, subtotal, coupon, tip]);
+
+  if (!store || !items.length || !summary) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-14">
+        <EmptyState icon={<ShoppingBag className="h-7 w-7" />} title="Tu carrito está vacío" text="Explorá comercios y agregá lo que quieras pedir." action={<Button asChild className="rounded-full"><Link to="/app">Ver comercios</Link></Button>} />
+      </div>
+    );
+  }
+
+  const applyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setCheckingCoupon(true);
+    const { data, error } = await db.rpc("delivery_validar_cupon", { p_codigo: couponInput.trim(), p_comercio: store.id, p_subtotal: subtotal });
+    setCheckingCoupon(false);
+    if (error) return toast.error(errorMessage(error));
+    setCoupon(data);
+    if (data?.valido) toast.success("Cupón aplicado"); else toast.error(data?.mensaje || "Cupón inválido");
   };
 
-  if (!store || !items.length) return <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-20 text-center"><span className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"><ShoppingBag className="h-7 w-7" /></span><h1 className="mt-5 text-2xl font-extrabold">Tu carrito está vacío</h1><p className="mt-2 text-sm text-muted-foreground">Explorá comercios y agregá lo que quieras pedir.</p><Button asChild className="mt-6"><Link to="/lin">Ver comercios</Link></Button></div>;
+  const checkout = async () => {
+    if (!address?.direccion) return toast.error("Elegí una dirección de entrega");
+    if (summary.missing > 0) return toast.error(`Te faltan ${money(summary.missing)} para el pedido mínimo`);
+    setSubmitting(true);
+    const { data: orderId, error } = await db.rpc("delivery_crear_pedido", {
+      p_comercio: store.id,
+      p_items: items.map((item) => ({ producto_id: item.id, cantidad: item.cantidad, notas: item.notas || null })),
+      p_direccion: address.direccion,
+      p_direccion_id: address.id || null,
+      p_metodo_pago: payment,
+      p_propina: tip,
+      p_cupon: coupon?.valido ? coupon.codigo : null,
+      p_notas: notes.trim() || null,
+    });
+    setSubmitting(false);
+    if (error || !orderId) return toast.error(errorMessage(error, "No pudimos crear el pedido"));
+    clearCart();
+    toast.success("¡Pedido confirmado! El comercio ya lo recibió.");
+    navigate(`/app/pedidos/${orderId}`, { replace: true });
+  };
+
+  const chooseAddress = (saved: SavedAddress) => setAddress({ id: saved.id, alias: saved.alias, direccion: fullAddress(saved) });
 
   return (
-    <div className="mx-auto grid max-w-5xl gap-6 px-4 py-7 md:grid-cols-[1fr_360px] sm:px-6">
-      <section><p className="text-xs font-bold uppercase text-primary">Tu pedido</p><h1 className="mt-1 text-3xl font-extrabold">{store.nombre}</h1><div className="mt-6 space-y-3">{items.map((item) => <article key={item.id} className="flex items-center gap-4 rounded-lg border bg-card p-3"><img src={item.imagen_url || "/placeholder.svg"} alt="" loading="lazy" width={80} height={80} className="h-20 w-20 rounded-md object-cover" /><div className="min-w-0 flex-1"><p className="font-bold">{item.nombre}</p><p className="mt-1 text-sm text-muted-foreground">{money.format(item.precio)}</p></div><div className="flex items-center gap-2"><Button size="icon" variant="outline" className="h-9 w-9" onClick={() => updateQuantity(item.id, item.cantidad - 1)}><Minus className="h-4 w-4" /></Button><span className="w-5 text-center font-bold">{item.cantidad}</span><Button size="icon" className="h-9 w-9" onClick={() => updateQuantity(item.id, item.cantidad + 1)}><Plus className="h-4 w-4" /></Button></div></article>)}</div></section>
-      <aside className="h-fit rounded-lg border bg-card p-5 shadow-soft md:sticky md:top-24"><h2 className="text-xl font-extrabold">Entrega</h2><label className="mt-5 block text-sm font-bold">Dirección</label><Input value={address} onChange={(event) => setAddress(event.target.value)} className="mt-2" /><label className="mt-4 block text-sm font-bold">Notas para el comercio</label><Input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="Sin cebolla, tocar timbre…" className="mt-2" /><div className="my-5 space-y-2 border-y py-4 text-sm"><div className="flex justify-between"><span className="text-muted-foreground">Productos</span><span>{money.format(subtotal)}</span></div><div className="flex justify-between"><span className="text-muted-foreground">Envío</span><span>{money.format(store.costo_envio)}</span></div><div className="flex justify-between pt-2 text-lg font-extrabold"><span>Total</span><span>{money.format(subtotal + store.costo_envio)}</span></div></div><Button className="w-full" size="lg" onClick={checkout} disabled={submitting || !address.trim()}>{submitting ? "Confirmando…" : "Confirmar pedido"}</Button><p className="mt-3 text-center text-xs text-muted-foreground">Pago en efectivo al recibir.</p></aside>
+    <div className="mx-auto max-w-6xl px-4 pb-16 pt-5 sm:px-6">
+      <PageHeader back eyebrow="Tu pedido" title={store.nombre} subtitle={<Link to={`/app/tienda/${store.slug}`} className="font-bold text-primary">Agregar más productos</Link>} />
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
+        <div className="space-y-6">
+          <section className="rounded-3xl border bg-card p-4 sm:p-5">
+            <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold">Productos</h2><button type="button" className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-destructive" onClick={clearCart}><Trash2 className="h-4 w-4" />Vaciar</button></div>
+            <ul className="mt-3 divide-y">
+              {items.map((item) => (
+                <li key={item.id} className="flex items-center gap-3 py-3">
+                  <img src={img(item.imagen_url, 200)} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-bold">{item.nombre}</p>
+                    {item.notas && <p className="truncate text-xs text-muted-foreground">“{item.notas}”</p>}
+                    <p className="font-display text-sm font-extrabold">{money(item.precio * item.cantidad)}</p>
+                  </div>
+                  <div className="flex items-center gap-1 rounded-full border p-0.5">
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Quitar uno" onClick={() => updateQuantity(item.id, item.cantidad - 1)}>{item.cantidad === 1 ? <Trash2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}</Button>
+                    <span className="w-5 text-center text-sm font-bold tabular-nums">{item.cantidad}</span>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Agregar uno" onClick={() => updateQuantity(item.id, item.cantidad + 1)}><Plus className="h-4 w-4" /></Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <label htmlFor="order-notes" className="mt-2 block text-sm font-bold">Comentarios para el comercio</label>
+            <Textarea id="order-notes" value={notes} maxLength={500} onChange={(event) => setNotes(event.target.value)} placeholder="Ej.: sin cubiertos, tocar el timbre 2B…" className="mt-2 min-h-[64px] resize-none" />
+          </section>
+
+          <section className="rounded-3xl border bg-card p-4 sm:p-5">
+            <h2 className="flex items-center gap-2 text-lg font-extrabold"><MapPin className="h-5 w-5 text-primary" />Dirección de entrega</h2>
+            <div className="mt-3">
+              {addresses.length > 0 && <AddressList addresses={addresses} selectable={chooseAddress} />}
+              {addingAddress || addresses.length === 0 ? (
+                <div className="mt-3"><AddressForm onSaved={(saved) => { setAddingAddress(false); reload(); chooseAddress(saved); }} /></div>
+              ) : (
+                <Button variant="outline" className="mt-3 rounded-full" onClick={() => setAddingAddress(true)}><Plus className="h-4 w-4" />Nueva dirección</Button>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border bg-card p-4 sm:p-5">
+            <h2 className="text-lg font-extrabold">Medio de pago</h2>
+            <div className="mt-3 grid gap-2 sm:grid-cols-3">
+              {payments.map(({ id, label, hint, icon: Icon }) => (
+                <button key={id} type="button" onClick={() => setPayment(id)} className={cn("relative rounded-2xl border p-3 text-left transition-colors", payment === id ? "border-primary bg-primary/5" : "hover:bg-muted")}>
+                  <Icon className={cn("h-6 w-6", payment === id ? "text-primary" : "text-muted-foreground")} />
+                  <span className="mt-2 block font-bold">{label}</span>
+                  <span className="block text-xs text-muted-foreground">{hint}</span>
+                  {payment === id && <Check className="absolute right-3 top-3 h-5 w-5 text-primary" />}
+                </button>
+              ))}
+            </div>
+          </section>
+
+          <section className="rounded-3xl border bg-card p-4 sm:p-5">
+            <h2 className="text-lg font-extrabold">Propina para quien te lo lleva</h2>
+            <p className="text-sm text-muted-foreground">El 100% es para el repartidor.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {tips.map((value) => (
+                <button key={value} type="button" onClick={() => setTip(value)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", tip === value ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted")}>{value === 0 ? "Sin propina" : money(value)}</button>
+              ))}
+            </div>
+          </section>
+        </div>
+
+        <aside className="h-fit space-y-4 lg:sticky lg:top-24">
+          <section className="rounded-3xl border bg-card p-4 sm:p-5">
+            <h2 className="flex items-center gap-2 text-lg font-extrabold"><Tag className="h-5 w-5 text-primary" />Cupón</h2>
+            {coupon?.valido ? (
+              <div className="mt-3 flex items-center justify-between gap-2 rounded-2xl bg-success/10 p-3 text-sm">
+                <span><span className="font-bold text-success">{coupon.codigo}</span><span className="block text-muted-foreground">{coupon.mensaje}</span></span>
+                <Button size="icon" variant="ghost" aria-label="Quitar cupón" onClick={() => { setCoupon(null); setCouponInput(""); }}><X className="h-4 w-4" /></Button>
+              </div>
+            ) : (
+              <div className="mt-3 flex gap-2">
+                <Input value={couponInput} onChange={(event) => setCouponInput(event.target.value.toUpperCase())} placeholder="Ej.: BIENVENIDA" maxLength={30} className="uppercase placeholder:normal-case" onKeyDown={(event) => event.key === "Enter" && applyCoupon()} />
+                <Button variant="outline" onClick={applyCoupon} disabled={checkingCoupon || !couponInput.trim()}>{checkingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}</Button>
+              </div>
+            )}
+            {coupon && !coupon.valido && <p className="mt-2 text-sm font-semibold text-destructive">{coupon.mensaje}</p>}
+          </section>
+
+          <section className="rounded-3xl border bg-card p-4 shadow-soft sm:p-5">
+            <h2 className="text-lg font-extrabold">Resumen</h2>
+            <dl className="mt-3 space-y-2 text-sm">
+              <div className="flex justify-between"><dt className="text-muted-foreground">Productos</dt><dd>{money(subtotal)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Envío</dt><dd className={cn(summary.shipping === 0 && "font-bold text-success")}>{summary.shipping === 0 ? "Gratis" : money(summary.shipping)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa de servicio</dt><dd>{money(summary.service)}</dd></div>
+              {tip > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Propina</dt><dd>{money(tip)}</dd></div>}
+              {summary.discount > 0 && <div className="flex justify-between font-bold text-success"><dt>Descuento</dt><dd>-{money(summary.discount)}</dd></div>}
+              <div className="flex justify-between border-t pt-3 font-display text-xl font-extrabold"><dt>Total</dt><dd>{money(summary.total)}</dd></div>
+            </dl>
+            {summary.missing > 0 && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Te faltan {money(summary.missing)} para llegar al pedido mínimo.</p>}
+            {store.envio_gratis_desde && Number(store.envio_gratis_desde) > 1 && subtotal < Number(store.envio_gratis_desde) && (
+              <p className="mt-3 text-sm text-muted-foreground">Sumá {money(Number(store.envio_gratis_desde) - subtotal)} más y el envío es gratis.</p>
+            )}
+            <p className="mt-3 truncate text-sm text-muted-foreground">Entrega en <span className="font-bold text-foreground">{address?.direccion || "—"}</span></p>
+            <Button className="mt-4 h-12 w-full rounded-full text-base font-bold" onClick={checkout} disabled={submitting || summary.missing > 0 || !address?.direccion}>
+              {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `Hacer pedido · ${money(summary.total)}`}
+            </Button>
+            <p className="mt-2 text-center text-xs text-muted-foreground">El total final lo calcula el sistema al confirmar.</p>
+          </section>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -1,14 +1,81 @@
-import { useEffect, useState } from "react";
-import { Clock3, PackageCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import { ChevronRight, Receipt, RotateCcw } from "lucide-react";
+import { EmptyState, PageHeader } from "@/components/delivery/Common";
+import { StatusBadge } from "@/components/delivery/OrderStatus";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
-
-const statusLabel: Record<string, string> = { pendiente: "Esperando confirmación", confirmado: "Confirmado", preparando: "En preparación", en_camino: "En camino", entregado: "Entregado", cancelado: "Cancelado" };
-const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+import { useReorder } from "@/hooks/useReorder";
+import { db, DeliveryOrder, formatDateTime, img, money, orderSelect, pedidoActivo } from "@/lib/delivery";
 
 export default function Orders() {
   const { user } = useAuth();
-  const [orders, setOrders] = useState<any[]>([]);
-  useEffect(() => { if (!user) return; (async () => { const { data } = await (supabase as any).from("delivery_pedidos").select("*, comercio:delivery_comercios(nombre,imagen_url), items:delivery_pedido_items(nombre,cantidad)").eq("cliente_id", user.id).order("created_at", { ascending: false }); setOrders(data || []); })(); }, [user]);
-  return <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6"><p className="text-xs font-bold uppercase text-primary">Seguimiento</p><h1 className="mt-1 text-3xl font-extrabold">Mis pedidos</h1>{orders.length ? <div className="mt-6 space-y-4">{orders.map((order) => <article key={order.id} className="grid gap-4 rounded-lg border bg-card p-4 shadow-soft sm:grid-cols-[112px_1fr_auto]"><img src={order.comercio?.imagen_url || "/placeholder.svg"} alt="" loading="lazy" width={180} height={120} className="h-24 w-full rounded-md object-cover sm:w-28" /><div><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary"><PackageCheck className="h-4 w-4" /></span><h2 className="font-extrabold">{order.comercio?.nombre}</h2></div><p className="mt-2 text-sm text-muted-foreground">{order.items?.map((item: any) => `${item.cantidad}× ${item.nombre}`).join(" · ")}</p><p className="mt-2 flex items-center gap-1 text-xs font-semibold text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />{new Date(order.created_at).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" })}</p></div><div className="sm:text-right"><span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{statusLabel[order.estado] || order.estado}</span><p className="mt-3 font-extrabold">{money.format(order.total)}</p></div></article>)}</div> : <div className="mt-8 rounded-lg border bg-card p-10 text-center"><p className="font-bold">Todavía no hiciste pedidos</p><p className="mt-1 text-sm text-muted-foreground">Cuando confirmes uno, podrás seguirlo desde acá.</p></div>}</div>;
+  const [orders, setOrders] = useState<DeliveryOrder[]>([]);
+  const [loading, setLoading] = useState(true);
+  const reorder = useReorder();
+
+  useEffect(() => {
+    if (!user) return;
+    const load = async () => {
+      const { data } = await db.from("delivery_pedidos").select(orderSelect).eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(50);
+      setOrders(data || []);
+      setLoading(false);
+    };
+    load();
+    const channel = db.channel(`pedidos-cliente-${user.id}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos", filter: `cliente_id=eq.${user.id}` }, load)
+      .subscribe();
+    return () => { db.removeChannel(channel); };
+  }, [user]);
+
+  const active = useMemo(() => orders.filter((order) => pedidoActivo(order.estado)), [orders]);
+  const past = useMemo(() => orders.filter((order) => !pedidoActivo(order.estado)), [orders]);
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 pb-14 pt-5 sm:px-6">
+      <PageHeader eyebrow="Seguimiento" title="Mis pedidos" />
+      {loading ? (
+        <div className="mt-6 space-y-3">{[0, 1, 2].map((key) => <div key={key} className="h-28 animate-pulse rounded-3xl bg-muted" />)}</div>
+      ) : orders.length === 0 ? (
+        <EmptyState className="mt-6" icon={<Receipt className="h-7 w-7" />} title="Todavía no hiciste pedidos" text="Cuando confirmes uno, vas a poder seguirlo desde acá en tiempo real." action={<Button asChild className="rounded-full"><Link to="/app">Explorar comercios</Link></Button>} />
+      ) : (
+        <>
+          {active.length > 0 && (
+            <section className="mt-6">
+              <h2 className="text-lg font-extrabold">En curso</h2>
+              <div className="mt-3 space-y-3">{active.map((order) => <OrderRow key={order.id} order={order} highlight />)}</div>
+            </section>
+          )}
+          {past.length > 0 && (
+            <section className="mt-8">
+              <h2 className="text-lg font-extrabold">Anteriores</h2>
+              <div className="mt-3 space-y-3">{past.map((order) => <OrderRow key={order.id} order={order} onReorder={order.estado === "entregado" ? () => reorder(order) : undefined} />)}</div>
+            </section>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+function OrderRow({ order, highlight, onReorder }: { order: DeliveryOrder; highlight?: boolean; onReorder?: () => void }) {
+  const summary = (order.items || []).map((item) => `${item.cantidad}× ${item.nombre}`).join(" · ");
+  return (
+    <article className={`rounded-3xl border bg-card p-3 transition-shadow hover:shadow-soft sm:p-4 ${highlight ? "border-primary/40" : ""}`}>
+      <Link to={`/app/pedidos/${order.id}`} className="flex items-center gap-3">
+        <img src={img(order.comercio?.imagen_url, 200)} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-2xl object-cover sm:h-20 sm:w-20" />
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2"><h3 className="truncate font-extrabold">{order.comercio?.nombre}</h3><StatusBadge estado={order.estado} /></div>
+          <p className="mt-1 truncate text-sm text-muted-foreground">{summary}</p>
+          <p className="mt-1 text-xs font-semibold text-muted-foreground">{formatDateTime(order.created_at)} · <span className="text-foreground">{money(order.total)}</span></p>
+        </div>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+      </Link>
+      {onReorder && (
+        <div className="mt-3 flex justify-end border-t pt-3">
+          <Button variant="outline" size="sm" className="rounded-full" onClick={onReorder}><RotateCcw className="h-4 w-4" />Repetir pedido</Button>
+        </div>
+      )}
+    </article>
+  );
 }
