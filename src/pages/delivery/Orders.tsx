@@ -1,0 +1,14 @@
+import { useEffect, useState } from "react";
+import { Clock3, PackageCheck } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+
+const statusLabel: Record<string, string> = { pendiente: "Esperando confirmación", confirmado: "Confirmado", preparando: "En preparación", en_camino: "En camino", entregado: "Entregado", cancelado: "Cancelado" };
+const money = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });
+
+export default function Orders() {
+  const { user } = useAuth();
+  const [orders, setOrders] = useState<any[]>([]);
+  useEffect(() => { if (!user) return; (async () => { const { data } = await (supabase as any).from("delivery_pedidos").select("*, comercio:delivery_comercios(nombre,imagen_url), items:delivery_pedido_items(nombre,cantidad)").eq("cliente_id", user.id).order("created_at", { ascending: false }); setOrders(data || []); })(); }, [user]);
+  return <div className="mx-auto max-w-4xl px-4 py-7 sm:px-6"><p className="text-xs font-bold uppercase text-primary">Seguimiento</p><h1 className="mt-1 text-3xl font-extrabold">Mis pedidos</h1>{orders.length ? <div className="mt-6 space-y-4">{orders.map((order) => <article key={order.id} className="grid gap-4 rounded-lg border bg-card p-4 shadow-soft sm:grid-cols-[112px_1fr_auto]"><img src={order.comercio?.imagen_url || "/placeholder.svg"} alt="" loading="lazy" width={180} height={120} className="h-24 w-full rounded-md object-cover sm:w-28" /><div><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary"><PackageCheck className="h-4 w-4" /></span><h2 className="font-extrabold">{order.comercio?.nombre}</h2></div><p className="mt-2 text-sm text-muted-foreground">{order.items?.map((item: any) => `${item.cantidad}× ${item.nombre}`).join(" · ")}</p><p className="mt-2 flex items-center gap-1 text-xs font-semibold text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />{new Date(order.created_at).toLocaleString("es-AR", { dateStyle: "short", timeStyle: "short" })}</p></div><div className="sm:text-right"><span className="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-bold text-primary">{statusLabel[order.estado] || order.estado}</span><p className="mt-3 font-extrabold">{money.format(order.total)}</p></div></article>)}</div> : <div className="mt-8 rounded-lg border bg-card p-10 text-center"><p className="font-bold">Todavía no hiciste pedidos</p><p className="mt-1 text-sm text-muted-foreground">Cuando confirmes uno, podrás seguirlo desde acá.</p></div>}</div>;
+}
