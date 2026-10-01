@@ -15,4 +15,16 @@ if (isPreviewHost || isInIframe) {
   navigator.serviceWorker?.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
 }
 
+// Cuando se publica una versión nueva, la app instalada se recarga una vez para mostrarla.
+if (!isPreviewHost && !isInIframe && "serviceWorker" in navigator) {
+  // En la primera visita no hay versión anterior: no hace falta recargar.
+  const hadController = Boolean(navigator.serviceWorker.controller);
+  let reloaded = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloaded || !hadController) return;
+    reloaded = true;
+    window.location.reload();
+  });
+}
+
 createRoot(document.getElementById("root")!).render(<App />);
