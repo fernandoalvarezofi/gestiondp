@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Check, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { CartStore, useCart } from "@/contexts/CartContext";
-import { DeliveryProduct, img, money } from "@/lib/delivery";
+import { ChosenOption, DeliveryProduct, img, money, ProductGroup, sortGroups } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 function discount(product: DeliveryProduct) {
@@ -13,16 +13,28 @@ function discount(product: DeliveryProduct) {
   return Math.round((1 - product.precio / product.precio_anterior) * 100);
 }
 
+const groupHint = (group: ProductGroup) => {
+  if (group.minimo > 0 && group.maximo === group.minimo) return group.minimo === 1 ? "Elegí 1" : `Elegí ${group.minimo}`;
+  if (group.minimo > 0) return `Elegí de ${group.minimo} a ${group.maximo}`;
+  return group.maximo === 1 ? "Opcional" : `Opcional · hasta ${group.maximo}`;
+};
+
 export function ProductCard({ product, store, disabled }: { product: DeliveryProduct; store: CartStore; disabled?: boolean }) {
-  const { quantityOf, updateQuantity, addItem } = useCart();
+  const { quantityOf, decrementProduct, addItem } = useCart();
   const [open, setOpen] = useState(false);
   const quantity = quantityOf(product.id);
   const off = discount(product);
   const unavailable = disabled || !product.disponible || product.stock === 0;
+  const groups = useMemo(() => sortGroups(product.grupos), [product.grupos]);
+  const hasOptions = groups.some((group) => group.opciones.some((option) => option.disponible));
+  const needsChoice = groups.some((group) => group.minimo > 0);
 
   const quickAdd = () => {
+    // Si hay que elegir algo (tamaño, punto…), se abre el detalle en vez de agregar directo.
+    if (needsChoice) { setOpen(true); return; }
     const sameStore = addItem(product, store);
     if (!sameStore) toast.info(`Vaciamos tu carrito anterior para pedir en ${store.nombre}`);
+    else toast.success("Agregado al carrito");
   };
 
   return (
@@ -35,69 +47,126 @@ export function ProductCard({ product, store, disabled }: { product: DeliveryPro
           <h3 className="font-bold leading-snug">{product.nombre}</h3>
           {product.descripcion && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{product.descripcion}</p>}
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span className="font-display font-extrabold">{money(product.precio)}</span>
+            <span className="font-display font-extrabold">{needsChoice ? "Desde " : ""}{money(product.precio)}</span>
             {off && <span className="text-xs text-muted-foreground line-through">{money(product.precio_anterior)}</span>}
             {off && <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[11px] font-bold text-primary">-{off}%</span>}
           </div>
+          {hasOptions && !unavailable && <p className="mt-1 text-xs font-semibold text-muted-foreground">Personalizable</p>}
           {unavailable && <p className="mt-1 text-xs font-bold text-muted-foreground">Sin stock por ahora</p>}
         </div>
         <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-xl bg-muted">
           <img src={img(product.imagen_url, 300)} alt={product.nombre} loading="lazy" className="h-full w-full object-cover" />
           {!unavailable && (quantity > 0 ? (
             <div className="absolute inset-x-1.5 bottom-1.5 flex items-center justify-between rounded-full bg-card p-0.5 shadow-pop" onClick={(event) => event.stopPropagation()}>
-              <button type="button" aria-label="Quitar uno" className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted" onClick={() => updateQuantity(product.id, quantity - 1)}><Minus className="h-4 w-4" /></button>
+              <button type="button" aria-label="Quitar uno" className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-muted" onClick={() => decrementProduct(product.id)}><Minus className="h-4 w-4" /></button>
               <span className="text-sm font-bold tabular-nums">{quantity}</span>
-              <button type="button" aria-label="Agregar uno" className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground" onClick={quickAdd}><Plus className="h-4 w-4" /></button>
+              <button type="button" aria-label="Agregar uno" className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground" onClick={() => (hasOptions ? setOpen(true) : quickAdd())}><Plus className="h-4 w-4" /></button>
             </div>
           ) : (
-            <button type="button" aria-label={`Agregar ${product.nombre}`} className="absolute bottom-1.5 right-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop transition-transform active:scale-90" onClick={(event) => { event.stopPropagation(); quickAdd(); toast.success("Agregado al carrito"); }}>
+            <button type="button" aria-label={`Agregar ${product.nombre}`} className="absolute bottom-1.5 right-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop transition-transform active:scale-90" onClick={(event) => { event.stopPropagation(); quickAdd(); }}>
               <Plus className="h-5 w-5" />
             </button>
           ))}
         </div>
       </article>
-      <ProductDialog product={product} store={store} open={open} onOpenChange={setOpen} />
+      {open && <ProductDialog product={product} groups={groups} store={store} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function ProductDialog({ product, store, open, onOpenChange }: { product: DeliveryProduct; store: CartStore; open: boolean; onOpenChange: (open: boolean) => void }) {
+function ProductDialog({ product, groups, store, onClose }: { product: DeliveryProduct; groups: ProductGroup[]; store: CartStore; onClose: () => void }) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
+  const [selected, setSelected] = useState<Record<string, string[]>>(() =>
+    // Preselecciona la primera opción de los grupos obligatorios de una sola elección (ej. tamaño).
+    Object.fromEntries(groups.filter((group) => group.minimo === 1 && group.maximo === 1).map((group) => [group.id, group.opciones.filter((option) => option.disponible).slice(0, 1).map((option) => option.id)])),
+  );
   const maxQuantity = Math.min(product.stock ?? 50, 50);
 
+  const chosen: ChosenOption[] = groups.flatMap((group) => group.opciones
+    .filter((option) => (selected[group.id] || []).includes(option.id))
+    .map((option) => ({ id: option.id, grupo: group.nombre, nombre: option.nombre, precio: Number(option.precio_extra) })));
+  const unit = Number(product.precio) + chosen.reduce((total, option) => total + option.precio, 0);
+  const missing = groups.find((group) => (selected[group.id] || []).length < group.minimo);
+
+  const toggle = (group: ProductGroup, optionId: string) => {
+    setSelected((current) => {
+      const list = current[group.id] || [];
+      if (group.maximo === 1) return { ...current, [group.id]: list.includes(optionId) && group.minimo === 0 ? [] : [optionId] };
+      if (list.includes(optionId)) return { ...current, [group.id]: list.filter((id) => id !== optionId) };
+      if (list.length >= group.maximo) return current;
+      return { ...current, [group.id]: [...list, optionId] };
+    });
+  };
+
   const confirm = () => {
-    const sameStore = addItem(product, store, quantity, notes.trim() || undefined);
+    if (missing) {
+      toast.error(`Elegí una opción en “${missing.nombre}”`);
+      document.getElementById(`grupo-${missing.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    const sameStore = addItem(product, store, quantity, notes.trim() || undefined, chosen);
     toast.success(sameStore ? `${quantity} × ${product.nombre} agregado` : `Empezaste un carrito nuevo en ${store.nombre}`);
-    setQuantity(1);
-    setNotes("");
-    onOpenChange(false);
+    onClose();
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md gap-0 overflow-hidden p-0">
-        <img src={img(product.imagen_url, 900)} alt={product.nombre} className="aspect-[4/3] w-full object-cover" />
-        <div className="p-5">
-          <DialogTitle className="text-2xl font-extrabold">{product.nombre}</DialogTitle>
-          {product.descripcion && <DialogDescription className="mt-2">{product.descripcion}</DialogDescription>}
-          <div className="mt-3 flex items-center gap-2">
-            <span className="font-display text-xl font-extrabold">{money(product.precio)}</span>
-            {product.precio_anterior && product.precio_anterior > product.precio && <span className="text-sm text-muted-foreground line-through">{money(product.precio_anterior)}</span>}
-          </div>
-          <label htmlFor={`notes-${product.id}`} className="mt-5 block text-sm font-bold">Instrucciones especiales</label>
-          <Textarea id={`notes-${product.id}`} value={notes} maxLength={200} onChange={(event) => setNotes(event.target.value)} placeholder="Ej.: sin cebolla, bien cocido…" className="mt-2 min-h-[72px] resize-none" />
-          <div className="mt-5 flex items-center gap-3">
-            <div className="flex items-center gap-1 rounded-full border p-1">
-              <Button type="button" size="icon" variant="ghost" className="h-9 w-9 rounded-full" disabled={quantity <= 1} onClick={() => setQuantity(quantity - 1)} aria-label="Menos"><Minus className="h-4 w-4" /></Button>
-              <span className="w-6 text-center font-bold tabular-nums">{quantity}</span>
-              <Button type="button" size="icon" variant="ghost" className="h-9 w-9 rounded-full" disabled={quantity >= maxQuantity} onClick={() => setQuantity(quantity + 1)} aria-label="Más"><Plus className="h-4 w-4" /></Button>
+    <Dialog open onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="flex max-h-[92vh] max-w-md flex-col gap-0 overflow-hidden p-0">
+        <div className="overflow-y-auto">
+          <img src={img(product.imagen_url, 900)} alt={product.nombre} className="aspect-[4/3] w-full object-cover" />
+          <div className="p-5">
+            <DialogTitle className="text-2xl font-extrabold">{product.nombre}</DialogTitle>
+            {product.descripcion && <DialogDescription className="mt-2">{product.descripcion}</DialogDescription>}
+            <div className="mt-3 flex items-center gap-2">
+              <span className="font-display text-xl font-extrabold">{money(product.precio)}</span>
+              {product.precio_anterior && product.precio_anterior > product.precio && <span className="text-sm text-muted-foreground line-through">{money(product.precio_anterior)}</span>}
             </div>
-            <Button className="h-11 flex-1 rounded-full text-base font-bold" onClick={confirm}>
-              Agregar {money(product.precio * quantity)}
-            </Button>
+
+            {groups.map((group) => {
+              const picked = selected[group.id] || [];
+              const full = group.maximo > 1 && picked.length >= group.maximo;
+              return (
+                <fieldset key={group.id} id={`grupo-${group.id}`} className="mt-6">
+                  <legend className="flex w-full items-center justify-between gap-2">
+                    <span className="font-extrabold">{group.nombre}</span>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-bold", group.minimo > 0 ? (picked.length >= group.minimo ? "bg-success/10 text-success" : "bg-foreground text-background") : "bg-muted text-muted-foreground")}>
+                      {group.minimo > 0 && picked.length >= group.minimo ? "Listo" : groupHint(group)}
+                    </span>
+                  </legend>
+                  <div className="mt-2 divide-y rounded-2xl border">
+                    {group.opciones.map((option) => {
+                      const active = picked.includes(option.id);
+                      const blocked = !option.disponible || (!active && full);
+                      return (
+                        <button key={option.id} type="button" disabled={blocked} onClick={() => toggle(group, option.id)} className={cn("flex w-full items-center gap-3 px-3 py-3 text-left text-sm", blocked && "opacity-50")}>
+                          <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center border-2", group.maximo === 1 ? "rounded-full" : "rounded-md", active ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40")}>
+                            {active && (group.maximo === 1 ? <span className="h-2 w-2 rounded-full bg-primary-foreground" /> : <Check className="h-3.5 w-3.5" />)}
+                          </span>
+                          <span className="flex-1 font-semibold">{option.nombre}{!option.disponible && " · agotado"}</span>
+                          {Number(option.precio_extra) > 0 && <span className="text-muted-foreground">+{money(option.precio_extra)}</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
+              );
+            })}
+
+            <label htmlFor={`notes-${product.id}`} className="mt-6 block text-sm font-bold">Instrucciones especiales</label>
+            <Textarea id={`notes-${product.id}`} value={notes} maxLength={200} onChange={(event) => setNotes(event.target.value)} placeholder="Ej.: sin cebolla, cortada en 4…" className="mt-2 min-h-[64px] resize-none" />
           </div>
+        </div>
+        <div className="flex items-center gap-3 border-t bg-card p-4">
+          <div className="flex items-center gap-1 rounded-full border p-1">
+            <Button type="button" size="icon" variant="ghost" className="h-9 w-9 rounded-full" disabled={quantity <= 1} onClick={() => setQuantity(quantity - 1)} aria-label="Menos"><Minus className="h-4 w-4" /></Button>
+            <span className="w-6 text-center font-bold tabular-nums">{quantity}</span>
+            <Button type="button" size="icon" variant="ghost" className="h-9 w-9 rounded-full" disabled={quantity >= maxQuantity} onClick={() => setQuantity(quantity + 1)} aria-label="Más"><Plus className="h-4 w-4" /></Button>
+          </div>
+          <Button className={cn("h-11 flex-1 rounded-full text-base font-bold", missing && "opacity-80")} onClick={confirm}>
+            Agregar {money(unit * quantity)}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

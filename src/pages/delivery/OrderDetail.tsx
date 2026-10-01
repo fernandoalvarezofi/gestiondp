@@ -6,7 +6,7 @@ import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { OrderTimeline, StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { db, DeliveryOrder, errorMessage, estadoLabel, formatDateTime, formatTime, img, metodoPagoLabel, money, orderSelect, pedidoActivo, shortId } from "@/lib/delivery";
+import { db, DeliveryOrder, errorMessage, estadoLabel, formatDateTime, formatTime, img, metodoPagoLabel, money, optionsLabel, orderSelect, pedidoActivo, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { useReorder } from "@/hooks/useReorder";
 
@@ -101,7 +101,7 @@ export default function OrderDetail() {
         <ul className="mt-4 divide-y border-t">
           {(order.items || []).map((item, index) => (
             <li key={item.id || index} className="flex justify-between gap-3 py-2.5 text-sm">
-              <span><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.notas && <span className="block text-xs text-muted-foreground">“{item.notas}”</span>}</span>
+              <span><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.opciones && item.opciones.length > 0 && <span className="block text-xs text-muted-foreground">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block text-xs text-muted-foreground">“{item.notas}”</span>}</span>
               <span className="shrink-0">{money(item.precio_unitario * item.cantidad)}</span>
             </li>
           ))}

@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
-import { db, DeliveryOrder, EstadoPedido, errorMessage, formatDateTime, formatTime, metodoPagoLabel, money, shortId } from "@/lib/delivery";
+import { db, DeliveryOrder, EstadoPedido, errorMessage, formatDateTime, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 const columns: { estado: EstadoPedido; title: string }[] = [
@@ -92,7 +92,7 @@ function OrderCard({ order, onChange }: { order: DeliveryOrder; onChange: () => 
         <p className="font-display font-extrabold">{money(order.subtotal)}</p>
       </div>
       <ul className="mt-2 space-y-0.5 text-sm">
-        {(order.items || []).map((item, index) => <li key={item.id || index}><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.notas && <span className="block pl-5 text-xs text-muted-foreground">“{item.notas}”</span>}</li>)}
+        {(order.items || []).map((item, index) => <li key={item.id || index}><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.opciones && item.opciones.length > 0 && <span className="block pl-5 text-xs font-semibold text-foreground/80">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block pl-5 text-xs text-muted-foreground">“{item.notas}”</span>}</li>)}
       </ul>
       {order.notas && <p className="mt-2 rounded-lg bg-warning/15 p-2 text-xs"><span className="font-bold">Nota: </span>{order.notas}</p>}
       <p className="mt-2 text-xs text-muted-foreground">{metodoPagoLabel[order.metodo_pago]} · {order.direccion_entrega}</p>

@@ -7,7 +7,7 @@ import { ProductCard } from "@/components/delivery/ProductCard";
 import { deliveryFeeLabel, RatingBadge, StoreLogo } from "@/components/delivery/StoreCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CartStore } from "@/contexts/CartContext";
-import { db, DeliveryProduct, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, scheduleSummary } from "@/lib/delivery";
+import { db, DeliveryProduct, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, productSelect, scheduleSummary } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 type Review = { id: string; puntaje: number; comentario?: string | null; respuesta?: string | null; created_at: string; cliente?: { nombre: string } | null };
@@ -28,7 +28,7 @@ export default function StoreDetail() {
       if (!found) { setNotFound(true); return; }
       setStore(found);
       const [{ data: catalog }, { data: opinions }] = await Promise.all([
-        db.from("delivery_productos").select("*").eq("comercio_id", found.id).order("destacado", { ascending: false }).order("nombre"),
+        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).order("destacado", { ascending: false }).order("nombre"),
         db.from("delivery_resenas").select("id,puntaje,comentario,respuesta,created_at,cliente:perfiles(nombre)").eq("comercio_id", found.id).order("created_at", { ascending: false }).limit(20),
       ]);
       setProducts(catalog || []);

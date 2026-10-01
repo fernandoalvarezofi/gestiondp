@@ -3,6 +3,7 @@ import { Loader2, Pencil, Plus, Search, Star, Trash2, UtensilsCrossed } from "lu
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
+import { OptionGroupsEditor } from "@/components/merchant/OptionGroupsEditor";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -79,12 +80,12 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
         </section>
       ))}
 
-      <ProductEditor storeId={storeId} draft={draft} categories={categories} onClose={() => setDraft(null)} onSaved={() => { setDraft(null); onChange(); }} />
+      <ProductEditor storeId={storeId} draft={draft} categories={categories} onClose={() => setDraft(null)} onSaved={(close) => { if (close) setDraft(null); onChange(); }} onOptionsChanged={onChange} />
     </div>
   );
 }
 
-function ProductEditor({ storeId, draft, categories, onClose, onSaved }: { storeId: string; draft: Draft | null; categories: string[]; onClose: () => void; onSaved: () => void }) {
+function ProductEditor({ storeId, draft, categories, onClose, onSaved, onOptionsChanged }: { storeId: string; draft: Draft | null; categories: string[]; onClose: () => void; onSaved: (close: boolean) => void; onOptionsChanged: () => void }) {
   const [values, setValues] = useState<Draft>(emptyDraft);
   const [saving, setSaving] = useState(false);
   const [openedFor, setOpenedFor] = useState<Draft | null>(null);
@@ -108,13 +109,21 @@ function ProductEditor({ storeId, draft, categories, onClose, onSaved }: { store
       disponible: values.disponible,
     };
     setSaving(true);
-    const { error } = values.id
-      ? await db.from("delivery_productos").update(payload).eq("id", values.id)
-      : await db.from("delivery_productos").insert(payload);
+    if (values.id) {
+      const { error } = await db.from("delivery_productos").update(payload).eq("id", values.id);
+      setSaving(false);
+      if (error) return toast.error(errorMessage(error));
+      toast.success("Producto actualizado");
+      onSaved(true);
+      return;
+    }
+    const { data, error } = await db.from("delivery_productos").insert(payload).select("id").single();
     setSaving(false);
     if (error) return toast.error(errorMessage(error));
-    toast.success(values.id ? "Producto actualizado" : "Producto creado");
-    onSaved();
+    // Queda abierto para poder sumarle opciones (tamaños, extras) al producto recién creado.
+    setValues((current) => ({ ...current, id: data.id }));
+    toast.success("Producto creado. Si querés, agregale opciones abajo.");
+    onSaved(false);
   };
 
   return (
@@ -133,8 +142,15 @@ function ProductEditor({ storeId, draft, categories, onClose, onSaved }: { store
             <label className="flex items-center gap-2 text-sm font-semibold"><Switch checked={values.disponible} onCheckedChange={(checked) => set("disponible", checked)} />Disponible</label>
             <label className="flex items-center gap-2 text-sm font-semibold"><Switch checked={values.destacado} onCheckedChange={(checked) => set("destacado", checked)} />Destacado</label>
           </div>
-          <Button type="submit" className="rounded-full sm:col-span-2" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Guardar</Button>
+          <Button type="submit" className="rounded-full sm:col-span-2" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{values.id ? "Guardar" : "Crear producto"}</Button>
         </form>
+        <div className="border-t pt-4">
+          <h3 className="font-extrabold">Opciones del producto</h3>
+          <p className="mt-0.5 text-sm text-muted-foreground">Tamaños, punto de la carne, sabores, extras con precio…</p>
+          {values.id
+            ? <OptionGroupsEditor productId={values.id} onChange={onOptionsChanged} />
+            : <p className="mt-3 rounded-xl bg-muted p-3 text-sm text-muted-foreground">Creá el producto primero y después agregale opciones acá mismo.</p>}
+        </div>
       </DialogContent>
     </Dialog>
   );

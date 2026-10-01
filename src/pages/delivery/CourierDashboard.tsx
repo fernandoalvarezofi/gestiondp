@@ -18,7 +18,7 @@ const vehicles = [
   { id: "auto", label: "Auto", icon: Car },
   { id: "a_pie", label: "A pie", icon: Footprints },
 ];
-const courierSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas), comercio:delivery_comercios(nombre,slug,imagen_url,direccion,telefono), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
+const courierSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,direccion,telefono), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 const earning = (order: DeliveryOrder) => Number(order.costo_envio) + Number(order.propina);
 const mapsUrl = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
@@ -181,7 +181,7 @@ function CurrentDelivery({ order, onChange }: { order: DeliveryOrder; onChange: 
 
       <div className="mt-4 rounded-2xl bg-muted p-3 text-sm">
         <p className="font-bold">Contenido</p>
-        <p className="text-muted-foreground">{(order.items || []).map((item) => `${item.cantidad}× ${item.nombre}`).join(" · ")}</p>
+        <p className="text-muted-foreground">{(order.items || []).map((item) => `${item.cantidad}× ${item.nombre}${item.opciones?.length ? ` (${item.opciones.map((option) => option.nombre).join(", ")})` : ""}`).join(" · ")}</p>
         <p className="mt-2"><span className="font-bold">Cobro: </span>{order.metodo_pago === "efectivo" ? `Cobrá ${money(order.total)} en efectivo` : metodoPagoLabel[order.metodo_pago]}</p>
         {order.notas && <p className="mt-1"><span className="font-bold">Nota: </span>{order.notas}</p>}
       </div>

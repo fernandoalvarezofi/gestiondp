@@ -13,9 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, nextOpening, slugify } from "@/lib/delivery";
+import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, nextOpening, productSelect, slugify } from "@/lib/delivery";
 
-const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
+const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 
 /** Aviso sonoro corto para pedidos nuevos (sin archivos de audio). */
 function beep() {
@@ -67,7 +67,7 @@ export default function MerchantDashboard() {
   }, []);
 
   const loadProducts = useCallback(async (storeId: string) => {
-    const { data } = await db.from("delivery_productos").select("*").eq("comercio_id", storeId).order("categoria").order("nombre");
+    const { data } = await db.from("delivery_productos").select(productSelect).eq("comercio_id", storeId).order("categoria").order("nombre");
     setProducts(data || []);
   }, []);
 

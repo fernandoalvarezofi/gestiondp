@@ -118,9 +118,27 @@ export type DeliveryProduct = {
   stock?: number | null;
   disponible: boolean;
   destacado?: boolean;
+  grupos?: ProductGroup[];
 };
 
-export type OrderItem = { id?: string; nombre: string; cantidad: number; precio_unitario: number; notas?: string | null };
+export type ProductOption = { id: string; grupo_id: string; nombre: string; precio_extra: number; disponible: boolean; orden: number };
+export type ProductGroup = { id: string; producto_id: string; nombre: string; minimo: number; maximo: number; orden: number; opciones: ProductOption[] };
+/** Opción elegida, tal como se guarda en el carrito y en el pedido. */
+export type ChosenOption = { id: string; grupo: string; nombre: string; precio: number };
+
+export const productSelect = "*, grupos:delivery_producto_grupos(*, opciones:delivery_producto_opciones(*))";
+
+/** Ordena grupos y opciones (Supabase no ordena las relaciones anidadas). */
+export function sortGroups(groups: ProductGroup[] | null | undefined): ProductGroup[] {
+  return [...(groups || [])]
+    .sort((a, b) => a.orden - b.orden)
+    .map((group) => ({ ...group, opciones: [...(group.opciones || [])].sort((a, b) => a.orden - b.orden) }));
+}
+
+export const optionsLabel = (opciones: ChosenOption[] | null | undefined) =>
+  (opciones || []).map((option) => (Number(option.precio) > 0 ? `${option.nombre} (+${money(option.precio)})` : option.nombre)).join(" · ");
+
+export type OrderItem = { id?: string; nombre: string; cantidad: number; precio_unitario: number; notas?: string | null; opciones?: ChosenOption[] };
 
 export type DeliveryOrder = {
   id: string;
@@ -271,4 +289,4 @@ export function errorMessage(error: unknown, fallback = "Algo salió mal. Probá
 }
 
 export const storeSelect = "*";
-export const orderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas), comercio:delivery_comercios(nombre,slug,imagen_url,logo_url,direccion,telefono)";
+export const orderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,logo_url,direccion,telefono)";

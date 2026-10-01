@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { db, errorMessage, img, MetodoPago, money } from "@/lib/delivery";
+import { db, errorMessage, img, MetodoPago, money, optionsLabel } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 type CouponResult = { valido: boolean; codigo?: string; descuento?: number; envio_gratis?: boolean; mensaje: string };
@@ -92,7 +92,7 @@ export default function Cart() {
     setSubmitting(true);
     const { data: orderId, error } = await db.rpc("delivery_crear_pedido", {
       p_comercio: store.id,
-      p_items: items.map((item) => ({ producto_id: item.id, cantidad: item.cantidad, notas: item.notas || null })),
+      p_items: items.map((item) => ({ producto_id: item.id, cantidad: item.cantidad, notas: item.notas || null, opciones: item.opciones.map((option) => option.id) })),
       p_direccion: address.direccion,
       p_direccion_id: address.id || null,
       p_metodo_pago: payment,
@@ -120,17 +120,18 @@ export default function Cart() {
             <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold">Productos</h2><button type="button" className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-destructive" onClick={clearCart}><Trash2 className="h-4 w-4" />Vaciar</button></div>
             <ul className="mt-3 divide-y">
               {items.map((item) => (
-                <li key={item.id} className="flex items-center gap-3 py-3">
+                <li key={item.lineId} className="flex items-center gap-3 py-3">
                   <img src={img(item.imagen_url, 200)} alt="" loading="lazy" className="h-16 w-16 shrink-0 rounded-xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{item.nombre}</p>
+                    {item.opciones.length > 0 && <p className="text-xs text-muted-foreground">{optionsLabel(item.opciones)}</p>}
                     {item.notas && <p className="truncate text-xs text-muted-foreground">“{item.notas}”</p>}
                     <p className="font-display text-sm font-extrabold">{money(item.precio * item.cantidad)}</p>
                   </div>
                   <div className="flex items-center gap-1 rounded-full border p-0.5">
-                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Quitar uno" onClick={() => updateQuantity(item.id, item.cantidad - 1)}>{item.cantidad === 1 ? <Trash2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}</Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Quitar uno" onClick={() => updateQuantity(item.lineId, item.cantidad - 1)}>{item.cantidad === 1 ? <Trash2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}</Button>
                     <span className="w-5 text-center text-sm font-bold tabular-nums">{item.cantidad}</span>
-                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Agregar uno" onClick={() => updateQuantity(item.id, item.cantidad + 1)}><Plus className="h-4 w-4" /></Button>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Agregar uno" onClick={() => updateQuantity(item.lineId, item.cantidad + 1)}><Plus className="h-4 w-4" /></Button>
                   </div>
                 </li>
               ))}
