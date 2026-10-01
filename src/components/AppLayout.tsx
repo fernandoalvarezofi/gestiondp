@@ -1,77 +1,15 @@
-import { useEffect, useState } from "react";
-import { Navigate, Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
+import { Navigate, Outlet, NavLink } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
-
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { AppSidebar } from "./AppSidebar";
-import { ThemeToggle } from "./ThemeToggle";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  Loader2, Home, Compass, Plus, MessageCircle, UserCircle,
-  Menu, Rocket, Users, Bookmark, BarChart3, Settings, Film, Store, ShoppingBag, Bell, UserPlus,
-  Users2, PenSquare, Search, ChevronDown,
-} from "lucide-react";
-import { usePresenciaHeartbeat } from "@/hooks/usePresencia";
-import { InstallAppCTA } from "@/components/InstallAppCTA";
-import ChatDock from "@/components/lin/ChatDock";
-import { WorefLogo } from "@/components/lin/WorefLogo";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useQuery } from "@tanstack/react-query";
-import { initials } from "@/lib/worefHelpers";
+import { Home, Loader2, MapPin, Search, ShoppingBag, Store, UserCircle } from "lucide-react";
+import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
+import { Button } from "@/components/ui/button";
+import { useCart } from "@/contexts/CartContext";
 
 export function AppLayout() {
-  const { session, user, loading } = useAuth();
-  const { data: onboardingStatus, isLoading: onboardingLoading } = useOnboardingStatus();
-  const [noLeidos, setNoLeidos] = useState(0);
-  const [notifSinLeer, setNotifSinLeer] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { session, loading } = useAuth();
+  const { itemCount } = useCart();
 
-  usePresenciaHeartbeat();
-
-  const { data: miPerfil } = useQuery({
-    queryKey: ["layout-perfil", user?.id],
-    queryFn: async () => {
-      const { data } = await (supabase as any)
-        .from("perfiles")
-        .select("nombre,avatar_url")
-        .eq("id", user!.id)
-        .single();
-      return data;
-    },
-    enabled: !!user,
-  });
-
-  const recalcNoLeidos = async () => {
-    if (!user) return;
-    const { data } = await (supabase as any).rpc("get_mis_conversaciones", { user_id: user.id });
-    const total = (data || []).reduce((acc: number, c: any) =>
-      acc + (c.perfil_a_id === user.id ? (c.no_leidos_a || 0) : (c.no_leidos_b || 0)), 0);
-    setNoLeidos(total);
-  };
-  const recalcNotif = async () => {
-    if (!user) return;
-    const { count } = await (supabase as any).from("notificaciones")
-      .select("id", { count: "exact", head: true }).eq("perfil_id", user.id).eq("leida", false);
-    setNotifSinLeer(count || 0);
-  };
-
-  useEffect(() => {
-    if (!user) return;
-    recalcNoLeidos();
-    recalcNotif();
-    const ch = (supabase as any).channel("layout-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "conversaciones" }, recalcNoLeidos)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notificaciones", filter: `perfil_id=eq.${user.id}` }, recalcNotif)
-      .subscribe();
-    return () => { (supabase as any).removeChannel(ch); };
-  }, [user]);
-
-  if (loading || onboardingLoading) {
+  if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -81,237 +19,21 @@ export function AppLayout() {
 
   if (!session) return <Navigate to="/auth" replace />;
 
-  if (onboardingStatus?.needsOnboarding && location.pathname !== "/lin/perfil/editar") {
-    return <Navigate to="/lin/perfil/editar" replace />;
-  }
-
-
-  const linkCls = ({ isActive }: { isActive: boolean }) =>
-    `min-h-[44px] flex flex-col items-center justify-center gap-0.5 px-3 py-1 rounded-lg transition-all ${isActive ? "text-foreground" : "text-muted-foreground"}`;
-
-  const sheetGroups: { label: string; items: { to: string; icon: any; label: string }[] }[] = [
-    {
-      label: "Construir",
-
-      items: [
-        { to: "/lin/proyectos", icon: Rocket, label: "Proyectos" },
-        { to: "/lin/propiedades", icon: Store, label: "Propiedades" },
-        { to: "/lin/comunidades", icon: Users, label: "Comunidades" },
-      ],
-    },
-    {
-      label: "Mi cuenta",
-      items: [
-        { to: "/lin/notificaciones", icon: Bell, label: "Notificaciones" },
-        { to: "/lin/proyectos?tab=mios", icon: Rocket, label: "Mis proyectos" },
-        { to: "/lin/favoritos", icon: Bookmark, label: "Guardados" },
-        { to: "/lin/mis-compras", icon: ShoppingBag, label: "Mis compras" },
-        { to: "/lin/panel", icon: BarChart3, label: "Mi panel" },
-        { to: "/lin/perfil/editar", icon: Settings, label: "Editar perfil" },
-      ],
-    },
-  ];
-
   return (
-    <SidebarProvider>
-      <div className="flex min-h-screen w-full">
-        <AppSidebar />
-        <main className="flex-1 overflow-auto pb-20 md:pb-0">
-          <div className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
-            {/* MOBILE: logo + hamburger */}
-            <div className="flex items-center gap-2 px-4 py-3 md:hidden">
-              <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
-                <SheetTrigger asChild>
-                  <button className="rounded-md p-2 hover:bg-secondary" aria-label="Menú">
-                    <Menu className="h-5 w-5" />
-                  </button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-72 overflow-y-auto bg-sidebar text-sidebar-foreground border-sidebar-border">
-                  <div className="mb-6 flex items-center gap-2.5">
-                    <WorefLogo variant="full" size={22} />
-                  </div>
-                  <nav>
-                    {sheetGroups.map((group, gi) => (
-                      <div key={group.label}>
-                        <p className="px-3 mt-4 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                          {group.label}
-                        </p>
-                        <div className="space-y-0.5">
-                          {group.items.map(({ to, icon: Icon, label }) => (
-                            <NavLink
-                              key={to}
-                              to={to}
-                              onClick={() => setMenuOpen(false)}
-                              className={({ isActive }) =>
-                                `flex items-center gap-3 rounded-xl px-3 py-2.5 min-h-[44px] text-sm transition-colors ${isActive ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground/80 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"}`
-                              }
-                            >
-                              <Icon className="h-5 w-5" />
-                              {label}
-                            </NavLink>
-                          ))}
-                        </div>
-                        {gi < sheetGroups.length - 1 && <div className="mx-3 mt-3 h-px bg-border" />}
-                      </div>
-                    ))}
-                    <div className="mt-6 px-1 py-1" onClick={() => setMenuOpen(false)}>
-                      <InstallAppCTA variant="card" className="!p-4" />
-                    </div>
-                  </nav>
-                </SheetContent>
-              </Sheet>
-              <NavLink to="/lin" className="flex items-center gap-2">
-                <WorefLogo variant="full" size={20} />
-              </NavLink>
-              <div className="ml-auto flex items-center gap-1">
-                <InstallAppCTA variant="icon" />
-                <ThemeToggle />
-              </div>
-            </div>
-
-            {/* DESKTOP: logo + buscador + nav */}
-            <div className="hidden h-14 items-center gap-4 px-4 md:flex">
-              <SidebarTrigger />
-              <NavLink to="/lin" className="flex items-center gap-2">
-                <WorefLogo variant="full" size={22} />
-              </NavLink>
-
-              {/* Buscador */}
-              <div className="relative max-w-sm flex-1">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  readOnly
-                  placeholder="Buscar en Woref…"
-                  onClick={() => navigate("/lin/buscar")}
-                  className="pl-9 pr-16 h-9 rounded-full bg-secondary/60 border-0 cursor-pointer focus-visible:ring-1 focus-visible:ring-border hover:bg-secondary transition-colors text-sm"
-                />
-                <kbd className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 rounded border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                  ⌘ K
-                </kbd>
-              </div>
-
-              {/* Nav horizontal desktop */}
-              <nav className="ml-auto flex h-full items-stretch">
-                {[
-                  { icon: Home, label: "Inicio", to: "/lin", end: true, badge: 0 },
-                  { icon: Users2, label: "Mi red", to: "/lin/conectar", badge: 0 },
-                  { icon: MessageCircle, label: "Mensajes", to: "/lin/mensajes", badge: noLeidos },
-                  { icon: Bell, label: "Notificaciones", to: "/lin/notificaciones", badge: notifSinLeer },
-                ].map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    end={item.end}
-                    className={({ isActive }) =>
-                      `relative flex flex-col items-center justify-center gap-0.5 px-5 h-full text-[11px] font-medium transition-colors border-b-2 ${
-                        isActive
-                          ? "border-foreground text-foreground"
-                          : "border-transparent text-muted-foreground hover:text-foreground"
-                      }`
-                    }
-                  >
-                    <div className="relative">
-                      <item.icon className="h-5 w-5" />
-                      {item.badge > 0 && (
-                        <span className="absolute -right-2 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background ring-2 ring-background">
-                          {item.badge > 9 ? "9+" : item.badge}
-                        </span>
-                      )}
-                    </div>
-                    {item.label}
-                  </NavLink>
-                ))}
-
-                {/* Separador + Avatar */}
-                <div className="ml-2 flex items-center gap-1 border-l pl-3">
-                  <NavLink to="/lin/perfil" className="flex items-center gap-1">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={miPerfil?.avatar_url || ""} className="object-cover" />
-                      <AvatarFallback className="text-[11px]">{initials(miPerfil?.nombre)}</AvatarFallback>
-                    </Avatar>
-                    <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                  </NavLink>
-                  <InstallAppCTA variant="icon" />
-                  <ThemeToggle />
-                </div>
-              </nav>
-            </div>
-          </div>
-          <div className="px-0 pt-0 pb-0 md:p-6">
-            <Outlet />
-          </div>
-        </main>
-
-        <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t border-border/60 bg-background/90 backdrop-blur-xl px-2 py-2 pb-[max(env(safe-area-inset-bottom),0.5rem)] shadow-pop md:hidden">
-          <NavLink to="/lin" end className={linkCls}>
-            {({ isActive }) => (<>
-              <div className="relative">
-                <Home className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
-                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
-              </div>
-              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Inicio</span>
-            </>)}
-          </NavLink>
-          <NavLink to="/lin/conectar" className={linkCls}>
-            {({ isActive }) => (<>
-              <div className="relative">
-                <Users2 className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
-                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
-              </div>
-              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Mi red</span>
-            </>)}
-          </NavLink>
-          <NavLink to="/lin/mensajes" className={linkCls}>
-            {({ isActive }) => (<>
-              <div className="relative">
-                <MessageCircle className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
-                {noLeidos > 0 && (
-                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background ring-2 ring-background">
-                    {noLeidos > 9 ? "9+" : noLeidos}
-                  </span>
-                )}
-                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
-              </div>
-              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Mensajes</span>
-            </>)}
-          </NavLink>
-          <NavLink to="/lin/notificaciones" className={linkCls}>
-            {({ isActive }) => (<>
-              <div className="relative">
-                <Bell className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
-                {notifSinLeer > 0 && (
-                  <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-foreground px-1 text-[9px] font-bold text-background ring-2 ring-background">
-                    {notifSinLeer > 9 ? "9+" : notifSinLeer}
-                  </span>
-                )}
-                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
-              </div>
-              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Avisos</span>
-            </>)}
-          </NavLink>
-          <NavLink to="/lin/perfil" className={linkCls}>
-            {({ isActive }) => (<>
-              <div className="relative">
-                <UserCircle className={`h-6 w-6 ${isActive ? "stroke-foreground" : ""}`} />
-                {isActive && <span className="absolute -bottom-1 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-foreground" />}
-              </div>
-              <span className={`text-[10px] ${isActive ? "font-semibold text-foreground" : ""}`}>Perfil</span>
-            </>)}
-          </NavLink>
-        </nav>
-
-        {/* FAB Publicar — flotante sobre el bottom nav */}
-        <NavLink
-          to="/lin/publicar"
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-pop ring-2 ring-background md:hidden"
-          aria-label="Publicar"
-        >
-          <PenSquare className="h-5 w-5" strokeWidth={2.2} />
-        </NavLink>
-
-
-        <ChatDock />
-      </div>
-    </SidebarProvider>
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
+          <NavLink to="/lin"><DeliveryBrand /></NavLink>
+          <button className="hidden items-center gap-2 text-left text-sm font-bold sm:flex"><MapPin className="h-4 w-4 text-primary" /><span><span className="block text-[10px] uppercase text-muted-foreground">Entregar en</span>Av. Corrientes 1234</span></button>
+          <NavLink to="/lin/buscar" className="ml-auto hidden h-10 max-w-sm flex-1 items-center gap-2 rounded-md bg-muted px-3 text-sm text-muted-foreground md:flex"><Search className="h-4 w-4" />Buscar restaurantes y productos</NavLink>
+          <nav className="ml-auto hidden items-center gap-1 md:flex"><Button asChild variant="ghost"><NavLink to="/lin/pedidos">Pedidos</NavLink></Button><Button asChild variant="ghost"><NavLink to="/lin/comercio">Mi comercio</NavLink></Button><Button asChild variant="ghost" size="icon"><NavLink to="/lin/perfil"><UserCircle className="h-5 w-5" /></NavLink></Button><Button asChild><NavLink to="/lin/carrito"><ShoppingBag className="h-4 w-4" />{itemCount ? `${itemCount} productos` : "Carrito"}</NavLink></Button></nav>
+          <Button asChild size="icon" className="ml-auto md:hidden"><NavLink to="/lin/carrito" aria-label="Carrito"><ShoppingBag className="h-5 w-5" />{itemCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-deep px-1 text-[10px] text-primary-foreground">{itemCount}</span>}</NavLink></Button>
+        </div>
+      </header>
+      <main><Outlet /></main>
+      <nav className="fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
+        {[{to:"/lin",label:"Inicio",icon:Home,end:true},{to:"/lin/buscar",label:"Buscar",icon:Search},{to:"/lin/pedidos",label:"Pedidos",icon:ShoppingBag},{to:"/lin/comercio",label:"Comercio",icon:Store},{to:"/lin/perfil",label:"Perfil",icon:UserCircle}].map(({to,label,icon:Icon,end}) => <NavLink key={to} to={to} end={end} className={({isActive}) => `flex min-h-[62px] flex-col items-center justify-center gap-1 text-[10px] font-bold ${isActive ? "text-primary" : "text-muted-foreground"}`}><Icon className="h-5 w-5" />{label}</NavLink>)}
+      </nav>
+    </div>
   );
 }
