@@ -5,6 +5,7 @@ import type { OpsPoint } from "@/components/admin/OpsMap";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
+import { OrderHistory } from "@/components/delivery/OrderEvents";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { db, EstadoPedido, errorMessage, formatTime, money, shortId } from "@/lib/delivery";
 import { DEFAULT_CENTER, distanceKm, formatKm } from "@/lib/geo";
@@ -200,6 +201,7 @@ export function OperationsCenter() {
                         {order.repartidor_id && !order.en_camino_at && (order.estado === "confirmado" || order.estado === "preparando") && <Button size="sm" variant="outline" className="h-7 rounded-full px-3 text-xs" disabled={busy === order.id} onClick={() => release(order)}><UserMinus className="h-3.5 w-3.5" />Liberar</Button>}
                       </span>
                     </div>
+                    {focus === `o-${order.id}` && <OrderHistory orderId={order.id} version={`${order.estado}-${order.repartidor_id ?? ""}`} retiro={order.tipo_entrega === "retiro"} staff className="mt-2 border-0 bg-muted/40" />}
                   </li>
                 ))}
               </ul>

@@ -16,6 +16,8 @@ import { ChatButton } from "@/components/delivery/OrderChat";
 import { OrderClaims } from "@/components/delivery/OrderClaims";
 import { MapView } from "@/components/maps/LazyMaps";
 import { OrderAdjustments } from "@/components/delivery/OrderAdjustments";
+import { EtaBreakdown, OrderHistory } from "@/components/delivery/OrderEvents";
+import { useOrderEta } from "@/hooks/useOrderEta";
 import { useRoute } from "@/lib/route";
 import type { MapMarker } from "@/components/maps/DeliveryMap";
 
@@ -66,6 +68,7 @@ export default function OrderDetail() {
     ? order.estado === "en_camino" ? (order.latitud != null && order.longitud != null ? { lat: Number(order.latitud), lng: Number(order.longitud) } : null)
       : (order.estado === "confirmado" || order.estado === "preparando") && order.comercio?.latitud != null && order.comercio?.longitud != null ? { lat: Number(order.comercio.latitud), lng: Number(order.comercio.longitud) } : null
     : null;
+  const serverEta = useOrderEta(order?.id, Boolean(order && pedidoActivo(order.estado) && order.estado !== "pendiente"));
   const eta = useRoute(courier, etaTarget, { profile: "moto", refreshMs: 60000 });
 
   const load = useCallback(async () => {
@@ -142,13 +145,17 @@ export default function OrderDetail() {
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">{order.programado_para ? <CalendarClock className="h-6 w-6" /> : retiro ? <Store className="h-6 w-6" /> : <Bike className="h-6 w-6 animate-ride" />}</span>
               <div>
                 <p className="text-sm text-muted-foreground">{order.programado_para ? (retiro ? "Retiro programado" : "Entrega programada") : retiro ? "Listo aproximadamente" : eta && order.estado === "en_camino" ? "Tu repartidor llega en" : "Llegada estimada"}</p>
-                <p className="font-display text-2xl font-extrabold">{order.programado_para ? formatSlot(order.programado_para) : eta && order.estado === "en_camino" ? `~${eta.min} min` : formatTime(order.entrega_estimada)}</p>
+                <p className="font-display text-2xl font-extrabold">{order.programado_para ? formatSlot(order.programado_para) : eta && order.estado === "en_camino" ? `~${eta.min} min` : serverEta?.hora ? formatTime(serverEta.hora) : formatTime(order.entrega_estimada)}</p>
+                {serverEta && !order.programado_para && !(eta && order.estado === "en_camino") && <p className="text-xs font-semibold text-muted-foreground">en unos {serverEta.minutos} min</p>}
               </div>
             </div>
           )}
+          {active && serverEta && !order.programado_para && <EtaBreakdown eta={serverEta} retiro={retiro} className="mb-5" />}
           <OrderTimeline order={order} />
         </section>
       )}
+
+      <OrderHistory orderId={order.id} version={`${order.estado}-${order.repartidor_id ?? ""}-${order.llegada_comercio_at ?? ""}-${order.llegada_cliente_at ?? ""}`} retiro={retiro} className="mt-4" />
 
       {order.estado === "cancelado" && (
         <div className="mt-6 flex items-start gap-3 rounded-3xl border border-destructive/30 bg-destructive/5 p-4">
