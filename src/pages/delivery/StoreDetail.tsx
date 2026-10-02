@@ -9,7 +9,7 @@ import { deliveryFeeLabel, RatingBadge, StoreLogo } from "@/components/delivery/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CartStore } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
-import { Coupon, couponValue, db, DeliveryProduct, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, productSelect, scheduleSummary } from "@/lib/delivery";
+import { Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,7 @@ export default function StoreDetail() {
   const [store, setStore] = useState<DeliveryStore | null>(null);
   const [products, setProducts] = useState<DeliveryProduct[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [sectionConfig, setSectionConfig] = useState<DeliverySection[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [notFound, setNotFound] = useState(false);
   const [term, setTerm] = useState("");
@@ -36,11 +37,13 @@ export default function StoreDetail() {
       const { data: found } = await db.from("delivery_comercios").select("*").eq("slug", slug).maybeSingle();
       if (!found) { setNotFound(true); return; }
       setStore(found);
-      const [{ data: catalog }, { data: opinions }, { data: storeCoupons }] = await Promise.all([
-        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).order("destacado", { ascending: false }).order("nombre"),
+      const [{ data: catalog }, { data: opinions }, { data: storeCoupons }, { data: configured }] = await Promise.all([
+        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).order("orden").order("nombre"),
         db.from("delivery_resenas").select("id,puntaje,comentario,respuesta,created_at,cliente:perfiles(nombre)").eq("comercio_id", found.id).order("created_at", { ascending: false }).limit(30),
         db.from("delivery_cupones").select("*").eq("comercio_id", found.id).eq("activo", true),
+        db.from("delivery_secciones").select("*").eq("comercio_id", found.id),
       ]);
+      setSectionConfig(configured || []);
       setProducts(catalog || []);
       setReviews(opinions || []);
       setCoupons((storeCoupons || []).filter((coupon: Coupon) => !coupon.vence_at || new Date(coupon.vence_at) > new Date()));
@@ -53,7 +56,9 @@ export default function StoreDetail() {
   }, [products, term]);
 
   const featured = useMemo(() => products.filter((product) => product.destacado && product.disponible), [products]);
-  const sections = useMemo(() => [...new Set(filtered.map((product) => product.categoria))].map((name) => ({ name, items: filtered.filter((product) => product.categoria === name) })), [filtered]);
+  const sections = useMemo(() => orderSections(filtered, sectionConfig, true)
+    .map(({ name }) => ({ name, items: filtered.filter((product) => product.categoria === name) }))
+    .filter((section) => section.items.length > 0), [filtered, sectionConfig]);
 
   // Pestaña activa según la sección que se está viendo (scroll-spy).
   useEffect(() => {

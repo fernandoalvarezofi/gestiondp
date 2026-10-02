@@ -135,8 +135,26 @@ export type DeliveryProduct = {
   stock?: number | null;
   disponible: boolean;
   destacado?: boolean;
+  orden?: number;
+  etiquetas?: string[];
   grupos?: ProductGroup[];
 };
+
+export type DeliverySection = { id: string; comercio_id: string; nombre: string; orden: number; visible: boolean };
+export const tagLabels: Record<string, string> = {
+  vegano: "Vegano", vegetariano: "Vegetariano", sin_tacc: "Sin TACC", apto_celiacos: "Apto celíacos", picante: "Picante", sin_azucar: "Sin azúcar", nuevo: "Nuevo", mas_vendido: "Más vendido",
+};
+
+/** Secciones del menú en el orden elegido por el comercio (las que no tienen configuración van al final, por nombre). Las ocultas se descartan si `onlyVisible`. */
+export function orderSections(products: Pick<DeliveryProduct, "categoria">[], configured: DeliverySection[], onlyVisible: boolean): { name: string; visible: boolean }[] {
+  const byName = new Map(configured.map((section) => [section.nombre, section]));
+  const names = [...new Set([...configured.map((section) => section.nombre), ...products.map((product) => product.categoria)])];
+  return names
+    .map((name) => ({ name, visible: byName.get(name)?.visible ?? true, orden: byName.get(name)?.orden ?? 1000 }))
+    .filter((section) => !onlyVisible || section.visible)
+    .sort((a, b) => a.orden - b.orden || a.name.localeCompare(b.name, "es"))
+    .map(({ name, visible }) => ({ name, visible }));
+}
 
 export type ProductOption = { id: string; grupo_id: string; nombre: string; precio_extra: number; disponible: boolean; orden: number };
 export type ProductGroup = { id: string; producto_id: string; nombre: string; minimo: number; maximo: number; orden: number; opciones: ProductOption[] };

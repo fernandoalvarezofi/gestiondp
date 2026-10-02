@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { CartStore, useCart } from "@/contexts/CartContext";
-import { ChosenOption, DeliveryProduct, img, money, ProductGroup, sortGroups } from "@/lib/delivery";
+import { ChosenOption, DeliveryProduct, img, money, ProductGroup, sortGroups, tagLabels } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 function discount(product: DeliveryProduct) {
@@ -75,6 +75,7 @@ export function ProductCard({ product, store, disabled, variant = "row" }: { pro
             <h3 className="text-[15px] font-extrabold leading-snug">{product.nombre}</h3>
             {product.descripcion && <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted-foreground">{product.descripcion}</p>}
             <div className="mt-2 text-[15px]">{price}</div>
+            {!!product.etiquetas?.length && <p className="mt-1.5 flex flex-wrap gap-1">{product.etiquetas.map((tag) => <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground">{tagLabels[tag] ?? tag}</span>)}</p>}
             {outOfStock && <p className="mt-1 text-xs font-bold text-muted-foreground">Sin stock por ahora</p>}
           </div>
           <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-2xl bg-muted">
