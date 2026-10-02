@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { BellRing, Bike, Check, ChefHat, Clock3, PackageCheck, Phone, X } from "lucide-react";
+import { BellRing, Bike, CalendarClock, Check, ChefHat, Clock3, PackageCheck, Phone, ShoppingBag, Store, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
-import { db, DeliveryOrder, EstadoPedido, errorMessage, formatDateTime, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
+import { db, DeliveryOrder, EstadoPedido, errorMessage, formatDateTime, formatSlot, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 const columns: { estado: EstadoPedido; title: string }[] = [
   { estado: "pendiente", title: "Nuevos" },
   { estado: "confirmado", title: "Aceptados" },
   { estado: "preparando", title: "En preparación" },
+  { estado: "listo", title: "Listos para retirar" },
   { estado: "en_camino", title: "En camino" },
 ];
 
@@ -33,9 +34,9 @@ export function MerchantOrders({ orders, onChange }: { orders: DeliveryOrder[]; 
       </div>
 
       {view === "tablero" ? (
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {columns.map((column) => {
-            const list = orders.filter((order) => order.estado === column.estado);
+            const list = orders.filter((order) => order.estado === column.estado).sort((a, b) => new Date(a.programado_para || a.created_at).getTime() - new Date(b.programado_para || b.created_at).getTime());
             return (
               <section key={column.estado} className="rounded-3xl bg-muted/60 p-3">
                 <h3 className="flex items-center justify-between px-1 font-extrabold">{column.title}<span className={cn("rounded-full px-2 py-0.5 text-xs", list.length && column.estado === "pendiente" ? "bg-primary text-primary-foreground" : "bg-card")}>{list.length}</span></h3>
@@ -80,6 +81,15 @@ function OrderCard({ order, onChange }: { order: DeliveryOrder; onChange: () => 
     setBusy(false);
     if (ok) { toast.success("Pedido actualizado"); onChange(); }
   };
+  const deliverPickup = async () => {
+    const codigo = window.prompt("Pedile al cliente su código de retiro (4 dígitos)");
+    if (!codigo) return;
+    setBusy(true);
+    const ok = await changeOrderStatus(order.id, "entregado", undefined, codigo.trim());
+    setBusy(false);
+    if (ok) { toast.success("Pedido entregado"); onChange(); }
+  };
+  const retiro = order.tipo_entrega === "retiro";
   const reject = () => {
     const motivo = window.prompt("¿Por qué rechazás el pedido? (lo verá el cliente)", "No tenemos stock de un producto");
     if (motivo !== null) run("cancelado", motivo || "Rechazado por el comercio");
@@ -91,13 +101,18 @@ function OrderCard({ order, onChange }: { order: DeliveryOrder; onChange: () => 
         <div><p className="font-extrabold">{shortId(order.id)}</p><p className="text-xs text-muted-foreground">{order.cliente?.nombre || "Cliente"} · {formatTime(order.created_at)}</p></div>
         <p className="font-display font-extrabold">{money(order.subtotal)}</p>
       </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold", retiro ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" : "bg-primary/10 text-primary")}>{retiro ? <Store className="h-3 w-3" /> : <Bike className="h-3 w-3" />}{retiro ? "Retira en el local" : "Envío"}</span>
+        {order.programado_para && <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-extrabold"><CalendarClock className="h-3 w-3" />Programado · {formatSlot(order.programado_para)}</span>}
+      </div>
       <ul className="mt-2 space-y-0.5 text-sm">
         {(order.items || []).map((item, index) => <li key={item.id || index}><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.opciones && item.opciones.length > 0 && <span className="block pl-5 text-xs font-semibold text-foreground/80">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block pl-5 text-xs text-muted-foreground">“{item.notas}”</span>}</li>)}
       </ul>
+      {order.metodo_pago === "efectivo" && order.efectivo_paga_con != null && <p className="mt-2 rounded-lg bg-muted p-2 text-xs"><span className="font-bold">Paga con {money(order.efectivo_paga_con)}</span> · vuelto {money(Number(order.efectivo_paga_con) - Number(order.total))}</p>}
       {order.notas && <p className="mt-2 rounded-lg bg-warning/15 p-2 text-xs"><span className="font-bold">Nota: </span>{order.notas}</p>}
       <p className="mt-2 text-xs text-muted-foreground">{metodoPagoLabel[order.metodo_pago]} · {order.direccion_entrega}</p>
       {order.telefono_contacto && <a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`} className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary"><Phone className="h-3.5 w-3.5" />{order.telefono_contacto}</a>}
-      {order.repartidor_id && <p className="mt-1 flex items-center gap-1 text-xs font-bold text-success"><Bike className="h-3.5 w-3.5" />Repartidor asignado</p>}
+      {!retiro && order.repartidor_id && <p className="mt-1 flex items-center gap-1 text-xs font-bold text-success"><Bike className="h-3.5 w-3.5" />Repartidor asignado</p>}
       {order.entrega_estimada && order.estado !== "pendiente" && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />Entrega estimada {formatTime(order.entrega_estimada)}</p>}
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -109,10 +124,12 @@ function OrderCard({ order, onChange }: { order: DeliveryOrder; onChange: () => 
           <Button size="sm" className="flex-1 rounded-full" disabled={busy} onClick={() => run("preparando")}><ChefHat className="h-4 w-4" />Empezar a preparar</Button>
           <Button size="sm" variant="ghost" className="rounded-full text-destructive" disabled={busy} onClick={reject}>Cancelar</Button>
         </>}
-        {order.estado === "preparando" && (order.repartidor_id
+        {order.estado === "preparando" && retiro && <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={() => run("listo")}><ShoppingBag className="h-4 w-4" />Listo para retirar</Button>}
+        {order.estado === "listo" && <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={deliverPickup}><PackageCheck className="h-4 w-4" />Entregar al cliente</Button>}
+        {order.estado === "preparando" && !retiro && (order.repartidor_id
           ? <p className="w-full rounded-xl bg-muted p-2 text-center text-xs font-semibold">El repartidor lo retira y lo marca en camino</p>
           : <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={() => run("en_camino")}><Bike className="h-4 w-4" />Despachar con envío propio</Button>)}
-        {order.estado === "en_camino" && (order.repartidor_id
+        {order.estado === "en_camino" && !retiro && (order.repartidor_id
           ? <p className="w-full rounded-xl bg-muted p-2 text-center text-xs font-semibold">En manos del repartidor</p>
           : <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={() => run("entregado")}><PackageCheck className="h-4 w-4" />Marcar entregado</Button>)}
       </div>

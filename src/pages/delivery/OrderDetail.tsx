@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Bike, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
+import { Bike, CalendarClock, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { OrderTimeline, StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { db, DeliveryOrder, errorMessage, estadoLabel, formatDateTime, formatTime, img, metodoPagoLabel, money, optionsLabel, orderSelect, pedidoActivo, shortId } from "@/lib/delivery";
+import { db, DeliveryOrder, errorMessage, estadoLabel, estadoTitulo, formatDateTime, formatSlot, formatTime, img, metodoPagoLabel, money, optionsLabel, orderSelect, pedidoActivo, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { useReorder } from "@/hooks/useReorder";
 import { startOnlinePayment } from "@/lib/payments";
@@ -19,6 +19,7 @@ const statusCopy: Record<string, string> = {
   pendiente: "El comercio está revisando tu pedido.",
   confirmado: "¡Aceptado! En breve empiezan a prepararlo.",
   preparando: "Tu pedido se está preparando.",
+  listo: "Tu pedido está listo. Pasá a retirarlo con tu código.",
   en_camino: "Tu pedido va en camino. Tené a mano el código de entrega.",
   entregado: "¡Que lo disfrutes!",
   cancelado: "Este pedido fue cancelado.",
@@ -89,6 +90,8 @@ export default function OrderDetail() {
   };
 
   const active = pedidoActivo(order.estado);
+  const retiro = order.tipo_entrega === "retiro";
+  const canCancel = order.estado === "pendiente" || (order.estado === "confirmado" && Boolean(order.programado_para) && new Date(order.programado_para as string).getTime() > Date.now() + 3600000);
   const awaitingPayment = order.metodo_pago === "mercadopago" && order.estado === "pendiente" && (order.pago_estado === "pendiente" || order.pago_estado === "rechazado");
   const markers: MapMarker[] = [
     ...(order.comercio?.latitud != null && order.comercio?.longitud != null ? [{ lat: Number(order.comercio.latitud), lng: Number(order.comercio.longitud), kind: "store" as const, label: order.comercio.nombre }] : []),
@@ -101,8 +104,8 @@ export default function OrderDetail() {
       <PageHeader
         back="/app/pedidos"
         eyebrow={`Pedido ${shortId(order.id)}`}
-        title={awaitingPayment ? "Falta completar el pago" : estadoLabel[order.estado]}
-        subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : statusCopy[order.estado]}
+        title={awaitingPayment ? "Falta completar el pago" : estadoTitulo(order)}
+        subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : order.estado === "en_camino" && retiro ? statusCopy.listo : statusCopy[order.estado]}
         actions={<StatusBadge estado={order.estado} />}
       />
 
@@ -112,12 +115,15 @@ export default function OrderDetail() {
         <section className="mt-6 rounded-3xl border bg-card p-4 sm:p-6">
           {active && order.entrega_estimada && (
             <div className="mb-5 flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Bike className="h-6 w-6 animate-ride" /></span>
-              <div><p className="text-sm text-muted-foreground">Llegada estimada</p><p className="font-display text-2xl font-extrabold">{formatTime(order.entrega_estimada)}</p></div>
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">{order.programado_para ? <CalendarClock className="h-6 w-6" /> : retiro ? <Store className="h-6 w-6" /> : <Bike className="h-6 w-6 animate-ride" />}</span>
+              <div>
+                <p className="text-sm text-muted-foreground">{order.programado_para ? (retiro ? "Retiro programado" : "Entrega programada") : retiro ? "Listo aproximadamente" : "Llegada estimada"}</p>
+                <p className="font-display text-2xl font-extrabold">{order.programado_para ? formatSlot(order.programado_para) : formatTime(order.entrega_estimada)}</p>
+              </div>
             </div>
           )}
           <OrderTimeline order={order} />
-          {active && markers.length > 1 && (
+          {active && !retiro && markers.length > 1 && (
             <>
               <MapView markers={markers} className="mt-5 h-64 sm:h-80" />
               <p className="mt-2 text-xs text-muted-foreground">
@@ -137,7 +143,7 @@ export default function OrderDetail() {
 
       {active && code && (
         <section className="mt-4 flex items-center justify-between gap-4 rounded-3xl bg-brand-deep p-5 text-white">
-          <div className="flex items-center gap-3"><KeyRound className="h-6 w-6" /><div><p className="font-bold">Código de entrega</p><p className="text-sm text-white/70">Dáselo al repartidor solo cuando recibas tu pedido.</p></div></div>
+          <div className="flex items-center gap-3"><KeyRound className="h-6 w-6" /><div><p className="font-bold">{retiro ? "Código de retiro" : "Código de entrega"}</p><p className="text-sm text-white/70">{retiro ? "Mostralo en el local cuando vayas a retirar." : "Dáselo al repartidor solo cuando recibas tu pedido."}</p></div></div>
           <span className="font-display text-3xl font-extrabold tracking-[0.3em]">{code}</span>
         </section>
       )}
@@ -170,13 +176,13 @@ export default function OrderDetail() {
       </section>
 
       <section className="mt-4 grid gap-3 rounded-3xl border bg-card p-4 text-sm sm:grid-cols-2 sm:p-5">
-        <div className="flex gap-2"><MapPin className="h-5 w-5 shrink-0 text-primary" /><div><p className="font-bold">Entrega en</p><p className="text-muted-foreground">{order.direccion_entrega}</p></div></div>
-        <div className="flex gap-2"><Receipt className="h-5 w-5 shrink-0 text-primary" /><div><p className="font-bold">Pago</p><p className="text-muted-foreground">{metodoPagoLabel[order.metodo_pago]} · {formatDateTime(order.created_at)}</p></div></div>
+        <div className="flex gap-2"><MapPin className="h-5 w-5 shrink-0 text-primary" /><div><p className="font-bold">{retiro ? "Retiro" : "Entrega en"}</p><p className="text-muted-foreground">{order.direccion_entrega}</p></div></div>
+        <div className="flex gap-2"><Receipt className="h-5 w-5 shrink-0 text-primary" /><div><p className="font-bold">Pago</p><p className="text-muted-foreground">{metodoPagoLabel[order.metodo_pago]} · {formatDateTime(order.created_at)}</p>{order.metodo_pago === "efectivo" && order.efectivo_paga_con != null && <p className="text-muted-foreground">Pagás con {money(order.efectivo_paga_con)} · vuelto {money(Number(order.efectivo_paga_con) - Number(order.total))}</p>}</div></div>
         {order.notas && <p className="text-muted-foreground sm:col-span-2"><span className="font-bold text-foreground">Comentarios: </span>{order.notas}</p>}
       </section>
 
       <div className="mt-5 flex flex-wrap gap-2">
-        {order.estado === "pendiente" && <Button variant="outline" className="rounded-full text-destructive" onClick={cancel} disabled={busy}><XCircle className="h-4 w-4" />Cancelar pedido</Button>}
+        {canCancel && <Button variant="outline" className="rounded-full text-destructive" onClick={cancel} disabled={busy}><XCircle className="h-4 w-4" />Cancelar pedido</Button>}
         {order.estado === "entregado" && <Button variant="outline" className="rounded-full" onClick={async () => { if (await reorder(order)) navigate("/app/carrito"); }}><RotateCcw className="h-4 w-4" />Repetir pedido</Button>}
       </div>
     </div>

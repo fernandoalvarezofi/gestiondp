@@ -1,10 +1,11 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
-import { AddressDialog } from "@/components/delivery/AddressDialog";
+import { AppFooter } from "@/components/delivery/AppFooter";
+import { AddressDialog, toCartAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
@@ -16,12 +17,21 @@ const bottomNav = [
   { to: "/app/buscar", label: "Buscar", icon: Search },
   { to: "/app/pedidos", label: "Pedidos", icon: Receipt },
   { to: "/app/favoritos", label: "Favoritos", icon: Heart },
-  { to: "/app/perfil", label: "Perfil", icon: UserCircle },
+  { to: "/app/perfil", label: "Cuenta", icon: UserCircle },
 ];
 
 export function AppLayout() {
   const { session, loading, signOut } = useAuth();
-  const { itemCount, subtotal, store, address } = useCart();
+  const { itemCount, subtotal, store, address, setAddress } = useCart();
+  const { addresses } = useSavedAddresses();
+
+  // Si todavía no eligió dirección, usamos la guardada (preferimos una con ubicación en el mapa).
+  useEffect(() => {
+    if (address || !addresses.length) return;
+    const located = addresses.filter((item) => item.latitud != null);
+    const preferred = located.find((item) => item.predeterminada) || located[0] || addresses[0];
+    setAddress(toCartAddress(preferred));
+  }, [address, addresses, setAddress]);
   const roles = useDeliveryRoles();
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,25 +51,25 @@ export function AppLayout() {
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl">
+      <header className="sticky top-0 z-40 border-b bg-card/95 shadow-[0_1px_0_rgba(0,0,0,0.02)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:gap-6 lg:px-8">
-          <NavLink to="/app" className="shrink-0"><DeliveryBrand compact className="sm:hidden" /><DeliveryBrand className="hidden sm:flex" /></NavLink>
+          <NavLink to="/app" className="hidden shrink-0 md:block" aria-label="Inicio"><DeliveryBrand /></NavLink>
 
           <AddressDialog
             trigger={
-              <button type="button" className="flex min-w-0 items-center gap-1.5 rounded-full px-2 py-1 text-left hover:bg-muted">
-                <MapPin className="h-4 w-4 shrink-0 text-primary" />
+              <button type="button" className="-ml-2 flex min-w-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-left hover:bg-muted md:ml-0">
+                <MapPin className="h-5 w-5 shrink-0 text-primary" />
                 <span className="min-w-0">
-                  <span className="block text-[10px] font-bold uppercase leading-none text-muted-foreground">Entregar en</span>
-                  <span className="block max-w-[150px] truncate text-sm font-bold sm:max-w-[220px]">{address?.direccion || "Elegí tu dirección"}</span>
+                  <span className="block text-[11px] font-bold leading-none text-muted-foreground">Entregar en</span>
+                  <span className="block max-w-[200px] truncate text-[15px] font-extrabold sm:max-w-[240px]">{address?.direccion || "Elegí tu dirección"}</span>
                 </span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
               </button>
             }
           />
 
-          <NavLink to="/app/buscar" className="hidden h-11 flex-1 items-center gap-2 rounded-full bg-muted px-4 text-sm text-muted-foreground transition-colors hover:bg-muted/70 md:flex lg:max-w-md">
-            <Search className="h-4 w-4" />Buscar comercios, platos o productos
+          <NavLink to="/app/buscar" className="hidden h-11 flex-1 items-center gap-2 rounded-full border bg-background px-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/40 md:flex lg:max-w-md">
+            <Search className="h-4 w-4 text-foreground" />Buscar locales, platos y productos
           </NavLink>
 
           <nav className="ml-auto hidden items-center gap-1 md:flex">
@@ -94,22 +104,26 @@ export function AppLayout() {
         </div>
       </header>
 
-      <main><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense></main>
+      <main className="min-h-[calc(100vh-4rem)]"><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense></main>
+      {!inPanel && <AppFooter />}
 
       {showCartBar && (
         <div className="fixed inset-x-0 bottom-[72px] z-40 px-4 md:hidden">
-          <NavLink to="/app/carrito" className="flex h-14 items-center justify-between rounded-2xl bg-primary px-4 text-primary-foreground shadow-pop">
-            <span className="flex h-8 min-w-8 items-center justify-center rounded-lg bg-white/20 px-2 text-sm font-bold">{itemCount}</span>
-            <span className="font-bold">Ver carrito{store ? ` · ${store.nombre}` : ""}</span>
-            <span className="font-display font-extrabold">{money(subtotal)}</span>
+          <NavLink to="/app/carrito" className="flex h-14 items-center justify-between gap-3 rounded-2xl bg-primary px-4 text-primary-foreground shadow-pop">
+            <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-white px-2 text-sm font-black text-primary">{itemCount}</span>
+            <span className="min-w-0 flex-1 truncate text-center text-[15px] font-extrabold">Ver mi pedido{store ? ` · ${store.nombre}` : ""}</span>
+            <span className="font-black">{money(subtotal)}</span>
           </NavLink>
         </div>
       )}
 
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-card/95 backdrop-blur-xl md:hidden">
         {bottomNav.map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("flex min-h-[64px] flex-col items-center justify-center gap-1 text-[11px] font-bold", isActive ? "text-primary" : "text-muted-foreground")}>
-            <Icon className="h-[22px] w-[22px]" />{label}
+          <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[62px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
+            {({ isActive }) => (<>
+              <span className={cn("flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary/10")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} /></span>
+              {label}
+            </>)}
           </NavLink>
         ))}
       </nav>

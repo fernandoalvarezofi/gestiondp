@@ -6,7 +6,8 @@ import { Beer, Cake, Coffee, Cross, Flame, IceCream, Pizza, Salad, ShoppingBaske
 export const db = supabase as any;
 
 export type Categoria = "comida" | "supermercado" | "farmacia" | "tiendas";
-export type EstadoPedido = "pendiente" | "confirmado" | "preparando" | "en_camino" | "entregado" | "cancelado";
+export type EstadoPedido = "pendiente" | "confirmado" | "preparando" | "listo" | "en_camino" | "entregado" | "cancelado";
+export type TipoEntrega = "delivery" | "retiro";
 export type MetodoPago = "efectivo" | "tarjeta" | "transferencia" | "mercadopago";
 export type PagoEstado = "no_requiere" | "pendiente" | "aprobado" | "rechazado" | "a_reintegrar" | "reintegrado";
 
@@ -41,6 +42,8 @@ export type DeliveryStore = {
   motivo_rechazo?: string | null;
   destacado?: boolean;
   activo?: boolean;
+  acepta_retiro?: boolean;
+  acepta_programados?: boolean;
   created_at?: string;
 };
 
@@ -176,6 +179,10 @@ export type DeliveryOrder = {
   latitud?: number | null;
   longitud?: number | null;
   distancia_km?: number | null;
+  tipo_entrega: TipoEntrega;
+  programado_para?: string | null;
+  efectivo_paga_con?: number | null;
+  listo_at?: string | null;
   comercio?: Pick<DeliveryStore, "nombre" | "slug" | "imagen_url" | "logo_url" | "direccion" | "telefono" | "latitud" | "longitud"> | null;
   cliente?: { nombre: string } | null;
 };
@@ -223,23 +230,25 @@ export const categoriaLabel: Record<Categoria, string> = {
   tiendas: "Tiendas",
 };
 
-export type Vertical = { id: string; label: string; icon: LucideIcon; categoria?: Categoria; rubro?: string; color: string };
+export type Vertical = { id: string; label: string; icon: LucideIcon; categoria?: Categoria; rubro?: string; color: string; image: string };
+
+const verticalPhoto = (id: string) => `https://images.unsplash.com/photo-${id}?w=400&q=80&auto=format&fit=crop`;
 
 /** Accesos rápidos de la portada: cada uno filtra por categoría o por rubro. */
 export const verticals: Vertical[] = [
-  { id: "restaurantes", label: "Restaurantes", icon: Utensils, categoria: "comida", color: "bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300" },
-  { id: "super", label: "Súper", icon: ShoppingBasket, categoria: "supermercado", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300" },
-  { id: "farmacia", label: "Farmacia", icon: Cross, categoria: "farmacia", color: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300" },
-  { id: "tiendas", label: "Tiendas", icon: Store, categoria: "tiendas", color: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" },
-  { id: "cafe", label: "Café", icon: Coffee, rubro: "Café", color: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300" },
-  { id: "helados", label: "Helados", icon: IceCream, rubro: "Helados", color: "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300" },
-  { id: "pizza", label: "Pizza", icon: Pizza, rubro: "Pizza", color: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300" },
-  { id: "saludable", label: "Saludable", icon: Salad, rubro: "Saludable", color: "bg-lime-100 text-lime-700 dark:bg-lime-500/15 dark:text-lime-300" },
-  { id: "parrilla", label: "Parrilla", icon: Flame, rubro: "Parrilla", color: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300" },
-  { id: "sandwiches", label: "Sándwiches", icon: Sandwich, rubro: "Sándwiches", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300" },
-  { id: "desayunos", label: "Desayunos", icon: Cake, rubro: "Desayunos", color: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300" },
-  { id: "bebidas", label: "Bebidas", icon: Beer, rubro: "Bebidas", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300" },
-  { id: "moda", label: "Moda", icon: Shirt, rubro: "Indumentaria", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300" },
+  { id: "restaurantes", label: "Restaurantes", icon: Utensils, categoria: "comida", color: "bg-orange-100 text-orange-600 dark:bg-orange-500/15 dark:text-orange-300", image: verticalPhoto("1568901346375-23c9450c58cd") },
+  { id: "super", label: "Súper", icon: ShoppingBasket, categoria: "supermercado", color: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300", image: verticalPhoto("1542838132-92c53300491e") },
+  { id: "farmacia", label: "Farmacia", icon: Cross, categoria: "farmacia", color: "bg-sky-100 text-sky-700 dark:bg-sky-500/15 dark:text-sky-300", image: verticalPhoto("1587854692152-cbe660dbde88") },
+  { id: "tiendas", label: "Tiendas", icon: Store, categoria: "tiendas", color: "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300", image: verticalPhoto("1513885535751-8b9238bd345a") },
+  { id: "cafe", label: "Café", icon: Coffee, rubro: "Café", color: "bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300", image: verticalPhoto("1509042239860-f550ce710b93") },
+  { id: "helados", label: "Helados", icon: IceCream, rubro: "Helados", color: "bg-pink-100 text-pink-700 dark:bg-pink-500/15 dark:text-pink-300", image: verticalPhoto("1563805042-7684c019e1cb") },
+  { id: "pizza", label: "Pizza", icon: Pizza, rubro: "Pizza", color: "bg-red-100 text-red-700 dark:bg-red-500/15 dark:text-red-300", image: verticalPhoto("1513104890138-7c749659a591") },
+  { id: "saludable", label: "Saludable", icon: Salad, rubro: "Saludable", color: "bg-lime-100 text-lime-700 dark:bg-lime-500/15 dark:text-lime-300", image: verticalPhoto("1512621776951-a57141f2eefd") },
+  { id: "parrilla", label: "Parrilla", icon: Flame, rubro: "Parrilla", color: "bg-orange-100 text-orange-700 dark:bg-orange-500/15 dark:text-orange-300", image: verticalPhoto("1600891964092-4316c288032e") },
+  { id: "sandwiches", label: "Sándwiches", icon: Sandwich, rubro: "Sándwiches", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300", image: verticalPhoto("1592415486689-125cbbfcbee2") },
+  { id: "desayunos", label: "Desayunos", icon: Cake, rubro: "Desayunos", color: "bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-300", image: verticalPhoto("1484723091739-30a097e8f929") },
+  { id: "bebidas", label: "Bebidas", icon: Beer, rubro: "Bebidas", color: "bg-yellow-100 text-yellow-800 dark:bg-yellow-500/15 dark:text-yellow-300", image: verticalPhoto("1608270586620-248524c67de9") },
+  { id: "moda", label: "Moda", icon: Shirt, rubro: "Indumentaria", color: "bg-indigo-100 text-indigo-700 dark:bg-indigo-500/15 dark:text-indigo-300", image: verticalPhoto("1441986300917-64674bd600d8") },
 ];
 
 export const matchesVertical = (store: DeliveryStore, vertical: Vertical) =>
@@ -249,6 +258,7 @@ export const estadoLabel: Record<EstadoPedido, string> = {
   pendiente: "Esperando al comercio",
   confirmado: "Pedido confirmado",
   preparando: "Preparando tu pedido",
+  listo: "Listo para retirar",
   en_camino: "En camino",
   entregado: "Entregado",
   cancelado: "Cancelado",
@@ -258,6 +268,7 @@ export const estadoCorto: Record<EstadoPedido, string> = {
   pendiente: "Nuevo",
   confirmado: "Confirmado",
   preparando: "En preparación",
+  listo: "Listo para retirar",
   en_camino: "En camino",
   entregado: "Entregado",
   cancelado: "Cancelado",
@@ -267,12 +278,34 @@ export const estadoTone: Record<EstadoPedido, string> = {
   pendiente: "bg-warning/15 text-warning-foreground dark:text-warning",
   confirmado: "bg-info/10 text-info",
   preparando: "bg-info/10 text-info",
+  listo: "bg-success/10 text-success",
   en_camino: "bg-primary/10 text-primary",
   entregado: "bg-success/10 text-success",
   cancelado: "bg-muted text-muted-foreground",
 };
 
 export const pasosPedido: EstadoPedido[] = ["pendiente", "confirmado", "preparando", "en_camino", "entregado"];
+export const pasosRetiro: EstadoPedido[] = ["pendiente", "confirmado", "preparando", "listo", "entregado"];
+/** Pasos del seguimiento según cómo se entrega el pedido. */
+export const pasosDe = (order: Pick<DeliveryOrder, "tipo_entrega">) => (order.tipo_entrega === "retiro" ? pasosRetiro : pasosPedido);
+
+/** Título del estado, ajustado al tipo de entrega ("Retirado" en vez de "Entregado"). */
+export function estadoTitulo(order: Pick<DeliveryOrder, "estado" | "tipo_entrega">) {
+  if (order.tipo_entrega === "retiro" && order.estado === "entregado") return "Retirado";
+  return estadoLabel[order.estado];
+}
+
+const argentinaDay = (date: Date) => date.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" });
+/** Día de una franja programada: "Hoy", "Mañana" o "vie 3 oct". */
+export function slotDay(value: string | Date) {
+  const date = new Date(value);
+  if (argentinaDay(date) === argentinaDay(new Date())) return "Hoy";
+  if (argentinaDay(date) === argentinaDay(new Date(Date.now() + 86400000))) return "Mañana";
+  return date.toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", weekday: "short", day: "numeric", month: "short" });
+}
+export const slotTime = (value: string | Date) =>
+  new Date(value).toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour: "2-digit", minute: "2-digit", hour12: false });
+export const formatSlot = (value: string | Date) => `${slotDay(value)} ${slotTime(value)}`;
 export const pedidoActivo = (estado: EstadoPedido) => estado !== "entregado" && estado !== "cancelado";
 
 export const metodoPagoLabel: Record<MetodoPago, string> = {

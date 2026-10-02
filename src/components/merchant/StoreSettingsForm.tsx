@@ -15,12 +15,14 @@ import { Categoria, categoriaLabel, defaultSchedule, DeliveryStore, Horarios, mo
 export type StoreFormValues = Pick<DeliveryStore,
   "nombre" | "categoria" | "rubro" | "descripcion" | "direccion" | "telefono" | "horario" | "imagen_url" | "logo_url" |
   "tiempo_min" | "tiempo_max" | "costo_envio" | "pedido_minimo" | "envio_gratis_desde" | "promo_texto" | "esta_abierto"> & {
+  acepta_retiro: boolean; acepta_programados: boolean;
   horarios: Horarios; latitud: number | null; longitud: number | null; radio_entrega_km: number; costo_por_km: number;
 };
 
 export const emptyStore: StoreFormValues = {
   nombre: "", categoria: "comida", rubro: "", descripcion: "", direccion: "", telefono: "", horario: "",
   imagen_url: "", logo_url: "", tiempo_min: 20, tiempo_max: 35, costo_envio: 990, pedido_minimo: 0, envio_gratis_desde: null, promo_texto: "", esta_abierto: true,
+  acepta_retiro: true, acepta_programados: true,
   horarios: defaultSchedule, latitud: null, longitud: null, radio_entrega_km: 5, costo_por_km: 200,
 };
 
@@ -30,6 +32,7 @@ export function storeToFormValues(store: DeliveryStore): StoreFormValues {
     horario: store.horario || "", imagen_url: store.imagen_url || "", logo_url: store.logo_url || "", tiempo_min: store.tiempo_min, tiempo_max: store.tiempo_max,
     costo_envio: Number(store.costo_envio), pedido_minimo: Number(store.pedido_minimo), envio_gratis_desde: store.envio_gratis_desde ?? null, promo_texto: store.promo_texto || "",
     esta_abierto: store.esta_abierto, horarios: store.horarios || defaultSchedule,
+    acepta_retiro: store.acepta_retiro ?? true, acepta_programados: store.acepta_programados ?? true,
     latitud: store.latitud != null ? Number(store.latitud) : null, longitud: store.longitud != null ? Number(store.longitud) : null,
     radio_entrega_km: Number(store.radio_entrega_km ?? 5), costo_por_km: Number(store.costo_por_km ?? 0),
   };
@@ -97,6 +100,14 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
         <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
           <span><span className="block text-sm font-bold">Recibir pedidos</span><span className="block text-xs text-muted-foreground">Apagalo para pausar el local aunque esté en horario (por ejemplo, si se cortó la luz).</span></span>
           <Switch checked={values.esta_abierto} onCheckedChange={(checked) => set("esta_abierto", checked)} />
+        </label>
+        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
+          <span><span className="block text-sm font-bold">Ofrecer retiro en el local</span><span className="block text-xs text-muted-foreground">El cliente puede pasar a buscar su pedido, sin costo de envío ni repartidor.</span></span>
+          <Switch checked={values.acepta_retiro} onCheckedChange={(checked) => set("acepta_retiro", checked)} />
+        </label>
+        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
+          <span><span className="block text-sm font-bold">Aceptar pedidos programados</span><span className="block text-xs text-muted-foreground">Los clientes pueden pedir para más tarde o para otro día, dentro de tus horarios.</span></span>
+          <Switch checked={values.acepta_programados} onCheckedChange={(checked) => set("acepta_programados", checked)} />
         </label>
       </fieldset>
 

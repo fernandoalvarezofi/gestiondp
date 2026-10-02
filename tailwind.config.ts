@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Figtree", "system-ui", "sans-serif"],
-        display: ["Outfit", "Figtree", "system-ui", "sans-serif"],
+        sans: ["Nunito", "system-ui", "sans-serif"],
+        display: ["Nunito", "system-ui", "sans-serif"],
+        brand: ["Nunito", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-ember": "var(--gradient-ember)",

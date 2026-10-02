@@ -9,6 +9,7 @@ type Message = { title: string; body: string; url: string; tag: string };
 const estadoCliente: Record<string, Omit<Message, "url" | "tag"> | undefined> = {
   confirmado: { title: "¡Tu pedido fue aceptado!", body: "El comercio ya lo está organizando." },
   preparando: { title: "Están preparando tu pedido", body: "En breve sale para tu casa." },
+  listo: { title: "¡Tu pedido está listo para retirar!", body: "Pasá por el local con tu código de retiro." },
   en_camino: { title: "Tu pedido va en camino 🛵", body: "Tené a mano el código de entrega." },
   entregado: { title: "¡Pedido entregado!", body: "Que lo disfrutes. Contanos qué tal estuvo." },
   cancelado: { title: "Tu pedido fue cancelado", body: "No se te cobró nada." },
@@ -31,7 +32,7 @@ Deno.serve(async (req) => {
   const { pedido_id, evento, estado_anterior } = (await req.json()) as Payload;
   const { data: order } = await supabase
     .from("delivery_pedidos")
-    .select("id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
+    .select("id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
     .eq("id", pedido_id)
     .maybeSingle();
   if (!order) return new Response("Pedido no encontrado", { status: 404 });
@@ -48,7 +49,11 @@ Deno.serve(async (req) => {
   }
 
   if (evento === "estado") {
-    const copy = estadoCliente[order.estado];
+    const copy = order.tipo_entrega === "retiro" && order.estado === "preparando"
+      ? { title: "Están preparando tu pedido", body: "Te avisamos apenas esté listo para retirar." }
+      : order.tipo_entrega === "retiro" && order.estado === "entregado"
+        ? { title: "¡Pedido retirado!", body: "Que lo disfrutes. Contanos qué tal estuvo." }
+        : estadoCliente[order.estado];
     if (copy) sends.push({ userIds: [order.cliente_id], message: { ...copy, body: order.estado === "cancelado" && order.motivo_cancelacion ? order.motivo_cancelacion : copy.body, url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
 
     // Si lo canceló el cliente, también se entera el comercio.
@@ -57,7 +62,9 @@ Deno.serve(async (req) => {
     }
 
     // Pedido recién aceptado y sin repartidor: avisamos a los repartidores conectados.
-    if (order.estado === "confirmado" && !order.repartidor_id) {
+    // (los retiros no usan repartidor y los programados se avisan recién cuando se acerca la hora)
+    const soon = !order.programado_para || new Date(order.programado_para as string).getTime() <= Date.now() + 50 * 60 * 1000;
+    if (order.estado === "confirmado" && !order.repartidor_id && order.tipo_entrega === "delivery" && soon) {
       const { data: couriers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("disponible", true).eq("activo", true);
       const ids = (couriers || []).map((courier) => courier.perfil_id).filter((id) => id !== store?.propietario_id);
       if (ids.length) sends.push({ userIds: ids, message: { title: "Pedido disponible para retirar", body: `${store?.nombre || "Un comercio"} tiene un pedido listo para tomar.`, url: "/app/repartidor", tag: "pedidos-disponibles" } });

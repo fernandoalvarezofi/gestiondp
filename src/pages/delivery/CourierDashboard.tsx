@@ -199,7 +199,7 @@ function CurrentDelivery({ order, onChange }: { order: DeliveryOrder; onChange: 
       <div className="mt-4 rounded-2xl bg-muted p-3 text-sm">
         <p className="font-bold">Contenido</p>
         <p className="text-muted-foreground">{(order.items || []).map((item) => `${item.cantidad}× ${item.nombre}${item.opciones?.length ? ` (${item.opciones.map((option) => option.nombre).join(", ")})` : ""}`).join(" · ")}</p>
-        <p className="mt-2"><span className="font-bold">Cobro: </span>{order.metodo_pago === "efectivo" ? `Cobrá ${money(order.total)} en efectivo` : order.metodo_pago === "mercadopago" ? "Ya está pagado online: no cobres nada" : `${metodoPagoLabel[order.metodo_pago]}: cobrá ${money(order.total)}`}</p>
+        <p className="mt-2"><span className="font-bold">Cobro: </span>{order.metodo_pago === "efectivo" ? `Cobrá ${money(order.total)} en efectivo${order.efectivo_paga_con != null ? ` · paga con ${money(order.efectivo_paga_con)}, llevá ${money(Number(order.efectivo_paga_con) - Number(order.total))} de vuelto` : ""}` : order.metodo_pago === "mercadopago" ? "Ya está pagado online: no cobres nada" : `${metodoPagoLabel[order.metodo_pago]}: cobrá ${money(order.total)}`}</p>
         {order.notas && <p className="mt-1"><span className="font-bold">Nota: </span>{order.notas}</p>}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">

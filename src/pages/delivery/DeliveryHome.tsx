@@ -1,152 +1,278 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Bike, ChevronRight, Search } from "lucide-react";
+import { ChevronRight, Search, SlidersHorizontal, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
-import { StatusBadge } from "@/components/delivery/OrderStatus";
-import { EmptyState, Rail } from "@/components/delivery/Common";
+import { EmptyState } from "@/components/delivery/Common";
+import { StoreCard, StoreCardSkeleton, StoreListItem, StoreListSkeleton, StoreLogo } from "@/components/delivery/StoreCard";
 import { useInZone } from "@/hooks/useAddressPoint";
-import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
-import { db, DeliveryOrder, DeliveryStore, estadoLabel, isOpenNow, verticals } from "@/lib/delivery";
+import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 const banners = [
-  { title: "30% OFF en tu primer pedido", text: "Usá el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=1000&q=80&auto=format&fit=crop", tone: "from-primary/95 via-primary/80", to: "/app/promociones" },
-  { title: "Súper en 30 minutos", text: "Frescos, almacén y bebidas", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1000&q=80&auto=format&fit=crop", tone: "from-emerald-700/95 via-emerald-700/75", to: "/app/categoria/super" },
-  { title: "Envío gratis desde $8.000", text: "Con el código ENVIOGRATIS", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000&q=80&auto=format&fit=crop", tone: "from-brand-deep/95 via-brand-deep/75", to: "/app/promociones" },
+  { title: "30% OFF en tu primer pedido", text: "Con el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=1000&q=80&auto=format&fit=crop", tone: "from-[#F2402A] via-[#F2402A]/85", to: "/app/promociones", cta: "Ver cupones" },
+  { title: "Tu súper en minutos", text: "Frescos, almacén y bebidas", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1000&q=80&auto=format&fit=crop", tone: "from-emerald-700 via-emerald-700/80", to: "/app/categoria/super", cta: "Hacer el súper" },
+  { title: "Envío gratis desde $8.000", text: "Usá ENVIOGRATIS al pagar", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000&q=80&auto=format&fit=crop", tone: "from-brand-deep via-brand-deep/80", to: "/app/promociones", cta: "Aprovechar" },
 ];
 
-type Filter = "todos" | "abiertos" | "gratis" | "rating" | "rapido";
-const filters: { id: Filter; label: string }[] = [
-  { id: "todos", label: "Todos" },
-  { id: "abiertos", label: "Abiertos ahora" },
-  { id: "gratis", label: "Envío gratis" },
-  { id: "rating", label: "Mejor puntuados" },
-  { id: "rapido", label: "Más rápidos" },
-];
+type Sort = "relevancia" | "rating" | "rapido";
+type Filters = { gratis: boolean; promos: boolean; abiertos: boolean; top: boolean };
+
+function Section({ title, subtitle, to, children }: { title: string; subtitle?: string; to?: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-8">
+      <div className="mb-3 flex items-end justify-between gap-4 px-4 sm:px-0">
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-black sm:text-xl">{title}</h2>
+          {subtitle && <p className="text-[13px] font-semibold text-muted-foreground">{subtitle}</p>}
+        </div>
+        {to && <Link to={to} className="flex shrink-0 items-center text-sm font-extrabold text-primary">Ver todos<ChevronRight className="h-4 w-4" /></Link>}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+const Rail = ({ children }: { children: React.ReactNode }) => (
+  <div className="scrollbar-none flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:scroll-px-0 sm:px-0">{children}</div>
+);
 
 export default function DeliveryHome() {
   const { user } = useAuth();
-  const { nombre } = useDeliveryRoles();
+  const inZone = useInZone();
   const [stores, setStores] = useState<DeliveryStore[]>([]);
-  const [activeOrder, setActiveOrder] = useState<DeliveryOrder | null>(null);
+  const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<Filter>("todos");
-  const [banner, setBanner] = useState(0);
+  const [sort, setSort] = useState<Sort>("relevancia");
+  const [filters, setFilters] = useState<Filters>({ gratis: false, promos: false, abiertos: false, top: false });
 
   useEffect(() => {
-    (async () => {
-      const { data } = await db.from("delivery_comercios").select("*").eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false });
-      setStores(data || []);
-      setLoading(false);
-    })();
+    db.from("delivery_comercios").select("*").eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
+      .then(({ data }: { data: DeliveryStore[] | null }) => { setStores(data || []); setLoading(false); });
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    db.from("delivery_pedidos").select("*, comercio:delivery_comercios(nombre,slug,imagen_url,logo_url)").eq("cliente_id", user.id)
-      .not("estado", "in", "(entregado,cancelado)").order("created_at", { ascending: false }).limit(1).maybeSingle()
-      .then(({ data }: { data: DeliveryOrder | null }) => setActiveOrder(data));
+    db.from("delivery_pedidos").select("id,estado,calificado,created_at,entrega_estimada,comercio_id,pago_estado,metodo_pago,tipo_entrega,programado_para,comercio:delivery_comercios(nombre,slug,imagen_url,logo_url)")
+      .eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(20)
+      .then(({ data }: { data: DeliveryOrder[] | null }) => setOrders(data || []));
   }, [user]);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => setBanner((current) => (current + 1) % banners.length), 5000);
-    return () => window.clearInterval(timer);
-  }, []);
+  const available = useMemo(() => stores.filter((store) => isOpenNow(store) && inZone(store)), [stores, inZone]);
+  const activeOrder = orders.find((order) => !["entregado", "cancelado"].includes(order.estado) && order.pago_estado !== "pendiente");
+  const toRate = orders.find((order) => order.estado === "entregado" && !order.calificado && Date.now() - new Date(order.created_at).getTime() < 7 * 86400000);
+  const reorder = useMemo(() => {
+    const ids = [...new Set(orders.filter((order) => order.estado === "entregado").map((order) => order.comercio_id))];
+    return ids.map((id) => stores.find((store) => store.id === id)).filter(Boolean) as DeliveryStore[];
+  }, [orders, stores]);
 
-  const inZone = useInZone();
-  const open = useMemo(() => stores.filter((store) => isOpenNow(store) && inZone(store)), [stores, inZone]);
-  const popular = useMemo(() => [...open].sort((a, b) => b.total_resenas - a.total_resenas).slice(0, 10), [open]);
-  const promos = useMemo(() => open.filter((store) => store.promo_texto), [open]);
-  const fast = useMemo(() => [...open].sort((a, b) => a.tiempo_max - b.tiempo_max).slice(0, 10), [open]);
-  const markets = useMemo(() => open.filter((store) => store.categoria !== "comida"), [open]);
+  const popular = useMemo(() => [...available].sort((a, b) => b.total_resenas - a.total_resenas).slice(0, 10), [available]);
+  const promos = useMemo(() => available.filter((store) => store.promo_texto), [available]);
+  const freeShipping = useMemo(() => available.filter((store) => Number(store.costo_envio) === 0 || (store.envio_gratis_desde ?? Infinity) <= 1), [available]);
+  const fast = useMemo(() => [...available].sort((a, b) => a.tiempo_max - b.tiempo_max).slice(0, 10), [available]);
+  const newStores = useMemo(() => available.filter((store) => !store.total_resenas || (store.created_at && Date.now() - new Date(store.created_at).getTime() < 30 * 86400000)), [available]);
 
-  const all = useMemo(() => {
-    const list = [...stores];
-    if (filter === "abiertos") return list.filter((store) => isOpenNow(store) && inZone(store));
-    if (filter === "gratis") return list.filter((store) => Number(store.costo_envio) === 0 || (store.envio_gratis_desde ?? Infinity) <= 1);
-    if (filter === "rating") list.sort((a, b) => b.rating - a.rating);
-    if (filter === "rapido") list.sort((a, b) => a.tiempo_max - b.tiempo_max);
-    // Los que no llegan a tu dirección van al final.
-    return list.sort((a, b) => Number(inZone(b)) - Number(inZone(a)));
-  }, [stores, filter, inZone]);
+  const list = useMemo(() => {
+    let result = [...stores];
+    if (filters.gratis) result = result.filter((store) => Number(store.costo_envio) === 0 || (store.envio_gratis_desde ?? Infinity) <= 1);
+    if (filters.promos) result = result.filter((store) => store.promo_texto);
+    if (filters.abiertos) result = result.filter((store) => isOpenNow(store) && inZone(store));
+    if (filters.top) result = result.filter((store) => store.total_resenas > 0 && store.rating >= 4.7);
+    if (sort === "rating") result.sort((a, b) => b.rating - a.rating);
+    if (sort === "rapido") result.sort((a, b) => a.tiempo_max - b.tiempo_max);
+    return result.sort((a, b) => Number(isOpenNow(b) && inZone(b)) - Number(isOpenNow(a) && inZone(a)));
+  }, [stores, filters, sort, inZone]);
 
-  const firstName = nombre.split(" ")[0];
+  // "¿Qué se te antoja?": rubros reales de los locales, con la foto del local más pedido de cada uno.
+  const cuisines = useMemo(() => {
+    const byRubro = new Map<string, DeliveryStore>();
+    for (const store of available) {
+      const key = store.rubro?.trim();
+      if (!key || store.categoria !== "comida") continue;
+      const current = byRubro.get(key);
+      if (!current || store.total_resenas > current.total_resenas) byRubro.set(key, store);
+    }
+    return [...byRubro.entries()].map(([rubro, store]) => ({ rubro, image: store.imagen_url }));
+  }, [available]);
+
+  const big = verticals.slice(0, 2);
+  const small = verticals.slice(2);
+  const toggle = (key: keyof Filters) => setFilters((current) => ({ ...current, [key]: !current[key] }));
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-14 pt-5 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-extrabold sm:text-3xl">{firstName ? `Hola, ${firstName} 👋` : "Hola 👋"}</h1>
-      <p className="text-sm text-muted-foreground">¿Qué querés pedir hoy?</p>
-
-      <Link to="/app/buscar" className="mt-4 flex h-12 items-center gap-3 rounded-full bg-muted px-4 text-sm text-muted-foreground md:hidden">
-        <Search className="h-5 w-5" />Buscar comercios, platos o productos
-      </Link>
-
-      {activeOrder && (
-        <Link to={`/app/pedidos/${activeOrder.id}`} className="mt-5 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3 transition-colors hover:bg-primary/10">
-          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"><Bike className="h-5 w-5 animate-ride" /></span>
-          <span className="min-w-0 flex-1">
-            <span className="block truncate font-bold">{estadoLabel[activeOrder.estado]}</span>
-            <span className="block truncate text-sm text-muted-foreground">{activeOrder.comercio?.nombre} · Seguí tu pedido en vivo</span>
-          </span>
-          <StatusBadge estado={activeOrder.estado} className="hidden sm:inline-flex" />
-          <ChevronRight className="h-5 w-5 text-muted-foreground" />
+    <div className="mx-auto w-full max-w-6xl pb-16 pt-3 sm:px-6 sm:pt-6 lg:px-8">
+      <div className="px-4 sm:px-0">
+        <Link to="/app/buscar" className="flex h-12 items-center gap-3 rounded-full border bg-card px-4 text-[15px] font-semibold text-muted-foreground shadow-sm transition-colors hover:border-primary/40 md:hidden">
+          <Search className="h-5 w-5 text-foreground" />Buscar locales, platos y productos
         </Link>
-      )}
 
-      <section className="scrollbar-none -mx-4 mt-6 flex gap-3 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-[repeat(13,minmax(0,1fr))] lg:px-0">
-        {verticals.map(({ id, label, icon: Icon, color }) => (
-          <Link key={id} to={`/app/categoria/${id}`} className="group flex w-[76px] shrink-0 flex-col items-center gap-2 lg:w-auto">
-            <span className={cn("flex h-16 w-16 items-center justify-center rounded-2xl transition-transform group-hover:-translate-y-0.5 group-active:scale-95", color)}><Icon className="h-7 w-7" /></span>
-            <span className="text-center text-xs font-bold">{label}</span>
-          </Link>
-        ))}
-      </section>
+        {activeOrder && <ActiveOrderBanner order={activeOrder} />}
+        {!activeOrder && toRate && <RateBanner order={toRate} />}
 
-      <section className="relative mt-7 overflow-hidden rounded-3xl">
-        <div className="flex transition-transform duration-500" style={{ transform: `translateX(-${banner * 100}%)` }}>
-          {banners.map((item) => (
-            <Link key={item.title} to={item.to} className="relative block aspect-[16/7] min-h-[170px] w-full shrink-0 sm:aspect-[16/5]">
-              <img src={item.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
-              <div className={cn("absolute inset-0 bg-gradient-to-r to-transparent", item.tone)} />
-              <div className="relative flex h-full max-w-md flex-col justify-center p-6 text-white sm:p-10">
-                <h2 className="text-2xl font-extrabold leading-tight sm:text-4xl">{item.title}</h2>
-                <p className="mt-2 text-sm font-semibold text-white/85 sm:text-base">{item.text}</p>
-                <span className="mt-4 flex w-fit items-center gap-1 rounded-full bg-white px-4 py-2 text-sm font-bold text-foreground">Pedir ahora<ArrowRight className="h-4 w-4" /></span>
-              </div>
+        {/* Accesos: dos grandes y el resto en grilla, como en las apps de delivery */}
+        <section className="mt-4 grid grid-cols-2 gap-3">
+          {big.map(({ id, label, image }) => (
+            <Link key={id} to={`/app/categoria/${id}`} className="group relative h-28 overflow-hidden rounded-3xl bg-muted p-4 sm:h-36">
+              <span className="relative z-10 text-lg font-black sm:text-2xl">{label}</span>
+              <img src={image} alt="" className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full object-cover shadow-lg transition-transform duration-300 group-hover:scale-105 sm:h-32 sm:w-32" />
             </Link>
           ))}
-        </div>
-        <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
-          {banners.map((item, index) => (
-            <button key={item.title} type="button" aria-label={`Ver promoción ${index + 1}`} onClick={() => setBanner(index)} className={cn("h-2 rounded-full bg-white transition-all", banner === index ? "w-6" : "w-2 opacity-60")} />
+        </section>
+        <section className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-6 sm:px-0 lg:grid-cols-11">
+          {small.map(({ id, label, image }) => (
+            <Link key={id} to={`/app/categoria/${id}`} className="group flex w-[76px] shrink-0 flex-col items-center gap-1.5 sm:w-auto">
+              <span className="flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-2xl bg-muted">
+                <img src={image} alt="" loading="lazy" className="h-14 w-14 rounded-full object-cover transition-transform duration-300 group-hover:scale-110" />
+              </span>
+              <span className="text-center text-xs font-bold leading-tight">{label}</span>
+            </Link>
           ))}
-        </div>
-      </section>
+        </section>
+      </div>
+
+      <BannerCarousel />
+
+      {cuisines.length > 2 && (
+        <Section title="¿Qué se te antoja?">
+          <Rail>
+            {cuisines.map(({ rubro, image }) => (
+              <Link key={rubro} to={`/app/buscar?q=${encodeURIComponent(rubro)}`} className="group flex w-[84px] shrink-0 snap-start flex-col items-center gap-2 text-center">
+                <span className="relative h-[84px] w-[84px] overflow-hidden rounded-full bg-muted ring-2 ring-transparent transition-all duration-300 group-hover:ring-primary group-active:scale-95">
+                  <img src={img(image, 240)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <span className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]" />
+                </span>
+                <span className="text-[13px] font-extrabold leading-tight">{rubro}</span>
+              </Link>
+            ))}
+          </Rail>
+        </Section>
+      )}
+
+      {reorder.length > 0 && (
+        <Section title="Pedí de nuevo" subtitle="Tus locales de siempre">
+          <Rail>
+            {reorder.map((store) => (
+              <Link key={store.id} to={`/app/tienda/${store.slug}`} className="flex w-[88px] shrink-0 snap-start flex-col items-center gap-1.5 text-center">
+                <StoreLogo store={store} className="h-[76px] w-[76px] text-xl" />
+                <span className="line-clamp-2 text-xs font-bold leading-tight">{store.nombre}</span>
+              </Link>
+            ))}
+          </Rail>
+        </Section>
+      )}
 
       {loading ? (
-        <Rail title="Los más pedidos">{[0, 1, 2, 3].map((key) => <StoreCardSkeleton key={key} variant="row" />)}</Rail>
+        <Section title="Los más pedidos"><Rail>{[0, 1, 2, 3].map((key) => <StoreCardSkeleton key={key} variant="row" />)}</Rail></Section>
       ) : (
         <>
-          {popular.length > 0 && <Rail title="Los más pedidos" subtitle="Favoritos de la zona">{popular.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail>}
-          {promos.length > 0 && <Rail title="Promociones imperdibles" subtitle="Descuentos que vencen pronto" to="/app/promociones">{promos.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail>}
-          {fast.length > 0 && <Rail title="Llegan rapidísimo" subtitle="En menos de 35 minutos">{fast.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail>}
-          {markets.length > 0 && <Rail title="Súper, farmacia y tiendas" to="/app/categoria/super">{markets.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail>}
+          {popular.length > 0 && <Section title="Los más pedidos" subtitle="Lo que más se pide cerca tuyo"><Rail>{popular.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
+          {promos.length > 0 && <Section title="Descuentos imperdibles" to="/app/promociones"><Rail>{promos.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
+          {freeShipping.length > 0 && <Section title="Con envío gratis"><Rail>{freeShipping.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
+          {fast.length > 0 && <Section title="Te llega rapidísimo" subtitle="Los que menos tardan"><Rail>{fast.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
+          {newStores.length > 0 && <Section title="Nuevos en Woref"><Rail>{newStores.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
         </>
       )}
 
-      <section className="pt-10">
-        <h2 className="text-xl font-extrabold sm:text-2xl">Todos los comercios</h2>
-        <div className="scrollbar-none -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          {filters.map((item) => (
-            <button key={item.id} type="button" onClick={() => setFilter(item.id)} className={cn("shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors", filter === item.id ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{item.label}</button>
+      <section className="mt-10">
+        <div className="px-4 sm:px-0">
+          <h2 className="text-lg font-black sm:text-xl">Todos los locales</h2>
+          <p className="text-[13px] font-semibold text-muted-foreground">{list.length} {list.length === 1 ? "resultado" : "resultados"}</p>
+        </div>
+        <div className="scrollbar-none mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:px-0">
+          <label className="relative flex shrink-0 items-center">
+            <SlidersHorizontal className="pointer-events-none absolute left-3 h-4 w-4" />
+            <select value={sort} onChange={(event) => setSort(event.target.value as Sort)} className="h-9 appearance-none rounded-full border bg-card pl-9 pr-4 text-sm font-bold" aria-label="Ordenar">
+              <option value="relevancia">Ordenar: Relevancia</option>
+              <option value="rating">Mejor puntuados</option>
+              <option value="rapido">Menor tiempo</option>
+            </select>
+          </label>
+          {([["gratis", "Envío gratis"], ["promos", "Con descuento"], ["abiertos", "Abiertos ahora"], ["top", "Más de 4,7 ★"]] as [keyof Filters, string][]).map(([key, label]) => (
+            <button key={key} type="button" onClick={() => toggle(key)} className={cn("h-9 shrink-0 rounded-full border px-4 text-sm font-bold transition-colors", filters[key] ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{label}</button>
           ))}
         </div>
-        <div className="mt-6 grid grid-cols-1 gap-x-5 gap-y-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {loading ? [0, 1, 2, 3].map((key) => <StoreCardSkeleton key={key} />) : all.map((store) => <StoreCard key={store.id} store={store} />)}
+        <div className="mt-2 grid gap-1 px-2 sm:grid-cols-2 sm:px-0 lg:grid-cols-3">
+          {loading ? [0, 1, 2, 3, 4, 5].map((key) => <StoreListSkeleton key={key} />) : list.map((store) => <StoreListItem key={store.id} store={store} />)}
         </div>
-        {!loading && all.length === 0 && <EmptyState title="No hay comercios para mostrar" text="Probá con otro filtro." />}
+        {!loading && list.length === 0 && <EmptyState className="mx-4 mt-4 sm:mx-0" title="No hay locales con esos filtros" text="Probá sacando alguno." />}
       </section>
     </div>
+  );
+}
+
+function ActiveOrderBanner({ order }: { order: DeliveryOrder }) {
+  const steps = pasosDe(order);
+  const step = Math.max(0, steps.indexOf(order.estado));
+  const eta = order.entrega_estimada ? new Date(order.entrega_estimada).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" }) : null;
+  return (
+    <Link to={`/app/pedidos/${order.id}`} className="mt-4 block rounded-3xl bg-brand-deep p-4 text-white shadow-pop">
+      <div className="flex items-center gap-3">
+        {order.comercio && <StoreLogo store={order.comercio as DeliveryStore} className="h-11 w-11 border-0 text-sm" />}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[15px] font-extrabold">{estadoTitulo(order)}</p>
+          <p className="truncate text-[13px] font-semibold text-white/75">{order.comercio?.nombre}{eta && ` · ${order.tipo_entrega === "retiro" ? "Listo aprox." : "Llega aprox."} ${eta}`}</p>
+        </div>
+        <ChevronRight className="h-5 w-5 text-white/70" />
+      </div>
+      <div className="mt-3 grid grid-cols-5 gap-1">
+        {steps.map((_, index) => <span key={index} className={cn("h-1.5 rounded-full", index <= step ? "bg-primary" : "bg-white/20", index === step && "animate-pulse")} />)}
+      </div>
+    </Link>
+  );
+}
+
+function RateBanner({ order }: { order: DeliveryOrder }) {
+  return (
+    <Link to={`/app/pedidos/${order.id}`} className="mt-4 flex items-center gap-3 rounded-3xl border bg-card p-4 shadow-sm">
+      {order.comercio && <StoreLogo store={order.comercio as DeliveryStore} className="h-11 w-11 text-sm" />}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[15px] font-extrabold">¿Qué tal estuvo {order.comercio?.nombre}?</p>
+        <span className="mt-0.5 flex gap-0.5">{[1, 2, 3, 4, 5].map((value) => <Star key={value} className="h-5 w-5 text-muted-foreground/40" />)}</span>
+      </div>
+      <span className="text-sm font-extrabold text-primary">Calificar</span>
+    </Link>
+  );
+}
+
+function BannerCarousel() {
+  const track = useRef<HTMLDivElement>(null);
+  const [current, setCurrent] = useState(0);
+
+  // Avanza solo cada 5 s; si la persona desliza, el indicador sigue al banner visible.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const element = track.current;
+      if (!element) return;
+      const next = (current + 1) % banners.length;
+      element.scrollTo({ left: (element.children[next] as HTMLElement).offsetLeft - element.offsetLeft - 16, behavior: "smooth" });
+    }, 5000);
+    return () => window.clearInterval(timer);
+  }, [current]);
+
+  const onScroll = () => {
+    const element = track.current;
+    if (!element) return;
+    const width = (element.children[0] as HTMLElement).offsetWidth;
+    setCurrent(Math.min(banners.length - 1, Math.round(element.scrollLeft / (width + 12))));
+  };
+
+  return (
+    <section className="mt-6">
+      <div ref={track} onScroll={onScroll} className="scrollbar-none flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto scroll-smooth px-4 sm:scroll-px-0 sm:px-0">
+        {banners.map((item) => (
+          <Link key={item.title} to={item.to} className="relative aspect-[2/1] w-[86%] shrink-0 snap-start overflow-hidden rounded-3xl sm:aspect-[3/1] sm:w-full">
+            <img src={img(item.image, 1000)} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <div className={cn("absolute inset-0 bg-gradient-to-r to-transparent", item.tone)} />
+            <div className="relative flex h-full max-w-[70%] flex-col justify-center p-5 text-white sm:max-w-md sm:p-10">
+              <h2 className="text-xl font-black leading-tight sm:text-4xl">{item.title}</h2>
+              <p className="mt-1 text-[13px] font-semibold text-white/90 sm:text-base">{item.text}</p>
+              <span className="mt-3 w-fit rounded-full bg-white px-4 py-1.5 text-[13px] font-extrabold text-foreground">{item.cta}</span>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="mt-2 flex justify-center gap-1.5">
+        {banners.map((item, index) => <span key={item.title} className={cn("h-1.5 rounded-full transition-all", index === current ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/30")} />)}
+      </div>
+    </section>
   );
 }
