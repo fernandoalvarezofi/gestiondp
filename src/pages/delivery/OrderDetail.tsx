@@ -143,6 +143,8 @@ export default function OrderDetail() {
         </div>
       )}
 
+      {active && !retiro && order.llegada_cliente_at && <p className="mt-4 flex items-center gap-2 rounded-2xl bg-success/10 p-4 font-bold text-success"><Bike className="h-5 w-5" />¡Tu repartidor llegó! Salí a recibir tu pedido y dale el código de entrega.</p>}
+
       {active && code && (
         <section className="mt-4 flex items-center justify-between gap-4 rounded-3xl bg-brand-deep p-5 text-white">
           <div className="flex items-center gap-3"><KeyRound className="h-6 w-6" /><div><p className="font-bold">{retiro ? "Código de retiro" : "Código de entrega"}</p><p className="text-sm text-white/70">{retiro ? "Mostralo en el local cuando vayas a retirar." : "Dáselo al repartidor solo cuando recibas tu pedido."}</p></div></div>

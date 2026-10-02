@@ -254,7 +254,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
       {order.metodo_pago === "efectivo" && order.efectivo_paga_con != null && <p className="mt-2 rounded-lg bg-muted p-2 text-xs"><span className="font-bold">Paga con {money(order.efectivo_paga_con)}</span> · vuelto {money(Number(order.efectivo_paga_con) - Number(order.total))}</p>}
       <p className="mt-2 flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{metodoPagoLabel[order.metodo_pago]}{!retiro && ` · ${order.direccion_entrega}`}{order.distancia_km != null && !retiro && ` · ${order.distancia_km} km`}</span></p>
       {order.telefono_contacto && <a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`} className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary"><Phone className="h-3.5 w-3.5" />{order.telefono_contacto}</a>}
-      {!retiro && order.repartidor_id && <p className="mt-1 flex items-center gap-1 text-xs font-bold text-success"><Bike className="h-3.5 w-3.5" />Repartidor asignado</p>}
+      {!retiro && order.repartidor_id && <p className="mt-1 flex items-center gap-1 text-xs font-bold text-success"><Bike className="h-3.5 w-3.5" />{order.llegada_comercio_at && order.estado !== "en_camino" ? `El repartidor llegó a las ${formatTime(order.llegada_comercio_at)} y espera el pedido` : "Repartidor asignado"}</p>}
 
       {promised !== null && order.estado !== "pendiente" && (
         <p className={cn("mt-2 flex items-center gap-1 text-xs font-semibold", late ? "text-destructive" : "text-muted-foreground")}>

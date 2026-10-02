@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
 import { ClaimsManager } from "@/components/admin/ClaimsManager";
 import { ZoneDemand } from "@/components/admin/ZoneDemand";
+import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
 import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
@@ -17,7 +18,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { categoriaLabel, Coupon, db, isOpenNow, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, estadoCorto, formatDateTime, img, money, pedidoActivo, shortId } from "@/lib/delivery";
 
-type CourierRow = { perfil_id: string; vehiculo: string; telefono?: string | null; disponible: boolean; activo: boolean; created_at: string; perfil?: { nombre: string } | null };
 const adminOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario), comercio:delivery_comercios(nombre,slug,imagen_url,direccion), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 const nextStatus = (order: Pick<DeliveryOrder, "estado" | "tipo_entrega">): EstadoPedido | undefined =>
   order.tipo_entrega === "retiro"
@@ -33,6 +33,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<EstadoPedido | "activos" | "todos">("activos");
   const [editing, setEditing] = useState<DeliveryStore | null>(null);
   const [openClaims, setOpenClaims] = useState(0);
+  const pendingCouriers = couriers.filter((courier) => !courier.verificado && !courier.motivo_rechazo).length;
 
   const loadStores = useCallback(async () => {
     const { data } = await db.from("delivery_comercios").select("*").order("created_at", { ascending: false });
@@ -84,11 +85,6 @@ export default function AdminDashboard() {
     if (error) return toast.error(errorMessage(error));
     loadStores();
   };
-  const updateCourier = async (courier: CourierRow, activo: boolean) => {
-    const { error } = await db.from("delivery_repartidores").update({ activo, disponible: activo ? courier.disponible : false }).eq("perfil_id", courier.perfil_id);
-    if (error) return toast.error(errorMessage(error));
-    loadCouriers();
-  };
   const moderate = async (store: DeliveryStore, approve: boolean) => {
     const motivo = approve ? null : window.prompt("¿Por qué lo rechazás? (lo verá el dueño del comercio)", "Faltan fotos o datos del local");
     if (!approve && motivo === null) return;
@@ -137,7 +133,7 @@ export default function AdminDashboard() {
 
       <Tabs defaultValue="pedidos" className="mt-6">
         <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">
-          {[["pedidos", "Pedidos"], ["reclamos", `Reclamos${openClaims ? ` (${openClaims})` : ""}`], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})`], ["demanda", "Zonas sin cobertura"], ["cupones", "Cupones"], ["pagos", `Pagos${refundCount ? ` (${refundCount})` : ""}`]].map(([value, label]) => (
+          {[["pedidos", "Pedidos"], ["reclamos", `Reclamos${openClaims ? ` (${openClaims})` : ""}`], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})${pendingCouriers ? ` · ${pendingCouriers} por verificar` : ""}`], ["demanda", "Zonas sin cobertura"], ["cupones", "Cupones"], ["pagos", `Pagos${refundCount ? ` (${refundCount})` : ""}`]].map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="shrink-0 rounded-full px-4 py-2 font-bold data-[state=active]:bg-card">{label}</TabsTrigger>
           ))}
         </TabsList>
@@ -197,20 +193,7 @@ export default function AdminDashboard() {
           </ul>
         </TabsContent>
 
-        <TabsContent value="repartidores" className="mt-6">
-          {couriers.length ? (
-            <ul className="divide-y overflow-hidden rounded-3xl border bg-card">
-              {couriers.map((courier) => (
-                <li key={courier.perfil_id} className="flex flex-wrap items-center gap-3 p-3">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><Bike className="h-5 w-5" /></span>
-                  <div className="min-w-0 flex-1"><p className="font-bold">{courier.perfil?.nombre || "Repartidor"}</p><p className="text-xs text-muted-foreground">{courier.vehiculo.replace("_", " ")} · {courier.telefono || "sin teléfono"} · desde {formatDateTime(courier.created_at)}</p></div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-bold ${courier.disponible ? "bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>{courier.disponible ? "Conectado" : "Desconectado"}</span>
-                  <label className="flex items-center gap-2 text-xs font-semibold">Habilitado<Switch checked={courier.activo} onCheckedChange={(checked) => updateCourier(courier, checked)} /></label>
-                </li>
-              ))}
-            </ul>
-          ) : <EmptyState icon={<Bike className="h-7 w-7" />} title="Todavía no hay repartidores registrados" />}
-        </TabsContent>
+        <TabsContent value="repartidores" className="mt-6"><CouriersManager couriers={couriers} onChange={loadCouriers} /></TabsContent>
 
         <TabsContent value="demanda" className="mt-6"><ZoneDemand /></TabsContent>
 

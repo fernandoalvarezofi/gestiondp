@@ -193,6 +193,10 @@ export type DeliveryOrder = {
   responder_antes_de?: string | null;
   aceptado_en_seg?: number | null;
   demora_extra_min?: number;
+  asignado_at?: string | null;
+  ganancia_repartidor?: number | null;
+  llegada_comercio_at?: string | null;
+  llegada_cliente_at?: string | null;
   comercio?: Pick<DeliveryStore, "nombre" | "slug" | "imagen_url" | "logo_url" | "direccion" | "telefono" | "latitud" | "longitud"> | null;
   cliente?: { nombre: string } | null;
 };

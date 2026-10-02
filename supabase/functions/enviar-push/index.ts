@@ -3,7 +3,7 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
-type Payload = { pedido_id: string; evento: "nuevo" | "estado" | "asignado" | "demora" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
+type Payload = { pedido_id: string; evento: "nuevo" | "estado" | "asignado" | "liberado" | "llegada" | "demora" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
 
 const tipoReclamo: Record<string, string> = { demora: "Demora", faltante: "Producto faltante", mal_estado: "Producto en mal estado", equivocado: "Pedido equivocado", cobro: "Problema con el cobro", repartidor: "Problema con el repartidor", otro: "Otro" };
 type Message = { title: string; body: string; url: string; tag: string };
@@ -50,6 +50,18 @@ Deno.serve(async (req) => {
     });
   }
 
+  // Oferta de reparto para el repartidor mejor ubicado (el servidor decide quién; los demás la ven si no responde).
+  async function offerToCourier() {
+    const { data: candidate } = await supabase.rpc("delivery_candidato_oferta", { p_pedido: order!.id });
+    if (candidate) sends.push({ userIds: [candidate as string], message: { title: "Nueva oferta de reparto 🛵", body: `${store?.nombre || "Un comercio"} · tenés 45 segundos para aceptar.`, url: "/app/repartidor", tag: "oferta-reparto" } });
+  }
+
+  if (evento === "liberado" && order.estado !== "cancelado" && order.tipo_entrega === "delivery") await offerToCourier();
+
+  if (evento === "llegada") {
+    sends.push({ userIds: [order.cliente_id], message: { title: "¡Tu repartidor llegó! 🛵", body: "Salí a recibir tu pedido y tené a mano el código de entrega.", url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
+  }
+
   if (evento === "estado") {
     const copy = order.tipo_entrega === "retiro" && order.estado === "preparando"
       ? { title: "Están preparando tu pedido", body: "Te avisamos apenas esté listo para retirar." }
@@ -63,14 +75,10 @@ Deno.serve(async (req) => {
       sends.push({ userIds: [store.propietario_id], message: { title: `Pedido ${shortId(order.id)} cancelado`, body: "El cliente canceló el pedido antes de que lo aceptaras.", url: "/app/comercio", tag: `pedido-${order.id}` } });
     }
 
-    // Pedido recién aceptado y sin repartidor: avisamos a los repartidores conectados.
+    // Pedido recién aceptado y sin repartidor: la oferta va primero al repartidor libre más cercano al comercio.
     // (los retiros no usan repartidor y los programados se avisan recién cuando se acerca la hora)
     const soon = !order.programado_para || new Date(order.programado_para as string).getTime() <= Date.now() + 50 * 60 * 1000;
-    if (order.estado === "confirmado" && !order.repartidor_id && order.tipo_entrega === "delivery" && soon) {
-      const { data: couriers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("disponible", true).eq("activo", true);
-      const ids = (couriers || []).map((courier) => courier.perfil_id).filter((id) => id !== store?.propietario_id);
-      if (ids.length) sends.push({ userIds: ids, message: { title: "Pedido disponible para retirar", body: `${store?.nombre || "Un comercio"} tiene un pedido listo para tomar.`, url: "/app/repartidor", tag: "pedidos-disponibles" } });
-    }
+    if (order.estado === "confirmado" && !order.repartidor_id && order.tipo_entrega === "delivery" && soon) await offerToCourier();
   }
 
   if (evento === "mensaje" && mensaje_id) {
