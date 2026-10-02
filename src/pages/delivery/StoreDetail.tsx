@@ -182,7 +182,7 @@ export default function StoreDetail() {
         {sections.map((section) => (
           <section key={section.name} data-section={section.name} className="pt-6">
             <h2 className="text-lg font-black">{section.name}</h2>
-            <div className="divide-y">
+            <div className="sm:grid sm:grid-cols-2 sm:gap-x-8">
               {section.items.map((product) => <ProductCard key={product.id} product={product} store={cartStore} disabled={!open || !reach.inZone} />)}
             </div>
           </section>

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { divIcon, latLngBounds } from "leaflet";
-import { MapContainer, Marker, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, Marker, TileLayer, Tooltip, ZoomControl, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { DEFAULT_CENTER, GeoPoint } from "@/lib/geo";
 import { cn } from "@/lib/utils";
@@ -53,7 +53,8 @@ export function DeliveryMap({ markers, className }: { markers: MapMarker[]; clas
   const first = markers[0] || DEFAULT_CENTER;
   return (
     <div className={cn("relative z-0 overflow-hidden rounded-2xl", className)}>
-      <MapContainer center={[first.lat, first.lng]} zoom={14} scrollWheelZoom={false} className="h-full w-full" attributionControl>
+      <MapContainer center={[first.lat, first.lng]} zoom={14} scrollWheelZoom={false} zoomControl={false} className="h-full w-full" attributionControl>
+        <ZoomControl position="bottomright" />
         <TileLayer url={TILES} attribution={ATTRIBUTION} />
         {markers.map((marker) => (
           <Marker key={`${marker.kind}-${marker.lat}-${marker.lng}`} position={[marker.lat, marker.lng]} icon={icon(marker.kind)}>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { Bike, CalendarClock, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
+import { ArrowLeft, Bike, CalendarClock, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { OrderTimeline, StatusBadge } from "@/components/delivery/OrderStatus";
@@ -101,10 +101,23 @@ export default function OrderDetail() {
     ...(courier ? [{ lat: courier.lat, lng: courier.lng, kind: "courier" as const, label: "Repartidor" }] : []),
   ];
 
+  // Seguimiento tipo app de delivery: el mapa ocupa la parte de arriba y los datos del pedido se apoyan debajo como una hoja.
+  const showMap = active && !retiro && markers.length > 1;
+
   return (
-    <div className="mx-auto max-w-3xl px-4 pb-16 pt-5 sm:px-6">
+    <div className="mx-auto max-w-3xl pb-16 sm:px-6">
+      {showMap && (
+        <div className="relative sm:pt-5">
+          <MapView markers={markers} className="h-[42vh] min-h-[280px] rounded-none sm:h-96 sm:rounded-3xl" />
+          <button type="button" aria-label="Volver a mis pedidos" onClick={() => navigate("/app/pedidos")} className="absolute left-4 top-4 z-[500] flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-pop sm:left-3 sm:top-8"><ArrowLeft className="h-5 w-5" /></button>
+          <p className="absolute inset-x-4 bottom-8 z-[500] mx-auto w-fit max-w-full rounded-full bg-card/95 px-3 py-1.5 text-center text-xs font-bold shadow-soft sm:bottom-3">
+            {courier ? `Repartidor en camino · actualizado ${formatTime(courier.updatedAt)}` : order.repartidor_id ? "Esperando la ubicación del repartidor…" : "Cuando un repartidor tome tu pedido, lo vas a ver moverse acá"}
+          </p>
+        </div>
+      )}
+      <div className={cn("relative z-10 bg-background px-4 pt-5", showMap ? "-mt-6 rounded-t-[28px] sm:mt-0 sm:rounded-none sm:px-0" : "sm:px-0")}>
       <PageHeader
-        back="/app/pedidos"
+        back={showMap ? undefined : "/app/pedidos"}
         eyebrow={`Pedido ${shortId(order.id)}`}
         title={awaitingPayment ? "Falta completar el pago" : estadoTitulo(order)}
         subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : order.estado === "en_camino" && retiro ? statusCopy.listo : statusCopy[order.estado]}
@@ -125,14 +138,6 @@ export default function OrderDetail() {
             </div>
           )}
           <OrderTimeline order={order} />
-          {active && !retiro && markers.length > 1 && (
-            <>
-              <MapView markers={markers} className="mt-5 h-64 sm:h-80" />
-              <p className="mt-2 text-xs text-muted-foreground">
-                {courier ? `Repartidor en camino · ubicación actualizada ${formatTime(courier.updatedAt)}` : order.repartidor_id ? "Esperando la ubicación del repartidor…" : "Cuando un repartidor tome tu pedido, lo vas a ver moverse en el mapa."}
-              </p>
-            </>
-          )}
         </section>
       )}
 
@@ -197,6 +202,7 @@ export default function OrderDetail() {
       <div className="mt-5 flex flex-wrap gap-2">
         {canCancel && <Button variant="outline" className="rounded-full text-destructive" onClick={cancel} disabled={busy}><XCircle className="h-4 w-4" />Cancelar pedido</Button>}
         {order.estado === "entregado" && <Button variant="outline" className="rounded-full" onClick={async () => { if (await reorder(order)) navigate("/app/carrito"); }}><RotateCcw className="h-4 w-4" />Repetir pedido</Button>}
+      </div>
       </div>
     </div>
   );

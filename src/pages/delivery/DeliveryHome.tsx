@@ -36,6 +36,9 @@ function Section({ title, subtitle, to, children }: { title: string; subtitle?: 
   );
 }
 
+// Una fila con menos de 3 locales se ve vacía y repetida: se oculta hasta que haya más oferta.
+const RAIL_MIN = 3;
+
 const Rail = ({ children }: { children: React.ReactNode }) => (
   <div className="scrollbar-none flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:scroll-px-0 sm:px-0">{children}</div>
 );
@@ -70,11 +73,23 @@ export default function DeliveryHome() {
     return ids.map((id) => stores.find((store) => store.id === id)).filter(Boolean) as DeliveryStore[];
   }, [orders, stores]);
 
-  const popular = useMemo(() => [...available].sort((a, b) => b.total_resenas - a.total_resenas).slice(0, 10), [available]);
-  const promos = useMemo(() => available.filter((store) => store.promo_texto), [available]);
-  const freeShipping = useMemo(() => available.filter((store) => Number(store.costo_envio) === 0 || (store.envio_gratis_desde ?? Infinity) <= 1), [available]);
-  const fast = useMemo(() => [...available].sort((a, b) => a.tiempo_max - b.tiempo_max).slice(0, 10), [available]);
-  const newStores = useMemo(() => available.filter((store) => !store.total_resenas || (store.created_at && Date.now() - new Date(store.created_at).getTime() < 30 * 86400000)), [available]);
+  // Cada local aparece una sola vez entre las filas de arriba (el listado completo está más abajo).
+  const { popular, promos, freeShipping, fast, newStores } = useMemo(() => {
+    const seen = new Set<string>();
+    const pick = (list: DeliveryStore[]) => {
+      const fresh = list.filter((store) => !seen.has(store.id)).slice(0, 10);
+      if (fresh.length < RAIL_MIN) return [];
+      fresh.forEach((store) => seen.add(store.id));
+      return fresh;
+    };
+    return {
+      popular: pick([...available].sort((x, y) => y.total_resenas - x.total_resenas)),
+      promos: pick(available.filter((store) => store.promo_texto)),
+      freeShipping: pick(available.filter((store) => Number(store.costo_envio) === 0 || (store.envio_gratis_desde ?? Infinity) <= 1)),
+      fast: pick([...available].sort((x, y) => x.tiempo_max - y.tiempo_max)),
+      newStores: pick(available.filter((store) => !store.total_resenas || (store.created_at && Date.now() - new Date(store.created_at).getTime() < 30 * 86400000))),
+    };
+  }, [available]);
 
   const list = useMemo(() => {
     let result = [...stores];
@@ -108,8 +123,7 @@ export default function DeliveryHome() {
     return distances.length ? Math.min(...distances) : null;
   }, [stores, point]);
 
-  const big = verticals.slice(0, 2);
-  const small = verticals.slice(2);
+  const tiles = verticals.slice(0, 8);
   const toggle = (key: keyof Filters) => setFilters((current) => {
     const next = { ...current, [key]: !current[key] };
     if (key === "retiro") writePickupPreference(next.retiro);
@@ -117,35 +131,34 @@ export default function DeliveryHome() {
   });
 
   return (
-    <div className="mx-auto w-full max-w-6xl pb-16 pt-3 sm:px-6 sm:pt-6 lg:px-8">
-      <div className="px-4 sm:px-0">
-        <Link to="/app/buscar" className="flex h-12 items-center gap-3 rounded-full border bg-card px-4 text-[15px] font-semibold text-muted-foreground shadow-sm transition-colors hover:border-primary/40 md:hidden">
-          <Search className="h-5 w-5 text-foreground" />Buscar locales, platos y productos
-        </Link>
+    <div className="pb-16">
+      {/* Portada de marca: el buscador vive adentro, como en las apps de delivery */}
+      <div className="mx-auto max-w-6xl sm:px-6 md:pt-6 lg:px-8">
+        <section className="bg-primary px-4 pb-14 pt-1 text-primary-foreground max-md:rounded-b-[32px] md:rounded-3xl md:px-10 md:pb-16 md:pt-10">
+          <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-tight md:text-5xl">¿Qué querés<br className="md:hidden" /> pedir hoy?</h1>
+          <p className="mt-1 hidden text-lg font-semibold text-primary-foreground/85 md:block">Comida, súper, farmacia y más, cerca tuyo.</p>
+          <Link to="/app/buscar" className="mt-4 flex h-12 items-center gap-3 rounded-full bg-card px-4 text-[15px] font-semibold text-muted-foreground shadow-pop transition-transform active:scale-[0.99] md:mt-6 md:h-14 md:max-w-xl md:text-base">
+            <Search className="h-5 w-5 text-primary" />Buscar locales, platos y productos
+          </Link>
+        </section>
+      </div>
 
+      <div className="relative z-10 mx-auto -mt-9 max-w-6xl px-4 sm:px-6 md:-mt-10 lg:px-8">
+        <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-8 md:p-5" aria-label="Categorías">
+          {tiles.map(({ id, label, icon: Icon, color }) => (
+            <Link key={id} to={`/app/categoria/${id}`} className="group flex flex-col items-center gap-1.5 text-center">
+              <span className={cn("flex h-14 w-14 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 md:h-16 md:w-16", color)}><Icon className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
+              <span className="text-[12px] font-bold leading-tight md:text-[13px]">{label}</span>
+            </Link>
+          ))}
+        </section>
+      </div>
+
+      <div className="mx-auto w-full max-w-6xl sm:px-6 lg:px-8">
+      <div className="px-4 sm:px-0">
         {activeOrder && <ActiveOrderBanner order={activeOrder} />}
         {!activeOrder && toRate && <RateBanner order={toRate} />}
         {noCoverage && <OutOfZone nearestKm={nearestKm} />}
-
-        {/* Accesos: dos grandes y el resto en grilla, como en las apps de delivery */}
-        <section className="mt-4 grid grid-cols-2 gap-3">
-          {big.map(({ id, label, image }) => (
-            <Link key={id} to={`/app/categoria/${id}`} className="group relative h-28 overflow-hidden rounded-3xl bg-muted p-4 sm:h-36">
-              <span className="relative z-10 text-lg font-black sm:text-2xl">{label}</span>
-              <img src={image} alt="" className="absolute -bottom-4 -right-4 h-24 w-24 rounded-full object-cover shadow-lg transition-transform duration-300 group-hover:scale-105 sm:h-32 sm:w-32" />
-            </Link>
-          ))}
-        </section>
-        <section className="scrollbar-none -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-6 sm:px-0 lg:grid-cols-11">
-          {small.map(({ id, label, image }) => (
-            <Link key={id} to={`/app/categoria/${id}`} className="group flex w-[76px] shrink-0 flex-col items-center gap-1.5 sm:w-auto">
-              <span className="flex h-[68px] w-[68px] items-center justify-center overflow-hidden rounded-2xl bg-muted">
-                <img src={image} alt="" loading="lazy" className="h-14 w-14 rounded-full object-cover transition-transform duration-300 group-hover:scale-110" />
-              </span>
-              <span className="text-center text-xs font-bold leading-tight">{label}</span>
-            </Link>
-          ))}
-        </section>
       </div>
 
       <BannerCarousel />
@@ -214,6 +227,7 @@ export default function DeliveryHome() {
         </div>
         {!loading && list.length === 0 && <EmptyState className="mx-4 mt-4 sm:mx-0" title="No hay locales con esos filtros" text="Probá sacando alguno." />}
       </section>
+      </div>
     </div>
   );
 }

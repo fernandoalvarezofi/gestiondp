@@ -70,7 +70,7 @@ export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; v
           <img src={img(store.imagen_url, 640)} alt="" loading="lazy" className={cn("h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]", (!open || !reach.inZone) && "grayscale")} />
           <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
             {store.promo_texto && <span className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-extrabold text-primary-foreground shadow-sm">{store.promo_texto}</span>}
-            {free && open && <span className="rounded-full bg-success px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">Envío gratis</span>}
+            {free && open && !/env[ií]o gratis/i.test(store.promo_texto || "") && <span className="rounded-full bg-success px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">Envío gratis</span>}
           </div>
           <ClosedOverlay store={store} reachKm={reach.km} open={open} inZone={reach.inZone} />
           <FavoriteButton storeId={store.id} className="absolute right-2 top-2 h-8 w-8" />
@@ -80,12 +80,11 @@ export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; v
       </div>
       <div className="px-0.5 pt-5">
         <h3 className="truncate text-[15px] font-extrabold leading-tight">{store.nombre}</h3>
-        <div className="mt-1 flex items-center gap-1.5 text-[13px] font-semibold text-muted-foreground">
+        <div className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-[13px] font-semibold text-muted-foreground">
           <RatingBadge store={store} />
           <span aria-hidden>·</span>
-          <span className="truncate">{store.rubro || "Local"}</span>
-          <span aria-hidden>·</span>
           <span className={cn("truncate", free && "font-bold text-success")}>{fee}</span>
+          {reach.km != null && <><span aria-hidden>·</span><span className="shrink-0">{formatKm(reach.km)}</span></>}
         </div>
       </div>
     </Link>
@@ -100,23 +99,21 @@ export function StoreListItem({ store }: { store: DeliveryStore }) {
     <Link to={`/app/tienda/${store.slug}`} className={cn("group flex items-center gap-3 rounded-2xl p-2 transition-colors hover:bg-muted/60", unavailable && "opacity-60")}>
       <StoreLogo store={store} className="h-[72px] w-[72px] shrink-0 text-xl" />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <h3 className="truncate text-base font-extrabold">{store.nombre}</h3>
-        </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] font-semibold text-muted-foreground">
+        <h3 className="truncate text-base font-extrabold">{store.nombre}</h3>
+        <div className="mt-0.5 flex items-center gap-x-1.5 whitespace-nowrap text-[13px] font-semibold text-muted-foreground">
           <RatingBadge store={store} showCount />
           <span aria-hidden>·</span>
-          <span>{store.rubro || "Local"}</span>
-          {reach.km != null && <><span aria-hidden>·</span><span>{formatKm(reach.km)}</span></>}
+          <span className="truncate">{store.rubro || "Local"}</span>
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] font-semibold text-muted-foreground">
+        <div className="mt-0.5 flex items-center gap-x-1.5 whitespace-nowrap text-[13px] font-semibold text-muted-foreground">
           {unavailable ? (
-            <span className="font-bold text-foreground">{!open ? (store.esta_abierto ? nextOpening(store.horarios) || "Cerrado" : "Cerrado por ahora") : "No llega a tu dirección"}</span>
+            <span className="truncate font-bold text-foreground">{!open ? (store.esta_abierto ? nextOpening(store.horarios) || "Cerrado" : "Cerrado por ahora") : "No llega a tu dirección"}</span>
           ) : (
             <>
               <span>{store.tiempo_min}-{store.tiempo_max} min</span>
               <span aria-hidden>·</span>
-              <span className={cn(free && "font-bold text-success")}>{fee}</span>
+              <span className={cn("truncate", free && "font-bold text-success")}>{fee}</span>
+              {reach.km != null && <><span aria-hidden>·</span><span className="shrink-0">{formatKm(reach.km)}</span></>}
             </>
           )}
         </div>

@@ -119,7 +119,13 @@ export default function Auth() {
   const footerColor = isMint ? "text-muted-foreground/60" : "text-white/60";
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen max-lg:flex-col">
+      {/* Portada de marca en el celular */}
+      <div className="bg-primary px-6 pb-14 pt-8 text-primary-foreground max-lg:rounded-b-[32px] lg:hidden">
+        <DeliveryBrand inverted />
+        <h1 className="mt-7 text-[32px] font-extrabold leading-[1.05] tracking-tight">Lo que necesitás,<br />llega hoy.</h1>
+        <p className="mt-2 max-w-xs text-[15px] font-medium text-primary-foreground/85">Comida, súper, farmacia y más, con seguimiento en tiempo real.</p>
+      </div>
       {/* Left panel */}
       <div className={`hidden lg:flex lg:w-1/2 overflow-hidden ${leftPanelClasses}`}>
         {isPhoto && (
@@ -170,7 +176,7 @@ export default function Auth() {
       </div>
 
       {/* Right panel */}
-      <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-12 bg-white dark:bg-card">
+      <div className="flex flex-1 flex-col items-center justify-start p-6 sm:p-12 lg:justify-center bg-white dark:bg-card">
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-semibold mb-1">
             {isLogin ? "Bienvenido de nuevo" : "Crear cuenta"}

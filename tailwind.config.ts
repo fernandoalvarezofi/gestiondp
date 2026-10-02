@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["Nunito", "system-ui", "sans-serif"],
-        display: ["Nunito", "system-ui", "sans-serif"],
-        brand: ["Nunito", "system-ui", "sans-serif"],
+        sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        display: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
+        brand: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
       },
       backgroundImage: {
         "gradient-ember": "var(--gradient-ember)",

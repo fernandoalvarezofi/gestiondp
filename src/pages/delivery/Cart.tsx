@@ -233,7 +233,7 @@ export default function Cart() {
   const change = cashWith ? cashWith - summary.total : 0;
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-16 pt-5 sm:px-6">
+    <div className="mx-auto max-w-6xl px-4 pb-32 pt-5 sm:px-6 lg:pb-16">
       <PageHeader back eyebrow="Tu pedido" title={store.nombre} subtitle={<Link to={`/app/tienda/${store.slug}`} className="font-bold text-primary">Agregar más productos</Link>} />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
@@ -432,12 +432,19 @@ export default function Cart() {
             <p className="mt-3 truncate text-sm text-muted-foreground">{pickup ? "Retirás en" : "Entrega en"} <span className="font-bold text-foreground">{pickup ? storeInfo?.direccion || store.nombre : address?.direccion || "—"}</span>{slot && needsSlot && <> · <span className="font-bold text-foreground">{slotDay(slot)} {slotTime(slot)}</span></>}</p>
             {summary.needsPin && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Esta dirección no tiene ubicación en el mapa. Agregá una nueva dirección para calcular el envío.</p>}
             {!pickup && !summary.needsPin && !summary.reach.inZone && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección, retirá en el local o pedí en un comercio más cercano.</p>}
-            <Button className="mt-4 h-12 w-full rounded-full text-base font-bold" onClick={checkout} disabled={submitDisabled}>
+            <Button className="mt-4 h-12 w-full rounded-full text-base font-bold max-lg:hidden" onClick={checkout} disabled={submitDisabled}>
               {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
             </Button>
             <p className="mt-2 text-center text-xs text-muted-foreground">{payment === "mercadopago" ? "Te llevamos a Mercado Pago para pagar de forma segura." : "El total final lo calcula el sistema al confirmar."}</p>
           </section>
         </aside>
+      </div>
+
+      {/* Botón de confirmar fijo abajo en el celular */}
+      <div className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t bg-card px-4 pb-3 pt-3 shadow-pop lg:hidden">
+        <Button className="h-12 w-full rounded-full text-base font-extrabold" onClick={checkout} disabled={submitDisabled}>
+          {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
+        </Button>
       </div>
     </div>
   );

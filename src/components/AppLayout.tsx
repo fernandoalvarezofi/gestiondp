@@ -55,6 +55,11 @@ export function AppLayout() {
   if (!session) return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
 
   const inPanel = /^\/app\/(comercio|repartidor|admin)/.test(location.pathname);
+  const isHome = location.pathname === "/app";
+  // En el carrito la barra de abajo la ocupa el botón de confirmar (como en las apps de delivery).
+  const hideNav = inPanel || location.pathname.startsWith("/app/carrito");
+  // El seguimiento de un pedido es una pantalla completa con su propio botón de volver (como en las apps de delivery).
+  const immersive = location.pathname.startsWith("/app/pedidos/");
   const showCartBar = itemCount > 0 && !inPanel && !location.pathname.startsWith("/app/carrito") && !location.pathname.startsWith("/app/pedidos/");
 
   return (
@@ -87,19 +92,19 @@ export function AppLayout() {
         </header>
       )}
       {!inPanel && (
-      <header className="sticky top-0 z-40 border-b bg-card/95 shadow-[0_1px_0_rgba(0,0,0,0.02)] backdrop-blur-xl">
+      <header className={cn("sticky top-0 z-40 border-b bg-card shadow-[0_1px_0_rgba(0,0,0,0.02)]", isHome && "max-md:border-transparent max-md:bg-primary max-md:shadow-none max-md:backdrop-blur-none", immersive && "max-md:hidden")}>
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:gap-6 lg:px-8">
           <NavLink to="/app" className="hidden shrink-0 md:block" aria-label="Inicio"><DeliveryBrand /></NavLink>
 
           <AddressDialog
             trigger={
-              <button type="button" className="-ml-2 flex min-w-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-left hover:bg-muted md:ml-0">
-                <MapPin className="h-5 w-5 shrink-0 text-primary" />
+              <button type="button" className={cn("-ml-2 flex min-w-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-left hover:bg-muted md:ml-0", isHome && "max-md:hover:bg-white/10")}>
+                <MapPin className={cn("h-5 w-5 shrink-0 text-primary", isHome && "max-md:text-white")} />
                 <span className="min-w-0">
-                  <span className="block text-[11px] font-bold leading-none text-muted-foreground">Entregar en</span>
-                  <span className="block max-w-[200px] truncate text-[15px] font-extrabold sm:max-w-[240px]">{address?.direccion || "Elegí tu dirección"}</span>
+                  <span className={cn("block text-[11px] font-bold leading-none text-muted-foreground", isHome && "max-md:text-white/80")}>Entregar en</span>
+                  <span className={cn("block max-w-[200px] truncate text-[15px] font-extrabold sm:max-w-[240px]", isHome && "max-md:text-white")}>{address?.direccion || "Elegí tu dirección"}</span>
                 </span>
-                <ChevronDown className="h-4 w-4 shrink-0 text-primary" />
+                <ChevronDown className={cn("h-4 w-4 shrink-0 text-primary", isHome && "max-md:text-white")} />
               </button>
             }
           />
@@ -133,7 +138,7 @@ export function AppLayout() {
             </Button>
           </nav>
 
-          <NavLink to="/app/carrito" aria-label="Carrito" className="relative ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary md:hidden">
+          <NavLink to="/app/carrito" aria-label="Carrito" className={cn("relative ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary md:hidden", isHome && "max-md:bg-white/20 max-md:text-white")}>
             <ShoppingBag className="h-5 w-5" />
             {itemCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 animate-pop-in items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{itemCount}</span>}
           </NavLink>
@@ -156,7 +161,7 @@ export function AppLayout() {
         </div>
       )}
 
-      {!inPanel && <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-card/95 backdrop-blur-xl md:hidden">
+      {!hideNav && <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-card/95 backdrop-blur-xl md:hidden">
         {bottomNav.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[62px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
             {({ isActive }) => (<>
