@@ -4,8 +4,8 @@ export type GeoPoint = { lat: number; lng: number };
 /** `exacta` = tiene calle y número; `calle` = solo la calle o una zona (hay que ajustar el pin). */
 export type AddressSuggestion = GeoPoint & { label: string; detail: string; precision?: "exacta" | "calle" };
 
-/** Centro de CABA: punto de partida del mapa cuando no hay otra referencia. */
-export const DEFAULT_CENTER: GeoPoint = { lat: -34.6037, lng: -58.3816 };
+/** Centro de Lincoln, Buenos Aires: punto de partida del mapa cuando no hay otra referencia. */
+export const DEFAULT_CENTER: GeoPoint = { lat: -34.8667, lng: -61.5333 };
 
 /** Distancia en línea recta en km (misma fórmula que delivery_distancia_km en la base). */
 export function distanceKm(a: GeoPoint, b: GeoPoint) {

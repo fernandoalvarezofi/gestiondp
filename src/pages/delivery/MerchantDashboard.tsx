@@ -7,33 +7,17 @@ import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { MerchantMenu } from "@/components/merchant/MerchantMenu";
 import { MerchantOrders, NewOrderAlert } from "@/components/merchant/MerchantOrders";
-import { MerchantOverview } from "@/components/merchant/MerchantOverview";
+import { MerchantStats } from "@/components/merchant/MerchantStats";
+import { StoreStatusControl } from "@/components/merchant/StoreStatusControl";
 import { MerchantReviews, StoreReview } from "@/components/merchant/MerchantReviews";
 import { emptyStore, StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
-import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, nextOpening, productSelect, slugify } from "@/lib/delivery";
+import { playChime } from "@/lib/alarm";
+import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, productSelect, slugify } from "@/lib/delivery";
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
-
-/** Aviso sonoro corto para pedidos nuevos (sin archivos de audio). */
-function beep() {
-  try {
-    const context = new AudioContext();
-    const oscillator = context.createOscillator();
-    const gain = context.createGain();
-    oscillator.frequency.value = 880;
-    gain.gain.setValueAtTime(0.15, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.5);
-    oscillator.connect(gain).connect(context.destination);
-    oscillator.start();
-    oscillator.stop(context.currentTime + 0.5);
-  } catch {
-    // Sin audio disponible: alcanza con el aviso visual.
-  }
-}
 
 export default function MerchantDashboard() {
   const { user } = useAuth();
@@ -60,7 +44,7 @@ export default function MerchantDashboard() {
     const list: DeliveryOrder[] = data || [];
     const pending = list.filter((order) => order.estado === "pendiente").map((order) => order.id);
     if (knownPending.current && pending.some((id) => !knownPending.current!.has(id))) {
-      beep();
+      playChime();
       toast.success("¡Entró un pedido nuevo!");
     }
     knownPending.current = new Set(pending);
@@ -112,14 +96,6 @@ export default function MerchantDashboard() {
     loadStore();
   };
 
-  const toggleOpen = async (open: boolean) => {
-    if (!store) return;
-    setStore({ ...store, esta_abierto: open });
-    const { error } = await db.from("delivery_comercios").update({ esta_abierto: open }).eq("id", store.id);
-    if (error) { toast.error(errorMessage(error)); loadStore(); return; }
-    toast.success(open ? "Tu comercio está abierto" : "Pausaste la recepción de pedidos");
-  };
-
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   if (!store) {
@@ -147,12 +123,7 @@ export default function MerchantDashboard() {
         eyebrow="Panel del comercio"
         title={store.nombre}
         subtitle={<Link to={`/app/tienda/${store.slug}`} className="inline-flex items-center gap-1 font-bold text-primary">Ver como cliente<ExternalLink className="h-3.5 w-3.5" /></Link>}
-        actions={
-          <label className={`flex items-center gap-3 rounded-full border px-4 py-2 font-bold ${isOpenNow(store) ? "border-success/40 bg-success/10 text-success" : "bg-muted text-muted-foreground"}`}>
-            {!store.esta_abierto ? "Pausado" : isOpenNow(store) ? "Abierto · recibiendo pedidos" : nextOpening(store.horarios) || "Fuera de horario"}
-            <Switch checked={store.esta_abierto} onCheckedChange={toggleOpen} />
-          </label>
-        }
+        actions={<StoreStatusControl store={store} onChange={loadStore} />}
       />
       {store.aprobado === false && !store.motivo_rechazo && <p className="mt-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Cuando lo aprobemos, aparece para los clientes.</p>}
       {store.aprobado === false && store.motivo_rechazo && <p className="mt-4 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive"><span className="font-bold">Tu comercio no fue aprobado:</span> {store.motivo_rechazo}. Corregilo en Configuración y escribinos para revisarlo de nuevo.</p>}
@@ -162,12 +133,12 @@ export default function MerchantDashboard() {
 
       <Tabs value={tab} onValueChange={setTab} className="mt-6">
         <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">
-          {[["resumen", "Resumen"], ["pedidos", `Pedidos${pendingCount ? ` (${pendingCount})` : ""}`], ["menu", "Menú"], ["cupones", "Cupones"], ["opiniones", "Opiniones"], ["ajustes", "Configuración"]].map(([value, label]) => (
+          {[["resumen", "Estadísticas"], ["pedidos", `Pedidos${pendingCount ? ` (${pendingCount})` : ""}`], ["menu", "Menú"], ["cupones", "Cupones"], ["opiniones", "Opiniones"], ["ajustes", "Configuración"]].map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="shrink-0 rounded-full px-4 py-2 font-bold data-[state=active]:bg-card">{label}</TabsTrigger>
           ))}
         </TabsList>
-        <TabsContent value="resumen" className="mt-6"><MerchantOverview store={store} orders={orders} /></TabsContent>
-        <TabsContent value="pedidos" className="mt-6"><MerchantOrders orders={orders} onChange={() => loadOrders(store.id)} /></TabsContent>
+        <TabsContent value="resumen" className="mt-6"><MerchantStats storeId={store.id} rating={Number(store.rating)} reviews={store.total_resenas} /></TabsContent>
+        <TabsContent value="pedidos" className="mt-6"><MerchantOrders orders={orders} store={store} onChange={() => loadOrders(store.id)} /></TabsContent>
         <TabsContent value="menu" className="mt-6"><MerchantMenu storeId={store.id} products={products} onChange={() => loadProducts(store.id)} /></TabsContent>
         <TabsContent value="cupones" className="mt-6"><CouponManager storeId={store.id} coupons={coupons} onChange={() => loadCoupons(store.id)} /></TabsContent>
         <TabsContent value="opiniones" className="mt-6"><MerchantReviews reviews={reviews} onChange={() => loadReviews(store.id)} /></TabsContent>

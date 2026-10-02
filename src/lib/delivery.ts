@@ -44,6 +44,9 @@ export type DeliveryStore = {
   activo?: boolean;
   acepta_retiro?: boolean;
   acepta_programados?: boolean;
+  pausado_hasta?: string | null;
+  tiempo_preparacion_min?: number;
+  comision_pct?: number;
   created_at?: string;
 };
 
@@ -83,7 +86,9 @@ export function withinSchedule(horarios: Horarios | null | undefined, date = new
 }
 
 /** Abierto = el comercio no está pausado y está dentro de su horario. */
-export const isOpenNow = (store: Pick<DeliveryStore, "esta_abierto" | "horarios">) => store.esta_abierto && withinSchedule(store.horarios);
+/** ¿Está en pausa temporal? (el comercio pidió no recibir pedidos por un rato) */
+export const isPaused = (store: Pick<DeliveryStore, "pausado_hasta">) => Boolean(store.pausado_hasta && new Date(store.pausado_hasta).getTime() > Date.now());
+export const isOpenNow = (store: Pick<DeliveryStore, "esta_abierto" | "horarios"> & Partial<Pick<DeliveryStore, "pausado_hasta">>) => store.esta_abierto && !isPaused(store) && withinSchedule(store.horarios);
 
 /** Próxima apertura para mostrar "Abre hoy a las 10:00" / "Abre el lunes a las 12:00". */
 export function nextOpening(horarios: Horarios | null | undefined) {
@@ -183,6 +188,11 @@ export type DeliveryOrder = {
   programado_para?: string | null;
   efectivo_paga_con?: number | null;
   listo_at?: string | null;
+  preparacion_min?: number | null;
+  visible_at?: string | null;
+  responder_antes_de?: string | null;
+  aceptado_en_seg?: number | null;
+  demora_extra_min?: number;
   comercio?: Pick<DeliveryStore, "nombre" | "slug" | "imagen_url" | "logo_url" | "direccion" | "telefono" | "latitud" | "longitud"> | null;
   cliente?: { nombre: string } | null;
 };

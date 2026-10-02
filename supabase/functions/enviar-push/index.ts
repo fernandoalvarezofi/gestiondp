@@ -3,7 +3,7 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
-type Payload = { pedido_id: string; evento: "nuevo" | "estado" | "asignado" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
+type Payload = { pedido_id: string; evento: "nuevo" | "estado" | "asignado" | "demora" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
 
 const tipoReclamo: Record<string, string> = { demora: "Demora", faltante: "Producto faltante", mal_estado: "Producto en mal estado", equivocado: "Pedido equivocado", cobro: "Problema con el cobro", repartidor: "Problema con el repartidor", otro: "Otro" };
 type Message = { title: string; body: string; url: string; tag: string };
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   const { pedido_id, evento, estado_anterior, mensaje_id, reclamo_id } = (await req.json()) as Payload;
   const { data: order } = await supabase
     .from("delivery_pedidos")
-    .select("id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
+    .select("id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, entrega_estimada, demora_extra_min, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
     .eq("id", pedido_id)
     .maybeSingle();
   if (!order) return new Response("Pedido no encontrado", { status: 404 });
@@ -101,6 +101,13 @@ Deno.serve(async (req) => {
       const text = claim.resolucion ? String(claim.resolucion) : "Revisá la respuesta en tu pedido.";
       sends.push({ userIds: [claim.cliente_id as string], message: { title: claim.estado === "resuelto" ? "Resolvimos tu reclamo" : "Respondimos tu reclamo", body: text.length > 110 ? `${text.slice(0, 107)}…` : text, url: `/app/pedidos/${order.id}`, tag: `reclamo-${reclamo_id}` } });
     }
+  }
+
+  if (evento === "demora") {
+    const hora = order.entrega_estimada
+      ? new Date(order.entrega_estimada as string).toLocaleTimeString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", hour: "2-digit", minute: "2-digit", hour12: false })
+      : null;
+    sends.push({ userIds: [order.cliente_id], message: { title: "Tu pedido se demora un poco más", body: `${store?.nombre || "El comercio"} te avisa una demora${hora ? `. Nueva hora estimada: ${hora}` : ""}.`, url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
   }
 
   if (evento === "asignado") {

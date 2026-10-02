@@ -15,14 +15,14 @@ import { Categoria, categoriaLabel, defaultSchedule, DeliveryStore, Horarios, mo
 export type StoreFormValues = Pick<DeliveryStore,
   "nombre" | "categoria" | "rubro" | "descripcion" | "direccion" | "telefono" | "horario" | "imagen_url" | "logo_url" |
   "tiempo_min" | "tiempo_max" | "costo_envio" | "pedido_minimo" | "envio_gratis_desde" | "promo_texto" | "esta_abierto"> & {
-  acepta_retiro: boolean; acepta_programados: boolean;
+  acepta_retiro: boolean; acepta_programados: boolean; tiempo_preparacion_min: number;
   horarios: Horarios; latitud: number | null; longitud: number | null; radio_entrega_km: number; costo_por_km: number;
 };
 
 export const emptyStore: StoreFormValues = {
   nombre: "", categoria: "comida", rubro: "", descripcion: "", direccion: "", telefono: "", horario: "",
   imagen_url: "", logo_url: "", tiempo_min: 20, tiempo_max: 35, costo_envio: 990, pedido_minimo: 0, envio_gratis_desde: null, promo_texto: "", esta_abierto: true,
-  acepta_retiro: true, acepta_programados: true,
+  acepta_retiro: true, acepta_programados: true, tiempo_preparacion_min: 20,
   horarios: defaultSchedule, latitud: null, longitud: null, radio_entrega_km: 5, costo_por_km: 200,
 };
 
@@ -32,7 +32,7 @@ export function storeToFormValues(store: DeliveryStore): StoreFormValues {
     horario: store.horario || "", imagen_url: store.imagen_url || "", logo_url: store.logo_url || "", tiempo_min: store.tiempo_min, tiempo_max: store.tiempo_max,
     costo_envio: Number(store.costo_envio), pedido_minimo: Number(store.pedido_minimo), envio_gratis_desde: store.envio_gratis_desde ?? null, promo_texto: store.promo_texto || "",
     esta_abierto: store.esta_abierto, horarios: store.horarios || defaultSchedule,
-    acepta_retiro: store.acepta_retiro ?? true, acepta_programados: store.acepta_programados ?? true,
+    acepta_retiro: store.acepta_retiro ?? true, acepta_programados: store.acepta_programados ?? true, tiempo_preparacion_min: store.tiempo_preparacion_min ?? 20,
     latitud: store.latitud != null ? Number(store.latitud) : null, longitud: store.longitud != null ? Number(store.longitud) : null,
     radio_entrega_km: Number(store.radio_entrega_km ?? 5), costo_por_km: Number(store.costo_por_km ?? 0),
   };
@@ -128,6 +128,7 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
         <legend className="mb-3 text-base font-extrabold">Entrega</legend>
         <div className="space-y-1.5"><Label htmlFor="s-tmin">Tiempo mínimo (min)</Label><Input id="s-tmin" type="number" min={5} max={180} value={values.tiempo_min} onChange={(event) => set("tiempo_min", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-tmax">Tiempo máximo (min)</Label><Input id="s-tmax" type="number" min={5} max={240} value={values.tiempo_max} onChange={(event) => set("tiempo_max", toNumber(event.target.value))} /></div>
+        <div className="space-y-1.5"><Label htmlFor="s-prep">Preparación habitual (min)</Label><Input id="s-prep" type="number" min={5} max={120} value={values.tiempo_preparacion_min} onChange={(event) => set("tiempo_preparacion_min", Math.min(120, Math.max(5, toNumber(event.target.value))))} /><p className="text-xs text-muted-foreground">Es lo que se sugiere al aceptar un pedido.</p></div>
         <div className="space-y-1.5"><Label htmlFor="s-envio">Envío base ($)</Label><Input id="s-envio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-minimo">Pedido mínimo ($)</Label><Input id="s-minimo" type="number" min={0} value={values.pedido_minimo} onChange={(event) => set("pedido_minimo", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-gratis">Envío gratis desde ($)</Label><Input id="s-gratis" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>
