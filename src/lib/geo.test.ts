@@ -31,6 +31,16 @@ describe("distancia y zona", () => {
     const store = { costo_envio: 1500, envio_gratis_desde: null, latitud: -34.6, longitud: -58.38 };
     expect(storeReach(store, null)).toEqual({ km: null, inZone: true, fee: 1500 });
   });
+
+  it("cobra el envío por los km de la ruta real y mide la cobertura en línea recta", () => {
+    const store = { costo_envio: 1500, envio_gratis_desde: null, latitud: -34.6, longitud: -58.38, radio_entrega_km: 3, costo_por_km: 200 };
+    const point = { lat: -34.605, lng: -58.385 };
+    const estimated = storeReach(store, point);
+    const real = storeReach(store, point, 5);
+    expect(real.km).toBe(estimated.km);
+    expect(real.feeKm).toBe(5);
+    expect(real.fee).toBe(Math.round((1500 + Number(store.costo_por_km || 0) * 5) / 10) * 10);
+  });
 });
 
 describe("búsqueda de direcciones", () => {

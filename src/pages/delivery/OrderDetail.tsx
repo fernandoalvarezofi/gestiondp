@@ -16,6 +16,7 @@ import { ChatButton } from "@/components/delivery/OrderChat";
 import { OrderClaims } from "@/components/delivery/OrderClaims";
 import { MapView } from "@/components/maps/LazyMaps";
 import { OrderAdjustments } from "@/components/delivery/OrderAdjustments";
+import { useRoute } from "@/lib/route";
 import type { MapMarker } from "@/components/maps/DeliveryMap";
 
 const statusCopy: Record<string, string> = {
@@ -60,6 +61,12 @@ export default function OrderDetail() {
     }
   };
   const courier = useCourierLocation(order?.repartidor_id, Boolean(order && pedidoActivo(order.estado)));
+  // Tiempo real hasta el cliente (si ya salió) o hasta el local (si va a retirarlo), por las calles.
+  const etaTarget = order && courier
+    ? order.estado === "en_camino" ? (order.latitud != null && order.longitud != null ? { lat: Number(order.latitud), lng: Number(order.longitud) } : null)
+      : (order.estado === "confirmado" || order.estado === "preparando") && order.comercio?.latitud != null && order.comercio?.longitud != null ? { lat: Number(order.comercio.latitud), lng: Number(order.comercio.longitud) } : null
+    : null;
+  const eta = useRoute(courier, etaTarget, { profile: "moto", refreshMs: 60000 });
 
   const load = useCallback(async () => {
     const { data } = await db.from("delivery_pedidos").select(orderSelect).eq("id", id).maybeSingle();
@@ -112,7 +119,7 @@ export default function OrderDetail() {
           <MapView markers={markers} className="h-[42vh] min-h-[280px] rounded-none sm:h-96 sm:rounded-3xl" />
           <button type="button" aria-label="Volver a mis pedidos" onClick={() => navigate("/app/pedidos")} className="absolute left-4 top-4 z-[500] flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-pop sm:left-3 sm:top-8"><ArrowLeft className="h-5 w-5" /></button>
           <p className="absolute inset-x-4 bottom-8 z-[500] mx-auto w-fit max-w-full rounded-full bg-card/95 px-3 py-1.5 text-center text-xs font-bold shadow-soft sm:bottom-3">
-            {courier ? `Repartidor en camino · actualizado ${formatTime(courier.updatedAt)}` : order.repartidor_id ? "Esperando la ubicación del repartidor…" : "Cuando un repartidor tome tu pedido, lo vas a ver moverse acá"}
+            {courier ? (eta ? `${order.estado === "en_camino" ? "Llega" : "Llega al local"} en ~${eta.min} min · en vivo` : `Repartidor en camino · actualizado ${formatTime(courier.updatedAt)}`) : order.repartidor_id ? "Esperando la ubicación del repartidor…" : "Cuando un repartidor tome tu pedido, lo vas a ver moverse acá"}
           </p>
         </div>
       )}
@@ -134,8 +141,8 @@ export default function OrderDetail() {
             <div className="mb-5 flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">{order.programado_para ? <CalendarClock className="h-6 w-6" /> : retiro ? <Store className="h-6 w-6" /> : <Bike className="h-6 w-6 animate-ride" />}</span>
               <div>
-                <p className="text-sm text-muted-foreground">{order.programado_para ? (retiro ? "Retiro programado" : "Entrega programada") : retiro ? "Listo aproximadamente" : "Llegada estimada"}</p>
-                <p className="font-display text-2xl font-extrabold">{order.programado_para ? formatSlot(order.programado_para) : formatTime(order.entrega_estimada)}</p>
+                <p className="text-sm text-muted-foreground">{order.programado_para ? (retiro ? "Retiro programado" : "Entrega programada") : retiro ? "Listo aproximadamente" : eta && order.estado === "en_camino" ? "Tu repartidor llega en" : "Llegada estimada"}</p>
+                <p className="font-display text-2xl font-extrabold">{order.programado_para ? formatSlot(order.programado_para) : eta && order.estado === "en_camino" ? `~${eta.min} min` : formatTime(order.entrega_estimada)}</p>
               </div>
             </div>
           )}

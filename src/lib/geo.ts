@@ -18,18 +18,26 @@ export function distanceKm(a: GeoPoint, b: GeoPoint) {
 
 export const formatKm = (km: number) => (km < 1 ? `${Math.round(km * 1000)} m` : `${km.toLocaleString("es-AR", { maximumFractionDigits: 1 })} km`);
 
-export type StoreReach = { km: number | null; inZone: boolean; fee: number };
+/** Cuánto más largo que la línea recta es, en promedio, el camino por las calles (respaldo cuando no hay ruta real). */
+export const ROUTE_FACTOR = 1.35;
 
-/** Distancia, si llega a la dirección y costo de envío estimado (misma regla que el servidor). */
+export type StoreReach = { km: number | null; inZone: boolean; fee: number; feeKm?: number };
+
+/**
+ * Distancia en línea recta (cobertura), si llega a la dirección y costo de envío estimado (misma regla que el servidor).
+ * El costo se calcula con los kilómetros por las calles: los reales si se pasan (`roadKm`) o una estimación.
+ */
 export function storeReach(
   store: Pick<DeliveryStore, "costo_envio" | "envio_gratis_desde"> & { latitud?: number | null; longitud?: number | null; radio_entrega_km?: number | null; costo_por_km?: number | null },
   point: GeoPoint | null | undefined,
+  roadKm?: number | null,
 ): StoreReach {
   const base = Number(store.costo_envio);
   if (!point || store.latitud == null || store.longitud == null) return { km: null, inZone: true, fee: base };
   const km = distanceKm(point, { lat: Number(store.latitud), lng: Number(store.longitud) });
-  const fee = Math.round((base + Number(store.costo_por_km || 0) * km) / 10) * 10;
-  return { km, inZone: km <= Number(store.radio_entrega_km ?? 6), fee };
+  const feeKm = roadKm ?? Math.round(km * ROUTE_FACTOR * 100) / 100;
+  const fee = Math.round((base + Number(store.costo_por_km || 0) * feeKm) / 10) * 10;
+  return { km, inZone: km <= Number(store.radio_entrega_km ?? 6), fee, feeKm };
 }
 
 type PhotonFeature = {

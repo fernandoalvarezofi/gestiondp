@@ -11,6 +11,7 @@ import { CartStore } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
+import { useRoute } from "@/lib/route";
 import { cn } from "@/lib/utils";
 
 type Review = { id: string; puntaje: number; comentario?: string | null; respuesta?: string | null; created_at: string; cliente?: { nombre: string } | null };
@@ -76,11 +77,14 @@ export default function StoreDetail() {
     tabsRef.current.querySelector(`[data-tab="${CSS.escape(activeSection)}"]`)?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
   }, [activeSection]);
 
+  const storePoint = store?.latitud != null && store?.longitud != null ? { lat: Number(store.latitud), lng: Number(store.longitud) } : null;
+  const road = useRoute(storePoint, point, { persist: true });
+
   if (notFound) return <div className="mx-auto max-w-3xl px-4 py-16"><EmptyState icon={<StoreIcon className="h-7 w-7" />} title="No encontramos este local" text="Puede que ya no esté disponible." /></div>;
   if (!store) return <div className="mx-auto max-w-5xl sm:px-6 sm:pt-6"><div className="h-52 animate-pulse bg-muted sm:rounded-3xl" /><div className="mx-4 mt-4 h-24 animate-pulse rounded-3xl bg-muted" /></div>;
 
   const open = isOpenNow(store);
-  const reach = storeReach(store, point);
+  const reach = storeReach(store, point, road?.km);
   const fee = deliveryFeeLabel(store, reach.fee);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
 

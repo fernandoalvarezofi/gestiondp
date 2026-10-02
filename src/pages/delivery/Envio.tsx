@@ -14,6 +14,7 @@ import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { db, errorMessage, money } from "@/lib/delivery";
 import { EnvioQuote, EnvioTamano, tamanos } from "@/lib/envios";
 import type { AddressSuggestion } from "@/lib/geo";
+import { fetchRoute } from "@/lib/route";
 import { cn } from "@/lib/utils";
 
 type Place = { label: string; lat: number; lng: number } | null;
@@ -53,6 +54,8 @@ export default function Envio() {
     let active = true;
     setQuoting(true);
     const timer = window.setTimeout(async () => {
+      // Primero se consulta (y se guarda) la ruta real: el precio se calcula con los km por las calles.
+      await fetchRoute({ lat: origin.lat, lng: origin.lng }, { lat: dest.lat, lng: dest.lng }, { persist: true });
       const { data, error } = await db.rpc("delivery_cotizar_envio", { p_olat: origin.lat, p_olng: origin.lng, p_dlat: dest.lat, p_dlng: dest.lng, p_tamano: size });
       if (!active) return;
       setQuoting(false);
