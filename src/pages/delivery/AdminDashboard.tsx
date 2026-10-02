@@ -4,6 +4,7 @@ import { Bike, Check, Loader2, Pencil, Receipt, ShieldAlert, Store, Wallet, X } 
 import { toast } from "sonner";
 import { EmptyState, PageHeader, StatCard } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
+import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
 import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
@@ -64,6 +65,7 @@ export default function AdminDashboard() {
   }, [orders, stores, couriers]);
 
   const pending = stores.filter((store) => store.aprobado === false);
+  const refundCount = orders.filter((order) => order.pago_estado === "a_reintegrar").length;
   const filteredOrders = orders.filter((order) => statusFilter === "todos" || (statusFilter === "activos" ? pedidoActivo(order.estado) : order.estado === statusFilter));
 
   if (roles.loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
@@ -129,7 +131,7 @@ export default function AdminDashboard() {
 
       <Tabs defaultValue="pedidos" className="mt-6">
         <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">
-          {[["pedidos", "Pedidos"], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})`], ["cupones", "Cupones"]].map(([value, label]) => (
+          {[["pedidos", "Pedidos"], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})`], ["cupones", "Cupones"], ["pagos", `Pagos${refundCount ? ` (${refundCount})` : ""}`]].map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="shrink-0 rounded-full px-4 py-2 font-bold data-[state=active]:bg-card">{label}</TabsTrigger>
           ))}
         </TabsList>
@@ -203,6 +205,7 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="cupones" className="mt-6"><CouponManager storeId={null} coupons={coupons} onChange={loadCoupons} /></TabsContent>
+        <TabsContent value="pagos" className="mt-6"><PaymentsSettings orders={orders} onChange={loadOrders} /></TabsContent>
       </Tabs>
 
       <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>

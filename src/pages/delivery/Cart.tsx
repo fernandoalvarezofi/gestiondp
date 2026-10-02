@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Banknote, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Tag, Trash2, X } from "lucide-react";
+import { Banknote, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Tag, Trash2, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { AddressForm, AddressList, SavedAddress, toCartAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
@@ -12,10 +12,12 @@ import { useCart } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { db, DeliveryStore, errorMessage, img, MetodoPago, money, optionsLabel } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
+import { startOnlinePayment } from "@/lib/payments";
 import { cn } from "@/lib/utils";
 
 type CouponResult = { valido: boolean; codigo?: string; descuento?: number; envio_gratis?: boolean; mensaje: string };
 
+const onlinePayment = { id: "mercadopago" as MetodoPago, label: "Mercado Pago", hint: "Tarjeta, débito o dinero en cuenta, ahora", icon: Wallet };
 const payments: { id: MetodoPago; label: string; hint: string; icon: typeof Banknote }[] = [
   { id: "efectivo", label: "Efectivo", hint: "Pagás al recibir", icon: Banknote },
   { id: "tarjeta", label: "Tarjeta", hint: "Débito o crédito al recibir (posnet)", icon: CreditCard },
@@ -39,6 +41,14 @@ export default function Cart() {
   const [storeInfo, setStoreInfo] = useState<DeliveryStore | null>(null);
   const point = useAddressPoint();
   const { user } = useAuth();
+  const [onlineEnabled, setOnlineEnabled] = useState(false);
+
+  useEffect(() => {
+    db.rpc("delivery_pagos_online_activos").then(({ data }: { data: boolean | null }) => {
+      setOnlineEnabled(Boolean(data));
+      if (data) setPayment((current) => (current === "efectivo" ? "mercadopago" : current));
+    });
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -55,7 +65,9 @@ export default function Cart() {
 
   useEffect(() => {
     if (!address && addresses.length) {
-      const preferred = addresses.find((item) => item.predeterminada) || addresses[0];
+      // Preferimos direcciones con ubicación en el mapa (sin ella no se puede calcular el envío).
+      const located = addresses.filter((item) => item.latitud != null);
+      const preferred = located.find((item) => item.predeterminada) || located[0] || addresses.find((item) => item.predeterminada) || addresses[0];
       setAddress(toCartAddress(preferred));
     }
   }, [address, addresses, setAddress]);
@@ -101,24 +113,38 @@ export default function Cart() {
     if (phone.replace(/\D/g, "").length < 8) return toast.error("Dejanos un teléfono de contacto para coordinar la entrega");
     if (summary.missing > 0) return toast.error(`Te faltan ${money(summary.missing)} para el pedido mínimo`);
     setSubmitting(true);
-    const { data: orderId, error } = await db.rpc("delivery_crear_pedido", {
+    const online = payment === "mercadopago";
+    const params = {
       p_comercio: store.id,
       p_items: items.map((item) => ({ producto_id: item.id, cantidad: item.cantidad, notas: item.notas || null, opciones: item.opciones.map((option) => option.id) })),
       p_direccion: address.direccion,
       p_direccion_id: address.id || null,
-      p_metodo_pago: payment,
       p_propina: tip,
       p_cupon: coupon?.valido ? coupon.codigo : null,
       p_notas: notes.trim() || null,
       p_telefono: phone.trim(),
       p_latitud: address.lat ?? null,
       p_longitud: address.lng ?? null,
-    });
-    setSubmitting(false);
-    if (error || !orderId) return toast.error(errorMessage(error, "No pudimos crear el pedido"));
+    };
+    const { data: orderId, error } = online
+      ? await db.rpc("delivery_crear_pedido_online", params)
+      : await db.rpc("delivery_crear_pedido", { ...params, p_metodo_pago: payment });
+    if (error || !orderId) { setSubmitting(false); return toast.error(errorMessage(error, "No pudimos crear el pedido")); }
     clearCart();
-    toast.success("¡Pedido confirmado! El comercio ya lo recibió.");
-    navigate(`/app/pedidos/${orderId}`, { replace: true });
+    if (!online) {
+      setSubmitting(false);
+      toast.success("¡Pedido confirmado! El comercio ya lo recibió.");
+      navigate(`/app/pedidos/${orderId}`, { replace: true });
+      return;
+    }
+    // Pago online: el pedido queda reservado y vamos a Mercado Pago. Si algo falla, se puede pagar desde el pedido.
+    try {
+      await startOnlinePayment(orderId);
+    } catch (paymentError) {
+      setSubmitting(false);
+      toast.error((paymentError as Error).message);
+      navigate(`/app/pedidos/${orderId}`, { replace: true });
+    }
   };
 
   const chooseAddress = (saved: SavedAddress) => setAddress(toCartAddress(saved));
@@ -170,8 +196,8 @@ export default function Cart() {
 
           <section className="rounded-3xl border bg-card p-4 sm:p-5">
             <h2 className="text-lg font-extrabold">Medio de pago</h2>
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              {payments.map(({ id, label, hint, icon: Icon }) => (
+            <div className={cn("mt-3 grid gap-2", onlineEnabled ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
+              {(onlineEnabled ? [onlinePayment, ...payments] : payments).map(({ id, label, hint, icon: Icon }) => (
                 <button key={id} type="button" onClick={() => setPayment(id)} className={cn("relative rounded-2xl border p-3 text-left transition-colors", payment === id ? "border-primary bg-primary/5" : "hover:bg-muted")}>
                   <Icon className={cn("h-6 w-6", payment === id ? "text-primary" : "text-muted-foreground")} />
                   <span className="mt-2 block font-bold">{label}</span>
@@ -228,9 +254,9 @@ export default function Cart() {
             {summary.needsPin && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Esta dirección no tiene ubicación en el mapa. Agregá una nueva dirección para calcular el envío.</p>}
             {!summary.needsPin && !summary.reach.inZone && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección o pedí en un comercio más cercano.</p>}
             <Button className="mt-4 h-12 w-full rounded-full text-base font-bold" onClick={checkout} disabled={submitting || summary.missing > 0 || !address?.direccion || !summary.reach.inZone || summary.needsPin}>
-              {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `Hacer pedido · ${money(summary.total)}`}
+              {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${payment === "mercadopago" ? "Pagar" : "Hacer pedido"} · ${money(summary.total)}`}
             </Button>
-            <p className="mt-2 text-center text-xs text-muted-foreground">El total final lo calcula el sistema al confirmar.</p>
+            <p className="mt-2 text-center text-xs text-muted-foreground">{payment === "mercadopago" ? "Te llevamos a Mercado Pago para pagar de forma segura." : "El total final lo calcula el sistema al confirmar."}</p>
           </section>
         </aside>
       </div>

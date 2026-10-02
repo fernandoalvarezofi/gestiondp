@@ -7,7 +7,8 @@ export const db = supabase as any;
 
 export type Categoria = "comida" | "supermercado" | "farmacia" | "tiendas";
 export type EstadoPedido = "pendiente" | "confirmado" | "preparando" | "en_camino" | "entregado" | "cancelado";
-export type MetodoPago = "efectivo" | "tarjeta" | "transferencia";
+export type MetodoPago = "efectivo" | "tarjeta" | "transferencia" | "mercadopago";
+export type PagoEstado = "no_requiere" | "pendiente" | "aprobado" | "rechazado" | "a_reintegrar" | "reintegrado";
 
 export type DeliveryStore = {
   id: string;
@@ -160,6 +161,7 @@ export type DeliveryOrder = {
   metodo_pago: MetodoPago;
   notas?: string | null;
   telefono_contacto?: string | null;
+  pago_estado?: PagoEstado;
   cupon_codigo?: string | null;
   motivo_cancelacion?: string | null;
   calificado: boolean;
@@ -277,6 +279,16 @@ export const metodoPagoLabel: Record<MetodoPago, string> = {
   efectivo: "Efectivo",
   tarjeta: "Tarjeta al recibir",
   transferencia: "Transferencia",
+  mercadopago: "Mercado Pago (online)",
+};
+
+export const pagoEstadoLabel: Record<PagoEstado, string> = {
+  no_requiere: "Se paga al recibir",
+  pendiente: "Esperando el pago",
+  aprobado: "Pagado",
+  rechazado: "Pago rechazado",
+  a_reintegrar: "Reintegro pendiente",
+  reintegrado: "Reintegrado",
 };
 
 export function couponValue(coupon: Pick<Coupon, "tipo" | "valor">) {

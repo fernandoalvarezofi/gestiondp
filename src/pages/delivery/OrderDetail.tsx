@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Bike, KeyRound, MapPin, Receipt, RotateCcw, Star, Store, XCircle } from "lucide-react";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Bike, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { OrderTimeline, StatusBadge } from "@/components/delivery/OrderStatus";
@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { db, DeliveryOrder, errorMessage, estadoLabel, formatDateTime, formatTime, img, metodoPagoLabel, money, optionsLabel, orderSelect, pedidoActivo, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { useReorder } from "@/hooks/useReorder";
+import { startOnlinePayment } from "@/lib/payments";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { MapView } from "@/components/maps/LazyMaps";
@@ -31,6 +32,29 @@ export default function OrderDetail() {
   const [code, setCode] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [paying, setPaying] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Al volver de Mercado Pago: avisamos el resultado (la confirmación real llega por el aviso del servidor).
+  useEffect(() => {
+    const result = searchParams.get("pago");
+    if (!result) return;
+    if (result === "aprobado") toast.success("¡Pago recibido! Estamos confirmándolo con Mercado Pago.");
+    else if (result === "pendiente") toast.info("Tu pago quedó en proceso. Te avisamos cuando se acredite.");
+    else toast.error("El pago no se completó. Podés intentarlo de nuevo.");
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams]);
+
+  const pay = async () => {
+    if (!order) return;
+    setPaying(true);
+    try {
+      await startOnlinePayment(order.id);
+    } catch (error) {
+      toast.error((error as Error).message);
+      setPaying(false);
+    }
+  };
   const courier = useCourierLocation(order?.repartidor_id, Boolean(order && pedidoActivo(order.estado)));
 
   const load = useCallback(async () => {
@@ -65,6 +89,7 @@ export default function OrderDetail() {
   };
 
   const active = pedidoActivo(order.estado);
+  const awaitingPayment = order.metodo_pago === "mercadopago" && order.estado === "pendiente" && (order.pago_estado === "pendiente" || order.pago_estado === "rechazado");
   const markers: MapMarker[] = [
     ...(order.comercio?.latitud != null && order.comercio?.longitud != null ? [{ lat: Number(order.comercio.latitud), lng: Number(order.comercio.longitud), kind: "store" as const, label: order.comercio.nombre }] : []),
     ...(order.latitud != null && order.longitud != null ? [{ lat: Number(order.latitud), lng: Number(order.longitud), kind: "home" as const, label: "Tu dirección" }] : []),
@@ -73,7 +98,15 @@ export default function OrderDetail() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-5 sm:px-6">
-      <PageHeader back="/app/pedidos" eyebrow={`Pedido ${shortId(order.id)}`} title={estadoLabel[order.estado]} subtitle={statusCopy[order.estado]} actions={<StatusBadge estado={order.estado} />} />
+      <PageHeader
+        back="/app/pedidos"
+        eyebrow={`Pedido ${shortId(order.id)}`}
+        title={awaitingPayment ? "Falta completar el pago" : estadoLabel[order.estado]}
+        subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : statusCopy[order.estado]}
+        actions={<StatusBadge estado={order.estado} />}
+      />
+
+      {order.metodo_pago === "mercadopago" && <PaymentStatus order={order} onPay={pay} paying={paying} />}
 
       {order.estado !== "cancelado" && (
         <section className="mt-6 rounded-3xl border bg-card p-4 sm:p-6">
@@ -177,6 +210,24 @@ function RateOrder({ orderId, storeName, onDone }: { orderId: string; storeName:
       </div>
       <Textarea value={comment} onChange={(event) => setComment(event.target.value)} maxLength={500} placeholder="Contanos tu experiencia (opcional)" className="mt-3 min-h-[72px] resize-none bg-card" />
       <Button className="mt-3 rounded-full" onClick={send} disabled={sending}>Enviar calificación</Button>
+    </section>
+  );
+}
+
+function PaymentStatus({ order, onPay, paying }: { order: DeliveryOrder; onPay: () => void; paying: boolean }) {
+  const status = order.pago_estado;
+  if (status === "aprobado") {
+    return <p className="mt-4 flex items-center gap-2 rounded-2xl bg-success/10 p-3 text-sm font-semibold text-success"><CheckCircle2 className="h-5 w-5" />Pagado con Mercado Pago</p>;
+  }
+  if (status === "a_reintegrar" || status === "reintegrado") {
+    return <p className="mt-4 rounded-2xl bg-info/10 p-3 text-sm font-semibold text-info">{status === "a_reintegrar" ? "Como el pedido se canceló, te vamos a devolver el dinero en el mismo medio de pago." : "Ya te devolvimos el dinero de este pedido."}</p>;
+  }
+  if (order.estado !== "pendiente") return null;
+  return (
+    <section className={`mt-4 rounded-3xl border p-4 sm:p-5 ${status === "rechazado" ? "border-destructive/30 bg-destructive/5" : "border-warning/40 bg-warning/10"}`}>
+      <p className="font-bold">{status === "rechazado" ? "Mercado Pago rechazó el pago" : "Tu pedido está reservado"}</p>
+      <p className="mt-1 text-sm text-muted-foreground">{status === "rechazado" ? "Probá con otra tarjeta o medio de pago." : "Completá el pago para que el comercio lo reciba."} Si no se paga en 30 minutos, se cancela solo.</p>
+      <Button className="mt-3 rounded-full" onClick={onPay} disabled={paying}>{paying ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}Pagar {money(order.total)} con Mercado Pago</Button>
     </section>
   );
 }
