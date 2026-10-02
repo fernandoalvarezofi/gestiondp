@@ -173,7 +173,7 @@ export function sortGroups(groups: ProductGroup[] | null | undefined): ProductGr
 export const optionsLabel = (opciones: ChosenOption[] | null | undefined) =>
   (opciones || []).map((option) => (Number(option.precio) > 0 ? `${option.nombre} (+${money(option.precio)})` : option.nombre)).join(" · ");
 
-export type OrderItem = { id?: string; nombre: string; cantidad: number; precio_unitario: number; notas?: string | null; opciones?: ChosenOption[] };
+export type OrderItem = { id?: string; producto_id?: string | null; nombre: string; cantidad: number; precio_unitario: number; notas?: string | null; opciones?: ChosenOption[] };
 
 export type DeliveryOrder = {
   id: string;

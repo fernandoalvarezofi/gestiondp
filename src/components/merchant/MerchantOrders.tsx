@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { alarmReady, playChime, unlockAlarm } from "@/lib/alarm";
 import { PrintAlertsPanel } from "@/components/merchant/PrintAlertsPanel";
+import { AdjustmentsList, ItemStockButton } from "@/components/merchant/StockAdjust";
 import { printOrderTicket, readPrintSettings } from "@/lib/print";
 import { distanceKm, formatKm } from "@/lib/geo";
 import { db, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, formatDateTime, formatSlot, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
@@ -221,8 +222,9 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
       )}
 
       <ul className="mt-3 space-y-0.5 text-sm">
-        {(order.items || []).map((item, index) => <li key={item.id || index}><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.opciones && item.opciones.length > 0 && <span className="block pl-5 text-xs font-semibold text-foreground/80">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block pl-5 text-xs text-muted-foreground">“{item.notas}”</span>}</li>)}
+        {(order.items || []).map((item, index) => <li key={item.id || index}><span className="font-bold">{item.cantidad}×</span> {item.nombre}<ItemStockButton order={order} item={item} onChange={onChange} />{item.opciones && item.opciones.length > 0 && <span className="block pl-5 text-xs font-semibold text-foreground/80">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block pl-5 text-xs text-muted-foreground">“{item.notas}”</span>}</li>)}
       </ul>
+      <AdjustmentsList orderId={order.id} />
       {order.notas && <p className="mt-2 rounded-lg bg-warning/15 p-2 text-xs"><span className="font-bold">Nota: </span>{order.notas}</p>}
       {order.metodo_pago === "efectivo" && order.efectivo_paga_con != null && <p className="mt-2 rounded-lg bg-muted p-2 text-xs"><span className="font-bold">Paga con {money(order.efectivo_paga_con)}</span> · vuelto {money(Number(order.efectivo_paga_con) - Number(order.total))}</p>}
       <p className="mt-2 flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{metodoPagoLabel[order.metodo_pago]}{!retiro && ` · ${order.direccion_entrega}`}{order.distancia_km != null && !retiro && ` · ${order.distancia_km} km`}</span></p>

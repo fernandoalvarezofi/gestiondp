@@ -3,7 +3,7 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
-type Payload = { pedido_id?: string; envio_id?: string; evento: "nuevo" | "estado" | "asignado" | "liberado" | "llegada" | "demora" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto" | "envio_nuevo" | "envio_estado"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
+type Payload = { pedido_id?: string; envio_id?: string; evento: "nuevo" | "estado" | "asignado" | "liberado" | "llegada" | "demora" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto" | "envio_nuevo" | "envio_estado" | "ajuste_nuevo" | "ajuste_respuesta"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string; ajuste_id?: string };
 
 const tipoReclamo: Record<string, string> = { demora: "Demora", faltante: "Producto faltante", mal_estado: "Producto en mal estado", equivocado: "Pedido equivocado", cobro: "Problema con el cobro", repartidor: "Problema con el repartidor", otro: "Otro" };
 type Message = { title: string; body: string; url: string; tag: string };
@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
     return new Response("No autorizado", { status: 401 });
   }
 
-  const { pedido_id, envio_id, evento, estado_anterior, mensaje_id, reclamo_id } = (await req.json()) as Payload;
+  const { pedido_id, envio_id, evento, estado_anterior, mensaje_id, reclamo_id, ajuste_id } = (await req.json()) as Payload;
   if (envio_id) return await handleEnvio(supabase, config, envio_id, evento, estado_anterior);
   const { data: order } = await supabase
     .from("delivery_pedidos")
@@ -125,6 +125,20 @@ Deno.serve(async (req) => {
 
   if (evento === "asignado") {
     sends.push({ userIds: [order.cliente_id], message: { title: "Un repartidor tomó tu pedido", body: "Ya podés seguirlo en el mapa.", url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
+  }
+
+  // Falta de stock: el comercio propone un cambio y el cliente responde.
+  if ((evento === "ajuste_nuevo" || evento === "ajuste_respuesta") && ajuste_id) {
+    const { data: aj } = await supabase.from("delivery_pedido_ajustes").select("tipo, item_nombre, reemplazo_nombre, estado").eq("id", ajuste_id).maybeSingle();
+    if (aj && evento === "ajuste_nuevo") {
+      const body = aj.tipo === "reemplazo"
+        ? `${aj.item_nombre} no está disponible. ${store?.nombre || "El comercio"} te ofrece ${aj.reemplazo_nombre}. Tenés 10 minutos para responder.`
+        : `${aj.item_nombre} no está disponible. Confirmá si seguís sin ese producto (10 minutos).`;
+      sends.push({ userIds: [order.cliente_id], message: { title: "Falta un producto de tu pedido", body, url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
+    }
+    if (aj && evento === "ajuste_respuesta" && staff.length) {
+      sends.push({ userIds: staff, message: { title: `Pedido ${shortId(order.id)}: el cliente respondió`, body: aj.estado === "aceptado" ? "Aceptó el cambio." : "No aceptó el cambio.", url: "/app/comercio", tag: `pedido-${order.id}` } });
+    }
   }
 
   return await dispatch(supabase, config, sends);

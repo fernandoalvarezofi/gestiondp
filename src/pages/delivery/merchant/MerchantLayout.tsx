@@ -20,7 +20,7 @@ import { roleLabel, type MerchantContext, type Permission, type StoreAccess } fr
 /** Qué permiso hace falta para entrar a cada sección del panel. */
 const sectionPermission: Record<string, Permission> = { menu: "catalogo", promociones: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", configuracion: "ajustes" };
 
-const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
+const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
 export default function MerchantLayout() {
   const { user } = useAuth();

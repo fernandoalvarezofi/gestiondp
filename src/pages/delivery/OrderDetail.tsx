@@ -15,6 +15,7 @@ import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { ChatButton } from "@/components/delivery/OrderChat";
 import { OrderClaims } from "@/components/delivery/OrderClaims";
 import { MapView } from "@/components/maps/LazyMaps";
+import { OrderAdjustments } from "@/components/delivery/OrderAdjustments";
 import type { MapMarker } from "@/components/maps/DeliveryMap";
 
 const statusCopy: Record<string, string> = {
@@ -125,6 +126,7 @@ export default function OrderDetail() {
       />
 
       {order.metodo_pago === "mercadopago" && <PaymentStatus order={order} onPay={pay} paying={paying} />}
+      <OrderAdjustments orderId={order.id} onChange={load} />
 
       {order.estado !== "cancelado" && (
         <section className="mt-6 rounded-3xl border bg-card p-4 sm:p-6">
