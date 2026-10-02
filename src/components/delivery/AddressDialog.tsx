@@ -95,7 +95,7 @@ export function AddressForm({ onSaved, compact }: { onSaved?: (address: SavedAdd
         ))}
       </div>
       {!point ? (
-        <AddressSearch autoFocus={compact} onPick={(found) => { setPoint({ lat: found.lat, lng: found.lng }); setDireccion(found.label); setApproximate(found.precision === "calle"); }} />
+        <AddressSearch autoFocus={compact} hideLocate={compact} onPick={(found) => { setPoint({ lat: found.lat, lng: found.lng }); setDireccion(found.label); setApproximate(found.precision === "calle"); }} />
       ) : (
         <>
           <MapPicker value={point} onChange={movePin} className="h-56" />

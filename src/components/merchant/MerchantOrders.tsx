@@ -111,9 +111,9 @@ export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOr
       </div>
 
       {!alarm.ready && !alarm.muted && (
-        <button type="button" onClick={alarm.enable} className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-warning/50 bg-warning/10 p-3 text-left">
-          <BellRing className="h-5 w-5 shrink-0" />
-          <span className="text-sm"><span className="block font-extrabold">Tocá para activar el sonido de pedidos nuevos</span><span className="text-muted-foreground">Sin esto el navegador no puede avisarte con sonido cuando entre un pedido.</span></span>
+        <button type="button" onClick={alarm.enable} className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-warning/50 bg-warning/10 px-3 py-2 text-left text-sm">
+          <BellRing className="h-4 w-4 shrink-0" />
+          <span><span className="font-extrabold">Tocá para activar el sonido</span> <span className="text-muted-foreground">· el navegador lo exige para avisarte con sonido de cada pedido nuevo.</span></span>
         </button>
       )}
 
@@ -131,7 +131,7 @@ function Board({ orders, store, now, onChange }: { orders: DeliveryOrder[]; stor
   return (
     <>
       <p className="mt-4 text-sm text-muted-foreground">Hoy: <span className="font-bold text-foreground">{todays.length} {todays.length === 1 ? "pedido" : "pedidos"}</span> · <span className="font-bold text-foreground">{money(todays.reduce((total, order) => total + Number(order.subtotal), 0))}</span> en ventas</p>
-      <div className={cn("mt-3 grid gap-4 md:grid-cols-2", visibleColumns.length > 4 ? "2xl:grid-cols-5" : "xl:grid-cols-4")}>
+      <div className="mt-3 grid gap-4 md:grid-cols-2 lg:auto-cols-[minmax(290px,1fr)] lg:grid-flow-col lg:grid-cols-none lg:overflow-x-auto lg:pb-2">
         {visibleColumns.map((column) => {
           const list = orders.filter((order) => order.estado === column.estado)
             .sort((a, b) => new Date(a.programado_para || a.created_at).getTime() - new Date(b.programado_para || b.created_at).getTime());
@@ -302,7 +302,7 @@ function AcceptDialog({ open, onOpenChange, order, defaultMinutes, onDone }: { o
             <button key={value} type="button" role="radio" aria-checked={minutes === value} onClick={() => setMinutes(value)} className={cn("h-14 rounded-2xl border text-lg font-black tabular-nums transition-colors", minutes === value ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted")}>{value}<span className="text-xs font-bold"> min</span></button>
           ))}
         </div>
-        <p className="rounded-xl bg-muted p-3 text-sm">El cliente va a ver {retiro ? "que puede retirarlo" : "que le llega"} cerca de las <span className="font-extrabold">{formatTime(eta.toISOString())}</span>.</p>
+        <p className="rounded-xl bg-muted p-3 text-sm">El cliente va a ver {retiro ? "que puede retirarlo" : "que le llega"} cerca de las <span className="font-extrabold">{formatTime(eta.toISOString())}</span></p>
         <Button className="h-12 rounded-full text-base font-bold" onClick={accept} disabled={saving}>Aceptar pedido</Button>
       </DialogContent>
     </Dialog>

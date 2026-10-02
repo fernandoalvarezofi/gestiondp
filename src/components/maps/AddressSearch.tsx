@@ -6,7 +6,7 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { AddressSuggestion, currentPosition, GeoPoint, reverseGeocode, searchAddresses } from "@/lib/geo";
 
 /** Buscador de direcciones con autocompletado y botón "usar mi ubicación". */
-export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (calle y altura)", autoFocus, near }: { onPick: (suggestion: AddressSuggestion) => void; placeholder?: string; autoFocus?: boolean; near?: GeoPoint | null }) {
+export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (calle y altura)", autoFocus, near, hideLocate }: { onPick: (suggestion: AddressSuggestion) => void; placeholder?: string; autoFocus?: boolean; near?: GeoPoint | null; hideLocate?: boolean }) {
   const cartPoint = useAddressPoint();
   const bias = near ?? cartPoint;
   const [query, setQuery] = useState("");
@@ -77,9 +77,9 @@ export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (cal
       {open && !searching && query.trim().length >= 3 && results.length === 0 && (
         <p className="absolute inset-x-0 top-full z-[600] mt-1 rounded-xl border bg-popover p-3 text-sm text-muted-foreground shadow-pop">No encontramos esa dirección. Probá con calle y altura, o usá tu ubicación.</p>
       )}
-      <Button type="button" variant="ghost" size="sm" className="mt-1 text-primary" onClick={locate} disabled={locating}>
+      {!hideLocate && <Button type="button" variant="ghost" size="sm" className="mt-1 text-primary" onClick={locate} disabled={locating}>
         {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <LocateFixed className="h-4 w-4" />}Usar mi ubicación actual
-      </Button>
+      </Button>}
     </div>
   );
 }

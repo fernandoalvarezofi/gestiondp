@@ -58,7 +58,35 @@ export function AppLayout() {
   const showCartBar = itemCount > 0 && !inPanel && !location.pathname.startsWith("/app/carrito") && !location.pathname.startsWith("/app/pedidos/");
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0">
+    <div className={cn("min-h-screen bg-background", !inPanel && "pb-24 md:pb-0")}>
+      {inPanel && (
+        <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl">
+          <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
+            <NavLink to="/app" className="shrink-0" aria-label="Volver a Woref"><DeliveryBrand /></NavLink>
+            <span className="hidden rounded-full bg-muted px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-muted-foreground sm:inline">
+              {location.pathname.startsWith("/app/comercio") ? "Panel del comercio" : location.pathname.startsWith("/app/repartidor") ? "Panel de repartidor" : "Administración"}
+            </span>
+            <div className="ml-auto flex items-center gap-1">
+              <Button asChild variant="ghost" size="sm" className="rounded-full font-bold"><NavLink to="/app"><Home className="h-4 w-4" /><span className="hidden sm:inline">Ir a Woref</span></NavLink></Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="rounded-full font-bold"><UserCircle className="h-5 w-5" /><span className="max-w-[110px] truncate">{roles.nombre.split(" ")[0] || "Mi cuenta"}</span><ChevronDown className="h-4 w-4" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Cambiar de panel</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => navigate("/app/comercio")}><Store className="h-4 w-4" />{roles.storeId ? "Panel de mi comercio" : "Sumar mi comercio"}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/app/repartidor")}><Bike className="h-4 w-4" />{roles.isCourier ? "Panel de repartidor" : "Quiero ser repartidor"}</DropdownMenuItem>
+                  {roles.isAdmin && <DropdownMenuItem onClick={() => navigate("/app/admin")}><ShieldCheck className="h-4 w-4" />Administración</DropdownMenuItem>}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/app/perfil")}><UserCircle className="h-4 w-4" />Mi cuenta</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </header>
+      )}
+      {!inPanel && (
       <header className="sticky top-0 z-40 border-b bg-card/95 shadow-[0_1px_0_rgba(0,0,0,0.02)] backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:gap-6 lg:px-8">
           <NavLink to="/app" className="hidden shrink-0 md:block" aria-label="Inicio"><DeliveryBrand /></NavLink>
@@ -111,10 +139,11 @@ export function AppLayout() {
           </NavLink>
         </div>
       </header>
+      )}
 
       <AddressDialog open={gateOpen} onOpenChange={setGateOpen} title="¿Dónde estás?" />
 
-      <main className="min-h-[calc(100vh-4rem)]"><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense></main>
+      <main className={inPanel ? "min-h-[calc(100vh-3.5rem)]" : "min-h-[calc(100vh-4rem)]"}><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense></main>
       {!inPanel && <AppFooter />}
 
       {showCartBar && (
@@ -127,7 +156,7 @@ export function AppLayout() {
         </div>
       )}
 
-      <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-card/95 backdrop-blur-xl md:hidden">
+      {!inPanel && <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-card/95 backdrop-blur-xl md:hidden">
         {bottomNav.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[62px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
             {({ isActive }) => (<>
@@ -136,7 +165,7 @@ export function AppLayout() {
             </>)}
           </NavLink>
         ))}
-      </nav>
+      </nav>}
     </div>
   );
 }
