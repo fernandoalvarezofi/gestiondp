@@ -3,6 +3,7 @@ import { Bike, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { CourierWallet } from "@/components/courier/CourierWallet";
 import { EmptyState } from "@/components/delivery/Common";
+import { DocumentViewer } from "@/components/verification/DocumentViewer";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
   const [rejecting, setRejecting] = useState<CourierRow | null>(null);
   const [reason, setReason] = useState("");
   const [account, setAccount] = useState<CourierRow | null>(null);
+  const [docsOf, setDocsOf] = useState<CourierRow | null>(null);
   const [kind, setKind] = useState<"pago" | "rendicion">("pago");
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
@@ -75,6 +77,7 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
                 {status === "verificado" && <p className="text-xs text-muted-foreground">{courier.aceptadas} aceptadas · {courier.rechazadas} rechazadas · {courier.soltados} soltados</p>}
               </div>
               <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", status === "verificado" ? "bg-success/10 text-success" : status === "pendiente" ? "bg-warning/20" : "bg-destructive/10 text-destructive")}>{status === "verificado" ? (courier.disponible ? "Conectado" : "Verificado") : status === "pendiente" ? "Por verificar" : "Rechazado"}</span>
+              <Button size="sm" variant="outline" className="rounded-full" onClick={() => setDocsOf(courier)}>Documentos</Button>
               {status !== "verificado" && <Button size="sm" className="rounded-full" disabled={saving} onClick={() => verify(courier, true)}>Verificar</Button>}
               {status !== "rechazado" && <Button size="sm" variant="outline" className="rounded-full" onClick={() => { setRejecting(courier); setReason(""); }}>{status === "verificado" ? "Revocar" : "Rechazar"}</Button>}
               {status === "verificado" && <Button size="sm" variant="outline" className="rounded-full" onClick={() => setAccount(courier)}>Cuenta</Button>}
@@ -83,6 +86,14 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
           );
         })}
       </ul>
+
+      <Dialog open={Boolean(docsOf)} onOpenChange={(open) => !open && setDocsOf(null)}>
+        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+          <DialogTitle className="text-xl font-black">Documentos de {docsOf?.perfil?.nombre || "repartidor"}</DialogTitle>
+          <DialogDescription>DNI {docsOf?.dni || "—"}. Verificá que el nombre y la cara coincidan con la cuenta antes de aprobar.</DialogDescription>
+          {docsOf && <DocumentViewer entidad="repartidor" entidadId={docsOf.perfil_id} />}
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(rejecting)} onOpenChange={(open) => !open && setRejecting(null)}>
         <DialogContent className="max-w-sm">

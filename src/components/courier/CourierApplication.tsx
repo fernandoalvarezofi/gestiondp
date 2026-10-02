@@ -4,7 +4,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
+import { DocumentChecklist, hasRequiredDocs } from "@/components/verification/DocumentChecklist";
 import { db, errorMessage } from "@/lib/delivery";
+import { courierDocs, VerificationDoc } from "@/lib/verification";
 import { cn } from "@/lib/utils";
 
 export type Courier = {
@@ -28,6 +30,7 @@ export function CourierApplication({ courier, onDone }: { courier: Courier | nul
   const [dni, setDni] = useState(courier?.dni ?? "");
   const [plate, setPlate] = useState(courier?.patente ?? "");
   const [saving, setSaving] = useState(false);
+  const [docs, setDocs] = useState<VerificationDoc[] | null>(null);
   const needsPlate = vehicle === "moto" || vehicle === "auto";
 
   const submit = async (event: FormEvent) => {
@@ -45,21 +48,24 @@ export function CourierApplication({ courier, onDone }: { courier: Courier | nul
       : await db.from("delivery_repartidores").insert({ perfil_id: user.id, ...values });
     setSaving(false);
     if (error) return toast.error(errorMessage(error));
-    toast.success(courier ? "Datos actualizados" : "¡Listo! Revisamos tus datos y te avisamos.");
+    toast.success(courier ? "Datos actualizados" : "¡Listo! Ahora subí tus documentos para que podamos verificarte.");
     setEditing(false);
     onDone();
   };
 
   if (courier && !editing) {
+    const specs = courierDocs(courier.vehiculo);
+    const complete = hasRequiredDocs(docs, specs);
     return (
       <div className="mx-auto max-w-xl px-4 py-14 text-center">
         <span className={cn("mx-auto flex h-20 w-20 items-center justify-center rounded-full", courier.motivo_rechazo ? "bg-destructive/10 text-destructive" : "bg-warning/20")}>
           {courier.motivo_rechazo ? <XCircle className="h-10 w-10" /> : <Clock3 className="h-10 w-10" />}
         </span>
-        <h1 className="mt-5 text-2xl font-black">{courier.motivo_rechazo ? "No pudimos verificar tus datos" : "Estamos revisando tus datos"}</h1>
+        <h1 className="mt-5 text-2xl font-black">{courier.motivo_rechazo ? "No pudimos verificar tus datos" : docs && !complete ? "Subí tus documentos para verificarte" : "Estamos revisando tus datos"}</h1>
         <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-          {courier.motivo_rechazo ? <>Motivo: <span className="font-bold text-foreground">{courier.motivo_rechazo}</span>. Corregí tus datos y volvemos a revisarlos.</> : "Verificamos la identidad de cada repartidor antes de dejarlo conectarse. Te avisamos apenas esté listo."}
+          {courier.motivo_rechazo ? <>Motivo: <span className="font-bold text-foreground">{courier.motivo_rechazo}</span>. Corregí tus datos o documentos y volvemos a revisarlos.</> : docs && !complete ? "Necesitamos tu DNI (frente y dorso) y una selfie con el DNI. Sin eso no podemos aprobarte." : "Verificamos la identidad de cada repartidor antes de dejarlo conectarse. Te avisamos apenas esté listo."}
         </p>
+        <div className="mt-6 text-left"><DocumentChecklist entidad="repartidor" entidadId={courier.perfil_id} specs={specs} onChange={setDocs} /></div>
         <dl className="mx-auto mt-6 max-w-sm space-y-2 rounded-2xl border bg-card p-4 text-left text-sm">
           <div className="flex justify-between"><dt className="text-muted-foreground">Vehículo</dt><dd className="font-bold">{vehicles.find((item) => item.id === courier.vehiculo)?.label}</dd></div>
           <div className="flex justify-between"><dt className="text-muted-foreground">DNI</dt><dd className="font-bold">{courier.dni || "—"}</dd></div>

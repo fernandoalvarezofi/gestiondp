@@ -4,7 +4,7 @@ const BUCKET = "delivery";
 const MAX_SIDE = 1600;
 
 /** Achica la foto en el navegador (máx. 1600 px, JPEG) para que suba rápido y pese poco. */
-async function compress(file: File): Promise<Blob> {
+export async function compress(file: File): Promise<Blob> {
   if (!file.type.startsWith("image/")) throw new Error("El archivo tiene que ser una imagen");
   const bitmap = await createImageBitmap(file).catch(() => null);
   if (!bitmap) return file;

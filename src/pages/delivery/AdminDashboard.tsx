@@ -11,6 +11,7 @@ import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
 import { ClaimsManager } from "@/components/admin/ClaimsManager";
 import { ZoneDemand } from "@/components/admin/ZoneDemand";
 import { SettlementsManager } from "@/components/admin/SettlementsManager";
+import { StoreReviewDialog } from "@/components/admin/StoreReviewDialog";
 import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
@@ -39,6 +40,7 @@ export default function AdminDashboard() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [statusFilter, setStatusFilter] = useState<EstadoPedido | "activos" | "todos">("activos");
   const [editing, setEditing] = useState<DeliveryStore | null>(null);
+  const [reviewing, setReviewing] = useState<DeliveryStore | null>(null);
   const [openClaims, setOpenClaims] = useState(0);
   const pendingCouriers = couriers.filter((courier) => !courier.verificado && !courier.motivo_rechazo).length;
 
@@ -136,6 +138,7 @@ export default function AdminDashboard() {
                   <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion}{store.telefono && ` · ${store.telefono}`}</p>
                   {store.motivo_rechazo && <p className="text-xs text-destructive">Rechazado: {store.motivo_rechazo}</p>}
                 </div>
+                <Button size="sm" variant="outline" className="rounded-full" onClick={() => setReviewing(store)}>Datos y documentos</Button>
                 <Button size="sm" className="rounded-full" onClick={() => moderate(store, true)}><Check className="h-4 w-4" />Aprobar</Button>
                 {!store.motivo_rechazo && <Button size="sm" variant="outline" className="rounded-full" onClick={() => moderate(store, false)}><X className="h-4 w-4" />Rechazar</Button>}
               </li>
@@ -272,6 +275,7 @@ export default function AdminDashboard() {
                 </label>
                 <label className="flex items-center gap-2 text-xs font-semibold">Destacado<Switch checked={Boolean(store.destacado)} onCheckedChange={(checked) => updateStore(store, { destacado: checked })} /></label>
                 <label className="flex items-center gap-2 text-xs font-semibold">Visible<Switch checked={store.activo !== false} onCheckedChange={(checked) => updateStore(store, { activo: checked })} /></label>
+                <Button size="sm" variant="outline" className="rounded-full" onClick={() => setReviewing(store)}>Verificación</Button>
                 <Button size="icon" variant="ghost" aria-label="Editar comercio" onClick={() => setEditing(store)}><Pencil className="h-4 w-4" /></Button>
               </li>
             ))}
@@ -286,6 +290,8 @@ export default function AdminDashboard() {
         <TabsContent value="liquidaciones" className="mt-0"><SettlementsManager /></TabsContent>
         <TabsContent value="pagos" className="mt-0"><PaymentsSettings orders={orders} onChange={loadOrders} /></TabsContent>
       </Tabs>
+
+      <StoreReviewDialog store={reviewing} onClose={() => setReviewing(null)} />
 
       <Dialog open={Boolean(editing)} onOpenChange={(open) => !open && setEditing(null)}>
         <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
