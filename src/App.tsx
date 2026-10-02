@@ -91,6 +91,7 @@ const App = () => (
                       <Route path="favoritos" element={<Favorites />} />
                       <Route path="promociones" element={<Promotions />} />
                       <Route path="perfil" element={<Profile />} />
+                      <Route path="perfil/:seccion" element={<Profile />} />
                       <Route path="comercio" element={<MerchantLayout />}>
                         <Route index element={<MerchantHome />} />
                         <Route path="pedidos" element={<MerchantPages.Orders />} />

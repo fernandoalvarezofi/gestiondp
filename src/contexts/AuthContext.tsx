@@ -43,7 +43,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Si el servidor no puede cerrar la sesión (por ejemplo, cuenta eliminada), igual la borramos de este dispositivo.
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+      try {
+        Object.keys(window.localStorage).filter((key) => key.startsWith("sb-") && key.endsWith("-auth-token")).forEach((key) => window.localStorage.removeItem(key));
+      } catch { /* sin acceso al almacenamiento: no hay nada que limpiar */ }
+    }
     // Dirección y carrito son de la persona que se va: en un dispositivo compartido no deben pasar a la siguiente.
     try {
       window.localStorage.removeItem("woref-delivery-address");

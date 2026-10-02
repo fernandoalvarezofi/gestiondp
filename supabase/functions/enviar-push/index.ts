@@ -139,7 +139,15 @@ async function dispatch(supabase: ReturnType<typeof createClient>, config: Recor
   let sent = 0;
   const expired: string[] = [];
 
-  for (const { userIds, message } of sends) {
+  for (const { userIds: allUserIds, message } of sends) {
+    // Quien silenció los mensajes de chat en su cuenta no los recibe (los avisos de estado siempre se envían).
+    let userIds = allUserIds;
+    if (message.tag.startsWith("chat-")) {
+      const { data: muted } = await supabase.from("delivery_preferencias").select("perfil_id").in("perfil_id", allUserIds).eq("push_mensajes", false);
+      const off = new Set((muted || []).map((row) => row.perfil_id as string));
+      userIds = allUserIds.filter((id) => !off.has(id));
+      if (!userIds.length) continue;
+    }
     const { data: subscriptions } = await supabase.from("delivery_push_suscripciones").select("id, endpoint, p256dh, auth").in("perfil_id", userIds);
     await Promise.all((subscriptions || []).map(async (subscription) => {
       try {

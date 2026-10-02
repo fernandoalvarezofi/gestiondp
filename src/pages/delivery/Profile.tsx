@@ -1,176 +1,116 @@
-import { FormEvent, useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { useTheme } from "next-themes";
-import { BellRing, Bike, ChevronRight, Heart, HelpCircle, KeyRound, LogOut, MapPin, Moon, Receipt, ShieldCheck, Store, Ticket, UserCircle } from "lucide-react";
-import { toast } from "sonner";
-import { AddressForm, AddressList, useSavedAddresses } from "@/components/delivery/AddressDialog";
+import { useEffect, useState } from "react";
+import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
+import { Bell, ChevronLeft, ChevronRight, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, UserCircle } from "lucide-react";
+import { AddressesSection } from "@/components/account/AddressesSection";
+import { GeneralSection } from "@/components/account/GeneralSection";
+import { HelpSection } from "@/components/account/HelpSection";
+import { NotificationsSection } from "@/components/account/NotificationsSection";
+import { PrivacySection } from "@/components/account/PrivacySection";
+import { SecuritySection } from "@/components/account/SecuritySection";
 import { TeamInvitations } from "@/components/merchant/TeamInvitations";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
-import { supabase } from "@/integrations/supabase/client";
-import { authErrorMessage } from "@/lib/authErrors";
-import { db, errorMessage } from "@/lib/delivery";
+import { db, img } from "@/lib/delivery";
+import { cn } from "@/lib/utils";
 
-const faqs = [
-  { q: "¿Cuánto tarda mi pedido?", a: "Cada comercio muestra su tiempo estimado. Cuando confirmás, ves la hora de llegada y el estado en tiempo real desde Mis pedidos." },
-  { q: "¿Puedo cancelar un pedido?", a: "Sí, mientras el comercio no lo haya aceptado. Entrá al pedido y tocá “Cancelar pedido”. Si ya lo aceptaron, escribinos y lo resolvemos." },
-  { q: "¿Para qué sirve el código de entrega?", a: "Es un código de 4 números que le das al repartidor cuando recibís el pedido. Así confirmamos que llegó a la persona correcta." },
-  { q: "¿Cómo uso un cupón?", a: "Copiá el código desde Cupones y promociones y pegalo en el carrito antes de confirmar. El descuento se aplica automáticamente." },
-  { q: "¿Cómo sumo mi comercio?", a: "Desde Perfil → Mi comercio podés crear tu tienda, cargar productos y empezar a recibir pedidos en minutos." },
+const SECTIONS = [
+  { id: "general", label: "Datos personales", hint: "Foto, nombre, teléfono y email", icon: UserCircle },
+  { id: "seguridad", label: "Seguridad", hint: "Contraseña, sesiones y dispositivos", icon: LockKeyhole },
+  { id: "direcciones", label: "Direcciones", hint: "Tus lugares de entrega", icon: MapPin },
+  { id: "notificaciones", label: "Notificaciones y apariencia", hint: "Avisos, emails y tema", icon: Bell },
+  { id: "privacidad", label: "Privacidad y datos", hint: "Descargar o eliminar tu cuenta", icon: ShieldCheck },
+  { id: "ayuda", label: "Ayuda y paneles", hint: "Preguntas, comercio, repartidor", icon: HelpCircle },
+] as const;
+
+const shortcuts = [
+  { to: "/app/pedidos", label: "Mis pedidos", icon: Receipt },
+  { to: "/app/favoritos", label: "Favoritos", icon: Heart },
+  { to: "/app/promociones", label: "Cupones", icon: Ticket },
 ];
 
+/** Mi cuenta: menú de secciones; en el celular se ve como lista y cada sección abre su pantalla. */
 export default function Profile() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
   const roles = useDeliveryRoles();
-  const { theme, setTheme } = useTheme();
-  const push = usePushNotifications();
-  const togglePush = async (checked: boolean) => {
-    if (!checked) { await push.disable(); toast.success("Notificaciones desactivadas en este dispositivo"); return; }
-    const result = await push.enable();
-    if (result.ok) toast.success(result.message); else toast.error(result.message);
-  };
-  const { addresses, reload } = useSavedAddresses();
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [savedPhone, setSavedPhone] = useState("");
-  const [savingName, setSavingName] = useState(false);
-  const [addingAddress, setAddingAddress] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
-  const [savingPassword, setSavingPassword] = useState(false);
+  const { seccion } = useParams();
+  const navigate = useNavigate();
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const current = SECTIONS.find((item) => item.id === seccion);
 
-  useEffect(() => { setName(roles.nombre); }, [roles.nombre]);
   useEffect(() => {
     if (!user) return;
-    db.from("perfiles").select("telefono").eq("id", user.id).maybeSingle().then(({ data }: { data: { telefono: string | null } | null }) => {
-      setPhone(data?.telefono || "");
-      setSavedPhone(data?.telefono || "");
-    });
-  }, [user]);
+    db.from("perfiles").select("avatar_url").eq("id", user.id).maybeSingle().then(({ data }: { data: { avatar_url: string | null } | null }) => setAvatar(data?.avatar_url ?? null));
+  }, [user, roles.nombre]);
 
-  const saveName = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!user || !name.trim()) return;
-    if (phone.trim() && phone.replace(/\D/g, "").length < 8) return toast.error("Revisá el teléfono: parece incompleto");
-    setSavingName(true);
-    const { error } = await db.from("perfiles").update({ nombre: name.trim(), telefono: phone.trim() || null }).eq("id", user.id);
-    setSavingName(false);
-    if (error) return toast.error(errorMessage(error));
-    toast.success("Datos actualizados");
-    setSavedPhone(phone.trim());
-    roles.refresh();
-  };
+  // En pantallas anchas abrimos la primera sección en vez de mostrar un panel vacío.
+  useEffect(() => {
+    if (!seccion && window.matchMedia("(min-width: 1024px)").matches) navigate("/app/perfil/general", { replace: true });
+  }, [seccion, navigate]);
 
-  const changePassword = async (event: FormEvent) => {
-    event.preventDefault();
-    if (newPassword.length < 8) return toast.error("La contraseña tiene que tener al menos 8 caracteres");
-    setSavingPassword(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setSavingPassword(false);
-    if (error) return toast.error(authErrorMessage(error.message));
-    setNewPassword("");
-    toast.success("Contraseña actualizada");
-  };
+  if (seccion && !current) return <Navigate to="/app/perfil" replace />;
 
   const initials = (roles.nombre || user?.email || "?").split(" ").filter(Boolean).slice(0, 2).map((part) => part[0]).join("");
-
-  const links = [
-    { to: "/app/pedidos", label: "Mis pedidos", icon: Receipt },
-    { to: "/app/favoritos", label: "Favoritos", icon: Heart },
-    { to: "/app/promociones", label: "Cupones y promociones", icon: Ticket },
-    { to: "/app/comercio", label: roles.storeId ? "Panel de mi comercio" : "Sumá tu comercio", icon: Store, hint: roles.storeId ? undefined : "Vendé con Woref" },
-    { to: "/app/repartidor", label: roles.isCourier ? "Panel de repartidor" : "Quiero ser repartidor", icon: Bike, hint: roles.isCourier ? undefined : "Generá ingresos extra" },
-    ...(roles.isAdmin ? [{ to: "/app/admin", label: "Administración", icon: ShieldCheck }] : []),
-  ];
+  const refreshProfile = () => roles.refresh();
 
   return (
-    <div className="pb-14">
-      <section className="bg-primary px-4 pb-16 pt-6 text-primary-foreground max-md:rounded-b-[32px] sm:px-6 md:mx-auto md:mt-6 md:max-w-3xl md:rounded-3xl">
-        <div className="flex items-center gap-4">
-          <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/20 text-2xl font-black uppercase">{initials}</span>
-          <div className="min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wide text-primary-foreground/75">Mi cuenta</p>
-            <h1 className="truncate text-2xl font-extrabold">{roles.nombre || "Perfil"}</h1>
-            <p className="truncate text-sm text-primary-foreground/80">{user?.email}</p>
-          </div>
+    <div className="mx-auto max-w-5xl px-4 pb-14 pt-5 sm:px-6">
+      <header className={cn("flex items-center gap-4", current && "max-lg:hidden")}>
+        {avatar ? <img src={img(avatar, 200)} alt="" className="h-16 w-16 shrink-0 rounded-full object-cover" /> : <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary text-2xl font-black uppercase text-primary-foreground">{initials}</span>}
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase tracking-wide text-primary">Mi cuenta</p>
+          <h1 className="truncate text-2xl font-extrabold">{roles.nombre || "Perfil"}</h1>
+          <p className="truncate text-sm text-muted-foreground">{user?.email}</p>
         </div>
-      </section>
-      <div className="relative z-10 mx-auto -mt-8 max-w-3xl px-4 sm:px-6">
-      <nav className="divide-y overflow-hidden rounded-3xl border bg-card shadow-pop">
-        {links.map(({ to, label, icon: Icon, hint }) => (
-          <Link key={to} to={to} className="flex items-center gap-3 p-4 hover:bg-muted/60">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
-            <span className="flex-1"><span className="block font-bold">{label}</span>{hint && <span className="block text-xs text-muted-foreground">{hint}</span>}</span>
-            <ChevronRight className="h-5 w-5 text-muted-foreground" />
-          </Link>
-        ))}
-        <label className="flex cursor-pointer items-center gap-3 p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"><Moon className="h-5 w-5" /></span>
-          <span className="flex-1 font-bold">Modo oscuro</span>
-          <Switch checked={theme === "dark"} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} />
-        </label>
-        <label className="flex cursor-pointer items-center gap-3 p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"><BellRing className="h-5 w-5" /></span>
-          <span className="flex-1">
-            <span className="block font-bold">Notificaciones</span>
-            <span className="block text-xs text-muted-foreground">
-              {push.state === "denied" ? "Bloqueadas: habilitalas desde el candado del navegador" :
-                push.state === "unsupported" ? "Este navegador no permite notificaciones" :
-                push.state === "ios-install" ? "En iPhone, instalá Woref en tu pantalla de inicio" : "Estado de tus pedidos y avisos de tus paneles"}
-            </span>
-          </span>
-          <Switch checked={push.state === "on"} disabled={!["on", "off"].includes(push.state)} onCheckedChange={togglePush} />
-        </label>
-      </nav>
+      </header>
 
-      <TeamInvitations className="mt-4" onAccepted={() => roles.refresh()} />
+      <TeamInvitations className={cn("mt-5", current && "max-lg:hidden")} onAccepted={refreshProfile} />
 
-      <Accordion type="single" collapsible className="mt-4 overflow-hidden rounded-3xl border bg-card px-4">
-        <AccordionItem value="datos" className="border-b">
-          <AccordionTrigger className="font-extrabold hover:no-underline"><span className="flex items-center gap-2"><UserCircle className="h-5 w-5 text-primary" />Datos personales y contraseña</span></AccordionTrigger>
-          <AccordionContent>
-            <form onSubmit={saveName} className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-              <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={100} placeholder="Tu nombre" aria-label="Nombre" />
-              <Input type="tel" inputMode="tel" autoComplete="tel" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="Teléfono" aria-label="Teléfono" />
-              <Button type="submit" variant="outline" disabled={savingName || (name.trim() === roles.nombre && phone.trim() === savedPhone)}>Guardar</Button>
-            </form>
-            <form onSubmit={changePassword} className="mt-4 flex gap-2 border-t pt-4">
-              <Input type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} maxLength={128} placeholder="Contraseña nueva" aria-label="Contraseña nueva" />
-              <Button type="submit" variant="outline" disabled={savingPassword || !newPassword}><KeyRound className="h-4 w-4" />Cambiar</Button>
-            </form>
-          </AccordionContent>
-        </AccordionItem>
-        <AccordionItem value="direcciones" className="border-b-0">
-          <AccordionTrigger className="font-extrabold hover:no-underline"><span className="flex items-center gap-2"><MapPin className="h-5 w-5 text-primary" />Mis direcciones{addresses.length > 0 && <span className="rounded-full bg-muted px-2 py-0.5 text-xs">{addresses.length}</span>}</span></AccordionTrigger>
-          <AccordionContent>
-            {addresses.length > 0 && <AddressList addresses={addresses} onDeleted={reload} />}
-            {addingAddress || addresses.length === 0 ? (
-              <div className="mt-3"><AddressForm onSaved={() => { setAddingAddress(false); reload(); }} /></div>
-            ) : (
-              <Button variant="outline" className="mt-3 rounded-full" onClick={() => setAddingAddress(true)}>Agregar dirección</Button>
-            )}
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+      <div className="mt-6 grid gap-6 lg:grid-cols-[280px_1fr]">
+        <nav className={cn("space-y-3", current && "max-lg:hidden")} aria-label="Secciones de mi cuenta">
+          <ul className="grid grid-cols-3 gap-2 lg:hidden">
+            {shortcuts.map(({ to, label, icon: Icon }) => (
+              <li key={to}><Link to={to} className="flex flex-col items-center gap-1 rounded-2xl border bg-card p-3 text-center text-xs font-bold hover:bg-muted"><Icon className="h-5 w-5 text-primary" />{label}</Link></li>
+            ))}
+          </ul>
+          <ul className="divide-y overflow-hidden rounded-3xl border bg-card lg:divide-y-0 lg:space-y-1 lg:border-0 lg:bg-transparent">
+            {SECTIONS.map(({ id, label, hint, icon: Icon }) => (
+              <li key={id}>
+                <Link to={`/app/perfil/${id}`} className={cn("flex items-center gap-3 p-4 hover:bg-muted/60 lg:rounded-2xl lg:border lg:border-transparent lg:p-3", current?.id === id && "lg:border-primary/30 lg:bg-primary/5 lg:text-primary")}>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
+                  <span className="min-w-0 flex-1"><span className="block font-bold">{label}</span><span className="block text-xs font-normal text-muted-foreground">{hint}</span></span>
+                  <ChevronRight className="h-5 w-5 text-muted-foreground lg:hidden" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <ul className="hidden gap-1 lg:block">
+            {shortcuts.map(({ to, label, icon: Icon }) => (
+              <li key={to}><Link to={to} className="flex items-center gap-3 rounded-2xl p-3 text-sm font-semibold text-muted-foreground hover:bg-muted"><Icon className="h-5 w-5" />{label}</Link></li>
+            ))}
+          </ul>
+        </nav>
 
-      <section className="mt-4 rounded-3xl border bg-card p-4 sm:p-5">
-        <h2 className="flex items-center gap-2 text-lg font-extrabold"><HelpCircle className="h-5 w-5 text-primary" />Ayuda</h2>
-        <Accordion type="single" collapsible className="mt-1">
-          {faqs.map((item) => (
-            <AccordionItem key={item.q} value={item.q}>
-              <AccordionTrigger className="text-left font-bold">{item.q}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">{item.a}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </section>
-
-      <Button variant="outline" className="mt-6 w-full rounded-full text-destructive" onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</Button>
-      <p className="mt-6 flex justify-center gap-4 text-xs text-muted-foreground"><Link to="/terminos" className="hover:text-foreground">Términos y condiciones</Link><Link to="/privacidad" className="hover:text-foreground">Política de privacidad</Link></p>
+        <section className={cn("min-w-0 rounded-3xl border bg-card p-4 sm:p-6", !current && "max-lg:hidden")}>
+          {current ? (
+            <>
+              <Link to="/app/perfil" className="mb-3 inline-flex items-center gap-1 text-sm font-bold text-primary lg:hidden"><ChevronLeft className="h-4 w-4" />Mi cuenta</Link>
+              <h2 className="text-xl font-extrabold">{current.label}</h2>
+              <p className="mb-6 text-sm text-muted-foreground">{current.hint}</p>
+              {current.id === "general" && <GeneralSection onSaved={refreshProfile} />}
+              {current.id === "seguridad" && <SecuritySection />}
+              {current.id === "direcciones" && <AddressesSection />}
+              {current.id === "notificaciones" && <NotificationsSection />}
+              {current.id === "privacidad" && <PrivacySection />}
+              {current.id === "ayuda" && <HelpSection />}
+            </>
+          ) : (
+            <div className="hidden flex-col items-center py-16 text-center lg:flex">
+              <UserCircle className="h-12 w-12 text-muted-foreground" />
+              <p className="mt-3 font-extrabold">Elegí una sección</p>
+              <p className="text-sm text-muted-foreground">Administrá tus datos, tu seguridad y tus preferencias.</p>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );
