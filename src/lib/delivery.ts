@@ -87,6 +87,10 @@ export function withinSchedule(horarios: Horarios | null | undefined, date = new
 
 /** Abierto = el comercio no está pausado y está dentro de su horario. */
 /** ¿Está en pausa temporal? (el comercio pidió no recibir pedidos por un rato) */
+/** Si la persona venía mirando comercios para retirar, el carrito arranca en "Retiro en el local". */
+export const readPickupPreference = () => { try { return window.sessionStorage.getItem("woref-modo-entrega") === "retiro"; } catch { return false; } };
+export const writePickupPreference = (pickup: boolean) => { try { window.sessionStorage.setItem("woref-modo-entrega", pickup ? "retiro" : "delivery"); } catch { /* sin almacenamiento */ } };
+
 export const isPaused = (store: Pick<DeliveryStore, "pausado_hasta">) => Boolean(store.pausado_hasta && new Date(store.pausado_hasta).getTime() > Date.now());
 export const isOpenNow = (store: Pick<DeliveryStore, "esta_abierto" | "horarios"> & Partial<Pick<DeliveryStore, "pausado_hasta">>) => store.esta_abierto && !isPaused(store) && withinSchedule(store.horarios);
 

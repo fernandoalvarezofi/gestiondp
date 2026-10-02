@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlarmClock, BellRing, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, PackageCheck, Phone, Printer, Search, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
+import { AlarmClock, BellRing, Settings2, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, PackageCheck, Phone, Printer, Search, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { ChatButton } from "@/components/delivery/OrderChat";
@@ -7,7 +7,12 @@ import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { alarmReady, playChime, unlockAlarm } from "@/lib/alarm";
+import { desktopNotificationsState, PrintSettings, printOrderTicket, readPrintSettings, writePrintSettings } from "@/lib/print";
+import { distanceKm, formatKm } from "@/lib/geo";
 import { db, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, formatDateTime, formatSlot, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
@@ -87,39 +92,6 @@ function useOrderAlarm(pending: number) {
   return { muted, ready, enable, toggleMute };
 }
 
-/** Comanda para la cocina. Se arma con el DOM (no con HTML) para que nada de lo que escribió el cliente pueda ejecutarse. */
-function printTicket(order: DeliveryOrder, store: DeliveryStore) {
-  const win = window.open("", "_blank", "width=380,height=640");
-  if (!win) { toast.error("Permití las ventanas emergentes para imprimir"); return; }
-  const doc = win.document;
-  doc.title = `Comanda ${shortId(order.id)}`;
-  const style = doc.createElement("style");
-  style.textContent = "body{font-family:monospace;font-size:13px;margin:12px;width:300px}h1{font-size:18px;margin:0}hr{border:0;border-top:1px dashed #000}.r{display:flex;justify-content:space-between}.s{padding-left:14px;font-size:12px}";
-  doc.head.appendChild(style);
-  const add = (tag: string, text: string, className?: string) => { const el = doc.createElement(tag); el.textContent = text; if (className) el.className = className; doc.body.appendChild(el); return el; };
-  add("h1", store.nombre);
-  add("div", `Pedido ${shortId(order.id)} · ${formatDateTime(order.created_at)}`);
-  add("div", order.tipo_entrega === "retiro" ? "RETIRA EN EL LOCAL" : "ENVÍO A DOMICILIO");
-  if (order.programado_para) add("div", `PROGRAMADO: ${formatSlot(order.programado_para)}`);
-  add("div", `Cliente: ${order.cliente?.nombre || "—"}${order.telefono_contacto ? ` · ${order.telefono_contacto}` : ""}`);
-  if (order.tipo_entrega !== "retiro") add("div", `Entrega: ${order.direccion_entrega}`);
-  doc.body.appendChild(doc.createElement("hr"));
-  (order.items || []).forEach((item) => {
-    const row = doc.createElement("div"); row.className = "r";
-    const left = doc.createElement("span"); left.textContent = `${item.cantidad}x ${item.nombre}`;
-    const right = doc.createElement("span"); right.textContent = money(item.precio_unitario * item.cantidad);
-    row.append(left, right); doc.body.appendChild(row);
-    if (item.opciones?.length) add("div", optionsLabel(item.opciones), "s");
-    if (item.notas) add("div", `» ${item.notas}`, "s");
-  });
-  doc.body.appendChild(doc.createElement("hr"));
-  if (order.notas) add("div", `NOTA: ${order.notas}`);
-  add("div", `Pago: ${metodoPagoLabel[order.metodo_pago]}${order.metodo_pago === "efectivo" && order.efectivo_paga_con != null ? ` · paga con ${money(order.efectivo_paga_con)}` : ""}`);
-  add("div", `TOTAL ${money(order.total)}`).style.fontWeight = "bold";
-  win.focus();
-  win.print();
-}
-
 export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOrder[]; store: DeliveryStore; onChange: () => void }) {
   const [view, setView] = useState<"tablero" | "historial">("tablero");
   const now = useNow();
@@ -132,7 +104,8 @@ export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOr
         {(["tablero", "historial"] as const).map((item) => (
           <button key={item} type="button" onClick={() => setView(item)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", view === item ? "border-foreground bg-foreground text-background" : "bg-card")}>{item === "tablero" ? "En curso" : "Historial"}</button>
         ))}
-        <button type="button" onClick={alarm.toggleMute} className="ml-auto flex items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-sm font-bold" aria-pressed={alarm.muted}>
+        <OrderTools />
+        <button type="button" onClick={alarm.toggleMute} className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-sm font-bold" aria-pressed={alarm.muted}>
           {alarm.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}{alarm.muted ? "Sonido apagado" : "Sonido activo"}
         </button>
       </div>
@@ -254,7 +227,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
       {order.metodo_pago === "efectivo" && order.efectivo_paga_con != null && <p className="mt-2 rounded-lg bg-muted p-2 text-xs"><span className="font-bold">Paga con {money(order.efectivo_paga_con)}</span> · vuelto {money(Number(order.efectivo_paga_con) - Number(order.total))}</p>}
       <p className="mt-2 flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{metodoPagoLabel[order.metodo_pago]}{!retiro && ` · ${order.direccion_entrega}`}{order.distancia_km != null && !retiro && ` · ${order.distancia_km} km`}</span></p>
       {order.telefono_contacto && <a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`} className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary"><Phone className="h-3.5 w-3.5" />{order.telefono_contacto}</a>}
-      {!retiro && order.repartidor_id && <p className="mt-1 flex items-center gap-1 text-xs font-bold text-success"><Bike className="h-3.5 w-3.5" />{order.llegada_comercio_at && order.estado !== "en_camino" ? `El repartidor llegó a las ${formatTime(order.llegada_comercio_at)} y espera el pedido` : "Repartidor asignado"}</p>}
+      {!retiro && order.repartidor_id && order.estado !== "en_camino" && <CourierProximity order={order} store={store} />}
 
       {promised !== null && order.estado !== "pendiente" && (
         <p className={cn("mt-2 flex items-center gap-1 text-xs font-semibold", late ? "text-destructive" : "text-muted-foreground")}>
@@ -265,7 +238,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
 
       <div className="mt-3 flex flex-wrap gap-2">
         <ChatButton pedidoId={order.id} canal="comercio" label="Chat" title={order.cliente?.nombre || "Cliente"} subtitle={`Pedido ${shortId(order.id)}`} />
-        <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => printTicket(order, store)}><Printer className="h-4 w-4" />Comanda</Button>
+        <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => printOrderTicket(order, store, readPrintSettings(), 1)}><Printer className="h-4 w-4" />Comanda</Button>
       </div>
 
       <div className="mt-2 flex flex-wrap gap-2">
@@ -420,7 +393,7 @@ function History({ orders, store }: { orders: DeliveryOrder[]; store: DeliverySt
                 {open.confirmado_at && (open.listo_at || open.en_camino_at) && <div className="flex justify-between"><dt className="text-muted-foreground">Preparación real</dt><dd>{Math.round((new Date((open.listo_at || open.en_camino_at) as string).getTime() - new Date(open.confirmado_at).getTime()) / 60000)} min{open.preparacion_min ? ` (prometidos ${open.preparacion_min})` : ""}</dd></div>}
                 {open.motivo_cancelacion && <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Motivo</dt><dd className="text-right">{open.motivo_cancelacion}</dd></div>}
               </dl>
-              <Button variant="outline" className="rounded-full" onClick={() => printTicket(open, store)}><Printer className="h-4 w-4" />Imprimir comanda</Button>
+              <Button variant="outline" className="rounded-full" onClick={() => printOrderTicket(open, store, readPrintSettings(), 1)}><Printer className="h-4 w-4" />Imprimir comanda</Button>
             </>
           )}
         </DialogContent>
@@ -437,5 +410,70 @@ export function NewOrderAlert({ count }: { count: number }) {
       <p className="font-bold">{count === 1 ? "Tenés 1 pedido nuevo esperando" : `Tenés ${count} pedidos nuevos esperando`}</p>
       <BellRing className="ml-auto h-5 w-5" />
     </div>
+  );
+}
+
+/** Dónde está el repartidor que viene a retirar el pedido, con la distancia y una estimación de cuánto tarda. */
+function CourierProximity({ order, store }: { order: DeliveryOrder; store: DeliveryStore }) {
+  const position = useCourierLocation(order.repartidor_id, true);
+  const km = position && store.latitud != null && store.longitud != null ? distanceKm(position, { lat: Number(store.latitud), lng: Number(store.longitud) }) : null;
+  const arrived = Boolean(order.llegada_comercio_at);
+  // Estimación gruesa: ~3 minutos por km en moto o bici dentro de la ciudad.
+  const minutes = km != null ? Math.max(1, Math.round(km * 3)) : null;
+  return (
+    <p className={cn("mt-1 flex items-start gap-1 text-xs font-bold", arrived ? "text-success" : "text-foreground")}>
+      <Bike className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+      <span>
+        {arrived ? `El repartidor llegó a las ${formatTime(order.llegada_comercio_at)} y espera el pedido` : km != null ? `Repartidor a ${formatKm(km)} · llega en ~${minutes} min` : "Repartidor asignado, esperando su ubicación"}
+      </span>
+    </p>
+  );
+}
+
+/** Impresión automática de comandas y avisos del navegador (se guardan en este dispositivo). */
+function OrderTools() {
+  const [settings, setSettings] = useState<PrintSettings>(() => readPrintSettings());
+  const [notifications, setNotifications] = useState(desktopNotificationsState());
+  const update = (patch: Partial<PrintSettings>) => {
+    const next = { ...settings, ...patch };
+    setSettings(next);
+    writePrintSettings(next);
+  };
+  const enableNotifications = async () => {
+    if (typeof Notification === "undefined") return;
+    const result = await Notification.requestPermission();
+    setNotifications(result);
+    if (result === "granted") toast.success("Te vamos a avisar de cada pedido nuevo");
+    else toast.error("El navegador bloqueó los avisos. Podés habilitarlos desde el candado de la barra de direcciones.");
+  };
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" className="ml-auto flex items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-sm font-bold" aria-label="Impresión y avisos"><Settings2 className="h-4 w-4" />Impresión y avisos</button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-80 space-y-4">
+        <div>
+          <p className="font-extrabold">Impresión de comandas</p>
+          <label className="mt-2 flex items-center justify-between gap-3 text-sm"><span>Imprimir automáticamente cada pedido nuevo</span><Switch checked={settings.auto} onCheckedChange={(checked) => update({ auto: checked })} /></label>
+          <div className="mt-3 flex items-center gap-2 text-sm">
+            <span className="w-14 shrink-0 font-semibold">Papel</span>
+            {(["58", "80"] as const).map((paper) => <button key={paper} type="button" onClick={() => update({ paper })} className={cn("rounded-full border px-3 py-1 text-xs font-bold", settings.paper === paper ? "border-foreground bg-foreground text-background" : "bg-card")}>{paper} mm</button>)}
+          </div>
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            <span className="w-14 shrink-0 font-semibold">Copias</span>
+            {[1, 2, 3].map((copies) => <button key={copies} type="button" onClick={() => update({ copies })} className={cn("rounded-full border px-3 py-1 text-xs font-bold", settings.copies === copies ? "border-foreground bg-foreground text-background" : "bg-card")}>{copies}</button>)}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Funciona con esta pestaña abierta. Elegí tu impresora de tickets como predeterminada del navegador.</p>
+        </div>
+        <div className="border-t pt-3">
+          <p className="font-extrabold">Avisos del navegador</p>
+          {notifications === "granted" ? <p className="mt-1 text-sm text-success">Activados: te avisamos aunque estés en otra ventana.</p>
+            : notifications === "unsupported" ? <p className="mt-1 text-sm text-muted-foreground">Este navegador no permite avisos.</p>
+            : notifications === "denied" ? <p className="mt-1 text-sm text-muted-foreground">Están bloqueados. Habilitalos desde el candado de la barra de direcciones.</p>
+            : <Button size="sm" className="mt-2 rounded-full" onClick={enableNotifications}>Activar avisos</Button>}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

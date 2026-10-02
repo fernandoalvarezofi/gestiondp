@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
-import { db, DeliveryProduct, DeliveryStore, errorMessage, img, isOpenNow, MetodoPago, money, optionsLabel, productSelect, slotDay, slotTime, sortGroups, TipoEntrega } from "@/lib/delivery";
+import { db, DeliveryProduct, DeliveryStore, errorMessage, img, isOpenNow, MetodoPago, money, optionsLabel, productSelect, readPickupPreference, slotDay, slotTime, sortGroups, TipoEntrega } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { startOnlinePayment } from "@/lib/payments";
 import { cn } from "@/lib/utils";
@@ -54,7 +54,7 @@ export default function Cart() {
   const point = useAddressPoint();
   const { user } = useAuth();
   const [onlineEnabled, setOnlineEnabled] = useState(false);
-  const [mode, setMode] = useState<TipoEntrega>("delivery");
+  const [mode, setMode] = useState<TipoEntrega>(() => (readPickupPreference() ? "retiro" : "delivery"));
   const [slots, setSlots] = useState<string[]>([]);
   const [scheduled, setScheduled] = useState(false);
   const [slotDayKey, setSlotDayKey] = useState<string | null>(null);

@@ -15,7 +15,8 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { playChime } from "@/lib/alarm";
-import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, productSelect, slugify } from "@/lib/delivery";
+import { notifyDesktop, printOrderTicket, readPrintSettings } from "@/lib/print";
+import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, money, productSelect, shortId, slugify } from "@/lib/delivery";
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 
@@ -29,11 +30,13 @@ export default function MerchantDashboard() {
   const [reviews, setReviews] = useState<StoreReview[]>([]);
   const [tab, setTab] = useState("pedidos");
   const knownPending = useRef<Set<string> | null>(null);
+  const storeRef = useRef<DeliveryStore | null>(null);
 
   const loadStore = useCallback(async () => {
     if (!user) return null;
     const { data } = await db.from("delivery_comercios").select("*").eq("propietario_id", user.id).order("created_at").limit(1).maybeSingle();
     setStore(data || null);
+    storeRef.current = data || null;
     setLoading(false);
     return data as DeliveryStore | null;
   }, [user]);
@@ -43,9 +46,15 @@ export default function MerchantDashboard() {
     const { data } = await db.from("delivery_pedidos").select(merchantOrderSelect).eq("comercio_id", storeId).gte("created_at", since).order("created_at", { ascending: false }).limit(300);
     const list: DeliveryOrder[] = data || [];
     const pending = list.filter((order) => order.estado === "pendiente").map((order) => order.id);
-    if (knownPending.current && pending.some((id) => !knownPending.current!.has(id))) {
+    const fresh = knownPending.current ? list.filter((order) => order.estado === "pendiente" && !knownPending.current!.has(order.id)) : [];
+    if (fresh.length) {
       playChime();
       toast.success("¡Entró un pedido nuevo!");
+      const settings = readPrintSettings();
+      fresh.forEach((order) => {
+        notifyDesktop("🔔 Pedido nuevo " + shortId(order.id), (order.items || []).length + " productos · " + money(order.total), order.id);
+        if (settings.auto && storeRef.current) printOrderTicket(order, storeRef.current, settings);
+      });
     }
     knownPending.current = new Set(pending);
     setOrders(list);

@@ -4,6 +4,7 @@ import { ChevronRight, Search, SlidersHorizontal, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/delivery/Common";
 import { OutOfZone } from "@/components/delivery/OutOfZone";
+import { readPickupPreference, writePickupPreference } from "@/lib/delivery";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { distanceKm } from "@/lib/geo";
 import { StoreCard, StoreCardSkeleton, StoreListItem, StoreListSkeleton, StoreLogo } from "@/components/delivery/StoreCard";
@@ -18,7 +19,7 @@ const banners = [
 ];
 
 type Sort = "relevancia" | "rating" | "rapido";
-type Filters = { gratis: boolean; promos: boolean; abiertos: boolean; top: boolean };
+type Filters = { retiro: boolean; gratis: boolean; promos: boolean; abiertos: boolean; top: boolean };
 
 function Section({ title, subtitle, to, children }: { title: string; subtitle?: string; to?: string; children: React.ReactNode }) {
   return (
@@ -47,7 +48,7 @@ export default function DeliveryHome() {
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<Sort>("relevancia");
-  const [filters, setFilters] = useState<Filters>({ gratis: false, promos: false, abiertos: false, top: false });
+  const [filters, setFilters] = useState<Filters>(() => ({ retiro: readPickupPreference(), gratis: false, promos: false, abiertos: false, top: false }));
 
   useEffect(() => {
     db.from("delivery_comercios").select("*").eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
@@ -77,6 +78,7 @@ export default function DeliveryHome() {
 
   const list = useMemo(() => {
     let result = [...stores];
+    if (filters.retiro) result = result.filter((store) => store.acepta_retiro !== false);
     if (filters.gratis) result = result.filter((store) => Number(store.costo_envio) === 0 || (store.envio_gratis_desde ?? Infinity) <= 1);
     if (filters.promos) result = result.filter((store) => store.promo_texto);
     if (filters.abiertos) result = result.filter((store) => isOpenNow(store) && inZone(store));
@@ -108,7 +110,11 @@ export default function DeliveryHome() {
 
   const big = verticals.slice(0, 2);
   const small = verticals.slice(2);
-  const toggle = (key: keyof Filters) => setFilters((current) => ({ ...current, [key]: !current[key] }));
+  const toggle = (key: keyof Filters) => setFilters((current) => {
+    const next = { ...current, [key]: !current[key] };
+    if (key === "retiro") writePickupPreference(next.retiro);
+    return next;
+  });
 
   return (
     <div className="mx-auto w-full max-w-6xl pb-16 pt-3 sm:px-6 sm:pt-6 lg:px-8">
@@ -199,7 +205,7 @@ export default function DeliveryHome() {
               <option value="rapido">Menor tiempo</option>
             </select>
           </label>
-          {([["gratis", "Envío gratis"], ["promos", "Con descuento"], ["abiertos", "Abiertos ahora"], ["top", "Más de 4,7 ★"]] as [keyof Filters, string][]).map(([key, label]) => (
+          {([["retiro", "Retiro en el local"], ["gratis", "Envío gratis"], ["promos", "Con descuento"], ["abiertos", "Abiertos ahora"], ["top", "Más de 4,7 ★"]] as [keyof Filters, string][]).map(([key, label]) => (
             <button key={key} type="button" onClick={() => toggle(key)} className={cn("h-9 shrink-0 rounded-full border px-4 text-sm font-bold transition-colors", filters[key] ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{label}</button>
           ))}
         </div>
