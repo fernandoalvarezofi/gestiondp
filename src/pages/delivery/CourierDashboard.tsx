@@ -13,6 +13,7 @@ import type { MapMarker } from "@/components/maps/DeliveryMap";
 import { useShareCourierLocation } from "@/hooks/useCourierLocation";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { formatKm } from "@/lib/geo";
+import { ChatButton } from "@/components/delivery/OrderChat";
 import { db, DeliveryOrder, errorMessage, formatDateTime, formatTime, metodoPagoLabel, money, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
@@ -203,6 +204,7 @@ function CurrentDelivery({ order, onChange }: { order: DeliveryOrder; onChange: 
         {order.notas && <p className="mt-1"><span className="font-bold">Nota: </span>{order.notas}</p>}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
+        <ChatButton pedidoId={order.id} canal="repartidor" label="Chat con el cliente" title={order.cliente?.nombre || "Cliente"} subtitle={`Pedido ${shortId(order.id)}`} />
         {order.telefono_contacto && <Button asChild variant="outline" className="rounded-full"><a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`}><Phone className="h-4 w-4" />Llamar al cliente</a></Button>}
         {order.comercio?.telefono && <Button asChild variant="outline" className="rounded-full"><a href={`tel:${order.comercio.telefono.replace(/\s/g, "")}`}><Store className="h-4 w-4" />Llamar al comercio</a></Button>}
       </div>

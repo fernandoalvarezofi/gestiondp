@@ -342,3 +342,43 @@ export function errorMessage(error: unknown, fallback = "Algo salió mal. Probá
 
 export const storeSelect = "*";
 export const orderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,logo_url,direccion,telefono,latitud,longitud)";
+
+export type ChatCanal = "comercio" | "repartidor";
+export type ChatMessage = { id: string; pedido_id: string; canal: ChatCanal; autor_id: string; texto: string; leido_at: string | null; created_at: string };
+
+export type ReclamoTipo = "demora" | "faltante" | "mal_estado" | "equivocado" | "cobro" | "repartidor" | "otro";
+export type Reclamo = {
+  id: string;
+  pedido_id: string;
+  cliente_id: string;
+  comercio_id: string;
+  tipo: ReclamoTipo;
+  detalle: string;
+  estado: "abierto" | "resuelto" | "rechazado";
+  resolucion?: string | null;
+  reembolso_monto: number;
+  resuelto_at?: string | null;
+  created_at: string;
+};
+
+export const reclamoTipoLabel: Record<ReclamoTipo, string> = {
+  demora: "Mi pedido se está demorando",
+  faltante: "Faltó un producto",
+  mal_estado: "Un producto llegó en mal estado",
+  equivocado: "Me trajeron otra cosa",
+  cobro: "Problema con el cobro",
+  repartidor: "Problema con el repartidor",
+  otro: "Otro problema",
+};
+
+/** Qué reclamos se pueden hacer según el momento del pedido (el servidor valida lo mismo). */
+export function reclamosDisponibles(order: Pick<DeliveryOrder, "estado" | "entrega_estimada" | "programado_para" | "entregado_at" | "tipo_entrega">): ReclamoTipo[] {
+  if (order.estado === "cancelado" || order.estado === "pendiente") return [];
+  if (order.estado === "entregado") {
+    const recent = order.entregado_at ? Date.now() - new Date(order.entregado_at).getTime() < 48 * 3600000 : false;
+    return recent ? ["faltante", "mal_estado", "equivocado", "cobro", ...(order.tipo_entrega === "delivery" ? (["repartidor"] as ReclamoTipo[]) : []), "otro"] : ["otro"];
+  }
+  const limit = order.programado_para || order.entrega_estimada;
+  const late = limit ? Date.now() > new Date(limit).getTime() + 10 * 60000 : false;
+  return late ? ["demora", "otro"] : ["otro"];
+}

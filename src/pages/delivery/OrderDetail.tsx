@@ -12,6 +12,8 @@ import { useReorder } from "@/hooks/useReorder";
 import { startOnlinePayment } from "@/lib/payments";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
+import { ChatButton } from "@/components/delivery/OrderChat";
+import { OrderClaims } from "@/components/delivery/OrderClaims";
 import { MapView } from "@/components/maps/LazyMaps";
 import type { MapMarker } from "@/components/maps/DeliveryMap";
 
@@ -148,9 +150,18 @@ export default function OrderDetail() {
         </section>
       )}
 
+      {active && !awaitingPayment && (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <ChatButton pedidoId={order.id} canal="comercio" label={`Escribirle a ${order.comercio?.nombre ?? "el local"}`} title={order.comercio?.nombre ?? "Comercio"} subtitle="Consultas sobre tu pedido" autoOpen={searchParams.get("chat") === "comercio"} />
+          {order.repartidor_id && !retiro && <ChatButton pedidoId={order.id} canal="repartidor" label="Chat con el repartidor" title="Tu repartidor" subtitle="Para coordinar la entrega" autoOpen={searchParams.get("chat") === "repartidor"} />}
+        </div>
+      )}
+
       {active && <PushPrompt className="mt-4" title="¿Te avisamos cuando salga tu pedido?" text="Activá los avisos y te contamos cada paso aunque cierres la app." />}
 
       {order.estado === "entregado" && !order.calificado && <RateOrder orderId={order.id} storeName={order.comercio?.nombre || "el comercio"} onDone={load} />}
+
+      <OrderClaims order={order} />
 
       <section className="mt-4 rounded-3xl border bg-card p-4 sm:p-5">
         <Link to={`/app/tienda/${order.comercio?.slug}`} className="flex items-center gap-3">

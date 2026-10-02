@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { EmptyState, PageHeader, StatCard } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
+import { ClaimsManager } from "@/components/admin/ClaimsManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
 import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
@@ -17,7 +18,10 @@ import { categoriaLabel, Coupon, db, isOpenNow, DeliveryOrder, DeliveryStore, Es
 
 type CourierRow = { perfil_id: string; vehiculo: string; telefono?: string | null; disponible: boolean; activo: boolean; created_at: string; perfil?: { nombre: string } | null };
 const adminOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario), comercio:delivery_comercios(nombre,slug,imagen_url,direccion), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
-const nextStatus: Partial<Record<EstadoPedido, EstadoPedido>> = { pendiente: "confirmado", confirmado: "preparando", preparando: "en_camino", en_camino: "entregado" };
+const nextStatus = (order: Pick<DeliveryOrder, "estado" | "tipo_entrega">): EstadoPedido | undefined =>
+  order.tipo_entrega === "retiro"
+    ? ({ pendiente: "confirmado", confirmado: "preparando", preparando: "listo" } as Partial<Record<EstadoPedido, EstadoPedido>>)[order.estado]
+    : ({ pendiente: "confirmado", confirmado: "preparando", preparando: "en_camino", en_camino: "entregado" } as Partial<Record<EstadoPedido, EstadoPedido>>)[order.estado];
 
 export default function AdminDashboard() {
   const roles = useDeliveryRoles();
@@ -27,6 +31,7 @@ export default function AdminDashboard() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [statusFilter, setStatusFilter] = useState<EstadoPedido | "activos" | "todos">("activos");
   const [editing, setEditing] = useState<DeliveryStore | null>(null);
+  const [openClaims, setOpenClaims] = useState(0);
 
   const loadStores = useCallback(async () => {
     const { data } = await db.from("delivery_comercios").select("*").order("created_at", { ascending: false });
@@ -131,14 +136,14 @@ export default function AdminDashboard() {
 
       <Tabs defaultValue="pedidos" className="mt-6">
         <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">
-          {[["pedidos", "Pedidos"], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})`], ["cupones", "Cupones"], ["pagos", `Pagos${refundCount ? ` (${refundCount})` : ""}`]].map(([value, label]) => (
+          {[["pedidos", "Pedidos"], ["reclamos", `Reclamos${openClaims ? ` (${openClaims})` : ""}`], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})`], ["cupones", "Cupones"], ["pagos", `Pagos${refundCount ? ` (${refundCount})` : ""}`]].map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="shrink-0 rounded-full px-4 py-2 font-bold data-[state=active]:bg-card">{label}</TabsTrigger>
           ))}
         </TabsList>
 
         <TabsContent value="pedidos" className="mt-6">
           <div className="scrollbar-none flex gap-2 overflow-x-auto">
-            {(["activos", "todos", "pendiente", "confirmado", "preparando", "en_camino", "entregado", "cancelado"] as const).map((value) => (
+            {(["activos", "todos", "pendiente", "confirmado", "preparando", "listo", "en_camino", "entregado", "cancelado"] as const).map((value) => (
               <button key={value} type="button" onClick={() => setStatusFilter(value)} className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold ${statusFilter === value ? "border-foreground bg-foreground text-background" : "bg-card"}`}>
                 {value === "activos" ? "En curso" : value === "todos" ? "Todos" : estadoCorto[value]}
               </button>
@@ -159,7 +164,7 @@ export default function AdminDashboard() {
                     <td className="p-3 text-right">
                       {pedidoActivo(order.estado) && (
                         <div className="flex justify-end gap-1">
-                          {nextStatus[order.estado] && <Button size="sm" variant="outline" className="rounded-full" onClick={() => advance(order, nextStatus[order.estado]!)}>→ {estadoCorto[nextStatus[order.estado]!]}</Button>}
+                          {nextStatus(order) && <Button size="sm" variant="outline" className="rounded-full" onClick={() => advance(order, nextStatus(order)!)}>→ {estadoCorto[nextStatus(order)!]}</Button>}
                           <Button size="sm" variant="ghost" className="rounded-full text-destructive" onClick={() => advance(order, "cancelado")}>Cancelar</Button>
                         </div>
                       )}
@@ -171,6 +176,8 @@ export default function AdminDashboard() {
             {filteredOrders.length === 0 && <p className="p-8 text-center text-muted-foreground">No hay pedidos con este filtro.</p>}
           </div>
         </TabsContent>
+
+        <TabsContent value="reclamos" className="mt-6"><ClaimsManager onChange={setOpenClaims} /></TabsContent>
 
         <TabsContent value="comercios" className="mt-6">
           <ul className="divide-y overflow-hidden rounded-3xl border bg-card">

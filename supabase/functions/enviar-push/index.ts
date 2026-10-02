@@ -3,7 +3,9 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
-type Payload = { pedido_id: string; evento: "nuevo" | "estado" | "asignado"; estado_anterior?: string | null };
+type Payload = { pedido_id: string; evento: "nuevo" | "estado" | "asignado" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
+
+const tipoReclamo: Record<string, string> = { demora: "Demora", faltante: "Producto faltante", mal_estado: "Producto en mal estado", equivocado: "Pedido equivocado", cobro: "Problema con el cobro", repartidor: "Problema con el repartidor", otro: "Otro" };
 type Message = { title: string; body: string; url: string; tag: string };
 
 const estadoCliente: Record<string, Omit<Message, "url" | "tag"> | undefined> = {
@@ -29,7 +31,7 @@ Deno.serve(async (req) => {
     return new Response("No autorizado", { status: 401 });
   }
 
-  const { pedido_id, evento, estado_anterior } = (await req.json()) as Payload;
+  const { pedido_id, evento, estado_anterior, mensaje_id, reclamo_id } = (await req.json()) as Payload;
   const { data: order } = await supabase
     .from("delivery_pedidos")
     .select("id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
@@ -68,6 +70,36 @@ Deno.serve(async (req) => {
       const { data: couriers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("disponible", true).eq("activo", true);
       const ids = (couriers || []).map((courier) => courier.perfil_id).filter((id) => id !== store?.propietario_id);
       if (ids.length) sends.push({ userIds: ids, message: { title: "Pedido disponible para retirar", body: `${store?.nombre || "Un comercio"} tiene un pedido listo para tomar.`, url: "/app/repartidor", tag: "pedidos-disponibles" } });
+    }
+  }
+
+  if (evento === "mensaje" && mensaje_id) {
+    const { data: msg } = await supabase.from("delivery_mensajes").select("autor_id, canal, texto").eq("id", mensaje_id).maybeSingle();
+    if (msg) {
+      const { data: author } = await supabase.from("perfiles").select("nombre").eq("id", msg.autor_id).maybeSingle();
+      const first = (author?.nombre as string | undefined)?.split(" ")[0] || "Alguien";
+      const preview = msg.texto.length > 110 ? `${msg.texto.slice(0, 107)}…` : msg.texto;
+      if (msg.autor_id === order.cliente_id) {
+        // Escribió el cliente: le avisamos al comercio o al repartidor según el canal.
+        const target = msg.canal === "comercio" ? store?.propietario_id : order.repartidor_id;
+        if (target) sends.push({ userIds: [target], message: { title: `💬 ${first} · pedido ${shortId(order.id)}`, body: preview, url: msg.canal === "comercio" ? "/app/comercio" : "/app/repartidor", tag: `chat-${order.id}-${msg.canal}` } });
+      } else {
+        const from = msg.canal === "comercio" ? store?.nombre || "El comercio" : "Tu repartidor";
+        sends.push({ userIds: [order.cliente_id], message: { title: `💬 ${from}`, body: preview, url: `/app/pedidos/${order.id}?chat=${msg.canal}`, tag: `chat-${order.id}-${msg.canal}` } });
+      }
+    }
+  }
+
+  if ((evento === "reclamo_nuevo" || evento === "reclamo_resuelto") && reclamo_id) {
+    const { data: claim } = await supabase.from("delivery_reclamos").select("tipo, estado, resolucion, cliente_id").eq("id", reclamo_id).maybeSingle();
+    if (claim && evento === "reclamo_nuevo") {
+      const { data: admins } = await supabase.from("user_roles").select("user_id").eq("role", "admin");
+      const ids = (admins || []).map((row) => row.user_id as string);
+      if (ids.length) sends.push({ userIds: ids, message: { title: `Nuevo reclamo · ${tipoReclamo[claim.tipo] || claim.tipo}`, body: `Pedido ${shortId(order.id)} de ${store?.nombre || "un comercio"}.`, url: "/app/admin", tag: `reclamo-${reclamo_id}` } });
+    }
+    if (claim && evento === "reclamo_resuelto") {
+      const text = claim.resolucion ? String(claim.resolucion) : "Revisá la respuesta en tu pedido.";
+      sends.push({ userIds: [claim.cliente_id as string], message: { title: claim.estado === "resuelto" ? "Resolvimos tu reclamo" : "Respondimos tu reclamo", body: text.length > 110 ? `${text.slice(0, 107)}…` : text, url: `/app/pedidos/${order.id}`, tag: `reclamo-${reclamo_id}` } });
     }
   }
 

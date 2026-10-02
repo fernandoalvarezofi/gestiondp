@@ -2,6 +2,7 @@ import { useState } from "react";
 import { BellRing, Bike, CalendarClock, Check, ChefHat, Clock3, PackageCheck, Phone, ShoppingBag, Store, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
+import { ChatButton } from "@/components/delivery/OrderChat";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
 import { db, DeliveryOrder, EstadoPedido, errorMessage, formatDateTime, formatSlot, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
@@ -115,6 +116,7 @@ function OrderCard({ order, onChange }: { order: DeliveryOrder; onChange: () => 
       {!retiro && order.repartidor_id && <p className="mt-1 flex items-center gap-1 text-xs font-bold text-success"><Bike className="h-3.5 w-3.5" />Repartidor asignado</p>}
       {order.entrega_estimada && order.estado !== "pendiente" && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3.5 w-3.5" />Entrega estimada {formatTime(order.entrega_estimada)}</p>}
 
+      <ChatButton pedidoId={order.id} canal="comercio" label="Chat con el cliente" title={order.cliente?.nombre || "Cliente"} subtitle={`Pedido ${shortId(order.id)}`} className="mt-3 w-full" />
       <div className="mt-3 flex flex-wrap gap-2">
         {order.estado === "pendiente" && <>
           <Button size="sm" className="flex-1 rounded-full" disabled={busy} onClick={() => run("confirmado")}><Check className="h-4 w-4" />Aceptar</Button>
