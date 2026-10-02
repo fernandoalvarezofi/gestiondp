@@ -133,7 +133,7 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
         {step === "ir_comercio" && <Button className="h-12 w-full rounded-full text-base font-bold" onClick={() => arrived("comercio")} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Llegué al comercio</Button>}
         {step === "en_comercio" && (
           <div className="space-y-2">
-            <p className="rounded-xl bg-muted p-3 text-center text-sm font-semibold">{order.estado === "preparando" ? "Ya lo están preparando. Retiralo cuando te lo entreguen." : "El comercio todavía no empezó a prepararlo. Esperá o consultale."}</p>
+            <p className="rounded-xl bg-muted p-3 text-center text-sm font-semibold">{order.estado === "preparando" ? (order.listo_at ? "¡Está listo! Pasá a retirarlo." : "Ya lo están preparando. Retiralo cuando te lo entreguen.") : "El comercio todavía no empezó a prepararlo. Esperá o consultale."}</p>
             <Button className="h-12 w-full rounded-full text-base font-bold" onClick={pickUp} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Retiré el pedido</Button>
           </div>
         )}

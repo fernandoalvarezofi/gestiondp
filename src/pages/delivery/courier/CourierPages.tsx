@@ -1,7 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Bike, Loader2, Package, PowerOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { ActiveDelivery } from "@/components/courier/ActiveDelivery";
+import { ActiveBatch } from "@/components/courier/ActiveBatch";
 import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
 import { CourierWallet } from "@/components/courier/CourierWallet";
 import { OfferCard } from "@/components/courier/OfferCard";
@@ -13,8 +13,8 @@ import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { useCourier } from "./CourierLayout";
 
 export function CourierOrdersPage() {
-  const { current, currentEnvio, connected, offers, envioOffers, position, sharingStatus, refreshAll } = useCourier();
-  if (current) return <ActiveDelivery order={current} position={position} sharing={sharingStatus} onChange={refreshAll} />;
+  const { current, currents, currentEnvio, connected, offers, envioOffers, position, sharingStatus, refreshAll } = useCourier();
+  if (current) return <ActiveBatch orders={currents} offers={offers} position={position} sharing={sharingStatus} onChange={refreshAll} />;
   if (currentEnvio) return <ActiveEnvio envio={currentEnvio} position={position} sharing={sharingStatus} onChange={refreshAll} />;
   if (!connected) return <EmptyState icon={<PowerOff className="h-7 w-7" />} title="Estás desconectado" text="Tocá “Conectarme” arriba para recibir ofertas de pedidos y envíos." />;
   if (!offers.length && !envioOffers.length) return <EmptyState icon={<Bike className="h-7 w-7" />} title="Buscando pedidos para vos" text="Quedate conectado: apenas haya un pedido o un envío de paquete cerca, te suena el aviso." />;

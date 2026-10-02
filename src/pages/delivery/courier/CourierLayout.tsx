@@ -22,6 +22,8 @@ export type CourierContext = {
   courier: Courier;
   connected: boolean;
   current: DeliveryOrder | null;
+  /** Todos los pedidos en curso (hay más de uno cuando se agrupan pedidos cercanos). */
+  currents: DeliveryOrder[];
   currentEnvio: Envio | null;
   delivered: DeliveryOrder[];
   deliveredEnvios: Envio[];
@@ -67,10 +69,13 @@ export default function CourierLayout() {
 
   const approved = Boolean(courier?.activo && courier?.verificado);
   const connected = approved && Boolean(courier?.disponible);
-  const current = mine.find((order) => ["confirmado", "preparando", "en_camino"].includes(order.estado)) || null;
+  const currents = useMemo(() => mine.filter((order) => ["confirmado", "preparando", "en_camino"].includes(order.estado)).sort((a, b) => new Date(a.asignado_at || a.created_at).getTime() - new Date(b.asignado_at || b.created_at).getTime()), [mine]);
+  const current = currents[0] || null;
   const sharing = useShareCourierLocation(connected);
   const hasEnvio = Boolean(myEnvios.find((envio) => envio.estado === "asignado" || envio.estado === "retirado"));
-  const { offers, refresh } = useOffers(connected && !current && !hasEnvio);
+  // Con un pedido todavía sin retirar, el servidor puede ofrecer otro cercano para llevarlos juntos.
+  const canBatch = currents.length > 0 && currents.length < 2 && currents.every((order) => order.tipo_entrega === "delivery" && !order.en_camino_at && order.estado !== "en_camino");
+  const { offers, refresh } = useOffers(connected && !hasEnvio && (!current || canBatch));
 
   // Ofertas de envíos de paquetes: el servidor muestra solo las cercanas y mientras no estés ocupado.
   const refreshEnvioOffers = useCallback(async () => {
@@ -124,7 +129,7 @@ export default function CourierLayout() {
 
   const refreshAll = () => { loadOrders(); loadEnvios(); refresh(); refreshEnvioOffers(); };
   const busyNow = Boolean(current) || hasEnvio;
-  const context: CourierContext = { courier, connected, current, currentEnvio, delivered, deliveredEnvios, offers, envioOffers, position: sharing.position, sharingStatus: sharing.status, refreshAll, reloadCourier };
+  const context: CourierContext = { courier, connected, current, currents, currentEnvio, delivered, deliveredEnvios, offers, envioOffers, position: sharing.position, sharingStatus: sharing.status, refreshAll, reloadCourier };
 
   return (
     <PanelShell
