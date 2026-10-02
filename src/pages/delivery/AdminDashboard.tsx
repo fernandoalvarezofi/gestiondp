@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Package, Pencil, Receipt, Settings, ShieldAlert, Store, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Package, Pencil, Receipt, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -13,6 +13,7 @@ import { ZoneDemand } from "@/components/admin/ZoneDemand";
 import { SettlementsManager } from "@/components/admin/SettlementsManager";
 import { StoreReviewDialog } from "@/components/admin/StoreReviewDialog";
 import { EnviosManager } from "@/components/admin/EnviosManager";
+import { CustomersManager } from "@/components/admin/CustomersManager";
 import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
@@ -162,6 +163,7 @@ export default function AdminDashboard() {
         { label: "Red", items: [
           { to: "/app/admin/comercios", label: "Comercios", icon: Store, badge: pendingStores },
           { to: "/app/admin/repartidores", label: "Repartidores", icon: Bike, badge: pendingCouriers },
+          { to: "/app/admin/clientes", label: "Clientes", icon: Users },
           { to: "/app/admin/demanda", label: "Zonas sin cobertura", icon: MapPinOff },
         ] },
         { label: "Marketing y finanzas", items: [
@@ -261,6 +263,7 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="envios" className="mt-0"><EnviosManager /></TabsContent>
+        <TabsContent value="clientes" className="mt-0"><CustomersManager /></TabsContent>
         <TabsContent value="reclamos" className="mt-0"><ClaimsManager onChange={setOpenClaims} /></TabsContent>
 
         <TabsContent value="comercios" className="mt-0">
