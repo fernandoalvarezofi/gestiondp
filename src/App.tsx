@@ -24,8 +24,23 @@ const OrderDetail = lazy(() => import("./pages/delivery/OrderDetail"));
 const Favorites = lazy(() => import("./pages/delivery/Favorites"));
 const Promotions = lazy(() => import("./pages/delivery/Promotions"));
 const Profile = lazy(() => import("./pages/delivery/Profile"));
-const MerchantDashboard = lazy(() => import("./pages/delivery/MerchantDashboard"));
-const CourierDashboard = lazy(() => import("./pages/delivery/CourierDashboard"));
+const MerchantLayout = lazy(() => import("./pages/delivery/merchant/MerchantLayout"));
+const MerchantHome = lazy(() => import("./pages/delivery/merchant/MerchantHome"));
+const MerchantSettings = lazy(() => import("./pages/delivery/merchant/MerchantSettings"));
+const MerchantPages = {
+  Orders: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantOrdersPage }))),
+  Menu: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantMenuPage }))),
+  Promos: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantPromosPage }))),
+  Reviews: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantReviewsPage }))),
+  Stats: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantStatsPage }))),
+};
+const CourierLayout = lazy(() => import("./pages/delivery/courier/CourierLayout"));
+const CourierPages = {
+  Orders: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierOrdersPage }))),
+  Earnings: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierEarningsPage }))),
+  History: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierHistoryPage }))),
+  Profile: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierProfilePage }))),
+};
 const AdminDashboard = lazy(() => import("./pages/delivery/AdminDashboard"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
@@ -70,9 +85,24 @@ const App = () => (
                       <Route path="favoritos" element={<Favorites />} />
                       <Route path="promociones" element={<Promotions />} />
                       <Route path="perfil" element={<Profile />} />
-                      <Route path="comercio" element={<MerchantDashboard />} />
-                      <Route path="repartidor" element={<CourierDashboard />} />
+                      <Route path="comercio" element={<MerchantLayout />}>
+                        <Route index element={<MerchantHome />} />
+                        <Route path="pedidos" element={<MerchantPages.Orders />} />
+                        <Route path="menu" element={<MerchantPages.Menu />} />
+                        <Route path="promociones" element={<MerchantPages.Promos />} />
+                        <Route path="opiniones" element={<MerchantPages.Reviews />} />
+                        <Route path="estadisticas" element={<MerchantPages.Stats />} />
+                        <Route path="configuracion" element={<Navigate to="general" replace />} />
+                        <Route path="configuracion/:seccion" element={<MerchantSettings />} />
+                      </Route>
+                      <Route path="repartidor" element={<CourierLayout />}>
+                        <Route index element={<CourierPages.Orders />} />
+                        <Route path="ganancias" element={<CourierPages.Earnings />} />
+                        <Route path="historial" element={<CourierPages.History />} />
+                        <Route path="perfil" element={<CourierPages.Profile />} />
+                      </Route>
                       <Route path="admin" element={<AdminDashboard />} />
+                      <Route path="admin/:seccion" element={<AdminDashboard />} />
                     </Route>
                     <Route path="/lin/local/:slug" element={<LegacyStoreRedirect />} />
                     <Route path="/lin/*" element={<Navigate to="/app" replace />} />

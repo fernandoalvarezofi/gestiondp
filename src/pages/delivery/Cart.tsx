@@ -13,6 +13,7 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { db, DeliveryProduct, DeliveryStore, errorMessage, img, isOpenNow, MetodoPago, money, optionsLabel, productSelect, readPickupPreference, slotDay, slotTime, sortGroups, TipoEntrega } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { startOnlinePayment } from "@/lib/payments";
+import { ajusteValor, useAjustes } from "@/hooks/useAjustes";
 import { cn } from "@/lib/utils";
 
 type CouponResult = { valido: boolean; codigo?: string; descuento?: number; envio_gratis?: boolean; mensaje: string };
@@ -62,6 +63,8 @@ export default function Cart() {
   const [cashWith, setCashWith] = useState<number | null>(null);
   const [customCash, setCustomCash] = useState("");
   const [catalog, setCatalog] = useState<DeliveryProduct[]>([]);
+  const { ajustes } = useAjustes();
+  const servicePct = ajusteValor(ajustes, "tarifa_servicio_pct", 5);
 
   useEffect(() => {
     db.rpc("delivery_pagos_online_activos").then(({ data }: { data: boolean | null }) => {
@@ -132,7 +135,7 @@ export default function Cart() {
     const freeByStore = store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && subtotal >= Number(store.envio_gratis_desde);
     const reach = storeReach(storeInfo || store, point);
     const shipping = pickup ? 0 : freeByStore || (coupon?.valido && coupon.envio_gratis) ? 0 : reach.fee;
-    const service = Math.round(subtotal * 0.05);
+    const service = Math.round(subtotal * servicePct / 100);
     const discount = coupon?.valido ? Number(coupon.descuento || 0) : 0;
     const tipValue = pickup ? 0 : tip;
     return {
@@ -142,7 +145,7 @@ export default function Cart() {
       reach,
       needsPin: !pickup && Boolean(storeInfo?.latitud != null && !point),
     };
-  }, [store, storeInfo, point, subtotal, coupon, tip, pickup]);
+  }, [store, storeInfo, point, subtotal, coupon, tip, pickup, servicePct]);
 
   // El billete con el que se paga tiene que cubrir el total vigente.
   useEffect(() => {

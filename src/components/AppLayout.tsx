@@ -56,6 +56,8 @@ export function AppLayout() {
 
   const inPanel = /^\/app\/(comercio|repartidor|admin)/.test(location.pathname);
   const isHome = location.pathname === "/app";
+  // Los paneles (comercio, repartidor, administración) traen su propia barra lateral y encabezado.
+  if (inPanel) return <Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense>;
   // En el carrito la barra de abajo la ocupa el botón de confirmar (como en las apps de delivery).
   const hideNav = inPanel || location.pathname.startsWith("/app/carrito");
   // El seguimiento de un pedido es una pantalla completa con su propio botón de volver (como en las apps de delivery).

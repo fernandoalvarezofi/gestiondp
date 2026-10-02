@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { alarmReady, playChime, unlockAlarm } from "@/lib/alarm";
-import { desktopNotificationsState, PrintSettings, printOrderTicket, readPrintSettings, writePrintSettings } from "@/lib/print";
+import { PrintAlertsPanel } from "@/components/merchant/PrintAlertsPanel";
+import { printOrderTicket, readPrintSettings } from "@/lib/print";
 import { distanceKm, formatKm } from "@/lib/geo";
 import { db, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, formatDateTime, formatSlot, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
@@ -430,50 +430,14 @@ function CourierProximity({ order, store }: { order: DeliveryOrder; store: Deliv
   );
 }
 
-/** Impresión automática de comandas y avisos del navegador (se guardan en este dispositivo). */
+/** Atajo a la impresión automática y los avisos (la configuración completa está en Configuración → Impresión y avisos). */
 function OrderTools() {
-  const [settings, setSettings] = useState<PrintSettings>(() => readPrintSettings());
-  const [notifications, setNotifications] = useState(desktopNotificationsState());
-  const update = (patch: Partial<PrintSettings>) => {
-    const next = { ...settings, ...patch };
-    setSettings(next);
-    writePrintSettings(next);
-  };
-  const enableNotifications = async () => {
-    if (typeof Notification === "undefined") return;
-    const result = await Notification.requestPermission();
-    setNotifications(result);
-    if (result === "granted") toast.success("Te vamos a avisar de cada pedido nuevo");
-    else toast.error("El navegador bloqueó los avisos. Podés habilitarlos desde el candado de la barra de direcciones.");
-  };
-
   return (
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" className="ml-auto flex items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-sm font-bold" aria-label="Impresión y avisos"><Settings2 className="h-4 w-4" />Impresión y avisos</button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 space-y-4">
-        <div>
-          <p className="font-extrabold">Impresión de comandas</p>
-          <label className="mt-2 flex items-center justify-between gap-3 text-sm"><span>Imprimir automáticamente cada pedido nuevo</span><Switch checked={settings.auto} onCheckedChange={(checked) => update({ auto: checked })} /></label>
-          <div className="mt-3 flex items-center gap-2 text-sm">
-            <span className="w-14 shrink-0 font-semibold">Papel</span>
-            {(["58", "80"] as const).map((paper) => <button key={paper} type="button" onClick={() => update({ paper })} className={cn("rounded-full border px-3 py-1 text-xs font-bold", settings.paper === paper ? "border-foreground bg-foreground text-background" : "bg-card")}>{paper} mm</button>)}
-          </div>
-          <div className="mt-2 flex items-center gap-2 text-sm">
-            <span className="w-14 shrink-0 font-semibold">Copias</span>
-            {[1, 2, 3].map((copies) => <button key={copies} type="button" onClick={() => update({ copies })} className={cn("rounded-full border px-3 py-1 text-xs font-bold", settings.copies === copies ? "border-foreground bg-foreground text-background" : "bg-card")}>{copies}</button>)}
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">Funciona con esta pestaña abierta. Elegí tu impresora de tickets como predeterminada del navegador.</p>
-        </div>
-        <div className="border-t pt-3">
-          <p className="font-extrabold">Avisos del navegador</p>
-          {notifications === "granted" ? <p className="mt-1 text-sm text-success">Activados: te avisamos aunque estés en otra ventana.</p>
-            : notifications === "unsupported" ? <p className="mt-1 text-sm text-muted-foreground">Este navegador no permite avisos.</p>
-            : notifications === "denied" ? <p className="mt-1 text-sm text-muted-foreground">Están bloqueados. Habilitalos desde el candado de la barra de direcciones.</p>
-            : <Button size="sm" className="mt-2 rounded-full" onClick={enableNotifications}>Activar avisos</Button>}
-        </div>
-      </PopoverContent>
+      <PopoverContent align="end" className="w-80"><PrintAlertsPanel /></PopoverContent>
     </Popover>
   );
 }

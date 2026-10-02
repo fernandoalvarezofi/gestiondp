@@ -40,9 +40,9 @@ export function StoreStatusControl({ store, onChange }: { store: DeliveryStore; 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button type="button" className={cn("flex items-center gap-2 rounded-full border px-4 py-2 font-bold", tone)} aria-label="Cambiar estado del local">
+        <button type="button" className={cn("flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-bold sm:px-4 sm:py-2", tone)} aria-label="Cambiar estado del local">
           <span className={cn("h-2.5 w-2.5 rounded-full", open ? "bg-success" : paused ? "bg-warning" : "bg-muted-foreground")} />
-          {label}<ChevronDown className="h-4 w-4" />
+          <span className="max-sm:sr-only">{label}</span><ChevronDown className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">

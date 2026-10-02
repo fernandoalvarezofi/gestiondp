@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { db, errorMessage, formatSlot, money } from "@/lib/delivery";
 import { formatKm } from "@/lib/geo";
+import { ajusteValor, useAjustes } from "@/hooks/useAjustes";
 import { cn } from "@/lib/utils";
 import type { Offer } from "./useOffers";
 
@@ -17,13 +18,11 @@ function useNow(intervalMs = 500) {
   return now;
 }
 
-const WINDOW_SECONDS = 45;
-
 /** Anillo con los segundos que quedan para aceptar. */
-function Countdown({ seconds }: { seconds: number }) {
+function Countdown({ seconds, total }: { seconds: number; total: number }) {
   const radius = 22;
   const circumference = 2 * Math.PI * radius;
-  const ratio = Math.max(0, Math.min(1, seconds / WINDOW_SECONDS));
+  const ratio = Math.max(0, Math.min(1, seconds / total));
   const urgent = seconds <= 10;
   return (
     <div className="relative h-14 w-14 shrink-0" role="timer" aria-label={`${seconds} segundos para aceptar`}>
@@ -39,6 +38,8 @@ function Countdown({ seconds }: { seconds: number }) {
 /** Oferta de reparto: ganancia, distancias y botones para aceptar o rechazar dentro del tiempo límite. */
 export function OfferCard({ offer, onChange, busyElsewhere }: { offer: Offer; onChange: () => void; busyElsewhere?: boolean }) {
   const now = useNow();
+  const { ajustes } = useAjustes();
+  const windowSeconds = ajusteValor(ajustes, "segundos_oferta", 45);
   const [busy, setBusy] = useState<"accept" | "reject" | null>(null);
   const remaining = offer.vence_at ? Math.max(0, Math.ceil((new Date(offer.vence_at).getTime() - now) / 1000)) : null;
   const expired = offer.exclusivo && remaining === 0;
@@ -64,7 +65,7 @@ export function OfferCard({ offer, onChange, busyElsewhere }: { offer: Offer; on
   return (
     <article className={cn("overflow-hidden rounded-3xl border-2 bg-card shadow-pop", offer.exclusivo ? "border-primary" : "border-border")}>
       <div className="flex items-center gap-3 bg-primary/10 p-4">
-        {remaining !== null ? <Countdown seconds={remaining} /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted"><Package className="h-6 w-6" /></span>}
+        {remaining !== null ? <Countdown seconds={remaining} total={windowSeconds} /> : <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-muted"><Package className="h-6 w-6" /></span>}
         <div className="min-w-0 flex-1">
           <p className="text-xs font-bold uppercase text-primary">{offer.exclusivo ? "Oferta para vos" : "Disponible para todos"}</p>
           <p className="truncate text-lg font-extrabold">{offer.comercio_nombre}</p>

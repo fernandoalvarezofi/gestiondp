@@ -42,7 +42,11 @@ const rubrosSugeridos = ["Hamburguesas", "Pizza", "Sushi", "Café", "Helados", "
 
 const toNumber = (value: string) => (value === "" ? 0 : Number(value));
 
-export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<void> }) {
+export type SettingsSection = "general" | "horarios" | "entrega" | "operacion";
+
+/** Sin `section` muestra todo (alta de un comercio nuevo); con `section` muestra solo esa parte de la configuración. */
+export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<void>; section?: SettingsSection }) {
+  const show = (name: SettingsSection) => !section || section === name;
   const [values, setValues] = useState<StoreFormValues>(initial);
   const [saving, setSaving] = useState(false);
   const set = <K extends keyof StoreFormValues>(key: K, value: StoreFormValues[K]) => setValues((current) => ({ ...current, [key]: value }));
@@ -73,6 +77,7 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
 
   return (
     <form onSubmit={submit} className="space-y-8">
+      {show("general") && (<>
       <fieldset className="grid gap-4 sm:grid-cols-2">
         <legend className="mb-3 text-base font-extrabold">Datos del comercio</legend>
         <div className="space-y-1.5"><Label htmlFor="s-nombre">Nombre</Label><Input id="s-nombre" required maxLength={80} value={values.nombre} onChange={(event) => set("nombre", event.target.value)} /></div>
@@ -87,13 +92,13 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
         <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="s-direccion">Dirección</Label><Input id="s-direccion" required maxLength={200} value={values.direccion} onChange={(event) => set("direccion", event.target.value)} /></div>
         <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="s-descripcion">Descripción</Label><Textarea id="s-descripcion" maxLength={300} value={values.descripcion || ""} onChange={(event) => set("descripcion", event.target.value)} className="min-h-[72px]" placeholder="Qué vendés y qué te hace especial" /></div>
       </fieldset>
-
       <fieldset className="grid gap-6 sm:grid-cols-[1fr_auto]">
         <legend className="mb-3 text-base font-extrabold">Fotos</legend>
         <ImageUpload label="Foto de portada" folder="comercios" value={values.imagen_url} onChange={(url) => set("imagen_url", url)} className="max-w-md" />
         <ImageUpload label="Logo" folder="comercios" shape="round" value={values.logo_url} onChange={(url) => set("logo_url", url)} />
       </fieldset>
-
+      </>)}
+      {show("horarios") && (<>
       <fieldset>
         <legend className="mb-3 text-base font-extrabold">Horarios de atención</legend>
         <ScheduleEditor value={values.horarios} onChange={(horarios) => set("horarios", horarios)} />
@@ -101,16 +106,9 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
           <span><span className="block text-sm font-bold">Recibir pedidos</span><span className="block text-xs text-muted-foreground">Apagalo para pausar el local aunque esté en horario (por ejemplo, si se cortó la luz).</span></span>
           <Switch checked={values.esta_abierto} onCheckedChange={(checked) => set("esta_abierto", checked)} />
         </label>
-        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
-          <span><span className="block text-sm font-bold">Ofrecer retiro en el local</span><span className="block text-xs text-muted-foreground">El cliente puede pasar a buscar su pedido, sin costo de envío ni repartidor.</span></span>
-          <Switch checked={values.acepta_retiro} onCheckedChange={(checked) => set("acepta_retiro", checked)} />
-        </label>
-        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
-          <span><span className="block text-sm font-bold">Aceptar pedidos programados</span><span className="block text-xs text-muted-foreground">Los clientes pueden pedir para más tarde o para otro día, dentro de tus horarios.</span></span>
-          <Switch checked={values.acepta_programados} onCheckedChange={(checked) => set("acepta_programados", checked)} />
-        </label>
       </fieldset>
-
+      </>)}
+      {show("entrega") && (<>
       <fieldset id="store-location" className="space-y-3">
         <legend className="mb-3 text-base font-extrabold">Ubicación y zona de entrega</legend>
         <AddressSearch placeholder="Buscá la dirección del local" onPick={(found) => setValues((current) => ({ ...current, latitud: found.lat, longitud: found.lng, direccion: current.direccion || found.label }))} />
@@ -123,17 +121,33 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
         </div>
         <p className="text-xs text-muted-foreground">Ejemplo: con envío base de {money(values.costo_envio)} y {money(values.costo_por_km)} por km, a 3 km el envío cuesta {money(Math.round((values.costo_envio + values.costo_por_km * 3) / 10) * 10)}.</p>
       </fieldset>
-
       <fieldset className="grid gap-4 sm:grid-cols-3">
         <legend className="mb-3 text-base font-extrabold">Entrega</legend>
         <div className="space-y-1.5"><Label htmlFor="s-tmin">Tiempo mínimo (min)</Label><Input id="s-tmin" type="number" min={5} max={180} value={values.tiempo_min} onChange={(event) => set("tiempo_min", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-tmax">Tiempo máximo (min)</Label><Input id="s-tmax" type="number" min={5} max={240} value={values.tiempo_max} onChange={(event) => set("tiempo_max", toNumber(event.target.value))} /></div>
-        <div className="space-y-1.5"><Label htmlFor="s-prep">Preparación habitual (min)</Label><Input id="s-prep" type="number" min={5} max={120} value={values.tiempo_preparacion_min} onChange={(event) => set("tiempo_preparacion_min", Math.min(120, Math.max(5, toNumber(event.target.value))))} /><p className="text-xs text-muted-foreground">Es lo que se sugiere al aceptar un pedido.</p></div>
         <div className="space-y-1.5"><Label htmlFor="s-envio">Envío base ($)</Label><Input id="s-envio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-minimo">Pedido mínimo ($)</Label><Input id="s-minimo" type="number" min={0} value={values.pedido_minimo} onChange={(event) => set("pedido_minimo", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-gratis">Envío gratis desde ($)</Label><Input id="s-gratis" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>
         <div className="space-y-1.5"><Label htmlFor="s-promo">Promoción destacada</Label><Input id="s-promo" maxLength={40} value={values.promo_texto || ""} onChange={(event) => set("promo_texto", event.target.value)} placeholder="Ej.: 20% OFF en combos" /></div>
       </fieldset>
+      </>)}
+      {show("operacion") && (<>
+      <fieldset className="space-y-3">
+        <legend className="mb-3 text-base font-extrabold">Cómo recibís pedidos</legend>
+        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
+          <span><span className="block text-sm font-bold">Ofrecer retiro en el local</span><span className="block text-xs text-muted-foreground">El cliente puede pasar a buscar su pedido, sin costo de envío ni repartidor.</span></span>
+          <Switch checked={values.acepta_retiro} onCheckedChange={(checked) => set("acepta_retiro", checked)} />
+        </label>
+        <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
+          <span><span className="block text-sm font-bold">Aceptar pedidos programados</span><span className="block text-xs text-muted-foreground">Los clientes pueden pedir para más tarde o para otro día, dentro de tus horarios.</span></span>
+          <Switch checked={values.acepta_programados} onCheckedChange={(checked) => set("acepta_programados", checked)} />
+        </label>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1.5"><Label htmlFor="s-prep">Preparación habitual (min)</Label><Input id="s-prep" type="number" min={5} max={120} value={values.tiempo_preparacion_min} onChange={(event) => set("tiempo_preparacion_min", Math.min(120, Math.max(5, toNumber(event.target.value))))} /><p className="text-xs text-muted-foreground">Es lo que se sugiere al aceptar un pedido.</p></div>
+        </div>
+      </fieldset>
+      </>)}
 
       <Button type="submit" className="rounded-full" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{submitLabel}</Button>
     </form>
