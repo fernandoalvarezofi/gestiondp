@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Package, Pencil, Receipt, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -14,6 +14,8 @@ import { SettlementsManager } from "@/components/admin/SettlementsManager";
 import { StoreReviewDialog } from "@/components/admin/StoreReviewDialog";
 import { EnviosManager } from "@/components/admin/EnviosManager";
 import { CustomersManager } from "@/components/admin/CustomersManager";
+import { OperationsCenter } from "@/components/admin/OperationsCenter";
+import { AuditLog } from "@/components/admin/AuditLog";
 import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
@@ -156,6 +158,7 @@ export default function AdminDashboard() {
       groups={[
         { label: "Operación", items: [
           { to: "/app/admin", label: "Resumen", icon: LayoutDashboard, end: true },
+          { to: "/app/admin/operaciones", label: "Centro de operaciones", icon: Radio },
           { to: "/app/admin/pedidos", label: "Pedidos", icon: ClipboardList, badge: stats.active },
           { to: "/app/admin/envios", label: "Mensajería", icon: Package },
           { to: "/app/admin/reclamos", label: "Reclamos", icon: LifeBuoy, badge: openClaims },
@@ -172,6 +175,7 @@ export default function AdminDashboard() {
           { to: "/app/admin/pagos", label: "Pagos y reintegros", icon: Banknote, badge: refundCount },
         ] },
         { label: "Sistema", items: [
+          { to: "/app/admin/auditoria", label: "Auditoría", icon: ScrollText },
           { to: "/app/admin/configuracion", label: "Configuración", icon: Settings },
         ] },
       ]}
@@ -262,6 +266,8 @@ export default function AdminDashboard() {
           </div>
         </TabsContent>
 
+        <TabsContent value="operaciones" className="mt-0"><OperationsCenter /></TabsContent>
+        <TabsContent value="auditoria" className="mt-0"><AuditLog /></TabsContent>
         <TabsContent value="envios" className="mt-0"><EnviosManager /></TabsContent>
         <TabsContent value="clientes" className="mt-0"><CustomersManager /></TabsContent>
         <TabsContent value="reclamos" className="mt-0"><ClaimsManager onChange={setOpenClaims} /></TabsContent>

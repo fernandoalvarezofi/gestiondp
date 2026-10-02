@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
   if (envio_id) return await handleEnvio(supabase, config, envio_id, evento, estado_anterior);
   const { data: order } = await supabase
     .from("delivery_pedidos")
-    .select("id, comercio_id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, entrega_estimada, demora_extra_min, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
+    .select("id, comercio_id, asignado_por, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, entrega_estimada, demora_extra_min, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
     .eq("id", pedido_id)
     .maybeSingle();
   if (!order) return new Response("Pedido no encontrado", { status: 404 });
@@ -125,6 +125,10 @@ Deno.serve(async (req) => {
 
   if (evento === "asignado") {
     sends.push({ userIds: [order.cliente_id], message: { title: "Un repartidor tomó tu pedido", body: "Ya podés seguirlo en el mapa.", url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
+    // Si lo asignó administración, el repartidor no lo aceptó él mismo: hay que avisarle.
+    if (order.asignado_por && order.repartidor_id) {
+      sends.push({ userIds: [order.repartidor_id as string], message: { title: "Te asignaron un pedido 🛵", body: `${store?.nombre || "Un comercio"}: andá a retirarlo. Lo ves en tu panel.`, url: "/app/repartidor", tag: `asignacion-${order.id}` } });
+    }
   }
 
   // Falta de stock: el comercio propone un cambio y el cliente responde.
