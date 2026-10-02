@@ -29,7 +29,7 @@ export function useOrderEta(orderId: string | undefined, active: boolean) {
 }
 
 export type OrderEvent = {
-  evento: "creado" | "estado" | "asignado" | "liberado" | "llegada_comercio" | "llegada_cliente" | "demora" | "pago";
+  evento: "creado" | "estado" | "asignado" | "liberado" | "llegada_comercio" | "llegada_cliente" | "listo" | "demora" | "pago";
   estado_anterior: string | null;
   estado_nuevo: string | null;
   actor_rol: "cliente" | "comercio" | "repartidor" | "admin" | "sistema";

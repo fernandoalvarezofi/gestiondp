@@ -20,6 +20,7 @@ export function eventText(event: OrderEvent, retiro = false, staff = false): str
       return stateText[event.estado_nuevo || ""] || String(event.estado_nuevo);
     case "asignado": return `${detail.repartidor ? String(detail.repartidor) : "Un repartidor"} tomó ${staff ? "el" : "tu"} pedido`;
     case "liberado": return "El repartidor no pudo continuar; buscamos otro";
+    case "listo": return staff ? "El comercio terminó de prepararlo" : "Tu pedido está listo y esperando al repartidor";
     case "llegada_comercio": return "El repartidor llegó al comercio";
     case "llegada_cliente": return staff ? "El repartidor llegó a la dirección del cliente" : "El repartidor llegó a tu dirección";
     case "demora": return `El comercio avisó una demora de ${Number(detail.minutos || 0)} min`;

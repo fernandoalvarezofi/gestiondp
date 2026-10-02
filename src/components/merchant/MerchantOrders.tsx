@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { alarmReady, playChime, unlockAlarm } from "@/lib/alarm";
+import { KitchenDisplay } from "@/components/merchant/KitchenDisplay";
 import { PrintAlertsPanel } from "@/components/merchant/PrintAlertsPanel";
 import { AdjustmentsList, ItemStockButton } from "@/components/merchant/StockAdjust";
 import { printOrderTicket, readPrintSettings } from "@/lib/print";
@@ -94,7 +95,7 @@ function useOrderAlarm(pending: number) {
 }
 
 export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOrder[]; store: DeliveryStore; onChange: () => void }) {
-  const [view, setView] = useState<"tablero" | "historial">("tablero");
+  const [view, setView] = useState<"tablero" | "cocina" | "historial">("tablero");
   const now = useNow();
   const pending = orders.filter((order) => order.estado === "pendiente").length;
   const alarm = useOrderAlarm(pending);
@@ -102,8 +103,8 @@ export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOr
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        {(["tablero", "historial"] as const).map((item) => (
-          <button key={item} type="button" onClick={() => setView(item)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", view === item ? "border-foreground bg-foreground text-background" : "bg-card")}>{item === "tablero" ? "En curso" : "Historial"}</button>
+        {(["tablero", "cocina", "historial"] as const).map((item) => (
+          <button key={item} type="button" onClick={() => setView(item)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", view === item ? "border-foreground bg-foreground text-background" : "bg-card")}>{item === "tablero" ? "En curso" : item === "cocina" ? "Cocina" : "Historial"}</button>
         ))}
         <OrderTools />
         <button type="button" onClick={alarm.toggleMute} className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-sm font-bold" aria-pressed={alarm.muted}>
@@ -118,7 +119,7 @@ export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOr
         </button>
       )}
 
-      {view === "tablero" ? <Board orders={orders} store={store} now={now} onChange={onChange} /> : <History orders={orders} store={store} />}
+      {view === "tablero" ? <Board orders={orders} store={store} now={now} onChange={onChange} /> : view === "cocina" ? <KitchenDisplay storeId={store.id} orders={orders} onChange={onChange} /> : <History orders={orders} store={store} />}
     </div>
   );
 }
