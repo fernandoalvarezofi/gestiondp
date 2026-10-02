@@ -1,20 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
-import { CheckCircle2, Clock3, LifeBuoy, Loader2, XCircle } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { CheckCircle2, Clock3, LifeBuoy, Loader2, MessageCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { db, DeliveryOrder, errorMessage, formatDateTime, money, Reclamo, ReclamoTipo, reclamosDisponibles, reclamoTipoLabel } from "@/lib/delivery";
+import { isOpenTicket } from "@/lib/support";
 import { cn } from "@/lib/utils";
 
 const estadoReclamo = {
   abierto: { label: "En revisión", icon: Clock3, tone: "bg-warning/15 text-warning-foreground dark:text-warning" },
+  en_curso: { label: "En curso", icon: Clock3, tone: "bg-primary/10 text-primary" },
+  esperando_cliente: { label: "Te respondimos", icon: MessageCircle, tone: "bg-primary/10 text-primary" },
   resuelto: { label: "Resuelto", icon: CheckCircle2, tone: "bg-success/10 text-success" },
   rechazado: { label: "Respondido", icon: XCircle, tone: "bg-muted text-muted-foreground" },
 } as const;
 
 /** Ayuda del pedido: reclamos ya hechos con su respuesta y botón para iniciar uno nuevo. */
 export function OrderClaims({ order }: { order: DeliveryOrder }) {
+  const navigate = useNavigate();
   const [claims, setClaims] = useState<Reclamo[]>([]);
   const [open, setOpen] = useState(false);
   const [tipo, setTipo] = useState<ReclamoTipo | null>(null);
@@ -34,19 +39,20 @@ export function OrderClaims({ order }: { order: DeliveryOrder }) {
     return () => { db.removeChannel(channel); };
   }, [order.id, load]);
 
-  const available = reclamosDisponibles(order).filter((item) => !claims.some((claim) => claim.tipo === item && claim.estado === "abierto"));
+  const available = reclamosDisponibles(order).filter((item) => !claims.some((claim) => claim.tipo === item && isOpenTicket(claim.estado)));
   if (!available.length && !claims.length) return null;
 
   const submit = async () => {
     if (!tipo) return toast.error("Elegí qué pasó");
     if (detalle.trim().length < 10) return toast.error("Contanos un poco más (al menos 10 caracteres)");
     setSending(true);
-    const { error } = await db.rpc("delivery_crear_reclamo", { p_pedido: order.id, p_tipo: tipo, p_detalle: detalle.trim() });
+    const { data: ticketId, error } = await db.rpc("delivery_crear_reclamo", { p_pedido: order.id, p_tipo: tipo, p_detalle: detalle.trim() });
     setSending(false);
     if (error) return toast.error(errorMessage(error));
     toast.success("Recibimos tu reclamo. Te respondemos por acá.");
     setOpen(false); setTipo(null); setDetalle("");
     load();
+    if (typeof ticketId === "string") navigate(`/app/ayuda/${ticketId}`);
   };
 
   return (
@@ -67,7 +73,7 @@ export function OrderClaims({ order }: { order: DeliveryOrder }) {
                 <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold", status.tone)}><Icon className="h-3 w-3" />{status.label}</span>
               </div>
               <p className="mt-1 text-muted-foreground">{claim.detalle}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(claim.created_at)}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{formatDateTime(claim.created_at)} · <Link to={`/app/ayuda/${claim.id}`} className="font-bold text-primary hover:underline">Ver conversación</Link></p>
               {claim.resolucion && (
                 <div className="mt-2 rounded-xl bg-muted p-2.5">
                   <p className="text-xs font-bold">Respuesta de Woref</p>

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bike, FileText, ShieldCheck, Store } from "lucide-react";
+import { Bike, FileText, Headset, ShieldCheck, Store } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 
@@ -23,6 +23,7 @@ export function HelpSection() {
   ];
   return (
     <div className="space-y-8">
+      <Link to="/app/ayuda" className="flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 hover:bg-primary/10"><span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground"><Headset className="h-5 w-5" /></span><span><span className="block font-extrabold">Hablar con soporte</span><span className="block text-sm text-muted-foreground">Tus consultas y reclamos, con respuesta en la app</span></span></Link>
       <section>
         <h3 className="font-extrabold">Preguntas frecuentes</h3>
         <Accordion type="single" collapsible className="mt-1">

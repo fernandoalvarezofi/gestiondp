@@ -382,15 +382,21 @@ export const orderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,pr
 export type ChatCanal = "comercio" | "repartidor";
 export type ChatMessage = { id: string; pedido_id: string; canal: ChatCanal; autor_id: string; texto: string; leido_at: string | null; created_at: string };
 
-export type ReclamoTipo = "demora" | "faltante" | "mal_estado" | "equivocado" | "cobro" | "repartidor" | "otro";
+export type ReclamoTipo = "demora" | "faltante" | "mal_estado" | "equivocado" | "cobro" | "repartidor" | "otro" | "cuenta" | "pago" | "app" | "consulta" | "sugerencia";
+export type ReclamoEstado = "abierto" | "en_curso" | "esperando_cliente" | "resuelto" | "rechazado";
 export type Reclamo = {
   id: string;
-  pedido_id: string;
+  pedido_id: string | null;
   cliente_id: string;
-  comercio_id: string;
+  comercio_id: string | null;
   tipo: ReclamoTipo;
   detalle: string;
-  estado: "abierto" | "resuelto" | "rechazado";
+  estado: ReclamoEstado;
+  prioridad?: "normal" | "alta" | "urgente";
+  csat?: number | null;
+  credito_codigo?: string | null;
+  ultimo_mensaje_at?: string;
+  ultimo_autor?: string | null;
   resolucion?: string | null;
   reembolso_monto: number;
   resuelto_at?: string | null;
@@ -405,6 +411,11 @@ export const reclamoTipoLabel: Record<ReclamoTipo, string> = {
   cobro: "Problema con el cobro",
   repartidor: "Problema con el repartidor",
   otro: "Otro problema",
+  cuenta: "Mi cuenta",
+  pago: "Pagos y reintegros",
+  app: "Falla en la app",
+  consulta: "Consulta general",
+  sugerencia: "Sugerencia",
 };
 
 /** Qué reclamos se pueden hacer según el momento del pedido (el servidor valida lo mismo). */

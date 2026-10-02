@@ -8,7 +8,7 @@ import { PanelShell } from "@/components/panel/PanelShell";
 import { PlatformSettings } from "@/components/admin/PlatformSettings";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
-import { ClaimsManager } from "@/components/admin/ClaimsManager";
+import { SupportCenter } from "@/components/admin/SupportCenter";
 import { ZoneDemand } from "@/components/admin/ZoneDemand";
 import { SettlementsManager } from "@/components/admin/SettlementsManager";
 import { StoreReviewDialog } from "@/components/admin/StoreReviewDialog";
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
           { to: "/app/admin/operaciones", label: "Centro de operaciones", icon: Radio },
           { to: "/app/admin/pedidos", label: "Pedidos", icon: ClipboardList, badge: stats.active },
           { to: "/app/admin/envios", label: "Mensajería", icon: Package },
-          { to: "/app/admin/reclamos", label: "Reclamos", icon: LifeBuoy, badge: openClaims },
+          { to: "/app/admin/soporte", label: "Soporte", icon: LifeBuoy, badge: openClaims },
         ] },
         { label: "Red", items: [
           { to: "/app/admin/comercios", label: "Comercios", icon: Store, badge: pendingStores },
@@ -213,7 +213,7 @@ export default function AdminDashboard() {
               <h2 className="font-extrabold">Pendientes de revisar</h2>
               <ul className="mt-3 space-y-2 text-sm">
                 {[
-                  { label: "Reclamos abiertos", value: openClaims, to: "/app/admin/reclamos" },
+                  { label: "Tickets de soporte abiertos", value: openClaims, to: "/app/admin/soporte" },
                   { label: "Comercios por aprobar", value: pendingStores, to: "/app/admin/comercios" },
                   { label: "Repartidores por verificar", value: pendingCouriers, to: "/app/admin/repartidores" },
                   { label: "Reintegros por hacer", value: refundCount, to: "/app/admin/pagos" },
@@ -273,7 +273,7 @@ export default function AdminDashboard() {
         <TabsContent value="errores" className="mt-0"><ErrorsPanel /></TabsContent>
         <TabsContent value="envios" className="mt-0"><EnviosManager /></TabsContent>
         <TabsContent value="clientes" className="mt-0"><CustomersManager /></TabsContent>
-        <TabsContent value="reclamos" className="mt-0"><ClaimsManager onChange={setOpenClaims} /></TabsContent>
+        <TabsContent value="soporte" className="mt-0"><SupportCenter onChange={setOpenClaims} /></TabsContent>
 
         <TabsContent value="comercios" className="mt-0">
           {pendingBlockEl}
