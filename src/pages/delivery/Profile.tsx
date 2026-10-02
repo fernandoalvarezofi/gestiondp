@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Bell, ChevronLeft, ChevronRight, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, UserCircle } from "lucide-react";
+import { Bell, ChevronLeft, ChevronRight, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, Trophy, UserCircle } from "lucide-react";
 import { AddressesSection } from "@/components/account/AddressesSection";
 import { GeneralSection } from "@/components/account/GeneralSection";
 import { HelpSection } from "@/components/account/HelpSection";
@@ -23,6 +23,7 @@ const SECTIONS = [
 ] as const;
 
 const shortcuts = [
+  { to: "/app/club", label: "Woref Club", icon: Trophy },
   { to: "/app/pedidos", label: "Mis pedidos", icon: Receipt },
   { to: "/app/favoritos", label: "Favoritos", icon: Heart },
   { to: "/app/promociones", label: "Cupones", icon: Ticket },
@@ -67,7 +68,7 @@ export default function Profile() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[280px_1fr]">
         <nav className={cn("space-y-3", current && "max-lg:hidden")} aria-label="Secciones de mi cuenta">
-          <ul className="grid grid-cols-3 gap-2 lg:hidden">
+          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:hidden">
             {shortcuts.map(({ to, label, icon: Icon }) => (
               <li key={to}><Link to={to} className="flex flex-col items-center gap-1 rounded-2xl border bg-card p-3 text-center text-xs font-bold hover:bg-muted"><Icon className="h-5 w-5 text-primary" />{label}</Link></li>
             ))}

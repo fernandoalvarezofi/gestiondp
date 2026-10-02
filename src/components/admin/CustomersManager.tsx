@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,7 @@ export function CustomersManager() {
   const [reason, setReason] = useState("");
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [credit, setCredit] = useState("");
 
   const load = useCallback(async () => {
     const { data, error } = await db.rpc("delivery_admin_clientes", { p_buscar: term.trim() || null, p_solo: scope, p_limite: 100 });
@@ -35,6 +37,15 @@ export function CustomersManager() {
   }, [load]);
 
   const open = (customer: Customer) => { setEditing(customer); setReason(customer.motivo ?? ""); setNote(customer.nota ?? ""); };
+  const giveCredit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    const { data, error } = await db.rpc("delivery_admin_regalar_credito", { p_cliente: editing.id, p_monto: Number(credit), p_motivo: reason.trim(), p_dias: 30 });
+    setSaving(false);
+    if (error) return toast.error(errorMessage(error));
+    toast.success(`Crédito regalado: el cliente lo ve en su Club (${data})`);
+    setCredit("");
+  };
   const save = async (blocked: boolean) => {
     if (!editing) return;
     setSaving(true);
@@ -83,6 +94,14 @@ export function CustomersManager() {
           <Textarea id="cc-reason" value={reason} maxLength={300} onChange={(event) => setReason(event.target.value)} placeholder="Ej.: pedidos falsos repetidos" className="min-h-[64px] resize-none" />
           <label htmlFor="cc-note" className="text-sm font-bold">Nota interna (solo administración)</label>
           <Textarea id="cc-note" value={note} maxLength={1000} onChange={(event) => setNote(event.target.value)} className="min-h-[64px] resize-none" />
+          <div className="rounded-2xl border bg-muted/40 p-3">
+            <p className="text-sm font-bold">Regalar crédito (compensación)</p>
+            <p className="text-xs text-muted-foreground">Se le crea un cupón personal de descuento, válido 30 días. Usa el motivo de arriba.</p>
+            <div className="mt-2 flex gap-2">
+              <Input inputMode="numeric" value={credit} onChange={(event) => setCredit(event.target.value.replace(/\D/g, ""))} placeholder="Monto ($)" aria-label="Monto del crédito" className="h-9" />
+              <Button size="sm" variant="outline" className="rounded-full" disabled={saving || !credit || reason.trim().length < 5} onClick={giveCredit}>Regalar</Button>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             {editing?.bloqueado
               ? <Button className="rounded-full" disabled={saving} onClick={() => save(false)}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Reactivar cuenta</Button>

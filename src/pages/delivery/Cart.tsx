@@ -14,6 +14,7 @@ import { db, DeliveryProduct, DeliveryStore, errorMessage, img, isOpenNow, Metod
 import { formatKm, storeReach } from "@/lib/geo";
 import { startOnlinePayment } from "@/lib/payments";
 import { ajusteValor, useAjustes } from "@/hooks/useAjustes";
+import { couponLabel, useMyCoupons } from "@/hooks/useMyCoupons";
 import { cn } from "@/lib/utils";
 
 type CouponResult = { valido: boolean; codigo?: string; descuento?: number; envio_gratis?: boolean; mensaje: string };
@@ -46,6 +47,7 @@ export default function Cart() {
   const [payment, setPayment] = useState<MetodoPago>("efectivo");
   const [tip, setTip] = useState(500);
   const [couponInput, setCouponInput] = useState("");
+  const myCoupons = useMyCoupons();
   const [coupon, setCoupon] = useState<CouponResult | null>(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [addingAddress, setAddingAddress] = useState(false);
@@ -168,10 +170,11 @@ export default function Cart() {
     );
   }
 
-  const applyCoupon = async () => {
-    if (!couponInput.trim()) return;
+  const applyCoupon = async (code?: string) => {
+    const value = (code ?? couponInput).trim();
+    if (!value) return;
     setCheckingCoupon(true);
-    const { data, error } = await db.rpc("delivery_validar_cupon", { p_codigo: couponInput.trim(), p_comercio: store.id, p_subtotal: subtotal });
+    const { data, error } = await db.rpc("delivery_validar_cupon", { p_codigo: value, p_comercio: store.id, p_subtotal: subtotal });
     setCheckingCoupon(false);
     if (error) return toast.error(errorMessage(error));
     if (pickup && data?.valido && data.envio_gratis) return toast.error("Ese cupón es solo para pedidos con envío");
@@ -412,7 +415,17 @@ export default function Cart() {
             ) : (
               <div className="mt-3 flex gap-2">
                 <Input value={couponInput} onChange={(event) => setCouponInput(event.target.value.toUpperCase())} placeholder="Ej.: BIENVENIDA" maxLength={30} className="uppercase placeholder:normal-case" onKeyDown={(event) => event.key === "Enter" && applyCoupon()} />
-                <Button variant="outline" onClick={applyCoupon} disabled={checkingCoupon || !couponInput.trim()}>{checkingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}</Button>
+                <Button variant="outline" onClick={() => applyCoupon()} disabled={checkingCoupon || !couponInput.trim()}>{checkingCoupon ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}</Button>
+              </div>
+            )}
+            {!coupon?.valido && myCoupons.length > 0 && (
+              <div className="mt-3">
+                <p className="text-xs font-bold text-muted-foreground">Tus cupones del Club</p>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {myCoupons.map((item) => (
+                    <button key={item.codigo} type="button" onClick={() => applyCoupon(item.codigo)} disabled={checkingCoupon} className="rounded-full border border-primary/40 bg-primary/5 px-3 py-1 text-xs font-bold text-primary hover:bg-primary/10">{couponLabel(item)} · {item.codigo}</button>
+                  ))}
+                </div>
               </div>
             )}
             {coupon && !coupon.valido && <p className="mt-2 text-sm font-semibold text-destructive">{coupon.mensaje}</p>}

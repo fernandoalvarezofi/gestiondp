@@ -24,6 +24,7 @@ const OrderDetail = lazy(() => import("./pages/delivery/OrderDetail"));
 const Favorites = lazy(() => import("./pages/delivery/Favorites"));
 const Promotions = lazy(() => import("./pages/delivery/Promotions"));
 const Profile = lazy(() => import("./pages/delivery/Profile"));
+const Club = lazy(() => import("./pages/delivery/Club"));
 const Envio = lazy(() => import("./pages/delivery/Envio"));
 const EnvioDetail = lazy(() => import("./pages/delivery/EnvioDetail"));
 const MerchantLayout = lazy(() => import("./pages/delivery/merchant/MerchantLayout"));
@@ -86,6 +87,7 @@ const App = () => (
                       <Route path="carrito" element={<Cart />} />
                       <Route path="pedidos" element={<Orders />} />
                       <Route path="pedidos/:id" element={<OrderDetail />} />
+                      <Route path="club" element={<Club />} />
                       <Route path="enviar" element={<Envio />} />
                       <Route path="envios/:id" element={<EnvioDetail />} />
                       <Route path="favoritos" element={<Favorites />} />

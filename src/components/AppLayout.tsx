@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
-import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, UserCircle } from "lucide-react";
+import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
@@ -124,6 +124,7 @@ export function AppLayout() {
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => navigate("/app/perfil")}><UserCircle className="h-4 w-4" />Perfil y direcciones</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/app/club")}><Trophy className="h-4 w-4" />Woref Club</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/app/favoritos")}><Heart className="h-4 w-4" />Favoritos</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/app/promociones")}><ShoppingBag className="h-4 w-4" />Cupones y promociones</DropdownMenuItem>
                 <DropdownMenuSeparator />
