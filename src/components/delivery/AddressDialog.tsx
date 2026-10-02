@@ -16,7 +16,7 @@ export type SavedAddress = { id: string; alias: string; direccion: string; detal
 
 /** Lo que guarda el carrito como dirección elegida (incluye coordenadas para calcular zona y envío). */
 export const toCartAddress = (address: SavedAddress) => ({
-  id: address.id,
+  id: address.id || null,
   alias: address.alias,
   direccion: fullAddress(address),
   lat: address.latitud != null ? Number(address.latitud) : null,
@@ -31,7 +31,8 @@ export function useSavedAddresses() {
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
-    if (!user) return;
+    // Sin sesión no hay direcciones guardadas: se puede explorar eligiendo una ubicación, que no se guarda.
+    if (!user) { setAddresses([]); setLoading(false); return; }
     const { data } = await db.from("delivery_direcciones").select("*").eq("perfil_id", user.id).order("predeterminada", { ascending: false }).order("created_at");
     setAddresses(data || []);
     setLoading(false);
@@ -66,10 +67,14 @@ export function AddressForm({ onSaved, compact }: { onSaved?: (address: SavedAdd
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!user) return;
     if (!point) return toast.error("Buscá tu dirección y confirmá el pin en el mapa");
     if (direccion.trim().length < 4) return toast.error("Escribí la calle y la altura");
     if (!/\d|s\/n/i.test(direccion)) return toast.error("Agregá la altura de la calle (o \"s/n\" si no tiene) para que el repartidor te encuentre");
+    if (!user) {
+      // Visitante: usamos la dirección para mostrar los comercios que llegan; se guarda cuando inicie sesión.
+      onSaved?.({ id: "", alias: alias.trim() || "Casa", direccion: direccion.trim(), detalle: detalle.trim() || null, instrucciones: instrucciones.trim() || null, predeterminada: false, latitud: point.lat, longitud: point.lng });
+      return;
+    }
     setSaving(true);
     const { data, error } = await db.from("delivery_direcciones").insert({
       perfil_id: user.id,

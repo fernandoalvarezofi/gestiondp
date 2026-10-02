@@ -52,8 +52,8 @@ export default function Auth() {
   }
 
   if (session) {
-    const from = (location.state as { from?: string } | null)?.from;
-    return <Navigate to={from && from.startsWith("/app") ? from : "/app"} replace />;
+    const from = (location.state as { from?: string } | null)?.from ?? searchParams.get("next") ?? undefined;
+    return <Navigate to={from && from.startsWith("/app") && !from.startsWith("//") ? from : "/app"} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

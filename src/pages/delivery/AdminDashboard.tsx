@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -16,6 +16,7 @@ import { EnviosManager } from "@/components/admin/EnviosManager";
 import { CustomersManager } from "@/components/admin/CustomersManager";
 import { OperationsCenter } from "@/components/admin/OperationsCenter";
 import { AuditLog } from "@/components/admin/AuditLog";
+import { ErrorsPanel } from "@/components/admin/ErrorsPanel";
 import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
@@ -176,6 +177,7 @@ export default function AdminDashboard() {
         ] },
         { label: "Sistema", items: [
           { to: "/app/admin/auditoria", label: "Auditoría", icon: ScrollText },
+          { to: "/app/admin/errores", label: "Errores de la app", icon: Bug },
           { to: "/app/admin/configuracion", label: "Configuración", icon: Settings },
         ] },
       ]}
@@ -268,6 +270,7 @@ export default function AdminDashboard() {
 
         <TabsContent value="operaciones" className="mt-0"><OperationsCenter /></TabsContent>
         <TabsContent value="auditoria" className="mt-0"><AuditLog /></TabsContent>
+        <TabsContent value="errores" className="mt-0"><ErrorsPanel /></TabsContent>
         <TabsContent value="envios" className="mt-0"><EnviosManager /></TabsContent>
         <TabsContent value="clientes" className="mt-0"><CustomersManager /></TabsContent>
         <TabsContent value="reclamos" className="mt-0"><ClaimsManager onChange={setOpenClaims} /></TabsContent>

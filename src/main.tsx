@@ -1,5 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { initMonitoring } from "@/lib/monitor";
 import "./index.css";
 
 // PWA: never register service worker inside Lovable preview iframes
@@ -27,4 +29,5 @@ if (!isPreviewHost && !isInIframe && "serviceWorker" in navigator) {
   });
 }
 
-createRoot(document.getElementById("root")!).render(<App />);
+initMonitoring();
+createRoot(document.getElementById("root")!).render(<ErrorBoundary><App /></ErrorBoundary>);

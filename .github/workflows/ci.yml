@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verificar:
+    name: Tipos, estilo, pruebas y compilación
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Tipos (TypeScript)
+        run: npx tsc --noEmit -p tsconfig.app.json
+      - name: Estilo y errores (ESLint)
+        run: npm run lint -- --quiet
+      - name: Pruebas unitarias
+        run: npm test
+      - name: Compilación
+        run: npx vite build
+        env:
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci
+          VITE_SUPABASE_PROJECT_ID: ci
+      - name: Dependencias con vulnerabilidades conocidas
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true

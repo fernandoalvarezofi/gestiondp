@@ -17,9 +17,13 @@ export function fetchRoute(from: GeoPoint, to: GeoPoint, options: RouteOptions =
   const cached = memo.get(id);
   // Los precios (persist) se reutilizan toda la sesión; los tiempos en vivo, 30 segundos.
   if (cached && (options.persist || Date.now() - cached.at < 30000)) return cached.value;
-  const value = supabase.functions.invoke("ruta", { body: { desde: from, hasta: to, guardar: Boolean(options.persist), perfil: options.profile ?? "moto" } })
+  const value = supabase.auth.getSession()
+    // Sin sesión no se consulta (el servicio exige iniciar sesión): quien explora usa la estimación.
+    .then(({ data: auth }) => (auth.session ? supabase.functions.invoke("ruta", { body: { desde: from, hasta: to, guardar: Boolean(options.persist), perfil: options.profile ?? "moto" } }) : { data: null, error: new Error("sin sesión") }))
     .then(({ data, error }) => (error || !data || typeof data.km !== "number" ? null : (data as RouteInfo)))
-    .catch(() => null);
+    .catch(() => null)
+    // Un fallo (por ejemplo, sin sesión) no se recuerda: se vuelve a intentar la próxima vez.
+    .then((info) => { if (!info) memo.delete(id); return info; });
   memo.set(id, { at: Date.now(), value });
   if (memo.size > 200) memo.delete(memo.keys().next().value as string);
   return value;

@@ -191,6 +191,12 @@ export default function Cart() {
   const closedWithoutSchedule = !openNow && !canSchedule;
 
   const checkout = async () => {
+    if (!user) {
+      // El carrito se conserva: al volver de ingresar, el pedido sigue ahí.
+      toast.info("Ingresá o creá tu cuenta para confirmar el pedido. Tu carrito te espera.");
+      navigate("/auth", { state: { from: "/app/carrito" } });
+      return;
+    }
     if (!pickup && !address?.direccion) return toast.error("Elegí una dirección de entrega");
     if (phone.replace(/\D/g, "").length < 8) return toast.error("Dejanos un teléfono de contacto para coordinar la entrega");
     if (summary.missing > 0) return toast.error(`Te faltan ${money(summary.missing)} para el pedido mínimo`);
@@ -453,7 +459,7 @@ export default function Cart() {
             {summary.needsPin && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Esta dirección no tiene ubicación en el mapa. Agregá una nueva dirección para calcular el envío.</p>}
             {!pickup && !summary.needsPin && !summary.reach.inZone && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección, retirá en el local o pedí en un comercio más cercano.</p>}
             <Button className="mt-4 h-12 w-full rounded-full text-base font-bold max-lg:hidden" onClick={checkout} disabled={submitDisabled}>
-              {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
+              {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
             </Button>
             <p className="mt-2 text-center text-xs text-muted-foreground">{payment === "mercadopago" ? "Te llevamos a Mercado Pago para pagar de forma segura." : "El total final lo calcula el sistema al confirmar."}</p>
           </section>
@@ -463,7 +469,7 @@ export default function Cart() {
       {/* Botón de confirmar fijo abajo en el celular */}
       <div className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t bg-card px-4 pb-3 pt-3 shadow-pop lg:hidden">
         <Button className="h-12 w-full rounded-full text-base font-extrabold" onClick={checkout} disabled={submitDisabled}>
-          {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
+          {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
         </Button>
       </div>
     </div>

@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useState } from "react";
-import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, To, useLocation, useNavigate } from "react-router-dom";
 import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
@@ -36,10 +36,10 @@ export function AppLayout() {
   }, [address, addresses, setAddress]);
   // Primera vez sin ninguna dirección: pedimos la ubicación apenas entra (una sola vez por sesión).
   useEffect(() => {
-    if (!session || addressesLoading || address || addresses.length || gateAsked) return;
+    if (loading || addressesLoading || address || addresses.length || gateAsked) return;
     setGateAsked(true);
     setGateOpen(true);
-  }, [session, addressesLoading, address, addresses.length, gateAsked]);
+  }, [loading, addressesLoading, address, addresses.length, gateAsked]);
   const roles = useDeliveryRoles();
   const location = useLocation();
   const navigate = useNavigate();
@@ -52,7 +52,12 @@ export function AppLayout() {
     );
   }
 
-  if (!session) return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
+  // Como en las apps de delivery: se puede explorar sin cuenta (inicio, comercios, búsqueda, carrito) y se pide ingresar al confirmar un pedido o entrar a lo personal.
+  const publicRoute = /^\/app(\/(buscar|promociones|carrito|categoria\/[^/]+|tienda\/[^/]+))?\/?$/.test(location.pathname);
+  if (!session && !publicRoute) return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
+  const guest = !session;
+  const loginTarget: To = { pathname: "/auth", search: `?next=${encodeURIComponent(location.pathname)}` };
+  const navItems: { to: To; label: string; icon: typeof Home; end?: boolean }[] = guest ? [bottomNav[0], bottomNav[1], { to: loginTarget, label: "Ingresar", icon: UserCircle }] : bottomNav;
 
   const inPanel = /^\/app\/(comercio|repartidor|admin)/.test(location.pathname);
   const isHome = location.pathname === "/app";
@@ -116,6 +121,12 @@ export function AppLayout() {
           </NavLink>
 
           <nav className="ml-auto hidden items-center gap-1 md:flex">
+            {guest ? (
+              <>
+                <Button asChild variant="ghost" className="rounded-full font-bold"><NavLink to={loginTarget}>Ingresar</NavLink></Button>
+                <Button asChild variant="outline" className="rounded-full font-bold"><NavLink to={{ pathname: "/auth", search: `?registro=1&next=${encodeURIComponent(location.pathname)}` }}>Crear cuenta</NavLink></Button>
+              </>
+            ) : (<>
             <Button asChild variant="ghost" className="rounded-full font-bold"><NavLink to="/app/pedidos"><Receipt className="h-4 w-4" />Pedidos</NavLink></Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -136,6 +147,7 @@ export function AppLayout() {
                 <DropdownMenuItem onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            </>)}
             <Button asChild className="rounded-full font-bold">
               <NavLink to="/app/carrito"><ShoppingBag className="h-4 w-4" />{itemCount ? `${itemCount} · ${money(subtotal)}` : "Carrito"}</NavLink>
             </Button>
@@ -164,9 +176,9 @@ export function AppLayout() {
         </div>
       )}
 
-      {!hideNav && <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 grid grid-cols-5 border-t bg-card/95 backdrop-blur-xl md:hidden">
-        {bottomNav.map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[62px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
+      {!hideNav && <nav className={cn("pb-safe fixed inset-x-0 bottom-0 z-50 grid border-t bg-card/95 backdrop-blur-xl md:hidden", guest ? "grid-cols-3" : "grid-cols-5")}>
+        {navItems.map(({ to, label, icon: Icon, end }) => (
+          <NavLink key={label} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[62px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
             {({ isActive }) => (<>
               <span className={cn("flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary/10")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} /></span>
               {label}

@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://woref.com/sitemap.xml
+Sitemap: https://woref.vercel.app/sitemap.xml

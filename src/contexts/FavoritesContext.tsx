@@ -23,7 +23,10 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   const toggle = useCallback(async (storeId: string) => {
-    if (!user) return;
+    if (!user) {
+      toast("Ingresá para guardar tus favoritos", { action: { label: "Ingresar", onClick: () => window.location.assign(`/auth?next=${encodeURIComponent(window.location.pathname)}`) } });
+      return;
+    }
     const wasFavorite = ids.has(storeId);
     setIds((current) => {
       const next = new Set(current);
