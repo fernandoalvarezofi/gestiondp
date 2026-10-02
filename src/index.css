@@ -94,10 +94,15 @@
     @apply bg-background text-foreground font-sans;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "cv11", "ss03";
   }
 
+  /* Cifras de ancho fijo: los precios se alinean y se leen mejor en listas largas. */
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+
   h1, h2, h3, h4 {
-    font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+    @apply font-display;
     font-weight: 800;
     letter-spacing: -0.012em;
   }

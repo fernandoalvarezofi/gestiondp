@@ -1,7 +1,8 @@
 import { FormEvent, useState } from "react";
-import { Bike, Loader2, PowerOff, ShieldCheck } from "lucide-react";
+import { Bike, Loader2, Package, PowerOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ActiveDelivery } from "@/components/courier/ActiveDelivery";
+import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
 import { CourierWallet } from "@/components/courier/CourierWallet";
 import { OfferCard } from "@/components/courier/OfferCard";
 import { EmptyState } from "@/components/delivery/Common";
@@ -12,27 +13,37 @@ import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { useCourier } from "./CourierLayout";
 
 export function CourierOrdersPage() {
-  const { current, connected, offers, position, sharingStatus, refreshAll } = useCourier();
+  const { current, currentEnvio, connected, offers, envioOffers, position, sharingStatus, refreshAll } = useCourier();
   if (current) return <ActiveDelivery order={current} position={position} sharing={sharingStatus} onChange={refreshAll} />;
-  if (!connected) return <EmptyState icon={<PowerOff className="h-7 w-7" />} title="Estás desconectado" text="Tocá “Conectarme” arriba para recibir ofertas de pedidos." />;
-  if (!offers.length) return <EmptyState icon={<Bike className="h-7 w-7" />} title="Buscando pedidos para vos" text="Quedate conectado: apenas haya uno cerca, te suena el aviso y tenés 45 segundos para aceptarlo." />;
-  return <div className="mx-auto max-w-2xl space-y-4">{offers.map((offer) => <OfferCard key={offer.pedido_id} offer={offer} onChange={refreshAll} />)}</div>;
+  if (currentEnvio) return <ActiveEnvio envio={currentEnvio} position={position} sharing={sharingStatus} onChange={refreshAll} />;
+  if (!connected) return <EmptyState icon={<PowerOff className="h-7 w-7" />} title="Estás desconectado" text="Tocá “Conectarme” arriba para recibir ofertas de pedidos y envíos." />;
+  if (!offers.length && !envioOffers.length) return <EmptyState icon={<Bike className="h-7 w-7" />} title="Buscando pedidos para vos" text="Quedate conectado: apenas haya un pedido o un envío de paquete cerca, te suena el aviso." />;
+  return (
+    <div className="mx-auto max-w-2xl space-y-4">
+      {offers.map((offer) => <OfferCard key={offer.pedido_id} offer={offer} onChange={refreshAll} />)}
+      {envioOffers.map((offer) => <EnvioOfferCard key={offer.id} offer={offer} onChange={refreshAll} />)}
+    </div>
+  );
 }
 
 export function CourierEarningsPage() {
-  const { delivered } = useCourier();
-  return <CourierWallet refreshKey={delivered.length} />;
+  const { delivered, deliveredEnvios } = useCourier();
+  return <CourierWallet refreshKey={delivered.length + deliveredEnvios.length} />;
 }
 
 export function CourierHistoryPage() {
-  const { delivered } = useCourier();
-  if (!delivered.length) return <EmptyState title="Todavía no hiciste entregas" text="Tus viajes y ganancias aparecen acá." />;
+  const { delivered, deliveredEnvios } = useCourier();
+  const rows = [
+    ...delivered.map((order) => ({ id: order.id, at: order.entregado_at || order.created_at, title: order.comercio?.nombre ?? "Pedido", detail: order.direccion_entrega, gain: order.ganancia_repartidor ?? Number(order.costo_envio) + Number(order.propina), parcel: false })),
+    ...deliveredEnvios.map((envio) => ({ id: envio.id, at: envio.entregado_at || envio.created_at, title: `Envío: ${envio.descripcion}`, detail: envio.destino_direccion, gain: Number(envio.ganancia_repartidor), parcel: true })),
+  ].sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+  if (!rows.length) return <EmptyState title="Todavía no hiciste entregas" text="Tus viajes y ganancias aparecen acá." />;
   return (
     <ul className="divide-y overflow-hidden rounded-3xl border bg-card">
-      {delivered.slice(0, 50).map((order) => (
-        <li key={order.id} className="flex items-center justify-between gap-3 p-3 text-sm">
-          <span className="min-w-0"><span className="block truncate font-bold">{order.comercio?.nombre}</span><span className="block truncate text-muted-foreground">{formatDateTime(order.entregado_at || order.created_at)} · {order.direccion_entrega}</span></span>
-          <span className="shrink-0 font-bold text-success">+{money(order.ganancia_repartidor ?? Number(order.costo_envio) + Number(order.propina))}</span>
+      {rows.slice(0, 50).map((row) => (
+        <li key={row.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+          <span className="min-w-0"><span className="block truncate font-bold">{row.parcel && <Package className="mr-1 inline h-3.5 w-3.5 text-amber-600" />}{row.title}</span><span className="block truncate text-muted-foreground">{formatDateTime(row.at)} · {row.detail}</span></span>
+          <span className="shrink-0 font-bold text-success">+{money(row.gain)}</span>
         </li>
       ))}
     </ul>

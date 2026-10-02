@@ -3,7 +3,7 @@
 import webpush from "npm:web-push@3.6.7";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
 
-type Payload = { pedido_id: string; evento: "nuevo" | "estado" | "asignado" | "liberado" | "llegada" | "demora" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
+type Payload = { pedido_id?: string; envio_id?: string; evento: "nuevo" | "estado" | "asignado" | "liberado" | "llegada" | "demora" | "mensaje" | "reclamo_nuevo" | "reclamo_resuelto" | "envio_nuevo" | "envio_estado"; estado_anterior?: string | null; mensaje_id?: string; reclamo_id?: string };
 
 const tipoReclamo: Record<string, string> = { demora: "Demora", faltante: "Producto faltante", mal_estado: "Producto en mal estado", equivocado: "Pedido equivocado", cobro: "Problema con el cobro", repartidor: "Problema con el repartidor", otro: "Otro" };
 type Message = { title: string; body: string; url: string; tag: string };
@@ -31,7 +31,8 @@ Deno.serve(async (req) => {
     return new Response("No autorizado", { status: 401 });
   }
 
-  const { pedido_id, evento, estado_anterior, mensaje_id, reclamo_id } = (await req.json()) as Payload;
+  const { pedido_id, envio_id, evento, estado_anterior, mensaje_id, reclamo_id } = (await req.json()) as Payload;
+  if (envio_id) return await handleEnvio(supabase, config, envio_id, evento, estado_anterior);
   const { data: order } = await supabase
     .from("delivery_pedidos")
     .select("id, comercio_id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, entrega_estimada, demora_extra_min, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
@@ -126,6 +127,12 @@ Deno.serve(async (req) => {
     sends.push({ userIds: [order.cliente_id], message: { title: "Un repartidor tomó tu pedido", body: "Ya podés seguirlo en el mapa.", url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
   }
 
+  return await dispatch(supabase, config, sends);
+});
+
+type Sends = { userIds: string[]; message: Message }[];
+
+async function dispatch(supabase: ReturnType<typeof createClient>, config: Record<string, string>, sends: Sends) {
   if (!sends.length) return Response.json({ enviados: 0 });
 
   webpush.setVapidDetails(config.vapid_subject, config.vapid_public_key, config.vapid_private_key);
@@ -153,4 +160,38 @@ Deno.serve(async (req) => {
 
   if (expired.length) await supabase.from("delivery_push_suscripciones").delete().in("id", expired);
   return Response.json({ enviados: sent, vencidas: expired.length });
-});
+}
+
+const envioCliente: Record<string, { title: string; body: string } | undefined> = {
+  asignado: { title: "Un repartidor tomó tu envío", body: "Ya va camino a retirar el paquete." },
+  retirado: { title: "Tu paquete va en camino 📦", body: "Tené a mano el código de entrega para el destinatario." },
+  entregado: { title: "¡Paquete entregado!", body: "Tu envío llegó a destino." },
+  cancelado: { title: "Tu envío fue cancelado", body: "No se te cobró nada." },
+};
+
+/** Avisos de la mensajería: ofertas a repartidores libres y estados al cliente. */
+async function handleEnvio(supabase: ReturnType<typeof createClient>, config: Record<string, string>, envioId: string, evento: string, estadoAnterior?: string | null) {
+  const { data: envio } = await supabase.from("delivery_envios").select("id, estado, cliente_id, repartidor_id, ganancia_repartidor, distancia_km, motivo_cancelacion, tamano").eq("id", envioId).maybeSingle();
+  if (!envio) return new Response("Envío no encontrado", { status: 404 });
+  const sends: Sends = [];
+
+  if (evento === "envio_nuevo" && envio.estado === "buscando") {
+    const { data: couriers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("activo", true).eq("verificado", true).eq("disponible", true).limit(100);
+    const free: string[] = [];
+    for (const courier of couriers || []) {
+      const { data: busy } = await supabase.rpc("delivery_repartidor_ocupado", { p_repartidor: courier.perfil_id });
+      if (!busy) free.push(courier.perfil_id as string);
+    }
+    if (free.length) sends.push({ userIds: free, message: { title: "Nuevo envío de paquete 📦", body: `${money(Number(envio.ganancia_repartidor))} de ganancia · ${Number(envio.distancia_km).toFixed(1)} km. El primero que lo acepta se lo queda.`, url: "/app/repartidor", tag: `envio-${envio.id}` } });
+  }
+
+  if (evento === "envio_estado") {
+    const copy = envioCliente[envio.estado as string];
+    if (copy) sends.push({ userIds: [envio.cliente_id as string], message: { ...copy, body: envio.estado === "cancelado" && envio.motivo_cancelacion ? envio.motivo_cancelacion as string : copy.body, url: `/app/envios/${envio.id}`, tag: `envio-${envio.id}` } });
+    // Si el cliente cancela con un repartidor asignado, el repartidor se entera.
+    if (envio.estado === "cancelado" && estadoAnterior === "asignado" && envio.repartidor_id) {
+      sends.push({ userIds: [envio.repartidor_id as string], message: { title: "Envío cancelado", body: "El cliente canceló el envío antes de que lo retires.", url: "/app/repartidor", tag: `envio-${envio.id}` } });
+    }
+  }
+  return await dispatch(supabase, config, sends);
+}

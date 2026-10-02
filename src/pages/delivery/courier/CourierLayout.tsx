@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useOutletContext } from "react-router-dom";
 import { Bike, ClipboardList, Loader2, Power, PowerOff, UserCircle, Wallet, History } from "lucide-react";
 import { toast } from "sonner";
@@ -10,8 +10,9 @@ import { PanelShell } from "@/components/panel/PanelShell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useShareCourierLocation } from "@/hooks/useCourierLocation";
-import { unlockAlarm } from "@/lib/alarm";
+import { playChime, unlockAlarm } from "@/lib/alarm";
 import { db, DeliveryOrder, errorMessage } from "@/lib/delivery";
+import type { Envio, EnvioOferta } from "@/lib/envios";
 import type { GeoPoint } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 
@@ -21,8 +22,11 @@ export type CourierContext = {
   courier: Courier;
   connected: boolean;
   current: DeliveryOrder | null;
+  currentEnvio: Envio | null;
   delivered: DeliveryOrder[];
+  deliveredEnvios: Envio[];
   offers: Offer[];
+  envioOffers: EnvioOferta[];
   position: GeoPoint | null;
   sharingStatus: string;
   refreshAll: () => void;
@@ -36,6 +40,8 @@ export default function CourierLayout() {
   const [courier, setCourier] = useState<Courier | null>(null);
   const [loading, setLoading] = useState(true);
   const [mine, setMine] = useState<DeliveryOrder[]>([]);
+  const [myEnvios, setMyEnvios] = useState<Envio[]>([]);
+  const [envioOffers, setEnvioOffers] = useState<EnvioOferta[]>([]);
   const location = useLocation();
 
   const reloadCourier = useCallback(async () => {
@@ -51,24 +57,56 @@ export default function CourierLayout() {
     setMine(data || []);
   }, [user]);
 
+  const loadEnvios = useCallback(async () => {
+    if (!user) return;
+    const { data } = await db.from("delivery_envios").select("*").eq("repartidor_id", user.id).order("created_at", { ascending: false }).limit(100);
+    setMyEnvios(data || []);
+  }, [user]);
+
   useEffect(() => { reloadCourier(); }, [reloadCourier]);
 
   const approved = Boolean(courier?.activo && courier?.verificado);
   const connected = approved && Boolean(courier?.disponible);
   const current = mine.find((order) => ["confirmado", "preparando", "en_camino"].includes(order.estado)) || null;
   const sharing = useShareCourierLocation(connected);
-  const { offers, refresh } = useOffers(connected && !current);
+  const hasEnvio = Boolean(myEnvios.find((envio) => envio.estado === "asignado" || envio.estado === "retirado"));
+  const { offers, refresh } = useOffers(connected && !current && !hasEnvio);
+
+  // Ofertas de envíos de paquetes: el servidor muestra solo las cercanas y mientras no estés ocupado.
+  const refreshEnvioOffers = useCallback(async () => {
+    const { data, error } = await db.rpc("delivery_envios_disponibles");
+    if (!error) setEnvioOffers((data || []) as EnvioOferta[]);
+  }, []);
+  const knownEnvios = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!connected || current || hasEnvio) { setEnvioOffers([]); knownEnvios.current = null; return; }
+    const poll = async () => {
+      const { data, error } = await db.rpc("delivery_envios_disponibles");
+      if (error) return;
+      const list = (data || []) as EnvioOferta[];
+      if (knownEnvios.current && list.some((offer) => !knownEnvios.current!.has(offer.id))) playChime();
+      knownEnvios.current = new Set(list.map((offer) => offer.id));
+      setEnvioOffers(list);
+    };
+    poll();
+    const timer = window.setInterval(poll, 6000);
+    return () => window.clearInterval(timer);
+  }, [connected, current, hasEnvio]);
 
   useEffect(() => {
     if (!approved) return;
     loadOrders();
+    loadEnvios();
     const channel = db.channel(`repartidor-${user?.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos", filter: `repartidor_id=eq.${user?.id}` }, loadOrders)
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_envios", filter: `repartidor_id=eq.${user?.id}` }, loadEnvios)
       .subscribe();
     return () => { db.removeChannel(channel); };
-  }, [approved, user?.id, loadOrders]);
+  }, [approved, user?.id, loadOrders, loadEnvios]);
 
   const delivered = useMemo(() => mine.filter((order) => order.estado === "entregado"), [mine]);
+  const currentEnvio = myEnvios.find((envio) => envio.estado === "asignado" || envio.estado === "retirado") || null;
+  const deliveredEnvios = useMemo(() => myEnvios.filter((envio) => envio.estado === "entregado"), [myEnvios]);
 
   const toggleConnection = async () => {
     if (!courier) return;
@@ -84,8 +122,9 @@ export default function CourierLayout() {
   if (!courier || !courier.verificado) return <CourierApplication courier={courier} onDone={reloadCourier} />;
   if (!courier.activo) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<Bike className="h-7 w-7" />} title="Tu cuenta de repartidor está pausada" text="Comunicate con soporte para reactivarla." /></div>;
 
-  const refreshAll = () => { loadOrders(); refresh(); };
-  const context: CourierContext = { courier, connected, current, delivered, offers, position: sharing.position, sharingStatus: sharing.status, refreshAll, reloadCourier };
+  const refreshAll = () => { loadOrders(); loadEnvios(); refresh(); refreshEnvioOffers(); };
+  const busyNow = Boolean(current) || hasEnvio;
+  const context: CourierContext = { courier, connected, current, currentEnvio, delivered, deliveredEnvios, offers, envioOffers, position: sharing.position, sharingStatus: sharing.status, refreshAll, reloadCourier };
 
   return (
     <PanelShell
@@ -98,13 +137,13 @@ export default function CourierLayout() {
         </div>
       }
       groups={[{ items: [
-        { to: "/app/repartidor", label: "Pedidos", icon: ClipboardList, end: true, badge: current ? undefined : offers.length },
+        { to: "/app/repartidor", label: "Pedidos", icon: ClipboardList, end: true, badge: busyNow ? undefined : offers.length + envioOffers.length },
         { to: "/app/repartidor/ganancias", label: "Ganancias", icon: Wallet },
         { to: "/app/repartidor/historial", label: "Historial", icon: History },
         { to: "/app/repartidor/perfil", label: "Mi perfil", icon: UserCircle },
       ] }]}
       actions={
-        <Button onClick={toggleConnection} size="sm" className={cn("h-9 rounded-full px-4 font-extrabold", connected ? "bg-success text-white hover:bg-success/90" : "")} variant={connected ? "default" : "outline"} disabled={Boolean(current) && connected} aria-pressed={connected}>
+        <Button onClick={toggleConnection} size="sm" className={cn("h-9 rounded-full px-4 font-extrabold", connected ? "bg-success text-white hover:bg-success/90" : "")} variant={connected ? "default" : "outline"} disabled={busyNow && connected} aria-pressed={connected}>
           {connected ? <><Power className="h-4 w-4" />Conectado</> : <><PowerOff className="h-4 w-4" />Conectarme</>}
         </Button>
       }

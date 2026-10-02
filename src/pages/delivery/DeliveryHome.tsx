@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Search, SlidersHorizontal, Star } from "lucide-react";
+import { ChevronRight, Package, Search, SlidersHorizontal, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/delivery/Common";
 import { OutOfZone } from "@/components/delivery/OutOfZone";
@@ -151,6 +151,10 @@ export default function DeliveryHome() {
               <span className="text-[12px] font-bold leading-tight md:text-[13px]">{label}</span>
             </Link>
           ))}
+          <Link to="/app/enviar" className="group flex flex-col items-center gap-1.5 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 dark:bg-amber-500/15 dark:text-amber-300 md:h-16 md:w-16"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
+            <span className="text-[12px] font-bold leading-tight md:text-[13px]">Envíos</span>
+          </Link>
         </section>
       </div>
 

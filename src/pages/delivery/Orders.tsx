@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Receipt, RotateCcw } from "lucide-react";
+import { ChevronRight, Package, Receipt, RotateCcw } from "lucide-react";
+import { Envio, envioActivo, envioEstadoLabel } from "@/lib/envios";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
@@ -11,19 +12,25 @@ import { db, DeliveryOrder, formatDateTime, img, money, orderSelect, pedidoActiv
 export default function Orders() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
+  const [envios, setEnvios] = useState<Envio[]>([]);
   const [loading, setLoading] = useState(true);
   const reorder = useReorder();
 
   useEffect(() => {
     if (!user) return;
     const load = async () => {
-      const { data } = await db.from("delivery_pedidos").select(orderSelect).eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(50);
+      const [{ data }, { data: parcels }] = await Promise.all([
+        db.from("delivery_pedidos").select(orderSelect).eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(50),
+        db.from("delivery_envios").select("*").eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(30),
+      ]);
       setOrders(data || []);
+      setEnvios(parcels || []);
       setLoading(false);
     };
     load();
     const channel = db.channel(`pedidos-cliente-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos", filter: `cliente_id=eq.${user.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_envios", filter: `cliente_id=eq.${user.id}` }, load)
       .subscribe();
     return () => { db.removeChannel(channel); };
   }, [user]);
@@ -36,10 +43,28 @@ export default function Orders() {
       <PageHeader eyebrow="Seguimiento" title="Mis pedidos" />
       {loading ? (
         <div className="mt-6 space-y-3">{[0, 1, 2].map((key) => <div key={key} className="h-28 animate-pulse rounded-3xl bg-muted" />)}</div>
-      ) : orders.length === 0 ? (
+      ) : orders.length === 0 && envios.length === 0 ? (
         <EmptyState className="mt-6" icon={<Receipt className="h-7 w-7" />} title="Todavía no hiciste pedidos" text="Cuando confirmes uno, vas a poder seguirlo desde acá en tiempo real." action={<Button asChild className="rounded-full"><Link to="/app">Explorar comercios</Link></Button>} />
       ) : (
         <>
+          {envios.length > 0 && (
+            <section className="mt-6">
+              <h2 className="flex items-center gap-2 text-lg font-extrabold"><Package className="h-5 w-5 text-primary" />Envíos de paquetes</h2>
+              <div className="mt-3 space-y-3">
+                {envios.map((envio) => (
+                  <Link key={envio.id} to={`/app/envios/${envio.id}`} className={`flex items-center gap-3 rounded-3xl border bg-card p-3 transition-shadow hover:shadow-soft sm:p-4 ${envioActivo(envio.estado) ? "border-primary/40" : ""}`}>
+                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300"><Package className="h-6 w-6" /></span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-extrabold">{envio.descripcion}</p>
+                      <p className="truncate text-sm text-muted-foreground">{envio.origen_direccion.split(",")[0]} → {envio.destino_direccion.split(",")[0]}</p>
+                      <p className="mt-0.5 text-xs font-semibold text-muted-foreground">{formatDateTime(envio.created_at)} · <span className="text-foreground">{money(envio.total)}</span> · <span className={envioActivo(envio.estado) ? "text-primary" : ""}>{envioEstadoLabel[envio.estado]}</span></p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
           {active.length > 0 && (
             <section className="mt-6">
               <h2 className="text-lg font-extrabold">En curso</h2>
