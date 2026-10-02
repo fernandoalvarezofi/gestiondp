@@ -11,6 +11,7 @@ import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
 import { MapView } from "@/components/maps/LazyMaps";
 import type { MapMarker } from "@/components/maps/DeliveryMap";
 import { useShareCourierLocation } from "@/hooks/useCourierLocation";
+import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { formatKm } from "@/lib/geo";
 import { db, DeliveryOrder, errorMessage, formatDateTime, formatTime, metodoPagoLabel, money, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
@@ -99,6 +100,7 @@ export default function CourierDashboard() {
         }
       />
 
+      <PushPrompt className="mt-6" title="Enterate al instante de pedidos nuevos" text="Activá los avisos y te notificamos cuando haya pedidos para retirar cerca tuyo." />
       <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard label="Ganancias de hoy" value={money(todayEarnings.reduce((total, order) => total + earning(order), 0))} icon={<Wallet className="h-4 w-4" />} hint="Envíos + propinas" />
         <StatCard label="Entregas de hoy" value={todayEarnings.length} icon={<PackageCheck className="h-4 w-4" />} />

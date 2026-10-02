@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ExternalLink, Loader2, Store } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader } from "@/components/delivery/Common";
+import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { MerchantMenu } from "@/components/merchant/MerchantMenu";
 import { MerchantOrders, NewOrderAlert } from "@/components/merchant/MerchantOrders";
@@ -157,6 +158,7 @@ export default function MerchantDashboard() {
       {store.aprobado === false && store.motivo_rechazo && <p className="mt-4 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive"><span className="font-bold">Tu comercio no fue aprobado:</span> {store.motivo_rechazo}. Corregilo en Configuración y escribinos para revisarlo de nuevo.</p>}
       {store.activo === false && <p className="mt-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Tu comercio fue pausado por administración y no aparece para los clientes. Escribinos para revisarlo.</p>}
       <div className="mt-4"><NewOrderAlert count={pendingCount} /></div>
+      <PushPrompt className="mt-4" title="No te pierdas ningún pedido" text="Activá los avisos y te llega una notificación apenas entra un pedido, aunque tengas la app cerrada." />
 
       <Tabs value={tab} onValueChange={setTab} className="mt-6">
         <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">

@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "next-themes";
-import { Bike, ChevronRight, Heart, HelpCircle, KeyRound, LogOut, MapPin, Moon, Receipt, ShieldCheck, Store, Ticket, UserCircle } from "lucide-react";
+import { BellRing, Bike, ChevronRight, Heart, HelpCircle, KeyRound, LogOut, MapPin, Moon, Receipt, ShieldCheck, Store, Ticket, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AddressForm, AddressList, useSavedAddresses } from "@/components/delivery/AddressDialog";
 import { PageHeader } from "@/components/delivery/Common";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { authErrorMessage } from "@/lib/authErrors";
 import { db, errorMessage } from "@/lib/delivery";
@@ -27,6 +28,12 @@ export default function Profile() {
   const { user, signOut } = useAuth();
   const roles = useDeliveryRoles();
   const { theme, setTheme } = useTheme();
+  const push = usePushNotifications();
+  const togglePush = async (checked: boolean) => {
+    if (!checked) { await push.disable(); toast.success("Notificaciones desactivadas en este dispositivo"); return; }
+    const result = await push.enable();
+    if (result.ok) toast.success(result.message); else toast.error(result.message);
+  };
   const { addresses, reload } = useSavedAddresses();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -119,6 +126,18 @@ export default function Profile() {
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"><Moon className="h-5 w-5" /></span>
           <span className="flex-1 font-bold">Modo oscuro</span>
           <Switch checked={theme === "dark"} onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")} />
+        </label>
+        <label className="flex cursor-pointer items-center gap-3 p-4">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted"><BellRing className="h-5 w-5" /></span>
+          <span className="flex-1">
+            <span className="block font-bold">Notificaciones en este dispositivo</span>
+            <span className="block text-xs text-muted-foreground">
+              {push.state === "denied" ? "Bloqueadas en el navegador: habilitalas desde el candado de la barra de direcciones" :
+                push.state === "unsupported" ? "Este navegador no permite notificaciones" :
+                push.state === "ios-install" ? "En iPhone, agregá Woref a la pantalla de inicio para activarlas" : "Estado de tus pedidos y avisos de tus paneles"}
+            </span>
+          </span>
+          <Switch checked={push.state === "on"} disabled={!["on", "off"].includes(push.state)} onCheckedChange={togglePush} />
         </label>
       </nav>
 

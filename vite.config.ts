@@ -39,6 +39,8 @@ export default defineConfig(({ mode }) => ({
       workbox: {
         navigateFallbackDenylist: [/^\/~oauth/],
         // Toma el control apenas se publica una versión nueva, para que nadie quede con una copia vieja.
+        // Manejo de notificaciones push (public/push-sw.js)
+        importScripts: ["push-sw.js"],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,

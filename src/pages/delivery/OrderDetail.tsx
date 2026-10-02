@@ -10,6 +10,7 @@ import { db, DeliveryOrder, errorMessage, estadoLabel, formatDateTime, formatTim
 import { cn } from "@/lib/utils";
 import { useReorder } from "@/hooks/useReorder";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
+import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { MapView } from "@/components/maps/LazyMaps";
 import type { MapMarker } from "@/components/maps/DeliveryMap";
 
@@ -107,6 +108,8 @@ export default function OrderDetail() {
           <span className="font-display text-3xl font-extrabold tracking-[0.3em]">{code}</span>
         </section>
       )}
+
+      {active && <PushPrompt className="mt-4" title="¿Te avisamos cuando salga tu pedido?" text="Activá los avisos y te contamos cada paso aunque cierres la app." />}
 
       {order.estado === "entregado" && !order.calificado && <RateOrder orderId={order.id} storeName={order.comercio?.nombre || "el comercio"} onDone={load} />}
 
