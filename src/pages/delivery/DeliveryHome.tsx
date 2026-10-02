@@ -3,6 +3,9 @@ import { Link } from "react-router-dom";
 import { ChevronRight, Search, SlidersHorizontal, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/delivery/Common";
+import { OutOfZone } from "@/components/delivery/OutOfZone";
+import { useAddressPoint } from "@/hooks/useAddressPoint";
+import { distanceKm } from "@/lib/geo";
 import { StoreCard, StoreCardSkeleton, StoreListItem, StoreListSkeleton, StoreLogo } from "@/components/delivery/StoreCard";
 import { useInZone } from "@/hooks/useAddressPoint";
 import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe, verticals } from "@/lib/delivery";
@@ -39,6 +42,7 @@ const Rail = ({ children }: { children: React.ReactNode }) => (
 export default function DeliveryHome() {
   const { user } = useAuth();
   const inZone = useInZone();
+  const point = useAddressPoint();
   const [stores, setStores] = useState<DeliveryStore[]>([]);
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +98,14 @@ export default function DeliveryHome() {
     return [...byRubro.entries()].map(([rubro, store]) => ({ rubro, image: store.imagen_url }));
   }, [available]);
 
+  // Con una dirección ubicada en el mapa y comercios cargados, ¿llega alguno? Si no, se explica y se registra la demanda.
+  const noCoverage = !loading && Boolean(point) && stores.length > 0 && !stores.some((store) => inZone(store));
+  const nearestKm = useMemo(() => {
+    if (!point) return null;
+    const distances = stores.filter((store) => store.latitud != null && store.longitud != null).map((store) => distanceKm(point, { lat: Number(store.latitud), lng: Number(store.longitud) }));
+    return distances.length ? Math.min(...distances) : null;
+  }, [stores, point]);
+
   const big = verticals.slice(0, 2);
   const small = verticals.slice(2);
   const toggle = (key: keyof Filters) => setFilters((current) => ({ ...current, [key]: !current[key] }));
@@ -107,6 +119,7 @@ export default function DeliveryHome() {
 
         {activeOrder && <ActiveOrderBanner order={activeOrder} />}
         {!activeOrder && toRate && <RateBanner order={toRate} />}
+        {noCoverage && <OutOfZone nearestKm={nearestKm} />}
 
         {/* Accesos: dos grandes y el resto en grilla, como en las apps de delivery */}
         <section className="mt-4 grid grid-cols-2 gap-3">

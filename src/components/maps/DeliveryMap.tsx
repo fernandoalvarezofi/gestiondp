@@ -69,7 +69,8 @@ export function DeliveryMap({ markers, className }: { markers: MapMarker[]; clas
 
 function CenterTracker({ onMove }: { onMove: (point: GeoPoint) => void }) {
   const map = useMapEvents({
-    moveend: () => {
+    // Solo cuando la persona arrastra el mapa: si el mapa se recentra solo (al elegir una dirección) no hay que pisarla.
+    dragend: () => {
       const center = map.getCenter();
       onMove({ lat: Math.round(center.lat * 1e7) / 1e7, lng: Math.round(center.lng * 1e7) / 1e7 });
     },

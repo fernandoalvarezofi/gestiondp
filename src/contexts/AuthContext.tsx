@@ -44,6 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
+    // Dirección y carrito son de la persona que se va: en un dispositivo compartido no deben pasar a la siguiente.
+    try {
+      window.localStorage.removeItem("woref-delivery-address");
+      window.localStorage.removeItem("woref-delivery-cart");
+    } catch { /* sin acceso al almacenamiento: no hay nada que limpiar */ }
+    window.location.replace("/auth");
   };
 
   return (

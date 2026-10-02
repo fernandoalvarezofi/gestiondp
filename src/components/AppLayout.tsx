@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -23,7 +23,9 @@ const bottomNav = [
 export function AppLayout() {
   const { session, loading, signOut } = useAuth();
   const { itemCount, subtotal, store, address, setAddress } = useCart();
-  const { addresses } = useSavedAddresses();
+  const { addresses, loading: addressesLoading } = useSavedAddresses();
+  const [gateOpen, setGateOpen] = useState(false);
+  const [gateAsked, setGateAsked] = useState(false);
 
   // Si todavía no eligió dirección, usamos la guardada (preferimos una con ubicación en el mapa).
   useEffect(() => {
@@ -32,6 +34,12 @@ export function AppLayout() {
     const preferred = located.find((item) => item.predeterminada) || located[0] || addresses[0];
     setAddress(toCartAddress(preferred));
   }, [address, addresses, setAddress]);
+  // Primera vez sin ninguna dirección: pedimos la ubicación apenas entra (una sola vez por sesión).
+  useEffect(() => {
+    if (!session || addressesLoading || address || addresses.length || gateAsked) return;
+    setGateAsked(true);
+    setGateOpen(true);
+  }, [session, addressesLoading, address, addresses.length, gateAsked]);
   const roles = useDeliveryRoles();
   const location = useLocation();
   const navigate = useNavigate();
@@ -103,6 +111,8 @@ export function AppLayout() {
           </NavLink>
         </div>
       </header>
+
+      <AddressDialog open={gateOpen} onOpenChange={setGateOpen} title="¿Dónde estás?" />
 
       <main className="min-h-[calc(100vh-4rem)]"><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense></main>
       {!inPanel && <AppFooter />}

@@ -2,10 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, LocateFixed, MapPin, Search } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { AddressSuggestion, currentPosition, reverseGeocode, searchAddresses } from "@/lib/geo";
+import { useAddressPoint } from "@/hooks/useAddressPoint";
+import { AddressSuggestion, currentPosition, GeoPoint, reverseGeocode, searchAddresses } from "@/lib/geo";
 
 /** Buscador de direcciones con autocompletado y botón "usar mi ubicación". */
-export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (calle y altura)", autoFocus }: { onPick: (suggestion: AddressSuggestion) => void; placeholder?: string; autoFocus?: boolean }) {
+export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (calle y altura)", autoFocus, near }: { onPick: (suggestion: AddressSuggestion) => void; placeholder?: string; autoFocus?: boolean; near?: GeoPoint | null }) {
+  const cartPoint = useAddressPoint();
+  const bias = near ?? cartPoint;
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<AddressSuggestion[]>([]);
   const [searching, setSearching] = useState(false);
@@ -20,7 +23,7 @@ export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (cal
     const timer = window.setTimeout(async () => {
       setSearching(true);
       try {
-        setResults(await searchAddresses(query, undefined, controller.signal));
+        setResults(await searchAddresses(query, bias, controller.signal));
         setOpen(true);
       } catch (error) {
         if ((error as Error).name !== "AbortError") toast.error("No pudimos buscar direcciones. Probá de nuevo.");
@@ -29,7 +32,7 @@ export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (cal
       }
     }, 350);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [query]);
+  }, [query]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const choose = (suggestion: AddressSuggestion) => {
     picked.current = true;
@@ -43,7 +46,8 @@ export function AddressSearch({ onPick, placeholder = "Buscá tu dirección (cal
     try {
       const point = await currentPosition();
       const found = await reverseGeocode(point);
-      choose(found || { ...point, label: "Mi ubicación", detail: "" });
+      if (point.accuracy > 300) toast.info(`Tu ubicación es aproximada (±${Math.round(point.accuracy)} m). Ajustá el pin en el mapa.`);
+      choose(found || { lat: point.lat, lng: point.lng, label: "Mi ubicación", detail: "", precision: "calle" });
     } catch (error) {
       toast.error((error as Error).message);
     } finally {

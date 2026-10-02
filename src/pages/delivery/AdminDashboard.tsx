@@ -6,6 +6,7 @@ import { EmptyState, PageHeader, StatCard } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
 import { ClaimsManager } from "@/components/admin/ClaimsManager";
+import { ZoneDemand } from "@/components/admin/ZoneDemand";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
 import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
@@ -136,7 +137,7 @@ export default function AdminDashboard() {
 
       <Tabs defaultValue="pedidos" className="mt-6">
         <TabsList className="scrollbar-none h-auto w-full justify-start gap-1 overflow-x-auto rounded-full bg-muted p-1">
-          {[["pedidos", "Pedidos"], ["reclamos", `Reclamos${openClaims ? ` (${openClaims})` : ""}`], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})`], ["cupones", "Cupones"], ["pagos", `Pagos${refundCount ? ` (${refundCount})` : ""}`]].map(([value, label]) => (
+          {[["pedidos", "Pedidos"], ["reclamos", `Reclamos${openClaims ? ` (${openClaims})` : ""}`], ["comercios", `Comercios (${stores.length})`], ["repartidores", `Repartidores (${couriers.length})`], ["demanda", "Zonas sin cobertura"], ["cupones", "Cupones"], ["pagos", `Pagos${refundCount ? ` (${refundCount})` : ""}`]].map(([value, label]) => (
             <TabsTrigger key={value} value={value} className="shrink-0 rounded-full px-4 py-2 font-bold data-[state=active]:bg-card">{label}</TabsTrigger>
           ))}
         </TabsList>
@@ -210,6 +211,8 @@ export default function AdminDashboard() {
             </ul>
           ) : <EmptyState icon={<Bike className="h-7 w-7" />} title="Todavía no hay repartidores registrados" />}
         </TabsContent>
+
+        <TabsContent value="demanda" className="mt-6"><ZoneDemand /></TabsContent>
 
         <TabsContent value="cupones" className="mt-6"><CouponManager storeId={null} coupons={coupons} onChange={loadCoupons} /></TabsContent>
         <TabsContent value="pagos" className="mt-6"><PaymentsSettings orders={orders} onChange={loadOrders} /></TabsContent>

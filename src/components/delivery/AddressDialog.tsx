@@ -1,8 +1,8 @@
 import { FormEvent, ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { AddressSearch } from "@/components/maps/AddressSearch";
 import { MapPicker } from "@/components/maps/LazyMaps";
-import { GeoPoint, reverseGeocode } from "@/lib/geo";
-import { Briefcase, Check, Home, MapPin, Plus, Trash2 } from "lucide-react";
+import { currentPosition, GeoPoint, reverseGeocode } from "@/lib/geo";
+import { AlertTriangle, Briefcase, Check, Home, Loader2, LocateFixed, MapPin, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -49,11 +49,13 @@ export function AddressForm({ onSaved, compact }: { onSaved?: (address: SavedAdd
   const [detalle, setDetalle] = useState("");
   const [instrucciones, setInstrucciones] = useState("");
   const [saving, setSaving] = useState(false);
+  const [approximate, setApproximate] = useState(false);
   const moved = useRef(0);
 
   // Si mueven el pin, actualizamos la calle y altura según el nuevo punto.
   const movePin = (next: GeoPoint) => {
     setPoint(next);
+    setApproximate(false);
     const ticket = ++moved.current;
     window.setTimeout(async () => {
       if (ticket !== moved.current) return;
@@ -67,6 +69,7 @@ export function AddressForm({ onSaved, compact }: { onSaved?: (address: SavedAdd
     if (!user) return;
     if (!point) return toast.error("Buscá tu dirección y confirmá el pin en el mapa");
     if (direccion.trim().length < 4) return toast.error("Escribí la calle y la altura");
+    if (!/\d|s\/n/i.test(direccion)) return toast.error("Agregá la altura de la calle (o \"s/n\" si no tiene) para que el repartidor te encuentre");
     setSaving(true);
     const { data, error } = await db.from("delivery_direcciones").insert({
       perfil_id: user.id,
@@ -80,7 +83,7 @@ export function AddressForm({ onSaved, compact }: { onSaved?: (address: SavedAdd
     setSaving(false);
     if (error) return toast.error(errorMessage(error));
     toast.success("Dirección guardada");
-    setDireccion(""); setDetalle(""); setInstrucciones(""); setPoint(null);
+    setDireccion(""); setDetalle(""); setInstrucciones(""); setPoint(null); setApproximate(false);
     onSaved?.(data);
   };
 
@@ -92,10 +95,11 @@ export function AddressForm({ onSaved, compact }: { onSaved?: (address: SavedAdd
         ))}
       </div>
       {!point ? (
-        <AddressSearch autoFocus={compact} onPick={(found) => { setPoint({ lat: found.lat, lng: found.lng }); setDireccion(found.label); }} />
+        <AddressSearch autoFocus={compact} onPick={(found) => { setPoint({ lat: found.lat, lng: found.lng }); setDireccion(found.label); setApproximate(found.precision === "calle"); }} />
       ) : (
         <>
           <MapPicker value={point} onChange={movePin} className="h-56" />
+          {approximate && <p className="flex items-start gap-2 rounded-xl bg-warning/15 p-3 text-xs font-semibold"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />Ubicación aproximada. Mové el mapa hasta que el pin quede en tu puerta: de eso depende el costo y el tiempo del envío.</p>}
           <div className="flex gap-2">
             <Input value={direccion} onChange={(event) => setDireccion(event.target.value)} placeholder="Calle y altura" maxLength={200} required aria-label="Calle y altura" />
             <Button type="button" variant="ghost" onClick={() => setPoint(null)}>Cambiar</Button>
@@ -147,11 +151,46 @@ export function AddressList({ addresses, onDeleted, selectable }: { addresses: S
   );
 }
 
-export function AddressDialog({ trigger }: { trigger: ReactNode }) {
-  const [open, setOpen] = useState(false);
+/** Usa la ubicación del dispositivo como dirección de entrega, sin necesidad de guardarla. */
+export function UseCurrentLocation({ onDone, className }: { onDone?: () => void; className?: string }) {
+  const { setAddress } = useCart();
+  const [locating, setLocating] = useState(false);
+
+  const locate = async () => {
+    setLocating(true);
+    try {
+      const position = await currentPosition();
+      const found = await reverseGeocode(position);
+      if (!found || found.precision !== "exacta") {
+        toast.info("Detectamos tu ubicación, pero no la altura exacta. Confirmala en el mapa para que el envío sea preciso.");
+      }
+      setAddress({ id: null, alias: "Ubicación actual", direccion: found ? [found.label, found.detail.split(",")[0]].filter(Boolean).join(", ") : "Mi ubicación actual", lat: position.lat, lng: position.lng });
+      toast.success("Usamos tu ubicación actual");
+      onDone?.();
+    } catch (error) {
+      toast.error((error as Error).message);
+    } finally {
+      setLocating(false);
+    }
+  };
+
+  return (
+    <Button type="button" variant="outline" className={cn("h-12 w-full justify-start gap-3 rounded-2xl text-left", className)} onClick={locate} disabled={locating}>
+      {locating ? <Loader2 className="h-5 w-5 animate-spin text-primary" /> : <LocateFixed className="h-5 w-5 text-primary" />}
+      <span><span className="block text-sm font-bold">Usar mi ubicación actual</span><span className="block text-xs font-normal text-muted-foreground">Detectada con el GPS de tu dispositivo</span></span>
+    </Button>
+  );
+}
+
+export function AddressDialog({ trigger, open: controlledOpen, onOpenChange, title }: { trigger?: ReactNode; open?: boolean; onOpenChange?: (open: boolean) => void; title?: string }) {
+  const [innerOpen, setInnerOpen] = useState(false);
+  const open = controlledOpen ?? innerOpen;
+  const setOpen = (next: boolean) => { setInnerOpen(next); onOpenChange?.(next); };
   const { addresses, reload } = useSavedAddresses();
   const { setAddress } = useCart();
   const [adding, setAdding] = useState(false);
+
+  useEffect(() => { if (open) reload(); }, [open, reload]);
 
   const choose = (address: SavedAddress) => {
     setAddress(toCartAddress(address));
@@ -159,13 +198,14 @@ export function AddressDialog({ trigger }: { trigger: ReactNode }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (next) reload(); }}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={setOpen}>
+      {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
+      <DialogContent className="max-h-[92vh] max-w-md overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-extrabold">¿Dónde querés recibir tu pedido?</DialogTitle>
-          <DialogDescription>Elegí una dirección guardada o agregá una nueva.</DialogDescription>
+          <DialogTitle className="text-xl font-extrabold">{title || "¿Dónde querés recibir tu pedido?"}</DialogTitle>
+          <DialogDescription>Mostramos solo los comercios que llegan a tu dirección.</DialogDescription>
         </DialogHeader>
+        <UseCurrentLocation onDone={() => setOpen(false)} />
         {addresses.length > 0 && <AddressList addresses={addresses} selectable={choose} />}
         {adding || addresses.length === 0 ? (
           <AddressForm compact onSaved={(address) => { setAdding(false); reload(); choose(address); }} />
