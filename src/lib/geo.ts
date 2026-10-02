@@ -21,7 +21,15 @@ export const formatKm = (km: number) => (km < 1 ? `${Math.round(km * 1000)} m` :
 /** Cuánto más largo que la línea recta es, en promedio, el camino por las calles (respaldo cuando no hay ruta real). */
 export const ROUTE_FACTOR = 1.35;
 
-export type StoreReach = { km: number | null; inZone: boolean; fee: number; feeKm?: number };
+/** Tarifa de la zona de entrega: recargo fijo, multiplicador (zona + demanda + clima) y si está cerrada. Misma regla que el servidor. */
+export type Tariff = { zona: string | null; cerrada: boolean; multiplicador: number; recargo: number; motivos: string[] };
+
+export function applyTariff(fee: number, tariff?: Pick<Tariff, "multiplicador" | "recargo"> | null): number {
+  if (!tariff || fee <= 0) return fee;
+  return Math.round((fee * Number(tariff.multiplicador) + Number(tariff.recargo)) / 10) * 10;
+}
+
+export type StoreReach = { km: number | null; inZone: boolean; fee: number; feeKm?: number; zoneClosed?: boolean; surge?: string[] };
 
 /**
  * Distancia en línea recta (cobertura), si llega a la dirección y costo de envío estimado (misma regla que el servidor).
@@ -31,13 +39,14 @@ export function storeReach(
   store: Pick<DeliveryStore, "costo_envio" | "envio_gratis_desde"> & { latitud?: number | null; longitud?: number | null; radio_entrega_km?: number | null; costo_por_km?: number | null },
   point: GeoPoint | null | undefined,
   roadKm?: number | null,
+  tariff?: Tariff | null,
 ): StoreReach {
   const base = Number(store.costo_envio);
   if (!point || store.latitud == null || store.longitud == null) return { km: null, inZone: true, fee: base };
   const km = distanceKm(point, { lat: Number(store.latitud), lng: Number(store.longitud) });
   const feeKm = roadKm ?? Math.round(km * ROUTE_FACTOR * 100) / 100;
-  const fee = Math.round((base + Number(store.costo_por_km || 0) * feeKm) / 10) * 10;
-  return { km, inZone: km <= Number(store.radio_entrega_km ?? 6), fee, feeKm };
+  const fee = applyTariff(Math.round((base + Number(store.costo_por_km || 0) * feeKm) / 10) * 10, tariff);
+  return { km, inZone: km <= Number(store.radio_entrega_km ?? 6) && !tariff?.cerrada, fee, feeKm, zoneClosed: Boolean(tariff?.cerrada), surge: tariff?.motivos?.length ? tariff.motivos : undefined };
 }
 
 type PhotonFeature = {

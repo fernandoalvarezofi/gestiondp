@@ -156,7 +156,7 @@ export default function Envio() {
           <div className="mx-auto flex max-w-4xl items-center gap-3">
             <div className="min-w-0 flex-1">
               {quoting ? <p className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Calculando precio…</p>
-                : quote?.ok ? <p className="text-sm"><span className="font-display text-xl font-black">{money(total)}</span><span className="ml-2 text-muted-foreground">{quote.km.toFixed(1)} km{tip ? ` · incluye ${money(tip)} de propina` : ""}</span></p>
+                : quote?.ok ? <p className="text-sm"><span className="font-display text-xl font-black">{money(total)}</span><span className="ml-2 text-muted-foreground">{quote.km.toFixed(1)} km{tip ? ` · incluye ${money(tip)} de propina` : ""}</span>{quote.tarifa?.motivos?.length ? <span className="mt-0.5 block text-xs text-muted-foreground">Tarifa dinámica: {quote.tarifa.motivos.join(" · ")}</span> : null}</p>
                 : reason ? <p className="text-sm font-semibold text-destructive">{reason}</p>
                 : <p className="text-sm text-muted-foreground">Elegí el retiro y la entrega para ver el precio.</p>}
             </div>

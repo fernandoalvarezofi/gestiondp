@@ -9,6 +9,7 @@ import { deliveryFeeLabel, RatingBadge, StoreLogo } from "@/components/delivery/
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CartStore } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
+import { useTariff } from "@/hooks/useTariff";
 import { Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { useRoute } from "@/lib/route";
@@ -20,6 +21,7 @@ export default function StoreDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
   const point = useAddressPoint();
+  const tariff = useTariff(point);
   const [store, setStore] = useState<DeliveryStore | null>(null);
   const [products, setProducts] = useState<DeliveryProduct[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -84,7 +86,7 @@ export default function StoreDetail() {
   if (!store) return <div className="mx-auto max-w-5xl sm:px-6 sm:pt-6"><div className="h-52 animate-pulse bg-muted sm:rounded-3xl" /><div className="mx-4 mt-4 h-24 animate-pulse rounded-3xl bg-muted" /></div>;
 
   const open = isOpenNow(store);
-  const reach = storeReach(store, point, road?.km);
+  const reach = storeReach(store, point, road?.km, tariff);
   const fee = deliveryFeeLabel(store, reach.fee);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
 
@@ -139,7 +141,8 @@ export default function StoreDetail() {
         </div>
 
         {!open && <p className="mt-3 rounded-2xl bg-muted p-3 text-sm"><span className="font-extrabold">Cerrado ahora.</span> {store.esta_abierto ? nextOpening(store.horarios) || "" : "El local pausó los pedidos por un rato."} Podés ver el menú igual.</p>}
-        {open && !reach.inZone && <p className="mt-3 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive"><span className="font-extrabold">No llega a tu dirección.</span> Está a {formatKm(reach.km || 0)} y entrega hasta {formatKm(Number(store.radio_entrega_km))}.</p>}
+        {open && reach.zoneClosed && <p className="mt-3 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive"><span className="font-extrabold">Por ahora no entregamos en tu zona.</span> Probá más tarde o elegí otra dirección.</p>}
+        {open && !reach.inZone && !reach.zoneClosed && <p className="mt-3 rounded-2xl bg-destructive/10 p-3 text-sm text-destructive"><span className="font-extrabold">No llega a tu dirección.</span> Está a {formatKm(reach.km || 0)} y entrega hasta {formatKm(Number(store.radio_entrega_km))}.</p>}
 
         {(store.promo_texto || coupons.length > 0 || (store.envio_gratis_desde && Number(store.envio_gratis_desde) > 1)) && (
           <div className="scrollbar-none -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">

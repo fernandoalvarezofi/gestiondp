@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { distanceKm, formatKm, searchAddresses, storeReach } from "./geo";
+import { applyTariff, distanceKm, formatKm, searchAddresses, storeReach } from "./geo";
 
 const photon = (features: unknown[]) => ({ ok: true, json: async () => ({ features }) });
 const feature = (props: Record<string, string>, lng = -58.39, lat = -34.6) => ({ geometry: { coordinates: [lng, lat] }, properties: { country: "Argentina", ...props } });
@@ -40,6 +40,24 @@ describe("distancia y zona", () => {
     expect(real.km).toBe(estimated.km);
     expect(real.feeKm).toBe(5);
     expect(real.fee).toBe(Math.round((1500 + Number(store.costo_por_km || 0) * 5) / 10) * 10);
+  });
+});
+
+describe("tarifa dinámica", () => {
+  const tariff = { zona: "Centro", cerrada: false, multiplicador: 1.35, recargo: 100, motivos: ["Mal clima +15%"] };
+  it("aplica multiplicador y recargo redondeando a 10, igual que el servidor", () => {
+    expect(applyTariff(1720, tariff)).toBe(2420);
+    expect(applyTariff(1000, { multiplicador: 1.2, recargo: 100 })).toBe(1300);
+  });
+  it("no cobra recargo si el envío es gratis ni sin tarifa", () => {
+    expect(applyTariff(0, tariff)).toBe(0);
+    expect(applyTariff(1500, null)).toBe(1500);
+  });
+  it("una zona cerrada deja el local fuera de zona", () => {
+    const store = { costo_envio: 1500, envio_gratis_desde: null, latitud: -34.6, longitud: -58.38, radio_entrega_km: 3, costo_por_km: 0 };
+    const reach = storeReach(store, { lat: -34.605, lng: -58.385 }, undefined, { ...tariff, cerrada: true });
+    expect(reach.inZone).toBe(false);
+    expect(reach.zoneClosed).toBe(true);
   });
 });
 

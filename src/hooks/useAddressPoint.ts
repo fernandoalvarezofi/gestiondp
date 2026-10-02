@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { useCart } from "@/contexts/CartContext";
 import type { DeliveryStore } from "@/lib/delivery";
 import { GeoPoint, storeReach } from "@/lib/geo";
+import { useTariff } from "@/hooks/useTariff";
 
 /** Coordenadas de la dirección de entrega elegida (o null si no tiene ubicación). */
 export function useAddressPoint(): GeoPoint | null {
@@ -12,5 +13,6 @@ export function useAddressPoint(): GeoPoint | null {
 /** ¿Este comercio llega a la dirección elegida? Sin dirección con ubicación, se asume que sí. */
 export function useInZone() {
   const point = useAddressPoint();
-  return useMemo(() => (store: DeliveryStore) => storeReach(store, point).inZone, [point]);
+  const tariff = useTariff(point);
+  return useMemo(() => (store: DeliveryStore) => storeReach(store, point, undefined, tariff).inZone, [point, tariff]);
 }

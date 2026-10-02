@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Star } from "lucide-react";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
+import { useTariff } from "@/hooks/useTariff";
 import { DeliveryStore, img, isOpenNow, money, nextOpening } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { cn } from "@/lib/utils";
@@ -45,17 +46,18 @@ export function deliveryFeeLabel(store: Pick<DeliveryStore, "costo_envio" | "env
 
 function useStoreState(store: DeliveryStore) {
   const point = useAddressPoint();
-  const reach = storeReach(store, point);
+  const tariff = useTariff(point);
+  const reach = storeReach(store, point, undefined, tariff);
   const fee = deliveryFeeLabel(store, reach.fee);
   return { reach, fee, free: fee === "Envío gratis", open: isOpenNow(store) };
 }
 
-function ClosedOverlay({ store, reachKm, open, inZone }: { store: DeliveryStore; reachKm: number | null; open: boolean; inZone: boolean }) {
+function ClosedOverlay({ store, reachKm, open, inZone, zoneClosed }: { store: DeliveryStore; reachKm: number | null; open: boolean; inZone: boolean; zoneClosed?: boolean }) {
   if (open && inZone) return null;
   return (
     <span className="absolute inset-0 flex flex-col items-center justify-center bg-black/55 text-center text-sm font-extrabold text-white">
       {!open ? "Cerrado" : "Fuera de tu zona"}
-      <span className="mt-0.5 text-xs font-semibold text-white/85">{!open ? (store.esta_abierto ? nextOpening(store.horarios) : "Volvé más tarde") : `Está a ${formatKm(reachKm || 0)}`}</span>
+      <span className="mt-0.5 text-xs font-semibold text-white/85">{!open ? (store.esta_abierto ? nextOpening(store.horarios) : "Volvé más tarde") : zoneClosed ? "Sin entregas en tu zona por ahora" : `Está a ${formatKm(reachKm || 0)}`}</span>
     </span>
   );
 }
@@ -72,7 +74,7 @@ export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; v
             {store.promo_texto && <span className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-extrabold text-primary-foreground shadow-sm">{store.promo_texto}</span>}
             {free && open && !/env[ií]o gratis/i.test(store.promo_texto || "") && <span className="rounded-full bg-success px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">Envío gratis</span>}
           </div>
-          <ClosedOverlay store={store} reachKm={reach.km} open={open} inZone={reach.inZone} />
+          <ClosedOverlay store={store} reachKm={reach.km} open={open} inZone={reach.inZone} zoneClosed={reach.zoneClosed} />
           <FavoriteButton storeId={store.id} className="absolute right-2 top-2 h-8 w-8" />
           {open && reach.inZone && <span className="absolute bottom-2 right-2 rounded-full bg-card px-2.5 py-1 text-[11px] font-extrabold shadow-soft">{store.tiempo_min}-{store.tiempo_max} min</span>}
         </div>

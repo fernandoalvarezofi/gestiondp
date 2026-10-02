@@ -17,7 +17,7 @@ export type EnvioOferta = {
   distancia_km: number; dist_retiro_km: number | null; ganancia: number; cobrar: number; quien_paga: "origen" | "destino"; created_at: string;
 };
 
-export type EnvioQuote = { ok: true; km: number; costo: number; ganancia: number } | { ok: false; km?: number; motivo: string };
+export type EnvioQuote = { ok: true; km: number; costo: number; costo_base?: number; tarifa?: { motivos: string[]; multiplicador: number }; ganancia: number } | { ok: false; km?: number; motivo: string };
 
 export const tamanos: { id: EnvioTamano; label: string; hint: string }[] = [
   { id: "sobre", label: "Sobre", hint: "Documentos, llaves" },

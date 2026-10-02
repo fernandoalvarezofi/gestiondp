@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { PlatformSettings } from "@/components/admin/PlatformSettings";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
+import { ZonesManager } from "@/components/admin/ZonesManager";
 import { SupportCenter } from "@/components/admin/SupportCenter";
 import { ZoneDemand } from "@/components/admin/ZoneDemand";
 import { SettlementsManager } from "@/components/admin/SettlementsManager";
@@ -168,6 +169,7 @@ export default function AdminDashboard() {
           { to: "/app/admin/comercios", label: "Comercios", icon: Store, badge: pendingStores },
           { to: "/app/admin/repartidores", label: "Repartidores", icon: Bike, badge: pendingCouriers },
           { to: "/app/admin/clientes", label: "Clientes", icon: Users },
+          { to: "/app/admin/zonas", label: "Zonas y tarifas", icon: Map },
           { to: "/app/admin/demanda", label: "Zonas sin cobertura", icon: MapPinOff },
         ] },
         { label: "Marketing y finanzas", items: [
@@ -299,6 +301,7 @@ export default function AdminDashboard() {
 
         <TabsContent value="repartidores" className="mt-0"><CouriersManager couriers={couriers} onChange={loadCouriers} /></TabsContent>
 
+        <TabsContent value="zonas" className="mt-0"><ZonesManager /></TabsContent>
         <TabsContent value="demanda" className="mt-0"><ZoneDemand /></TabsContent>
 
         <TabsContent value="cupones" className="mt-0"><CouponManager storeId={null} coupons={coupons} onChange={loadCoupons} /></TabsContent>

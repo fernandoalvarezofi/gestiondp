@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
+import { useTariff } from "@/hooks/useTariff";
 import { db, DeliveryProduct, DeliveryStore, errorMessage, img, isOpenNow, MetodoPago, money, optionsLabel, productSelect, readPickupPreference, slotDay, slotTime, sortGroups, TipoEntrega } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { startOnlinePayment } from "@/lib/payments";
@@ -56,6 +57,7 @@ export default function Cart() {
   const [phone, setPhone] = useState("");
   const [storeInfo, setStoreInfo] = useState<DeliveryStore | null>(null);
   const point = useAddressPoint();
+  const tariff = useTariff(point);
   // Ruta real por las calles: el servidor la guarda y es la que usa para cobrar el envío.
   const storePoint = storeInfo?.latitud != null && storeInfo?.longitud != null ? { lat: Number(storeInfo.latitud), lng: Number(storeInfo.longitud) } : null;
   const road = useRoute(storePoint, point, { persist: true });
@@ -139,7 +141,7 @@ export default function Cart() {
   const summary = useMemo(() => {
     if (!store) return null;
     const freeByStore = store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && subtotal >= Number(store.envio_gratis_desde);
-    const reach = storeReach(storeInfo || store, point, road?.km);
+    const reach = storeReach(storeInfo || store, point, road?.km, tariff);
     const shipping = pickup ? 0 : freeByStore || (coupon?.valido && coupon.envio_gratis) ? 0 : reach.fee;
     const service = Math.round(subtotal * servicePct / 100);
     const discount = coupon?.valido ? Number(coupon.descuento || 0) : 0;
@@ -151,7 +153,7 @@ export default function Cart() {
       reach,
       needsPin: !pickup && Boolean(storeInfo?.latitud != null && !point),
     };
-  }, [store, storeInfo, point, subtotal, coupon, tip, pickup, servicePct, road?.km]);
+  }, [store, storeInfo, point, subtotal, coupon, tip, pickup, servicePct, road?.km, tariff]);
 
   // El billete con el que se paga tiene que cubrir el total vigente.
   useEffect(() => {
@@ -446,6 +448,7 @@ export default function Cart() {
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-muted-foreground">Productos</dt><dd>{money(subtotal)}</dd></div>
               {!pickup && <div className="flex justify-between"><dt className="text-muted-foreground">Envío{summary.reach.km != null && ` (${formatKm(summary.reach.km)})`}</dt><dd className={cn(summary.shipping === 0 && "font-bold text-success")}>{summary.shipping === 0 ? "Gratis" : money(summary.shipping)}</dd></div>}
+              {!pickup && summary.reach.surge && summary.shipping > 0 && <p className="-mt-1 text-xs text-muted-foreground">Tarifa dinámica: {summary.reach.surge.join(" · ")}</p>}
               <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa de servicio</dt><dd>{money(summary.service)}</dd></div>
               {summary.tip > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Propina</dt><dd>{money(summary.tip)}</dd></div>}
               {summary.discount > 0 && <div className="flex justify-between font-bold text-success"><dt>Descuento</dt><dd>-{money(summary.discount)}</dd></div>}
@@ -457,7 +460,8 @@ export default function Cart() {
             )}
             <p className="mt-3 truncate text-sm text-muted-foreground">{pickup ? "Retirás en" : "Entrega en"} <span className="font-bold text-foreground">{pickup ? storeInfo?.direccion || store.nombre : address?.direccion || "—"}</span>{slot && needsSlot && <> · <span className="font-bold text-foreground">{slotDay(slot)} {slotTime(slot)}</span></>}</p>
             {summary.needsPin && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Esta dirección no tiene ubicación en el mapa. Agregá una nueva dirección para calcular el envío.</p>}
-            {!pickup && !summary.needsPin && !summary.reach.inZone && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección, retirá en el local o pedí en un comercio más cercano.</p>}
+            {!pickup && !summary.needsPin && summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Por ahora no entregamos en tu zona. Probá más tarde, elegí otra dirección o retirá en el local.</p>}
+            {!pickup && !summary.needsPin && !summary.reach.inZone && !summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección, retirá en el local o pedí en un comercio más cercano.</p>}
             <Button className="mt-4 h-12 w-full rounded-full text-base font-bold max-lg:hidden" onClick={checkout} disabled={submitDisabled}>
               {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
             </Button>
