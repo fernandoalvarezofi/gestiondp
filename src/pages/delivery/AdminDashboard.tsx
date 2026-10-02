@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Check, ClipboardList, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Pencil, Receipt, Settings, ShieldAlert, Store, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, MapPinOff, Megaphone, Pencil, Receipt, Settings, ShieldAlert, Store, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -10,6 +10,8 @@ import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
 import { ClaimsManager } from "@/components/admin/ClaimsManager";
 import { ZoneDemand } from "@/components/admin/ZoneDemand";
+import { SettlementsManager } from "@/components/admin/SettlementsManager";
+import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
@@ -90,6 +92,15 @@ export default function AdminDashboard() {
     if (error) return toast.error(errorMessage(error));
     loadStores();
   };
+  const setCommission = async (store: DeliveryStore, raw: string) => {
+    const pct = Number(raw);
+    if (raw.trim() === "" || !Number.isFinite(pct) || pct < 0 || pct > 50) return toast.error("La comisión debe estar entre 0 y 50 %");
+    if (pct === Number(store.comision_pct ?? 10)) return;
+    const { error } = await db.rpc("delivery_admin_comision", { p_comercio: store.id, p_pct: pct });
+    if (error) return toast.error(errorMessage(error));
+    toast.success(`Comisión de ${store.nombre}: ${pct}%`);
+    loadStores();
+  };
   const moderate = async (store: DeliveryStore, approve: boolean) => {
     const motivo = approve ? null : window.prompt("¿Por qué lo rechazás? (lo verá el dueño del comercio)", "Faltan fotos o datos del local");
     if (!approve && motivo === null) return;
@@ -150,6 +161,7 @@ export default function AdminDashboard() {
         ] },
         { label: "Marketing y finanzas", items: [
           { to: "/app/admin/cupones", label: "Cupones", icon: Megaphone },
+          { to: "/app/admin/liquidaciones", label: "Liquidaciones", icon: Landmark },
           { to: "/app/admin/pagos", label: "Pagos y reintegros", icon: Banknote, badge: refundCount },
         ] },
         { label: "Sistema", items: [
@@ -255,6 +267,9 @@ export default function AdminDashboard() {
                   <Link to={`/app/tienda/${store.slug}`} className="font-bold hover:underline">{store.nombre}</Link>
                   <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion} · {isOpenNow(store) ? "Abierto" : "Cerrado"}{store.aprobado === false && " · Pendiente de aprobación"}</p>
                 </div>
+                <label className="flex items-center gap-1.5 text-xs font-semibold">Comisión
+                  <Input key={`${store.id}-${store.comision_pct}`} type="number" inputMode="decimal" min={0} max={50} step={0.5} defaultValue={store.comision_pct ?? 10} className="h-8 w-16 px-2 text-right" aria-label={`Comisión de ${store.nombre} en porcentaje`} onBlur={(event) => setCommission(store, event.target.value)} />%
+                </label>
                 <label className="flex items-center gap-2 text-xs font-semibold">Destacado<Switch checked={Boolean(store.destacado)} onCheckedChange={(checked) => updateStore(store, { destacado: checked })} /></label>
                 <label className="flex items-center gap-2 text-xs font-semibold">Visible<Switch checked={store.activo !== false} onCheckedChange={(checked) => updateStore(store, { activo: checked })} /></label>
                 <Button size="icon" variant="ghost" aria-label="Editar comercio" onClick={() => setEditing(store)}><Pencil className="h-4 w-4" /></Button>
@@ -268,6 +283,7 @@ export default function AdminDashboard() {
         <TabsContent value="demanda" className="mt-0"><ZoneDemand /></TabsContent>
 
         <TabsContent value="cupones" className="mt-0"><CouponManager storeId={null} coupons={coupons} onChange={loadCoupons} /></TabsContent>
+        <TabsContent value="liquidaciones" className="mt-0"><SettlementsManager /></TabsContent>
         <TabsContent value="pagos" className="mt-0"><PaymentsSettings orders={orders} onChange={loadOrders} /></TabsContent>
       </Tabs>
 

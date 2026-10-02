@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, LayoutDashboard, Loader2, Megaphone, Settings, Star, Store, UtensilsCrossed } from "lucide-react";
+import { BarChart3, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Settings, Star, Store, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { StoreLogo } from "@/components/delivery/StoreCard";
@@ -157,6 +157,7 @@ export default function MerchantLayout() {
           { to: "/app/comercio/estadisticas", label: "Estadísticas", icon: BarChart3 },
         ] },
         { label: "Mi local", items: [
+          { to: "/app/comercio/finanzas", label: "Finanzas", icon: Landmark },
           { to: "/app/comercio/configuracion", label: "Configuración", icon: Settings },
         ] },
       ]}
