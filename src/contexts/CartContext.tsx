@@ -22,7 +22,7 @@ export type CartStore = {
 /** Una línea del carrito: el mismo producto con distintas opciones son líneas distintas. `precio` ya incluye los extras. */
 export type CartItem = CartProduct & { lineId: string; cantidad: number; notas?: string; opciones: ChosenOption[]; precioBase: number };
 
-export type DeliveryAddress = { id?: string | null; alias?: string; direccion: string };
+export type DeliveryAddress = { id?: string | null; alias?: string; direccion: string; lat?: number | null; lng?: number | null }
 
 type CartContextValue = {
   store: CartStore | null;

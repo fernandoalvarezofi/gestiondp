@@ -3,6 +3,7 @@ import { Navigate, useParams } from "react-router-dom";
 import { Store } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
+import { useInZone } from "@/hooks/useAddressPoint";
 import { db, DeliveryStore, isOpenNow, matchesVertical, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ export default function Category() {
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState<Sort>("recomendados");
   const [rubro, setRubro] = useState<string | null>(null);
+  const inZone = useInZone();
 
   useEffect(() => {
     if (!vertical) return;
@@ -42,8 +44,8 @@ export default function Category() {
     if (sort === "rating") sorted.sort((a, b) => b.rating - a.rating);
     if (sort === "rapido") sorted.sort((a, b) => a.tiempo_max - b.tiempo_max);
     if (sort === "envio") sorted.sort((a, b) => a.costo_envio - b.costo_envio);
-    return sorted.sort((a, b) => Number(isOpenNow(b)) - Number(isOpenNow(a)));
-  }, [stores, sort, rubro]);
+    return sorted.sort((a, b) => Number(isOpenNow(b) && inZone(b)) - Number(isOpenNow(a) && inZone(a)));
+  }, [stores, sort, rubro, inZone]);
 
   if (!vertical) return <Navigate to="/app" replace />;
   const Icon = vertical.icon;

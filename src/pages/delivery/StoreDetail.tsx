@@ -7,6 +7,8 @@ import { ProductCard } from "@/components/delivery/ProductCard";
 import { deliveryFeeLabel, RatingBadge, StoreLogo } from "@/components/delivery/StoreCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { CartStore } from "@/contexts/CartContext";
+import { useAddressPoint } from "@/hooks/useAddressPoint";
+import { formatKm, storeReach } from "@/lib/geo";
 import { db, DeliveryProduct, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, productSelect, scheduleSummary } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +23,7 @@ export default function StoreDetail() {
   const [notFound, setNotFound] = useState(false);
   const [term, setTerm] = useState("");
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const point = useAddressPoint();
 
   useEffect(() => {
     (async () => {
@@ -51,6 +54,7 @@ export default function StoreDetail() {
   if (!store) return <div className="mx-auto max-w-6xl px-4 py-6"><div className="aspect-[16/6] animate-pulse rounded-3xl bg-muted" /><div className="mt-6 h-8 w-1/3 animate-pulse rounded bg-muted" /></div>;
 
   const open = isOpenNow(store);
+  const reach = storeReach(store, point);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
   const scrollTo = (name: string) => {
     setActiveSection(name);
@@ -80,7 +84,7 @@ export default function StoreDetail() {
         <div className="mt-4 grid grid-cols-3 divide-x rounded-2xl border bg-card py-3 text-center">
           <div><RatingBadge store={store} className="justify-center" /><p className="mt-0.5 text-[11px] text-muted-foreground">{store.total_resenas ? `${store.total_resenas.toLocaleString("es-AR")} opiniones` : "Sin opiniones"}</p></div>
           <div><p className="flex items-center justify-center gap-1 text-sm font-bold"><Clock3 className="h-3.5 w-3.5" />{store.tiempo_min}-{store.tiempo_max}′</p><p className="mt-0.5 text-[11px] text-muted-foreground">Entrega</p></div>
-          <div><p className="flex items-center justify-center gap-1 text-sm font-bold"><Bike className="h-3.5 w-3.5" />{deliveryFeeLabel(store)}</p><p className="mt-0.5 text-[11px] text-muted-foreground">Envío</p></div>
+          <div><p className="flex items-center justify-center gap-1 text-sm font-bold"><Bike className="h-3.5 w-3.5" />{deliveryFeeLabel(store, reach.fee)}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{reach.km != null ? `Envío · ${formatKm(reach.km)}` : "Envío"}</p></div>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
@@ -89,6 +93,7 @@ export default function StoreDetail() {
           {Number(store.pedido_minimo) > 0 && <span className="rounded-full bg-muted px-3 py-1.5 text-xs font-bold text-muted-foreground">Pedido mínimo {money(store.pedido_minimo)}</span>}
         </div>
 
+        {open && !reach.inZone && <div className="mt-4 rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-sm"><span className="font-bold">Este comercio no llega a tu dirección.</span> Está a {formatKm(reach.km || 0)} y entrega hasta {formatKm(Number(store.radio_entrega_km))}. Probá con otra dirección desde “Entregar en”.</div>}
         {!open && <div className="mt-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Cerrado ahora.</span> {store.esta_abierto ? nextOpening(store.horarios) || "" : "El comercio pausó los pedidos por un rato."} Podés mirar el menú mientras tanto.</div>}
 
         <div className="sticky top-16 z-30 -mx-4 mt-6 border-b bg-background/95 px-4 pb-3 pt-3 backdrop-blur sm:mx-0 sm:px-0">

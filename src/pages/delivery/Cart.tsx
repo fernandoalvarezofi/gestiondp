@@ -2,14 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Banknote, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Tag, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { AddressForm, AddressList, fullAddress, SavedAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
+import { AddressForm, AddressList, SavedAddress, toCartAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
-import { db, errorMessage, img, MetodoPago, money, optionsLabel } from "@/lib/delivery";
+import { useAddressPoint } from "@/hooks/useAddressPoint";
+import { db, DeliveryStore, errorMessage, img, MetodoPago, money, optionsLabel } from "@/lib/delivery";
+import { formatKm, storeReach } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 
 type CouponResult = { valido: boolean; codigo?: string; descuento?: number; envio_gratis?: boolean; mensaje: string };
@@ -34,6 +36,8 @@ export default function Cart() {
   const [addingAddress, setAddingAddress] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
+  const [storeInfo, setStoreInfo] = useState<DeliveryStore | null>(null);
+  const point = useAddressPoint();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -43,10 +47,16 @@ export default function Cart() {
     });
   }, [user]);
 
+  // Datos actuales del comercio (ubicación, radio y costo por km) para estimar el envío igual que el servidor.
+  useEffect(() => {
+    if (!store?.id) return;
+    db.from("delivery_comercios").select("*").eq("id", store.id).maybeSingle().then(({ data }: { data: DeliveryStore | null }) => setStoreInfo(data));
+  }, [store?.id]);
+
   useEffect(() => {
     if (!address && addresses.length) {
       const preferred = addresses.find((item) => item.predeterminada) || addresses[0];
-      setAddress({ id: preferred.id, alias: preferred.alias, direccion: fullAddress(preferred) });
+      setAddress(toCartAddress(preferred));
     }
   }, [address, addresses, setAddress]);
 
@@ -61,11 +71,12 @@ export default function Cart() {
   const summary = useMemo(() => {
     if (!store) return null;
     const freeByStore = store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && subtotal >= Number(store.envio_gratis_desde);
-    const shipping = freeByStore || (coupon?.valido && coupon.envio_gratis) ? 0 : Number(store.costo_envio);
+    const reach = storeReach(storeInfo || store, point);
+    const shipping = freeByStore || (coupon?.valido && coupon.envio_gratis) ? 0 : reach.fee;
     const service = Math.round(subtotal * 0.05);
     const discount = coupon?.valido ? Number(coupon.descuento || 0) : 0;
-    return { shipping, service, discount, total: Math.max(subtotal + shipping + service + tip - discount, 0), missing: Math.max(Number(store.pedido_minimo || 0) - subtotal, 0) };
-  }, [store, subtotal, coupon, tip]);
+    return { shipping, service, discount, total: Math.max(subtotal + shipping + service + tip - discount, 0), missing: Math.max(Number(store.pedido_minimo || 0) - subtotal, 0), reach, needsPin: Boolean(storeInfo?.latitud != null && !point) };
+  }, [store, storeInfo, point, subtotal, coupon, tip]);
 
   if (!store || !items.length || !summary) {
     return (
@@ -100,6 +111,8 @@ export default function Cart() {
       p_cupon: coupon?.valido ? coupon.codigo : null,
       p_notas: notes.trim() || null,
       p_telefono: phone.trim(),
+      p_latitud: address.lat ?? null,
+      p_longitud: address.lng ?? null,
     });
     setSubmitting(false);
     if (error || !orderId) return toast.error(errorMessage(error, "No pudimos crear el pedido"));
@@ -108,7 +121,7 @@ export default function Cart() {
     navigate(`/app/pedidos/${orderId}`, { replace: true });
   };
 
-  const chooseAddress = (saved: SavedAddress) => setAddress({ id: saved.id, alias: saved.alias, direccion: fullAddress(saved) });
+  const chooseAddress = (saved: SavedAddress) => setAddress(toCartAddress(saved));
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-16 pt-5 sm:px-6">
@@ -201,7 +214,7 @@ export default function Cart() {
             <h2 className="text-lg font-extrabold">Resumen</h2>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-muted-foreground">Productos</dt><dd>{money(subtotal)}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Envío</dt><dd className={cn(summary.shipping === 0 && "font-bold text-success")}>{summary.shipping === 0 ? "Gratis" : money(summary.shipping)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Envío{summary.reach.km != null && ` (${formatKm(summary.reach.km)})`}</dt><dd className={cn(summary.shipping === 0 && "font-bold text-success")}>{summary.shipping === 0 ? "Gratis" : money(summary.shipping)}</dd></div>
               <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa de servicio</dt><dd>{money(summary.service)}</dd></div>
               {tip > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Propina</dt><dd>{money(tip)}</dd></div>}
               {summary.discount > 0 && <div className="flex justify-between font-bold text-success"><dt>Descuento</dt><dd>-{money(summary.discount)}</dd></div>}
@@ -212,7 +225,9 @@ export default function Cart() {
               <p className="mt-3 text-sm text-muted-foreground">Sumá {money(Number(store.envio_gratis_desde) - subtotal)} más y el envío es gratis.</p>
             )}
             <p className="mt-3 truncate text-sm text-muted-foreground">Entrega en <span className="font-bold text-foreground">{address?.direccion || "—"}</span></p>
-            <Button className="mt-4 h-12 w-full rounded-full text-base font-bold" onClick={checkout} disabled={submitting || summary.missing > 0 || !address?.direccion}>
+            {summary.needsPin && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Esta dirección no tiene ubicación en el mapa. Agregá una nueva dirección para calcular el envío.</p>}
+            {!summary.needsPin && !summary.reach.inZone && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección o pedí en un comercio más cercano.</p>}
+            <Button className="mt-4 h-12 w-full rounded-full text-base font-bold" onClick={checkout} disabled={submitting || summary.missing > 0 || !address?.direccion || !summary.reach.inZone || summary.needsPin}>
               {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `Hacer pedido · ${money(summary.total)}`}
             </Button>
             <p className="mt-2 text-center text-xs text-muted-foreground">El total final lo calcula el sistema al confirmar.</p>

@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { Bike, Clock3, Star } from "lucide-react";
+import { useCart } from "@/contexts/CartContext";
 import { DeliveryStore, img, isOpenNow, money, nextOpening } from "@/lib/delivery";
+import { formatKm, storeReach } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { FavoriteButton } from "./FavoriteButton";
 
@@ -28,21 +30,27 @@ export function RatingBadge({ store, className }: { store: Pick<DeliveryStore, "
   );
 }
 
-export function deliveryFeeLabel(store: Pick<DeliveryStore, "costo_envio" | "envio_gratis_desde">) {
-  if (Number(store.costo_envio) === 0 || (store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && Number(store.envio_gratis_desde) <= 1)) return "Envío gratis";
-  return money(store.costo_envio);
+/** Costo de envío a mostrar: si hay distancia, el calculado para esa dirección; si no, el base. */
+export function deliveryFeeLabel(store: Pick<DeliveryStore, "costo_envio" | "envio_gratis_desde">, fee?: number) {
+  const amount = fee ?? Number(store.costo_envio);
+  if (amount === 0 || (store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && Number(store.envio_gratis_desde) <= 1)) return "Envío gratis";
+  return money(amount);
 }
 
 export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; variant?: "grid" | "row" }) {
-  const free = deliveryFeeLabel(store) === "Envío gratis";
+  const { address } = useCart();
+  const reach = storeReach(store, address?.lat != null && address?.lng != null ? { lat: address.lat, lng: address.lng } : null);
+  const feeLabel = deliveryFeeLabel(store, reach.fee);
+  const free = feeLabel === "Envío gratis";
   const open = isOpenNow(store);
   return (
     <Link to={`/app/tienda/${store.slug}`} className={cn("group block min-w-0", variant === "row" && "w-[260px] shrink-0 sm:w-[300px]")}>
       <div className="relative">
         <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted">
-          <img src={img(store.imagen_url, 640)} alt={store.nombre} loading="lazy" className={cn("h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]", !open && "grayscale")} />
+          <img src={img(store.imagen_url, 640)} alt={store.nombre} loading="lazy" className={cn("h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.04]", (!open || !reach.inZone) && "grayscale")} />
           {store.promo_texto && <span className="absolute left-2.5 top-2.5 rounded-lg bg-primary px-2 py-1 text-[11px] font-bold text-primary-foreground shadow-soft">{store.promo_texto}</span>}
           {!open && <span className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center text-sm font-bold text-white">Cerrado<span className="text-xs font-semibold text-white/80">{store.esta_abierto ? nextOpening(store.horarios) : "Pausado por el local"}</span></span>}
+          {open && !reach.inZone && <span className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-center text-sm font-bold text-white">No llega a tu dirección<span className="text-xs font-semibold text-white/80">Está a {formatKm(reach.km || 0)}</span></span>}
           <FavoriteButton storeId={store.id} className="absolute right-2.5 top-2.5" />
         </div>
         <StoreLogo store={store} className="absolute -bottom-5 left-3 h-12 w-12 text-sm shadow-soft" />
@@ -55,8 +63,8 @@ export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; v
         <div className="mt-1 flex items-center gap-2 text-xs font-semibold text-muted-foreground">
           <span className="flex items-center gap-1"><Clock3 className="h-3.5 w-3.5" />{store.tiempo_min}-{store.tiempo_max} min</span>
           <span aria-hidden>·</span>
-          <span className={cn("flex items-center gap-1", free && "text-success")}><Bike className="h-3.5 w-3.5" />{deliveryFeeLabel(store)}</span>
-          {store.rubro && <><span aria-hidden className="hidden sm:inline">·</span><span className="hidden truncate sm:inline">{store.rubro}</span></>}
+          <span className={cn("flex items-center gap-1", free && "text-success")}><Bike className="h-3.5 w-3.5" />{feeLabel}</span>
+          {reach.km != null ? <><span aria-hidden>·</span><span className="truncate">{formatKm(reach.km)}</span></> : store.rubro && <><span aria-hidden className="hidden sm:inline">·</span><span className="hidden truncate sm:inline">{store.rubro}</span></>}
         </div>
       </div>
     </Link>

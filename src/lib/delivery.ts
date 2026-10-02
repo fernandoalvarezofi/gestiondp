@@ -32,6 +32,10 @@ export type DeliveryStore = {
   promo_texto?: string | null;
   esta_abierto: boolean;
   horarios?: Horarios | null;
+  latitud?: number | null;
+  longitud?: number | null;
+  radio_entrega_km?: number | null;
+  costo_por_km?: number | null;
   aprobado?: boolean;
   motivo_rechazo?: string | null;
   destacado?: boolean;
@@ -167,7 +171,10 @@ export type DeliveryOrder = {
   entregado_at?: string | null;
   cancelado_at?: string | null;
   items?: OrderItem[];
-  comercio?: Pick<DeliveryStore, "nombre" | "slug" | "imagen_url" | "logo_url" | "direccion" | "telefono"> | null;
+  latitud?: number | null;
+  longitud?: number | null;
+  distancia_km?: number | null;
+  comercio?: Pick<DeliveryStore, "nombre" | "slug" | "imagen_url" | "logo_url" | "direccion" | "telefono" | "latitud" | "longitud"> | null;
   cliente?: { nombre: string } | null;
 };
 
@@ -289,4 +296,4 @@ export function errorMessage(error: unknown, fallback = "Algo salió mal. Probá
 }
 
 export const storeSelect = "*";
-export const orderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,logo_url,direccion,telefono)";
+export const orderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,logo_url,direccion,telefono,latitud,longitud)";

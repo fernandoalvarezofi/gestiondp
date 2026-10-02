@@ -8,6 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
+import { MapView } from "@/components/maps/LazyMaps";
+import type { MapMarker } from "@/components/maps/DeliveryMap";
+import { useShareCourierLocation } from "@/hooks/useCourierLocation";
+import { formatKm } from "@/lib/geo";
 import { db, DeliveryOrder, errorMessage, formatDateTime, formatTime, metodoPagoLabel, money, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +22,7 @@ const vehicles = [
   { id: "auto", label: "Auto", icon: Car },
   { id: "a_pie", label: "A pie", icon: Footprints },
 ];
-const courierSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,direccion,telefono), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
+const courierSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,direccion,telefono,latitud,longitud), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 const earning = (order: DeliveryOrder) => Number(order.costo_envio) + Number(order.propina);
 const mapsUrl = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
 
@@ -148,6 +152,12 @@ function CurrentDelivery({ order, onChange }: { order: DeliveryOrder; onChange: 
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const pickedUp = order.estado === "en_camino";
+  const sharing = useShareCourierLocation(true);
+  const markers: MapMarker[] = [
+    ...(order.comercio?.latitud != null && order.comercio?.longitud != null ? [{ lat: Number(order.comercio.latitud), lng: Number(order.comercio.longitud), kind: "store" as const, label: order.comercio.nombre }] : []),
+    ...(order.latitud != null && order.longitud != null ? [{ lat: Number(order.latitud), lng: Number(order.longitud), kind: "home" as const, label: "Entrega" }] : []),
+    ...(sharing.position ? [{ ...sharing.position, kind: "courier" as const, label: "Vos" }] : []),
+  ];
 
   const pickUp = async () => {
     setBusy(true);
@@ -170,7 +180,12 @@ function CurrentDelivery({ order, onChange }: { order: DeliveryOrder; onChange: 
         <StatusBadge estado={order.estado} />
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      {markers.length > 1 && <MapView markers={markers} className="mt-5 h-56 sm:h-72" />}
+      <p className={cn("mt-2 text-xs font-semibold", sharing.status === "sharing" ? "text-success" : "text-muted-foreground")}>
+        {sharing.status === "sharing" ? "● Compartiendo tu ubicación con el cliente" : sharing.status === "denied" ? "Activá el permiso de ubicación para que el cliente pueda seguirte" : sharing.status === "unsupported" ? "Este dispositivo no permite compartir ubicación" : "Buscando tu ubicación…"}
+        {order.distancia_km != null && ` · Recorrido aprox. ${formatKm(Number(order.distancia_km))}`}
+      </p>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <a href={mapsUrl(order.comercio?.direccion || "")} target="_blank" rel="noreferrer" className={cn("flex gap-3 rounded-2xl border p-3 hover:bg-muted", !pickedUp && "border-primary bg-primary/5")}>
           <Store className="h-5 w-5 shrink-0 text-primary" /><span className="min-w-0"><span className="block font-bold">1. Retiro</span><span className="block text-sm text-muted-foreground">{order.comercio?.nombre} · {order.comercio?.direccion}</span></span><Navigation className="ml-auto h-4 w-4 shrink-0" />
         </a>

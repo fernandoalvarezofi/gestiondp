@@ -7,16 +7,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Categoria, categoriaLabel, defaultSchedule, DeliveryStore, Horarios, scheduleSummary } from "@/lib/delivery";
+import { toast } from "sonner";
+import { AddressSearch } from "@/components/maps/AddressSearch";
+import { MapPicker } from "@/components/maps/LazyMaps";
+import { Categoria, categoriaLabel, defaultSchedule, DeliveryStore, Horarios, money, scheduleSummary } from "@/lib/delivery";
 
 export type StoreFormValues = Pick<DeliveryStore,
   "nombre" | "categoria" | "rubro" | "descripcion" | "direccion" | "telefono" | "horario" | "imagen_url" | "logo_url" |
-  "tiempo_min" | "tiempo_max" | "costo_envio" | "pedido_minimo" | "envio_gratis_desde" | "promo_texto" | "esta_abierto"> & { horarios: Horarios };
+  "tiempo_min" | "tiempo_max" | "costo_envio" | "pedido_minimo" | "envio_gratis_desde" | "promo_texto" | "esta_abierto"> & {
+  horarios: Horarios; latitud: number | null; longitud: number | null; radio_entrega_km: number; costo_por_km: number;
+};
 
 export const emptyStore: StoreFormValues = {
   nombre: "", categoria: "comida", rubro: "", descripcion: "", direccion: "", telefono: "", horario: "",
   imagen_url: "", logo_url: "", tiempo_min: 20, tiempo_max: 35, costo_envio: 990, pedido_minimo: 0, envio_gratis_desde: null, promo_texto: "", esta_abierto: true,
-  horarios: defaultSchedule,
+  horarios: defaultSchedule, latitud: null, longitud: null, radio_entrega_km: 5, costo_por_km: 200,
 };
 
 export function storeToFormValues(store: DeliveryStore): StoreFormValues {
@@ -25,6 +30,8 @@ export function storeToFormValues(store: DeliveryStore): StoreFormValues {
     horario: store.horario || "", imagen_url: store.imagen_url || "", logo_url: store.logo_url || "", tiempo_min: store.tiempo_min, tiempo_max: store.tiempo_max,
     costo_envio: Number(store.costo_envio), pedido_minimo: Number(store.pedido_minimo), envio_gratis_desde: store.envio_gratis_desde ?? null, promo_texto: store.promo_texto || "",
     esta_abierto: store.esta_abierto, horarios: store.horarios || defaultSchedule,
+    latitud: store.latitud != null ? Number(store.latitud) : null, longitud: store.longitud != null ? Number(store.longitud) : null,
+    radio_entrega_km: Number(store.radio_entrega_km ?? 5), costo_por_km: Number(store.costo_por_km ?? 0),
   };
 }
 
@@ -39,6 +46,11 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (values.latitud == null || values.longitud == null) {
+      toast.error("Marcá la ubicación del local en el mapa (sección Ubicación y zona de entrega)");
+      document.getElementById("store-location")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
     setSaving(true);
     await onSubmit({
       ...values,
@@ -88,11 +100,24 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit }: { initial:
         </label>
       </fieldset>
 
+      <fieldset id="store-location" className="space-y-3">
+        <legend className="mb-3 text-base font-extrabold">Ubicación y zona de entrega</legend>
+        <AddressSearch placeholder="Buscá la dirección del local" onPick={(found) => setValues((current) => ({ ...current, latitud: found.lat, longitud: found.lng, direccion: current.direccion || found.label }))} />
+        {values.latitud != null && values.longitud != null ? (
+          <MapPicker value={{ lat: values.latitud, lng: values.longitud }} onChange={(point) => setValues((current) => ({ ...current, latitud: point.lat, longitud: point.lng }))} className="h-60" />
+        ) : <p className="rounded-xl bg-warning/15 p-3 text-sm font-semibold">Todavía no marcaste dónde está el local. Buscá la dirección arriba para ubicarlo en el mapa.</p>}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5"><Label htmlFor="s-radio">Entregás hasta (km)</Label><Input id="s-radio" type="number" min={0.5} max={50} step={0.5} value={values.radio_entrega_km} onChange={(event) => set("radio_entrega_km", toNumber(event.target.value))} /></div>
+          <div className="space-y-1.5"><Label htmlFor="s-km">Costo extra por km ($)</Label><Input id="s-km" type="number" min={0} value={values.costo_por_km} onChange={(event) => set("costo_por_km", toNumber(event.target.value))} /></div>
+        </div>
+        <p className="text-xs text-muted-foreground">Ejemplo: con envío base de {money(values.costo_envio)} y {money(values.costo_por_km)} por km, a 3 km el envío cuesta {money(Math.round((values.costo_envio + values.costo_por_km * 3) / 10) * 10)}.</p>
+      </fieldset>
+
       <fieldset className="grid gap-4 sm:grid-cols-3">
         <legend className="mb-3 text-base font-extrabold">Entrega</legend>
         <div className="space-y-1.5"><Label htmlFor="s-tmin">Tiempo mínimo (min)</Label><Input id="s-tmin" type="number" min={5} max={180} value={values.tiempo_min} onChange={(event) => set("tiempo_min", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-tmax">Tiempo máximo (min)</Label><Input id="s-tmax" type="number" min={5} max={240} value={values.tiempo_max} onChange={(event) => set("tiempo_max", toNumber(event.target.value))} /></div>
-        <div className="space-y-1.5"><Label htmlFor="s-envio">Costo de envío ($)</Label><Input id="s-envio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
+        <div className="space-y-1.5"><Label htmlFor="s-envio">Envío base ($)</Label><Input id="s-envio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-minimo">Pedido mínimo ($)</Label><Input id="s-minimo" type="number" min={0} value={values.pedido_minimo} onChange={(event) => set("pedido_minimo", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-gratis">Envío gratis desde ($)</Label><Input id="s-gratis" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>
         <div className="space-y-1.5"><Label htmlFor="s-promo">Promoción destacada</Label><Input id="s-promo" maxLength={40} value={values.promo_texto || ""} onChange={(event) => set("promo_texto", event.target.value)} placeholder="Ej.: 20% OFF en combos" /></div>

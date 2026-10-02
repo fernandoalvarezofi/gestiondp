@@ -9,6 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { db, DeliveryOrder, errorMessage, estadoLabel, formatDateTime, formatTime, img, metodoPagoLabel, money, optionsLabel, orderSelect, pedidoActivo, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { useReorder } from "@/hooks/useReorder";
+import { useCourierLocation } from "@/hooks/useCourierLocation";
+import { MapView } from "@/components/maps/LazyMaps";
+import type { MapMarker } from "@/components/maps/DeliveryMap";
 
 const statusCopy: Record<string, string> = {
   pendiente: "El comercio está revisando tu pedido.",
@@ -27,6 +30,7 @@ export default function OrderDetail() {
   const [code, setCode] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
+  const courier = useCourierLocation(order?.repartidor_id, Boolean(order && pedidoActivo(order.estado)));
 
   const load = useCallback(async () => {
     const { data } = await db.from("delivery_pedidos").select(orderSelect).eq("id", id).maybeSingle();
@@ -60,6 +64,11 @@ export default function OrderDetail() {
   };
 
   const active = pedidoActivo(order.estado);
+  const markers: MapMarker[] = [
+    ...(order.comercio?.latitud != null && order.comercio?.longitud != null ? [{ lat: Number(order.comercio.latitud), lng: Number(order.comercio.longitud), kind: "store" as const, label: order.comercio.nombre }] : []),
+    ...(order.latitud != null && order.longitud != null ? [{ lat: Number(order.latitud), lng: Number(order.longitud), kind: "home" as const, label: "Tu dirección" }] : []),
+    ...(courier ? [{ lat: courier.lat, lng: courier.lng, kind: "courier" as const, label: "Repartidor" }] : []),
+  ];
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-16 pt-5 sm:px-6">
@@ -74,6 +83,14 @@ export default function OrderDetail() {
             </div>
           )}
           <OrderTimeline order={order} />
+          {active && markers.length > 1 && (
+            <>
+              <MapView markers={markers} className="mt-5 h-64 sm:h-80" />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {courier ? `Repartidor en camino · ubicación actualizada ${formatTime(courier.updatedAt)}` : order.repartidor_id ? "Esperando la ubicación del repartidor…" : "Cuando un repartidor tome tu pedido, lo vas a ver moverse en el mapa."}
+              </p>
+            </>
+          )}
         </section>
       )}
 
