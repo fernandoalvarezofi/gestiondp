@@ -4,11 +4,12 @@ import { AlertTriangle, ArrowRight, BellRing, CheckCircle2, Circle, ClipboardLis
 import { StatCard } from "@/components/delivery/Common";
 import { img, money, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
-import { useMerchant } from "./context";
+import { Permission, useMerchant } from "./context";
 
 /** Pantalla de inicio del comercio: qué pasa hoy, qué falta completar y qué necesita atención. */
 export default function MerchantHome() {
-  const { store, orders, products, reviews, pendingCount } = useMerchant();
+  const { store, orders, products, reviews, pendingCount, access } = useMerchant();
+  const can = (permission: Permission) => access.permisos.includes(permission);
 
   const today = useMemo(() => {
     const day = new Date().toDateString();
@@ -55,14 +56,14 @@ export default function MerchantHome() {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Ventas de hoy" value={money(today.sales)} icon={<Wallet className="h-4 w-4" />} hint={`${today.count} ${today.count === 1 ? "pedido" : "pedidos"}`} />
-        <StatCard label="Ticket promedio" value={money(today.ticket)} icon={<Receipt className="h-4 w-4" />} hint="Hoy, sin envío ni propinas" />
+        {can("estadisticas") && <StatCard label="Ventas de hoy" value={money(today.sales)} icon={<Wallet className="h-4 w-4" />} hint={`${today.count} ${today.count === 1 ? "pedido" : "pedidos"}`} />}
+        {can("estadisticas") && <StatCard label="Ticket promedio" value={money(today.ticket)} icon={<Receipt className="h-4 w-4" />} hint="Hoy, sin envío ni propinas" />}
         <StatCard label="En curso" value={pendingCount + inProgress} icon={<ClipboardList className="h-4 w-4" />} hint={`${pendingCount} por responder`} />
         <StatCard label="Calificación" value={store.total_resenas ? Number(store.rating).toFixed(1) : "—"} icon={<Star className="h-4 w-4" />} hint={`${store.total_resenas} opiniones`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        {progress < 100 && (
+        {progress < 100 && can("ajustes") && can("catalogo") && (
           <section className="rounded-3xl border bg-card p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3">
               <div><h2 className="font-extrabold">Dejá tu local listo para vender</h2><p className="text-sm text-muted-foreground">Los locales completos reciben más pedidos.</p></div>
@@ -83,7 +84,7 @@ export default function MerchantHome() {
           </section>
         )}
 
-        <section className="rounded-3xl border bg-card p-4 sm:p-5">
+        {can("catalogo") && <section className="rounded-3xl border bg-card p-4 sm:p-5">
           <h2 className="flex items-center gap-2 font-extrabold"><AlertTriangle className="h-5 w-5 text-warning" />Necesita atención</h2>
           {soldOut.length === 0 && lowStock.length === 0 ? (
             <p className="mt-3 text-sm text-muted-foreground">Tu menú está en orden: no hay productos agotados ni con poco stock.</p>
@@ -103,9 +104,9 @@ export default function MerchantHome() {
               <Link to="/app/comercio/menu" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-primary">Ir al menú y stock<ArrowRight className="h-4 w-4" /></Link>
             </>
           )}
-        </section>
+        </section>}
 
-        {reviews.length > 0 && (
+        {reviews.length > 0 && can("opiniones") && (
           <section className="rounded-3xl border bg-card p-4 sm:p-5">
             <div className="flex items-center justify-between"><h2 className="flex items-center gap-2 font-extrabold"><TrendingUp className="h-5 w-5 text-primary" />Últimas opiniones</h2><Link to="/app/comercio/opiniones" className="text-sm font-bold text-primary">Ver todas</Link></div>
             <ul className="mt-3 divide-y">

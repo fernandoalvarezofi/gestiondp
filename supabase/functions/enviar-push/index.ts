@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
   const { pedido_id, evento, estado_anterior, mensaje_id, reclamo_id } = (await req.json()) as Payload;
   const { data: order } = await supabase
     .from("delivery_pedidos")
-    .select("id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, entrega_estimada, demora_extra_min, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
+    .select("id, comercio_id, estado, total, cliente_id, repartidor_id, motivo_cancelacion, tipo_entrega, programado_para, entrega_estimada, demora_extra_min, comercio:delivery_comercios(nombre, propietario_id), items:delivery_pedido_items(cantidad)")
     .eq("id", pedido_id)
     .maybeSingle();
   if (!order) return new Response("Pedido no encontrado", { status: 404 });
@@ -43,9 +43,13 @@ Deno.serve(async (req) => {
   const units = ((order.items as { cantidad: number }[]) || []).reduce((total, item) => total + item.cantidad, 0);
   const sends: { userIds: string[]; message: Message }[] = [];
 
-  if (evento === "nuevo" && store?.propietario_id) {
+  // El aviso del local le llega al dueño y a todo el equipo activo (todos los roles reciben pedidos).
+  const { data: team } = await supabase.from("delivery_comercio_equipo").select("user_id").eq("comercio_id", order.comercio_id as string).eq("estado", "activo");
+  const staff = [...new Set([store?.propietario_id, ...(team || []).map((row) => row.user_id as string | null)].filter((id): id is string => Boolean(id)))];
+
+  if (evento === "nuevo" && staff.length) {
     sends.push({
-      userIds: [store.propietario_id],
+      userIds: staff,
       message: { title: `🔔 Nuevo pedido ${shortId(order.id)}`, body: `${units} ${units === 1 ? "producto" : "productos"} · ${money(Number(order.total))}. Aceptalo desde tu panel.`, url: "/app/comercio", tag: `pedido-${order.id}` },
     });
   }
@@ -71,8 +75,8 @@ Deno.serve(async (req) => {
     if (copy) sends.push({ userIds: [order.cliente_id], message: { ...copy, body: order.estado === "cancelado" && order.motivo_cancelacion ? order.motivo_cancelacion : copy.body, url: `/app/pedidos/${order.id}`, tag: `pedido-${order.id}` } });
 
     // Si lo canceló el cliente, también se entera el comercio.
-    if (order.estado === "cancelado" && estado_anterior === "pendiente" && store?.propietario_id && order.motivo_cancelacion === "Cancelado por el cliente") {
-      sends.push({ userIds: [store.propietario_id], message: { title: `Pedido ${shortId(order.id)} cancelado`, body: "El cliente canceló el pedido antes de que lo aceptaras.", url: "/app/comercio", tag: `pedido-${order.id}` } });
+    if (order.estado === "cancelado" && estado_anterior === "pendiente" && staff.length && order.motivo_cancelacion === "Cancelado por el cliente") {
+      sends.push({ userIds: staff, message: { title: `Pedido ${shortId(order.id)} cancelado`, body: "El cliente canceló el pedido antes de que lo aceptaras.", url: "/app/comercio", tag: `pedido-${order.id}` } });
     }
 
     // Pedido recién aceptado y sin repartidor: la oferta va primero al repartidor libre más cercano al comercio.
@@ -89,8 +93,8 @@ Deno.serve(async (req) => {
       const preview = msg.texto.length > 110 ? `${msg.texto.slice(0, 107)}…` : msg.texto;
       if (msg.autor_id === order.cliente_id) {
         // Escribió el cliente: le avisamos al comercio o al repartidor según el canal.
-        const target = msg.canal === "comercio" ? store?.propietario_id : order.repartidor_id;
-        if (target) sends.push({ userIds: [target], message: { title: `💬 ${first} · pedido ${shortId(order.id)}`, body: preview, url: msg.canal === "comercio" ? "/app/comercio" : "/app/repartidor", tag: `chat-${order.id}-${msg.canal}` } });
+        const target = msg.canal === "comercio" ? staff : order.repartidor_id ? [order.repartidor_id as string] : [];
+        if (target.length) sends.push({ userIds: target, message: { title: `💬 ${first} · pedido ${shortId(order.id)}`, body: preview, url: msg.canal === "comercio" ? "/app/comercio" : "/app/repartidor", tag: `chat-${order.id}-${msg.canal}` } });
       } else {
         const from = msg.canal === "comercio" ? store?.nombre || "El comercio" : "Tu repartidor";
         sends.push({ userIds: [order.cliente_id], message: { title: `💬 ${from}`, body: preview, url: `/app/pedidos/${order.id}?chat=${msg.canal}`, tag: `chat-${order.id}-${msg.canal}` } });

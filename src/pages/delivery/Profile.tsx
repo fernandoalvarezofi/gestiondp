@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { BellRing, Bike, ChevronRight, Heart, HelpCircle, KeyRound, LogOut, MapPin, Moon, Receipt, ShieldCheck, Store, Ticket, UserCircle } from "lucide-react";
 import { toast } from "sonner";
 import { AddressForm, AddressList, useSavedAddresses } from "@/components/delivery/AddressDialog";
+import { TeamInvitations } from "@/components/merchant/TeamInvitations";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -125,6 +126,8 @@ export default function Profile() {
           <Switch checked={push.state === "on"} disabled={!["on", "off"].includes(push.state)} onCheckedChange={togglePush} />
         </label>
       </nav>
+
+      <TeamInvitations className="mt-4" onAccepted={() => roles.refresh()} />
 
       <Accordion type="single" collapsible className="mt-4 overflow-hidden rounded-3xl border bg-card px-4">
         <AccordionItem value="datos" className="border-b">

@@ -34,6 +34,7 @@ const MerchantPages = {
   Reviews: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantReviewsPage }))),
   Stats: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantStatsPage }))),
   Finance: lazy(() => import("./pages/delivery/merchant/MerchantFinance")),
+  Team: lazy(() => import("./pages/delivery/merchant/MerchantTeam")),
 };
 const CourierLayout = lazy(() => import("./pages/delivery/courier/CourierLayout"));
 const CourierPages = {
@@ -94,6 +95,7 @@ const App = () => (
                         <Route path="opiniones" element={<MerchantPages.Reviews />} />
                         <Route path="estadisticas" element={<MerchantPages.Stats />} />
                         <Route path="finanzas" element={<MerchantPages.Finance />} />
+                        <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />
                         <Route path="configuracion/:seccion" element={<MerchantSettings />} />
                       </Route>

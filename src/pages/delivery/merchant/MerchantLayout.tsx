@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Settings, Star, Store, UtensilsCrossed } from "lucide-react";
+import { BarChart3, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { StoreLogo } from "@/components/delivery/StoreCard";
@@ -13,13 +13,19 @@ import { playChime } from "@/lib/alarm";
 import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, isPaused, money, productSelect, shortId, slugify } from "@/lib/delivery";
 import { notifyDesktop, printOrderTicket, readPrintSettings } from "@/lib/print";
 import { cn } from "@/lib/utils";
-import type { MerchantContext } from "./context";
+import { TeamInvitations } from "@/components/merchant/TeamInvitations";
+import { EmptyState } from "@/components/delivery/Common";
+import { roleLabel, type MerchantContext, type Permission, type StoreAccess } from "./context";
+
+/** Qué permiso hace falta para entrar a cada sección del panel. */
+const sectionPermission: Record<string, Permission> = { menu: "catalogo", promociones: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", configuracion: "ajustes" };
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
 export default function MerchantLayout() {
   const { user } = useAuth();
   const [store, setStore] = useState<DeliveryStore | null>(null);
+  const [access, setAccess] = useState<StoreAccess | null>(null);
   const [loading, setLoading] = useState(true);
   const [products, setProducts] = useState<DeliveryProduct[]>([]);
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
@@ -31,7 +37,10 @@ export default function MerchantLayout() {
 
   const loadStore = useCallback(async () => {
     if (!user) return null;
-    const { data } = await db.from("delivery_comercios").select("*").eq("propietario_id", user.id).order("created_at").limit(1).maybeSingle();
+    // El comercio propio o aquel donde la persona es parte del equipo, con su rol.
+    const { data: acceso } = await db.rpc("delivery_mi_acceso");
+    const { data } = acceso?.comercio_id ? await db.from("delivery_comercios").select("*").eq("id", acceso.comercio_id).maybeSingle() : { data: null };
+    setAccess(data && acceso ? { rol: acceso.rol, permisos: acceso.permisos } : null);
     setStore(data || null);
     storeRef.current = data || null;
     setLoading(false);
@@ -111,9 +120,10 @@ export default function MerchantLayout() {
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
-  if (!store) {
+  if (!store || !access) {
     return (
       <div className="mx-auto max-w-3xl px-4 pb-16 pt-5 sm:px-6">
+        <TeamInvitations className="mb-6" onAccepted={() => { setLoading(true); loadStore(); }} />
         <div className="flex flex-col items-center rounded-3xl bg-brand-deep px-6 py-10 text-center text-white">
           <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10"><Store className="h-8 w-8" /></span>
           <h1 className="mt-4 text-3xl font-extrabold">Sumá tu comercio a Woref</h1>
@@ -128,13 +138,18 @@ export default function MerchantLayout() {
 
   const pendingCount = orders.filter((order) => order.estado === "pendiente").length;
   const open = isOpenNow(store);
-  const context: MerchantContext = { store, orders, products, coupons, reviews, pendingCount, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings };
+  const can = (permission: Permission) => access.permisos.includes(permission);
+  const section = location.pathname.split("/")[3] ?? "";
+  const needed = sectionPermission[section];
+  const blocked = needed ? !can(needed) : false;
+  const tabs = [["/app/comercio", true], ["/app/comercio/pedidos", true], ["/app/comercio/menu", can("catalogo")], ["/app/comercio/estadisticas", can("estadisticas")], ["/app/comercio/configuracion", can("ajustes")]] as const;
+  const context: MerchantContext = { store, access, orders, products, coupons, reviews, pendingCount, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings };
 
   return (
     <PanelShell
       panel="Panel del comercio"
       bottomTabs
-      tabs={["/app/comercio", "/app/comercio/pedidos", "/app/comercio/menu", "/app/comercio/estadisticas", "/app/comercio/configuracion"]}
+      tabs={tabs.filter(([, allowed]) => allowed).map(([to]) => to)}
       quickLink={{ to: `/app/tienda/${store.slug}`, label: "Ver como cliente" }}
       identity={
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-2.5 group-data-[collapsible=icon]:hidden">
@@ -149,25 +164,28 @@ export default function MerchantLayout() {
         { label: "Operación", items: [
           { to: "/app/comercio", label: "Inicio", icon: LayoutDashboard, end: true },
           { to: "/app/comercio/pedidos", label: "Pedidos", icon: ClipboardList, badge: pendingCount },
-          { to: "/app/comercio/menu", label: "Menú y stock", icon: UtensilsCrossed },
+          ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", icon: UtensilsCrossed }] : []),
         ] },
         { label: "Crecimiento", items: [
-          { to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone },
-          { to: "/app/comercio/opiniones", label: "Opiniones", icon: Star },
-          { to: "/app/comercio/estadisticas", label: "Estadísticas", icon: BarChart3 },
+          ...(can("promociones") ? [{ to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone }] : []),
+          ...(can("opiniones") ? [{ to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
+          ...(can("estadisticas") ? [{ to: "/app/comercio/estadisticas", label: "Estadísticas", icon: BarChart3 }] : []),
         ] },
         { label: "Mi local", items: [
-          { to: "/app/comercio/finanzas", label: "Finanzas", icon: Landmark },
-          { to: "/app/comercio/configuracion", label: "Configuración", icon: Settings },
+          ...(can("finanzas") ? [{ to: "/app/comercio/finanzas", label: "Finanzas", icon: Landmark }] : []),
+          ...(can("equipo") ? [{ to: "/app/comercio/equipo", label: "Equipo", icon: Users }] : []),
+          ...(can("ajustes") ? [{ to: "/app/comercio/configuracion", label: "Configuración", icon: Settings }] : []),
         ] },
-      ]}
+      ].filter((group) => group.items.length > 0)}
       actions={<StoreStatusControl store={store} onChange={loadStore} />}
     >
       {store.aprobado === false && !store.motivo_rechazo && <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Cuando lo aprobemos, aparece para los clientes.</p>}
       {store.aprobado === false && store.motivo_rechazo && <p className="mb-4 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive"><span className="font-bold">Tu comercio no fue aprobado:</span> {store.motivo_rechazo}. Corregilo en Configuración y escribinos para revisarlo de nuevo.</p>}
       {store.activo === false && <p className="mb-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Tu comercio fue pausado por administración y no aparece para los clientes. Escribinos para revisarlo.</p>}
       {(location.pathname === "/app/comercio" || location.pathname === "/app/comercio/pedidos") && <PushPrompt className="mb-4" title="No te pierdas ningún pedido" text="Activá los avisos y te llega una notificación apenas entra un pedido, aunque tengas la app cerrada." />}
-      <Outlet context={context} />
+      {blocked
+        ? <EmptyState title="No tenés acceso a esta sección" text={`Tu rol (${roleLabel[access.rol]}) no incluye esta parte del panel. Pedile al dueño que te cambie el rol si lo necesitás.`} />
+        : <Outlet context={context} />}
     </PanelShell>
   );
 }

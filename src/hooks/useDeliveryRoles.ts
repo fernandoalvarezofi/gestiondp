@@ -23,7 +23,7 @@ export function useDeliveryRoles(): DeliveryRoles {
     }
     const [roles, store, courier, perfil] = await Promise.all([
       db.from("user_roles").select("role").eq("user_id", user.id),
-      db.from("delivery_comercios").select("id").eq("propietario_id", user.id).limit(1).maybeSingle(),
+      db.rpc("delivery_mi_acceso"),
       db.from("delivery_repartidores").select("perfil_id, activo").eq("perfil_id", user.id).maybeSingle(),
       db.from("perfiles").select("nombre").eq("id", user.id).maybeSingle(),
     ]);
@@ -31,7 +31,7 @@ export function useDeliveryRoles(): DeliveryRoles {
       loading: false,
       isAdmin: (roles.data || []).some((row: { role: string }) => row.role === "admin"),
       isCourier: Boolean(courier.data?.activo),
-      storeId: store.data?.id ?? null,
+      storeId: store.data?.comercio_id ?? null,
       nombre: perfil.data?.nombre || (user.user_metadata?.full_name as string) || user.email?.split("@")[0] || "",
     });
   }, [user]);
