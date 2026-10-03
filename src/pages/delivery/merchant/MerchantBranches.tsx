@@ -66,7 +66,7 @@ export default function MerchantBranches() {
 
       <ul className="grid gap-3 sm:grid-cols-2">
         {rows.map((row) => (
-          <li key={row.id} className={cn("flex flex-col rounded-3xl border bg-card p-4", row.id === store.id && "border-primary ring-1 ring-primary/30")}>
+          <li key={row.id} className={cn("flex min-w-0 flex-col rounded-3xl border bg-card p-4", row.id === store.id && "border-primary ring-1 ring-primary/30")}>
             <div className="flex items-start gap-3">
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Building2 className="h-5 w-5" /></span>
               <div className="min-w-0 flex-1"><p className="truncate font-extrabold">{row.nombre}</p><p className="flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3 w-3 shrink-0" />{row.direccion}</p></div>

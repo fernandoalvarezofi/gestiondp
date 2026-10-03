@@ -13,7 +13,7 @@ import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { isRootPath, useGoBack } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
-export type PanelNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; badge?: number | string; hidden?: boolean };
+export type PanelNavItem = { to: string; label: string; /** Nombre corto para la barra de abajo del celular. */ short?: string; icon: LucideIcon; end?: boolean; badge?: number | string; hidden?: boolean };
 export type PanelNavGroup = { label?: string; items: PanelNavItem[] };
 
 type Props = {
@@ -138,7 +138,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
             {tabItems.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn("relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
                 <item.icon className="h-5 w-5" />
-                {item.label}
+                <span className="max-w-full truncate px-1 text-[10.5px] leading-tight">{item.short ?? item.label}</span>
                 {item.badge !== undefined && item.badge !== 0 && <span className="absolute right-[22%] top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{item.badge}</span>}
               </NavLink>
             ))}

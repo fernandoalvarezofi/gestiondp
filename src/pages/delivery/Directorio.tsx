@@ -58,14 +58,14 @@ export default function Directorio() {
           {visible.map((item) => {
             const hours = formatOsmHours(item.horario);
             return (
-              <li key={item.id} className="flex flex-col rounded-3xl border bg-card p-4">
+              <li key={item.id} className="flex min-w-0 flex-col rounded-3xl border bg-card p-4">
                 <div className="flex items-start gap-3">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-muted"><Store className="h-5 w-5 text-muted-foreground" /></span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-extrabold">{item.nombre}</p>
                     <p className="text-xs font-bold text-primary">{item.rubro}</p>
+                    {item.interesados > 0 && <p className="mt-1 text-xs font-extrabold text-muted-foreground">{item.interesados} {item.interesados === 1 ? "vecino lo quiere" : "vecinos lo quieren"}</p>}
                   </div>
-                  {item.interesados > 0 && <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-extrabold text-primary">{item.interesados} {item.interesados === 1 ? "vecino lo quiere" : "vecinos lo quieren"}</span>}
                 </div>
                 <ul className="mt-3 space-y-1 text-sm text-muted-foreground">
                   {item.direccion && <li className="flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0" />{item.direccion}</li>}

@@ -183,9 +183,9 @@ export default function CourierLayout() {
       groups={[{ items: [
         { to: "/app/repartidor", label: "Pedidos", icon: ClipboardList, end: true, badge: busyNow ? undefined : offers.length + envioOffers.length + viajeOffers.length },
         { to: "/app/repartidor/ganancias", label: "Ganancias", icon: Wallet },
-        { to: "/app/repartidor/incentivos", label: "Metas y turnos", icon: Target },
+        { to: "/app/repartidor/incentivos", label: "Metas y turnos", short: "Metas", icon: Target },
         { to: "/app/repartidor/historial", label: "Historial", icon: History },
-        { to: "/app/repartidor/perfil", label: "Mi perfil", icon: UserCircle },
+        { to: "/app/repartidor/perfil", label: "Mi perfil", short: "Perfil", icon: UserCircle },
       ] }]}
       actions={
         <Button onClick={toggleConnection} size="sm" className={cn("h-9 rounded-full px-4 font-extrabold", connected ? "bg-success text-white hover:bg-success/90" : "")} variant={connected ? "default" : "outline"} disabled={busyNow && connected} aria-pressed={connected}>

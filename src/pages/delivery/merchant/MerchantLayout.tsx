@@ -209,17 +209,17 @@ export default function MerchantLayout() {
         { label: "Operación", items: [
           { to: "/app/comercio", label: "Inicio", icon: LayoutDashboard, end: true },
           { to: "/app/comercio/pedidos", label: "Pedidos", icon: ClipboardList, badge: pendingCount },
-          ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", icon: UtensilsCrossed }] : []),
+          ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", short: "Menú", icon: UtensilsCrossed }] : []),
         ] },
         { label: "Crecimiento", items: [
           ...(can("promociones") ? [{ to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone }, { to: "/app/comercio/campanas", label: "Campañas", icon: Send }] : []),
           ...(can("opiniones") ? [{ to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
-          ...(can("estadisticas") ? [{ to: "/app/comercio/estadisticas", label: "Estadísticas", icon: BarChart3 }] : []),
+          ...(can("estadisticas") ? [{ to: "/app/comercio/estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3 }] : []),
         ] },
         { label: "Mi local", items: [
           ...(can("finanzas") ? [{ to: "/app/comercio/finanzas", label: "Finanzas", icon: Landmark }] : []),
           ...(can("equipo") ? [{ to: "/app/comercio/equipo", label: "Equipo", icon: Users }, { to: "/app/comercio/sucursales", label: branches.length > 1 ? "Sucursales" : "Agregar sucursal", icon: Building2 }] : []),
-          ...(can("ajustes") ? [{ to: "/app/comercio/configuracion", label: "Configuración", icon: Settings }] : []),
+          ...(can("ajustes") ? [{ to: "/app/comercio/configuracion", label: "Configuración", short: "Ajustes", icon: Settings }] : []),
         ] },
       ].filter((group) => group.items.length > 0)}
       actions={<StoreStatusControl store={store} onChange={loadStore} />}
