@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { KeyRound, Laptop, Loader2, LogOut, ShieldCheck, Smartphone, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { TwoFactorPanel } from "@/components/account/TwoFactorPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -80,6 +81,8 @@ export function SecuritySection() {
         <div className="space-y-1.5"><Label htmlFor="pw-repeat">Repetí la contraseña nueva</Label><Input id="pw-repeat" type="password" value={repeat} maxLength={128} onChange={(event) => setRepeat(event.target.value)} autoComplete="new-password" /></div>
         <Button type="submit" className="rounded-full" disabled={saving || !current || !next || !repeat}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Cambiar contraseña</Button>
       </form>
+
+      <TwoFactorPanel />
 
       <section className="border-t pt-6">
         <h3 className="flex items-center gap-2 font-extrabold"><ShieldCheck className="h-5 w-5 text-primary" />Sesiones</h3>

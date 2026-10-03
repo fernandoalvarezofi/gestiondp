@@ -3,6 +3,7 @@ import { Navigate, NavLink, Outlet, To, useLocation, useNavigate } from "react-r
 import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { MfaChallenge } from "@/components/account/MfaChallenge";
 import { BackBar } from "@/components/delivery/Common";
 import { isRootPath } from "@/lib/navigation";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
@@ -23,7 +24,7 @@ const bottomNav = [
 ];
 
 export function AppLayout() {
-  const { session, loading, signOut } = useAuth();
+  const { session, loading, signOut, mfaNeeded } = useAuth();
   const { itemCount, subtotal, store, address, setAddress } = useCart();
   const { addresses, loading: addressesLoading } = useSavedAddresses();
   const [gateOpen, setGateOpen] = useState(false);
@@ -53,6 +54,9 @@ export function AppLayout() {
       </div>
     );
   }
+
+  // Con la verificación en dos pasos activa, primero se confirma el código.
+  if (session && mfaNeeded) return <MfaChallenge />;
 
   // Como en las apps de delivery: se puede explorar sin cuenta (inicio, comercios, búsqueda, carrito) y se pide ingresar al confirmar un pedido o entrar a lo personal.
   const publicRoute = /^\/app(\/(buscar|promociones|directorio|carrito|categoria\/[^/]+|tienda\/[^/]+))?\/?$/.test(location.pathname);

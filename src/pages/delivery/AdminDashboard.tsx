@@ -22,6 +22,7 @@ import { ErrorsPanel } from "@/components/admin/ErrorsPanel";
 import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { IdentityQueue } from "@/components/admin/IdentityReview";
+import { AdminMfaNotice } from "@/components/admin/AdminMfaNotice";
 import { IncentivesManager } from "@/components/admin/IncentivesManager";
 import { RemisManager } from "@/components/admin/RemisManager";
 import { DirectorioManager } from "@/components/admin/DirectorioManager";
@@ -200,6 +201,7 @@ export default function AdminDashboard() {
     >
       <Tabs value={section}>
         <TabsContent value="resumen" className="mt-0 space-y-6">
+          <AdminMfaNotice />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
             <StatCard label="Facturado hoy" value={money(stats.gmv)} icon={<Wallet className="h-4 w-4" />} />
             <StatCard label="Pedidos hoy" value={stats.count} icon={<Receipt className="h-4 w-4" />} />
