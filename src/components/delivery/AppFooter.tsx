@@ -30,6 +30,7 @@ export function AppFooter() {
             <Link to="/app/repartidor" className="flex items-center gap-1 hover:text-foreground"><Bike className="h-4 w-4" />Repartí con Woref</Link>
             <Link to="/terminos" className="hover:text-foreground">Términos</Link>
             <Link to="/privacidad" className="hover:text-foreground">Privacidad</Link>
+            <Link to="/arrepentimiento" className="hover:text-foreground">Botón de arrepentimiento</Link>
           </nav>
           <p className="text-muted-foreground">© {new Date().getFullYear()} Woref</p>
         </div>

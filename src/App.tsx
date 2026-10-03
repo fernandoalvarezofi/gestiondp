@@ -13,6 +13,7 @@ import { AppLayout } from "@/components/AppLayout";
 import DeliveryHome from "./pages/delivery/DeliveryHome";
 
 const Auth = lazy(() => import("./pages/Auth"));
+const Arrepentimiento = lazy(() => import("./pages/Arrepentimiento"));
 const Landing = lazy(() => import("./pages/Landing"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Search = lazy(() => import("./pages/delivery/Search"));
@@ -86,6 +87,7 @@ const App = () => (
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/restablecer" element={<ResetPassword />} />
                     <Route path="/terminos" element={<Legal doc="terminos" />} />
+                    <Route path="/arrepentimiento" element={<Arrepentimiento />} />
                     <Route path="/privacidad" element={<Legal doc="privacidad" />} />
                     <Route path="/app" element={<AppLayout />}>
                       <Route index element={<DeliveryHome />} />

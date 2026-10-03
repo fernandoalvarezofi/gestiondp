@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, Undo2, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -26,6 +26,7 @@ import { AdminMfaNotice } from "@/components/admin/AdminMfaNotice";
 import { AnnouncementsManager } from "@/components/admin/AnnouncementsManager";
 import { IncentivesManager } from "@/components/admin/IncentivesManager";
 import { RemisManager } from "@/components/admin/RemisManager";
+import { WithdrawalsManager } from "@/components/admin/WithdrawalsManager";
 import { DirectorioManager } from "@/components/admin/DirectorioManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
@@ -175,6 +176,7 @@ export default function AdminDashboard() {
           { to: "/app/admin/pedidos", label: "Pedidos", icon: ClipboardList, badge: stats.active },
           { to: "/app/admin/envios", label: "Mensajería", icon: Package },
           { to: "/app/admin/soporte", label: "Soporte", icon: LifeBuoy, badge: openClaims },
+          { to: "/app/admin/arrepentimientos", label: "Arrepentimientos", icon: Undo2 },
         ] },
         { label: "Red", items: [
           { to: "/app/admin/comercios", label: "Comercios", icon: Store, badge: pendingStores },
@@ -293,6 +295,7 @@ export default function AdminDashboard() {
         <TabsContent value="errores" className="mt-0"><ErrorsPanel /></TabsContent>
         <TabsContent value="envios" className="mt-0"><EnviosManager /></TabsContent>
         <TabsContent value="clientes" className="mt-0"><CustomersManager /></TabsContent>
+        <TabsContent value="arrepentimientos" className="mt-0"><WithdrawalsManager /></TabsContent>
         <TabsContent value="soporte" className="mt-0"><SupportCenter onChange={setOpenClaims} /></TabsContent>
 
         <TabsContent value="comercios" className="mt-0">

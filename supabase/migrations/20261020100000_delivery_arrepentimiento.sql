@@ -1,0 +1,4 @@
+-- Botón de arrepentimiento y baja (Res. 424/2020, art. 34 Ley 24.240): se puede usar sin cuenta y devuelve un código; el admin responde en 24 h.
+-- Aplicada en la base en dos partes (tabla y funciones). Altas anónimas con tope de 5 por email al día y 500 globales al día.
+-- Tabla delivery_arrepentimientos: solo la lee un admin (RLS con has_role). Funciones: delivery_arrepentimiento_crear (anon y authenticated)
+-- y delivery_arrepentimiento_resolver (solo admin; cierra la solicitud una vez y guarda quién y qué resolvió).

@@ -47,6 +47,7 @@ export function HelpSection() {
         <h3 className="font-extrabold">Legales</h3>
         <ul className="mt-3 space-y-2 text-sm">
           <li><Link to="/terminos" className="flex items-center gap-2 font-semibold text-primary hover:underline"><FileText className="h-4 w-4" />Términos y condiciones</Link></li>
+          <li><Link to="/arrepentimiento" className="flex items-center gap-2 font-semibold text-primary hover:underline"><FileText className="h-4 w-4" />Botón de arrepentimiento y baja</Link></li>
           <li><Link to="/privacidad" className="flex items-center gap-2 font-semibold text-primary hover:underline"><FileText className="h-4 w-4" />Política de privacidad</Link></li>
         </ul>
       </section>
