@@ -17,6 +17,8 @@ import { startOnlinePayment } from "@/lib/payments";
 import { ajusteValor, useAjustes } from "@/hooks/useAjustes";
 import { couponLabel, useMyCoupons } from "@/hooks/useMyCoupons";
 import { useRoute } from "@/lib/route";
+import { Switch } from "@/components/ui/switch";
+import { loadWallet, walletApplied } from "@/lib/wallet";
 import { defaultOrderPreferences, deliveryNote, initialPayment, loadOrderPreferences, OrderPreferences, TIP_OPTIONS } from "@/lib/orderPreferences";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +69,9 @@ export default function Cart() {
   // Preferencias guardadas en Mi cuenta (pago, propina, instrucciones): se aplican una sola vez, sin pisar lo que la persona ya tocó.
   const [prefs, setPrefs] = useState<OrderPreferences | null | undefined>(undefined);
   const touched = useRef({ payment: false, tip: false, notes: false });
+  // Saldo de la billetera (créditos y reintegros): se descuenta del total si la persona lo quiere usar.
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(true);
   const [mode, setMode] = useState<TipoEntrega>(() => (readPickupPreference() ? "retiro" : "delivery"));
   const [slots, setSlots] = useState<string[]>([]);
   const [scheduled, setScheduled] = useState(false);
@@ -83,6 +88,11 @@ export default function Cart() {
       setOnlineEnabled(Boolean(data));
     });
   }, []);
+
+  useEffect(() => {
+    if (!user) { setWalletBalance(0); return; }
+    loadWallet().then((wallet) => setWalletBalance(wallet?.saldo ?? 0));
+  }, [user]);
 
   useEffect(() => {
     if (!user) { setPrefs(null); return; }
@@ -170,11 +180,14 @@ export default function Cart() {
       needsPin: !pickup && Boolean(storeInfo?.latitud != null && !point),
     };
   }, [store, storeInfo, point, subtotal, coupon, tip, pickup, servicePct, road?.km, tariff]);
+  // El saldo de la billetera cubre parte del total (no aplica al pago online, que cobra Mercado Pago).
+  const walletUsed = user && useWallet && payment !== "mercadopago" && summary ? walletApplied(walletBalance, summary.total) : 0;
+  const payable = summary ? summary.total - walletUsed : 0;
 
   // El billete con el que se paga tiene que cubrir el total vigente.
   useEffect(() => {
-    if (summary && cashWith !== null && cashWith < summary.total) { setCashWith(null); setCustomCash(""); }
-  }, [summary, cashWith]);
+    if (summary && cashWith !== null && cashWith < payable) { setCashWith(null); setCustomCash(""); }
+  }, [summary, cashWith, payable]);
 
   const suggestions = useMemo(() => {
     const inCart = new Set(items.map((item) => item.id));
@@ -237,7 +250,7 @@ export default function Cart() {
     };
     const { data: orderId, error } = online
       ? await db.rpc("delivery_crear_pedido_online", params)
-      : await db.rpc("delivery_crear_pedido", { ...params, p_metodo_pago: payment, p_paga_con: payment === "efectivo" ? cashWith : null });
+      : await db.rpc("delivery_crear_pedido", { ...params, p_metodo_pago: payment, p_paga_con: payment === "efectivo" ? cashWith : null, p_usar_saldo: walletUsed > 0 });
     if (error || !orderId) { setSubmitting(false); return toast.error(errorMessage(error, "No pudimos crear el pedido")); }
     clearCart();
     if (!online) {
@@ -263,8 +276,8 @@ export default function Cart() {
   };
   const submitDisabled = submitting || summary.missing > 0 || waitingSlot || closedWithoutSchedule || (!pickup && (!address?.direccion || !summary.reach.inZone || summary.needsPin));
   const times = slotDays.get(slotDayKey ?? "") ?? [];
-  const cashChoices = cashOptions(summary.total);
-  const change = cashWith ? cashWith - summary.total : 0;
+  const cashChoices = cashOptions(payable);
+  const change = cashWith ? cashWith - payable : 0;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-32 pt-5 sm:px-6 lg:pb-16">
@@ -410,10 +423,10 @@ export default function Cart() {
                     const digits = event.target.value.replace(/\D/g, "");
                     setCustomCash(digits);
                     const amount = Number(digits);
-                    setCashWith(amount >= summary.total && amount > 0 ? amount : null);
+                    setCashWith(amount >= payable && amount > 0 ? amount : null);
                   }} />
                 </div>
-                {customCash && Number(customCash) < summary.total && <p className="mt-2 text-xs font-semibold text-destructive">Tiene que cubrir el total ({money(summary.total)}).</p>}
+                {customCash && Number(customCash) < payable && <p className="mt-2 text-xs font-semibold text-destructive">Tiene que cubrir el total ({money(payable)}).</p>}
                 {cashWith !== null && <p className="mt-2 text-sm font-semibold">Tu vuelto: <span className="font-black">{money(change)}</span></p>}
               </div>
             )}
@@ -468,7 +481,11 @@ export default function Cart() {
               <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa de servicio</dt><dd>{money(summary.service)}</dd></div>
               {summary.tip > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Propina</dt><dd>{money(summary.tip)}</dd></div>}
               {summary.discount > 0 && <div className="flex justify-between font-bold text-success"><dt>Descuento</dt><dd>-{money(summary.discount)}</dd></div>}
-              <div className="flex justify-between border-t pt-3 font-display text-xl font-extrabold"><dt>Total</dt><dd>{money(summary.total)}</dd></div>
+              {walletUsed > 0 && <div className="flex justify-between font-bold text-success"><dt>Billetera Woref</dt><dd>-{money(walletUsed)}</dd></div>}
+              <div className="flex justify-between border-t pt-3 font-display text-xl font-extrabold"><dt>Total a pagar</dt><dd>{money(payable)}</dd></div>
+              {walletBalance > 0 && payment !== "mercadopago" && (
+                <label className="flex items-center justify-between gap-3 rounded-xl bg-success/10 p-3 text-sm font-bold"><span>Usar mi saldo de Woref ({money(walletBalance)})</span><Switch checked={useWallet} onCheckedChange={setUseWallet} aria-label="Usar mi saldo de Woref" /></label>
+              )}
             </dl>
             {summary.missing > 0 && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Te faltan {money(summary.missing)} para llegar al pedido mínimo.</p>}
             {!pickup && store.envio_gratis_desde && Number(store.envio_gratis_desde) > 1 && subtotal < Number(store.envio_gratis_desde) && (
@@ -479,7 +496,7 @@ export default function Cart() {
             {!pickup && !summary.needsPin && summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Por ahora no entregamos en tu zona. Probá más tarde, elegí otra dirección o retirá en el local.</p>}
             {!pickup && !summary.needsPin && !summary.reach.inZone && !summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección, retirá en el local o pedí en un comercio más cercano.</p>}
             <Button className="mt-4 h-12 w-full rounded-full text-base font-bold max-lg:hidden" onClick={checkout} disabled={submitDisabled}>
-              {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
+              {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(payable)}`}
             </Button>
             <p className="mt-2 text-center text-xs text-muted-foreground">{payment === "mercadopago" ? "Te llevamos a Mercado Pago para pagar de forma segura." : "El total final lo calcula el sistema al confirmar."}</p>
           </section>
@@ -489,7 +506,7 @@ export default function Cart() {
       {/* Botón de confirmar fijo abajo en el celular */}
       <div className="pb-safe fixed inset-x-0 bottom-0 z-50 border-t bg-card px-4 pb-3 pt-3 shadow-pop lg:hidden">
         <Button className="h-12 w-full rounded-full text-base font-extrabold" onClick={checkout} disabled={submitDisabled}>
-          {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(summary.total)}`}
+          {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(payable)}`}
         </Button>
       </div>
     </div>

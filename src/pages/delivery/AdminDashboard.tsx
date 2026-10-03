@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { PlatformSettings } from "@/components/admin/PlatformSettings";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
+import { AccountingPanel } from "@/components/admin/AccountingPanel";
 import { ZonesManager } from "@/components/admin/ZonesManager";
 import { SupportCenter } from "@/components/admin/SupportCenter";
 import { ZoneDemand } from "@/components/admin/ZoneDemand";
@@ -180,6 +181,7 @@ export default function AdminDashboard() {
         ] },
         { label: "Marketing y finanzas", items: [
           { to: "/app/admin/cupones", label: "Cupones", icon: Megaphone },
+          { to: "/app/admin/contabilidad", label: "Contabilidad", icon: Calculator },
           { to: "/app/admin/liquidaciones", label: "Liquidaciones", icon: Landmark },
           { to: "/app/admin/pagos", label: "Pagos y reintegros", icon: Banknote, badge: refundCount },
         ] },
@@ -312,6 +314,7 @@ export default function AdminDashboard() {
         <TabsContent value="demanda" className="mt-0"><ZoneDemand /></TabsContent>
 
         <TabsContent value="cupones" className="mt-0"><CouponManager storeId={null} coupons={coupons} onChange={loadCoupons} /></TabsContent>
+        <TabsContent value="contabilidad" className="mt-0"><AccountingPanel /></TabsContent>
         <TabsContent value="liquidaciones" className="mt-0"><SettlementsManager /></TabsContent>
         <TabsContent value="pagos" className="mt-0"><PaymentsSettings orders={orders} onChange={loadOrders} /></TabsContent>
       </Tabs>

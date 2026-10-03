@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Bell, ChevronRight, Fingerprint, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, Trophy, UserCircle, Wallet } from "lucide-react";
+import { Bell, ChevronRight, Fingerprint, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, PiggyBank, Trophy, UserCircle, Wallet } from "lucide-react";
 import { AddressesSection } from "@/components/account/AddressesSection";
 import { GeneralSection } from "@/components/account/GeneralSection";
 import { HelpSection } from "@/components/account/HelpSection";
 import { NotificationsSection } from "@/components/account/NotificationsSection";
 import { OrderPrefsSection } from "@/components/account/OrderPrefsSection";
+import { WalletSection } from "@/components/account/WalletSection";
 import { VerificationSection } from "@/components/account/VerificationSection";
 import { PrivacySection } from "@/components/account/PrivacySection";
 import { SecuritySection } from "@/components/account/SecuritySection";
@@ -20,6 +21,7 @@ const SECTIONS = [
   { id: "verificacion", label: "Verificación de identidad", hint: "DNI, selfie y nivel de tu cuenta", icon: Fingerprint },
   { id: "seguridad", label: "Seguridad", hint: "Contraseña, sesiones y dispositivos", icon: LockKeyhole },
   { id: "direcciones", label: "Direcciones", hint: "Tus lugares de entrega", icon: MapPin },
+  { id: "billetera", label: "Billetera", hint: "Saldo a favor y movimientos", icon: PiggyBank },
   { id: "pedidos", label: "Pedidos y pagos", hint: "Pago, propina y cómo recibir", icon: Wallet },
   { id: "notificaciones", label: "Notificaciones y apariencia", hint: "Avisos, tema y accesibilidad", icon: Bell },
   { id: "privacidad", label: "Privacidad y datos", hint: "Descargar o eliminar tu cuenta", icon: ShieldCheck },
@@ -102,6 +104,7 @@ export default function Profile() {
               <p className="mb-6 text-sm text-muted-foreground">{current.hint}</p>
               {current.id === "general" && <GeneralSection onSaved={refreshProfile} />}
               {current.id === "verificacion" && <VerificationSection />}
+              {current.id === "billetera" && <WalletSection />}
               {current.id === "pedidos" && <OrderPrefsSection />}
               {current.id === "seguridad" && <SecuritySection />}
               {current.id === "direcciones" && <AddressesSection />}
