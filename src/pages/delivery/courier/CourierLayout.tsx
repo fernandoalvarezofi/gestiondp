@@ -3,6 +3,7 @@ import { Outlet, useLocation, useOutletContext } from "react-router-dom";
 import { Bike, ClipboardList, Loader2, Power, PowerOff, UserCircle, Wallet, History } from "lucide-react";
 import { toast } from "sonner";
 import { Courier, CourierApplication } from "@/components/courier/CourierApplication";
+import { SelfieControl } from "@/components/courier/SelfieControl";
 import { Offer, useOffers } from "@/components/courier/useOffers";
 import { EmptyState } from "@/components/delivery/Common";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
@@ -116,6 +117,7 @@ export default function CourierLayout() {
   const toggleConnection = async () => {
     if (!courier) return;
     const next = !courier.disponible;
+    if (next && courier.control_estado) { toast.error("Primero completá la selfie de control"); return; }
     if (next) await unlockAlarm();
     setCourier({ ...courier, disponible: next });
     const { error } = await db.from("delivery_repartidores").update({ disponible: next }).eq("perfil_id", courier.perfil_id);
@@ -154,6 +156,7 @@ export default function CourierLayout() {
       }
     >
       {connected && sharing.status === "denied" && <p className="mb-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Necesitamos tu ubicación para ofrecerte pedidos cercanos. Habilitala desde el candado de la barra de direcciones.</p>}
+      <SelfieControl courier={courier} onDone={reloadCourier} />
       {location.pathname === "/app/repartidor" && <PushPrompt className="mb-4" title="Enterate al instante de las ofertas" text="Activá los avisos: te notificamos cuando haya una oferta para vos, aunque tengas la app cerrada." />}
       <Outlet context={context} />
     </PanelShell>

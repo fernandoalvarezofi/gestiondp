@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 export type CourierRow = {
   perfil_id: string; vehiculo: string; telefono?: string | null; disponible: boolean; activo: boolean; created_at: string;
-  dni?: string | null; patente?: string | null; verificado: boolean; motivo_rechazo?: string | null; aceptadas: number; rechazadas: number; soltados: number;
+  dni?: string | null; patente?: string | null; verificado: boolean; motivo_rechazo?: string | null; control_estado?: "requerido" | "en_revision" | null; aceptadas: number; rechazadas: number; soltados: number;
   perfil?: { nombre: string } | null;
 };
 
@@ -36,6 +36,24 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
   const [refresh, setRefresh] = useState(0);
   const [identities, setIdentities] = useState<Map<string, IdentityState>>(new Map());
   const [reviewing, setReviewing] = useState<IdentityRow | null>(null);
+  const [controlOf, setControlOf] = useState<CourierRow | null>(null);
+  const [controlReason, setControlReason] = useState("");
+  const askControl = async (courier: CourierRow) => {
+    const { error } = await db.rpc("delivery_admin_pedir_control", { p_perfil: courier.perfil_id });
+    if (error) { toast.error(errorMessage(error)); return; }
+    toast.success("Le pedimos una selfie de control: no puede conectarse hasta enviarla");
+    onChange();
+  };
+  const resolveControl = async (ok: boolean) => {
+    if (!controlOf) return;
+    setSaving(true);
+    const { error } = await db.rpc("delivery_admin_revisar_control", { p_perfil: controlOf.perfil_id, p_ok: ok, p_motivo: ok ? null : controlReason.trim() });
+    setSaving(false);
+    if (error) { toast.error(errorMessage(error)); return; }
+    toast.success(ok ? "Control aprobado: ya puede conectarse" : "Le pedimos otra selfie");
+    setControlOf(null); setControlReason("");
+    onChange();
+  };
 
   const loadIdentities = useCallback(async () => {
     const { data } = await db.from("delivery_identidad").select("perfil_id,estado");
@@ -99,6 +117,9 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
               <Button size="sm" variant="outline" className="rounded-full" onClick={() => setDocsOf(courier)}>Documentos</Button>
               {status !== "verificado" && waiting(courier) && <Button size="sm" className="rounded-full" onClick={() => openReview(courier)}>Revisar identidad</Button>}
               {status !== "rechazado" && <Button size="sm" variant="outline" className="rounded-full" onClick={() => { setRejecting(courier); setReason(""); }}>{status === "verificado" ? "Revocar" : "Rechazar"}</Button>}
+              {status === "verificado" && courier.control_estado === "en_revision" && <Button size="sm" className="rounded-full" onClick={() => { setControlOf(courier); setControlReason(""); }}>Revisar control</Button>}
+              {status === "verificado" && !courier.control_estado && <Button size="sm" variant="outline" className="rounded-full" onClick={() => askControl(courier)}>Pedir selfie de control</Button>}
+              {status === "verificado" && courier.control_estado === "requerido" && <span className="rounded-full bg-warning/20 px-2.5 py-1 text-xs font-bold">Control pedido</span>}
               {status === "verificado" && <Button size="sm" variant="outline" className="rounded-full" onClick={() => setAccount(courier)}>Cuenta</Button>}
               <label className="flex items-center gap-2 text-xs font-semibold">Habilitado<Switch checked={courier.activo} onCheckedChange={(checked) => setActive(courier, checked)} /></label>
             </li>
@@ -107,6 +128,19 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
       </ul>
 
       <IdentityReviewDialog row={reviewing} onClose={() => setReviewing(null)} onDone={() => { onChange(); loadIdentities(); }} />
+
+      <Dialog open={Boolean(controlOf)} onOpenChange={(open) => !open && !saving && setControlOf(null)}>
+        <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
+          <DialogTitle className="text-xl font-black">Selfie de control de {controlOf?.perfil?.nombre || "repartidor"}</DialogTitle>
+          <DialogDescription>Compará la selfie de control con la selfie original y el DNI: tiene que ser la misma persona y hacer el gesto pedido.</DialogDescription>
+          {controlOf && <DocumentViewer entidad="repartidor" entidadId={controlOf.perfil_id} />}
+          <Textarea value={controlReason} maxLength={300} onChange={(event) => setControlReason(event.target.value)} placeholder="Si no sirve, explicá por qué (lo ve el repartidor)" className="min-h-[72px] resize-none" aria-label="Motivo" />
+          <div className="flex flex-wrap gap-2">
+            <Button className="rounded-full" disabled={saving} onClick={() => resolveControl(true)}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Es la misma persona: aprobar</Button>
+            <Button variant="destructive" className="rounded-full" disabled={saving || controlReason.trim().length < 5} onClick={() => resolveControl(false)}>Pedir otra selfie</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={Boolean(docsOf)} onOpenChange={(open) => !open && setDocsOf(null)}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">

@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 export type Courier = {
   perfil_id: string; vehiculo: string; telefono?: string | null; disponible: boolean; activo: boolean;
   dni?: string | null; patente?: string | null; verificado: boolean; motivo_rechazo?: string | null;
+  control_estado?: "requerido" | "en_revision" | null; control_motivo?: string | null; control_desafio?: string | null;
 };
 
 const vehicles = [

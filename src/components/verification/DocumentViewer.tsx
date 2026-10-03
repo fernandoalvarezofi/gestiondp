@@ -5,7 +5,7 @@ import { docLabel, DocEntity, loadDocs, signedDocUrl, VerificationDoc } from "@/
 type Item = VerificationDoc & { url: string | null };
 
 // Primero el DNI (frente y dorso) y la selfie, en ese orden; después el resto.
-const ORDER = ["dni_frente", "dni_dorso", "selfie", "dni_titular"];
+const ORDER = ["dni_frente", "dni_dorso", "selfie", "selfie_control", "dni_titular"];
 const rank = (tipo: string) => { const index = ORDER.indexOf(tipo); return index === -1 ? ORDER.length : index; };
 
 /** Para administración: muestra los documentos de una persona o comercio con enlaces temporales. */

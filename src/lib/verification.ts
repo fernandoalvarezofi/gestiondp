@@ -3,7 +3,7 @@ import { db, errorMessage } from "@/lib/delivery";
 import { compress } from "@/lib/uploads";
 
 export type DocEntity = "repartidor" | "comercio" | "persona";
-export type DocType = "dni_frente" | "dni_dorso" | "selfie" | "licencia" | "cedula_vehiculo" | "habilitacion" | "constancia_afip" | "dni_titular";
+export type DocType = "dni_frente" | "dni_dorso" | "selfie" | "licencia" | "cedula_vehiculo" | "habilitacion" | "constancia_afip" | "dni_titular" | "selfie_control";
 export type VerificationDoc = { id: string; entidad: DocEntity; entidad_id: string; tipo: DocType; path: string; created_at: string };
 export type DocSpec = { tipo: DocType; label: string; hint: string; required: boolean };
 
@@ -13,7 +13,7 @@ const PDF = "application/pdf";
 
 export const docLabel: Record<DocType, string> = {
   dni_frente: "DNI (frente)", dni_dorso: "DNI (dorso)", selfie: "Selfie con tu DNI", licencia: "Licencia de conducir",
-  cedula_vehiculo: "Cédula del vehículo", habilitacion: "Habilitación comercial", constancia_afip: "Constancia de inscripción en AFIP", dni_titular: "DNI del titular",
+  cedula_vehiculo: "Cédula del vehículo", habilitacion: "Habilitación comercial", constancia_afip: "Constancia de inscripción en AFIP", dni_titular: "DNI del titular", selfie_control: "Selfie de control",
 };
 
 /** Documentos del vehículo (opcionales). El DNI y la selfie se cargan en el paso de verificación de identidad. */
