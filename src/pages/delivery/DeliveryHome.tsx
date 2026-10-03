@@ -238,8 +238,12 @@ export default function DeliveryHome() {
             <button key={key} type="button" onClick={() => toggle(key)} className={cn("h-9 shrink-0 rounded-full border px-4 text-sm font-bold transition-colors", filters[key] ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{label}</button>
           ))}
         </div>
-        <div className="mt-2 grid gap-1 px-2 sm:grid-cols-2 sm:px-0 lg:grid-cols-3">
+        <div className="mt-2 grid gap-1 px-2 sm:grid-cols-2 sm:px-0 md:hidden">
           {loading ? [0, 1, 2, 3, 4, 5].map((key) => <StoreListSkeleton key={key} />) : list.map((store) => <StoreListItem key={store.id} store={store} />)}
+        </div>
+        {/* En pantallas anchas los locales se muestran con foto, como en las filas de arriba. */}
+        <div className="mt-5 hidden gap-x-5 gap-y-8 md:grid md:grid-cols-3 xl:grid-cols-4">
+          {loading ? [0, 1, 2, 3, 4, 5, 6, 7].map((key) => <StoreCardSkeleton key={key} />) : list.map((store) => <StoreCard key={store.id} store={store} />)}
         </div>
         {!loading && list.length === 0 && <EmptyState className="mx-4 mt-4 sm:mx-0" title="No hay locales con esos filtros" text="Probá sacando alguno." />}
       </section>

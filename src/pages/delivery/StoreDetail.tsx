@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { FavoriteButton } from "@/components/delivery/FavoriteButton";
 import { ProductCard } from "@/components/delivery/ProductCard";
+import { StoreCartPanel } from "@/components/delivery/StoreCartPanel";
 import { deliveryFeeLabel, RatingBadge, StoreLogo } from "@/components/delivery/StoreCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CartStore } from "@/contexts/CartContext";
@@ -106,7 +107,7 @@ export default function StoreDetail() {
   };
 
   return (
-    <div className="mx-auto max-w-5xl pb-20 sm:px-6 sm:pt-6">
+    <div className="mx-auto max-w-5xl pb-20 sm:px-6 sm:pt-6 lg:max-w-6xl">
       {/* Portada */}
       <div className="relative h-48 w-full overflow-hidden bg-muted sm:h-72 sm:rounded-3xl">
         <img src={img(store.imagen_url, 1400)} alt="" className={cn("h-full w-full object-cover", !open && "grayscale")} />
@@ -147,7 +148,7 @@ export default function StoreDetail() {
         {(store.promo_texto || coupons.length > 0 || (store.envio_gratis_desde && Number(store.envio_gratis_desde) > 1)) && (
           <div className="scrollbar-none -mx-4 mt-4 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
             {store.promo_texto && <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-primary/10 px-3 py-2.5 text-sm font-extrabold text-primary"><Ticket className="h-4 w-4" />{store.promo_texto}</div>}
-            {store.envio_gratis_desde && Number(store.envio_gratis_desde) > 1 && <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-success/10 px-3 py-2.5 text-sm font-extrabold text-success"><Bike className="h-4 w-4" />Envío gratis desde {money(store.envio_gratis_desde)}</div>}
+            {store.envio_gratis_desde && Number(store.envio_gratis_desde) > 1 && !/env[ií]o gratis/i.test(store.promo_texto || "") && <div className="flex shrink-0 items-center gap-2 rounded-2xl bg-success/10 px-3 py-2.5 text-sm font-extrabold text-success"><Bike className="h-4 w-4" />Envío gratis desde {money(store.envio_gratis_desde)}</div>}
             {coupons.map((coupon) => (
               <button key={coupon.id} type="button" onClick={() => copyCoupon(coupon.codigo)} className="flex shrink-0 items-center gap-2 rounded-2xl border border-dashed border-primary px-3 py-2 text-left">
                 <span><span className="block text-sm font-black text-primary">{couponValue(coupon)}</span><span className="block text-[11px] font-semibold text-muted-foreground">Código {coupon.codigo}{Number(coupon.minimo) > 0 && ` · mín. ${money(coupon.minimo)}`}</span></span>
@@ -159,7 +160,7 @@ export default function StoreDetail() {
       </div>
 
       {/* Pestañas del menú */}
-      <div className="sticky top-16 z-30 border-b bg-card/95 backdrop-blur sm:mt-4 sm:rounded-2xl sm:border">
+      <div className="sticky top-16 z-30 border-b bg-card/95 backdrop-blur sm:mt-4 sm:rounded-2xl sm:border lg:hidden">
         {searching ? (
           <label className="flex h-14 items-center gap-2 px-4">
             <Search className="h-5 w-5 text-muted-foreground" />
@@ -181,7 +182,16 @@ export default function StoreDetail() {
         )}
       </div>
 
-      <div className="px-4 sm:px-0">
+      <div className="px-4 sm:px-0 lg:mt-6 lg:grid lg:grid-cols-[210px_minmax(0,1fr)_330px] lg:items-start lg:gap-8">
+        <nav aria-label="Categorías del menú" className="sticky top-24 hidden max-h-[calc(100vh-7rem)] overflow-y-auto lg:block">
+          <label className="mb-3 flex h-11 items-center gap-2 rounded-full border bg-card px-4"><Search className="h-4 w-4 shrink-0 text-muted-foreground" /><input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar en el menú" aria-label="Buscar en el menú" className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none" /></label>
+          <ul className="space-y-0.5">
+            {sections.map((section) => (
+              <li key={section.name}><button type="button" onClick={() => scrollTo(section.name)} className={cn("flex w-full items-center justify-between gap-2 rounded-xl px-3 py-2 text-left text-sm font-bold transition-colors", activeSection === section.name ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><span className="truncate">{section.name}</span><span className="text-xs font-semibold opacity-70">{section.items.length}</span></button></li>
+            ))}
+          </ul>
+        </nav>
+        <div className="min-w-0">
         {!term && featured.length >= 2 && (
           <section className="pt-6">
             <h2 className="text-lg font-black">Los más pedidos</h2>
@@ -194,13 +204,15 @@ export default function StoreDetail() {
         {sections.map((section) => (
           <section key={section.name} data-section={section.name} className="pt-6">
             <h2 className="text-lg font-black">{section.name}</h2>
-            <div className="sm:grid sm:grid-cols-2 sm:gap-x-8">
+            <div className="sm:grid sm:grid-cols-2 sm:gap-x-8 lg:grid-cols-1">
               {section.items.map((product) => <ProductCard key={product.id} product={product} store={cartStore} disabled={!open || !reach.inZone} />)}
             </div>
           </section>
         ))}
         {products.length > 0 && filtered.length === 0 && <EmptyState className="mt-6" title="No encontramos ese producto" text="Probá con otra palabra." />}
         {products.length === 0 && <EmptyState className="mt-6" title="Este local todavía no cargó su menú" />}
+        </div>
+        <div className="sticky top-24 hidden lg:block"><StoreCartPanel storeId={store.id} storeName={store.nombre} minimum={Number(store.pedido_minimo || 0)} /></div>
       </div>
 
       <Dialog open={reviewsOpen} onOpenChange={setReviewsOpen}>
