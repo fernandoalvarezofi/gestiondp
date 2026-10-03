@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Send, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
+import { BarChart3, Building2, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Send, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StoreLogo } from "@/components/delivery/StoreCard";
 import type { StoreReview } from "@/components/merchant/MerchantReviews";
 import { emptyStore, StoreFormValues, StoreSettingsForm } from "@/components/merchant/StoreSettingsForm";
@@ -15,10 +16,13 @@ import { notifyDesktop, printOrderTicket, readPrintSettings } from "@/lib/print"
 import { cn } from "@/lib/utils";
 import { TeamInvitations } from "@/components/merchant/TeamInvitations";
 import { EmptyState } from "@/components/delivery/Common";
-import { roleLabel, type MerchantContext, type Permission, type StoreAccess } from "./context";
+import { roleLabel, type Branch, type MerchantContext, type Permission, type StoreAccess } from "./context";
+
+const ACTIVE_KEY = "woref-sucursal";
+const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
 
 /** Qué permiso hace falta para entrar a cada sección del panel. */
-const sectionPermission: Record<string, Permission> = { menu: "catalogo", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", configuracion: "ajustes" };
+const sectionPermission: Record<string, Permission> = { menu: "catalogo", sucursales: "equipo", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", configuracion: "ajustes" };
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
@@ -31,6 +35,8 @@ export default function MerchantLayout() {
   const [orders, setOrders] = useState<DeliveryOrder[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [reviews, setReviews] = useState<StoreReview[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(readActive);
   const location = useLocation();
   const knownPending = useRef<Set<string> | null>(null);
   const storeRef = useRef<DeliveryStore | null>(null);
@@ -38,14 +44,33 @@ export default function MerchantLayout() {
   const loadStore = useCallback(async () => {
     if (!user) return null;
     // El comercio propio o aquel donde la persona es parte del equipo, con su rol.
-    const { data: acceso } = await db.rpc("delivery_mi_acceso");
+    const { data: mine } = await db.rpc("delivery_mis_comercios");
+    setBranches((mine || []) as Branch[]);
+    let { data: acceso } = await db.rpc("delivery_mi_acceso", { p_comercio: activeId });
+    // Si la sucursal guardada ya no es accesible, se vuelve a la primera.
+    if (activeId && !acceso?.comercio_id) { ({ data: acceso } = await db.rpc("delivery_mi_acceso", { p_comercio: null })); }
     const { data } = acceso?.comercio_id ? await db.from("delivery_comercios").select("*").eq("id", acceso.comercio_id).maybeSingle() : { data: null };
     setAccess(data && acceso ? { rol: acceso.rol, permisos: acceso.permisos } : null);
     setStore(data || null);
     storeRef.current = data || null;
     setLoading(false);
     return (data as DeliveryStore | null) ?? null;
-  }, [user]);
+  }, [user, activeId]);
+
+  const reloadBranches = useCallback(async () => {
+    const { data: mine } = await db.rpc("delivery_mis_comercios");
+    setBranches((mine || []) as Branch[]);
+  }, []);
+
+  /** Cambia de sucursal: se limpian los datos de la anterior para no mezclar pedidos ni avisos. */
+  const switchStore = useCallback((id: string) => {
+    try { window.localStorage.setItem(ACTIVE_KEY, id); } catch { /* sin almacenamiento: se usa solo en esta sesión */ }
+    knownPending.current = null;
+    storeRef.current = null;
+    setOrders([]); setProducts([]); setCoupons([]); setReviews([]);
+    setLoading(true);
+    setActiveId(id);
+  }, []);
 
   const loadOrders = useCallback(async () => {
     const current = storeRef.current;
@@ -143,7 +168,7 @@ export default function MerchantLayout() {
   const needed = sectionPermission[section];
   const blocked = needed ? !can(needed) : false;
   const tabs = [["/app/comercio", true], ["/app/comercio/pedidos", true], ["/app/comercio/menu", can("catalogo")], ["/app/comercio/estadisticas", can("estadisticas")], ["/app/comercio/configuracion", can("ajustes")]] as const;
-  const context: MerchantContext = { store, access, orders, products, coupons, reviews, pendingCount, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings };
+  const context: MerchantContext = { store, access, orders, products, coupons, reviews, pendingCount, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings, branches, switchStore, reloadBranches };
 
   return (
     <PanelShell
@@ -151,7 +176,27 @@ export default function MerchantLayout() {
       bottomTabs
       tabs={tabs.filter(([, allowed]) => allowed).map(([to]) => to)}
       quickLink={{ to: `/app/tienda/${store.slug}`, label: "Ver como cliente" }}
-      identity={
+      identity={branches.length > 1 ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" aria-label="Cambiar de sucursal" className="flex w-full items-center gap-3 rounded-2xl border bg-card p-2.5 text-left group-data-[collapsible=icon]:hidden">
+              <StoreLogo store={store} className="h-10 w-10 shrink-0 text-sm" />
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-extrabold leading-tight">{store.nombre}</span><span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className={cn("h-2 w-2 rounded-full", open ? "bg-success" : isPaused(store) ? "bg-warning" : "bg-muted-foreground")} />{open ? "Abierto" : isPaused(store) ? "En pausa" : "Cerrado"}</span></span>
+              <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-64">
+            <DropdownMenuLabel>Mis sucursales</DropdownMenuLabel>
+            {branches.map((branch) => (
+              <DropdownMenuItem key={branch.id} onClick={() => { if (branch.id !== store.id) switchStore(branch.id); }}>
+                <Building2 className="h-4 w-4" /><span className="min-w-0 flex-1 truncate">{branch.nombre}</span>{branch.id === store.id && <span className="text-xs font-extrabold text-primary">Acá</span>}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild><Link to="/app/comercio/sucursales">Ver todas las sucursales</Link></DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-2.5 group-data-[collapsible=icon]:hidden">
           <StoreLogo store={store} className="h-10 w-10 shrink-0 text-sm" />
           <div className="min-w-0">
@@ -159,7 +204,7 @@ export default function MerchantLayout() {
             <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className={cn("h-2 w-2 rounded-full", open ? "bg-success" : isPaused(store) ? "bg-warning" : "bg-muted-foreground")} />{open ? "Abierto" : isPaused(store) ? "En pausa" : "Cerrado"}</p>
           </div>
         </div>
-      }
+      )}
       groups={[
         { label: "Operación", items: [
           { to: "/app/comercio", label: "Inicio", icon: LayoutDashboard, end: true },
@@ -173,7 +218,7 @@ export default function MerchantLayout() {
         ] },
         { label: "Mi local", items: [
           ...(can("finanzas") ? [{ to: "/app/comercio/finanzas", label: "Finanzas", icon: Landmark }] : []),
-          ...(can("equipo") ? [{ to: "/app/comercio/equipo", label: "Equipo", icon: Users }] : []),
+          ...(can("equipo") ? [{ to: "/app/comercio/equipo", label: "Equipo", icon: Users }, { to: "/app/comercio/sucursales", label: branches.length > 1 ? "Sucursales" : "Agregar sucursal", icon: Building2 }] : []),
           ...(can("ajustes") ? [{ to: "/app/comercio/configuracion", label: "Configuración", icon: Settings }] : []),
         ] },
       ].filter((group) => group.items.length > 0)}

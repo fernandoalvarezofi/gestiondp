@@ -6,6 +6,7 @@ import type { Coupon, DeliveryOrder, DeliveryProduct, DeliveryStore } from "@/li
 export type TeamRole = "dueno" | "encargado" | "operador";
 export type Permission = "pedidos" | "catalogo" | "promociones" | "opiniones" | "estadisticas" | "ajustes" | "finanzas" | "equipo";
 export type StoreAccess = { rol: TeamRole; permisos: Permission[] };
+export type Branch = { id: string; nombre: string; logo_url: string | null; direccion: string; rol: TeamRole; aprobado: boolean; esta_abierto: boolean };
 
 export const roleLabel: Record<TeamRole, string> = { dueno: "Dueño", encargado: "Encargado", operador: "Operador" };
 export const roleSummary: Record<TeamRole, string> = {
@@ -29,6 +30,10 @@ export type MerchantContext = {
   loadCoupons: () => Promise<void>;
   loadReviews: () => Promise<void>;
   saveSettings: (values: StoreFormValues) => Promise<void>;
+  /** Todos los locales de la cuenta (propios y donde se es parte del equipo). */
+  branches: Branch[];
+  switchStore: (id: string) => void;
+  reloadBranches: () => Promise<void>;
 };
 
 export const useMerchant = () => useOutletContext<MerchantContext>();

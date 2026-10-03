@@ -1,0 +1,6 @@
+-- Multi-sucursal: una cuenta puede tener varios comercios y el panel elige con cuál trabajar.
+-- Aplicada en la base en dos partes:
+--  1) delivery_mi_acceso(p_comercio uuid DEFAULT NULL) (reemplaza a la versión sin parámetros), delivery_mis_comercios() y delivery_resumen_sucursales().
+--  2) delivery_crear_sucursal(p_origen, p_nombre, p_direccion, p_lat, p_lng, p_telefono, p_copiar_menu): solo el dueño del comercio (aprobado),
+--     hasta 10 sucursales, nombre propio único, slug único, nace cerrada y sin aprobar, con comisión por defecto; copia datos base y, si se pide,
+--     secciones, productos, grupos de opciones y opciones (con ids nuevos). Queda en auditoría.

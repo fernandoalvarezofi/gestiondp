@@ -39,6 +39,7 @@ const MerchantPages = {
   Orders: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantOrdersPage }))),
   Menu: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantMenuPage }))),
   Promos: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantPromosPage }))),
+  Branches: lazy(() => import("./pages/delivery/merchant/MerchantBranches")),
   Campaigns: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantCampaignsPage }))),
   Reviews: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantReviewsPage }))),
   Stats: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantStatsPage }))),
@@ -112,6 +113,7 @@ const App = () => (
                         <Route path="menu" element={<MerchantPages.Menu />} />
                         <Route path="promociones" element={<MerchantPages.Promos />} />
                         <Route path="campanas" element={<MerchantPages.Campaigns />} />
+                        <Route path="sucursales" element={<MerchantPages.Branches />} />
                         <Route path="opiniones" element={<MerchantPages.Reviews />} />
                         <Route path="estadisticas" element={<MerchantPages.Stats />} />
                         <Route path="finanzas" element={<MerchantPages.Finance />} />
