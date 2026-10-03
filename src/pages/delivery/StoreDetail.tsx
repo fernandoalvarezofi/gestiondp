@@ -11,7 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CartStore } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
-import { Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary } from "@/lib/delivery";
+import { Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary, tagLabels } from "@/lib/delivery";
+
+const dietTags = ["vegano", "vegetariano", "sin_tacc", "apto_celiacos", "sin_azucar"];
 import { formatKm, storeReach } from "@/lib/geo";
 import { useRoute } from "@/lib/route";
 import { cn } from "@/lib/utils";
@@ -31,6 +33,7 @@ export default function StoreDetail() {
   const [notFound, setNotFound] = useState(false);
   const [term, setTerm] = useState("");
   const [searching, setSearching] = useState(false);
+  const [diet, setDiet] = useState<string[]>([]);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
@@ -54,12 +57,19 @@ export default function StoreDetail() {
     })();
   }, [slug]);
 
+  // Solo se ofrecen los filtros dietarios que algún producto del menú realmente tiene.
+  const dietOptions = useMemo(() => dietTags.filter((tag) => products.some((product) => product.etiquetas?.includes(tag))), [products]);
+  const activeDiet = useMemo(() => diet.filter((tag) => dietOptions.includes(tag)), [diet, dietOptions]);
+  const toggleDiet = (tag: string) => setDiet((current) => (current.includes(tag) ? current.filter((item) => item !== tag) : [...current, tag]));
+
   const filtered = useMemo(() => {
     const value = term.trim().toLowerCase();
-    return value ? products.filter((product) => `${product.nombre} ${product.descripcion || ""}`.toLowerCase().includes(value)) : products;
-  }, [products, term]);
+    return products.filter((product) =>
+      activeDiet.every((tag) => product.etiquetas?.includes(tag))
+      && (!value || `${product.nombre} ${product.descripcion || ""}`.toLowerCase().includes(value)));
+  }, [products, term, activeDiet]);
 
-  const featured = useMemo(() => products.filter((product) => product.destacado && product.disponible), [products]);
+  const featured = useMemo(() => filtered.filter((product) => product.destacado && product.disponible), [filtered]);
   const sections = useMemo(() => orderSections(filtered, sectionConfig, true)
     .map(({ name }) => ({ name, items: filtered.filter((product) => product.categoria === name) }))
     .filter((section) => section.items.length > 0), [filtered, sectionConfig]);
@@ -192,6 +202,11 @@ export default function StoreDetail() {
           </ul>
         </nav>
         <div className="min-w-0">
+        {dietOptions.length > 0 && (
+          <div role="group" aria-label="Filtrar por dieta" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pt-4 sm:mx-0 sm:px-0">
+            {dietOptions.map((tag) => <button key={tag} type="button" aria-pressed={activeDiet.includes(tag)} onClick={() => toggleDiet(tag)} className={cn("shrink-0 rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition-colors", activeDiet.includes(tag) ? "border-primary bg-primary/10 text-primary" : "bg-card hover:bg-muted")}>{tagLabels[tag]}</button>)}
+          </div>
+        )}
         {!term && featured.length >= 2 && (
           <section className="pt-6">
             <h2 className="text-lg font-black">Los más pedidos</h2>
@@ -209,7 +224,7 @@ export default function StoreDetail() {
             </div>
           </section>
         ))}
-        {products.length > 0 && filtered.length === 0 && <EmptyState className="mt-6" title="No encontramos ese producto" text="Probá con otra palabra." />}
+        {products.length > 0 && filtered.length === 0 && <EmptyState className="mt-6" title="No encontramos ese producto" text={activeDiet.length ? "Probá sacando algún filtro de dieta." : "Probá con otra palabra."} />}
         {products.length === 0 && <EmptyState className="mt-6" title="Este local todavía no cargó su menú" />}
         </div>
         <div className="sticky top-24 hidden lg:block"><StoreCartPanel storeId={store.id} storeName={store.nombre} minimum={Number(store.pedido_minimo || 0)} /></div>
