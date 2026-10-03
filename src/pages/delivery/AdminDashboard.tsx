@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Store as StoreIcon2, Target, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
 import { IdentityQueue } from "@/components/admin/IdentityReview";
 import { AdminMfaNotice } from "@/components/admin/AdminMfaNotice";
+import { AnnouncementsManager } from "@/components/admin/AnnouncementsManager";
 import { IncentivesManager } from "@/components/admin/IncentivesManager";
 import { RemisManager } from "@/components/admin/RemisManager";
 import { DirectorioManager } from "@/components/admin/DirectorioManager";
@@ -188,6 +189,7 @@ export default function AdminDashboard() {
         ] },
         { label: "Marketing y finanzas", items: [
           { to: "/app/admin/cupones", label: "Cupones", icon: Megaphone },
+          { to: "/app/admin/anuncios", label: "Anuncios y campañas", icon: Send },
           { to: "/app/admin/contabilidad", label: "Contabilidad", icon: Calculator },
           { to: "/app/admin/liquidaciones", label: "Liquidaciones", icon: Landmark },
           { to: "/app/admin/pagos", label: "Pagos y reintegros", icon: Banknote, badge: refundCount },
@@ -324,6 +326,7 @@ export default function AdminDashboard() {
         <TabsContent value="zonas" className="mt-0"><ZonesManager /></TabsContent>
         <TabsContent value="demanda" className="mt-0"><ZoneDemand /></TabsContent>
 
+        <TabsContent value="anuncios" className="mt-0"><AnnouncementsManager /></TabsContent>
         <TabsContent value="cupones" className="mt-0"><CouponManager storeId={null} coupons={coupons} onChange={loadCoupons} /></TabsContent>
         <TabsContent value="contabilidad" className="mt-0"><AccountingPanel /></TabsContent>
         <TabsContent value="liquidaciones" className="mt-0"><SettlementsManager /></TabsContent>

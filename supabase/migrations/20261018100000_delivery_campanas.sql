@@ -1,0 +1,7 @@
+-- Campañas: avisos push de un comercio a sus clientes (sin que el comercio vea quiénes son) y anuncios de la plataforma.
+-- Aplicada en la base en dos partes (tablas + audiencia + conteo, y RPC + disparador + funciones para push-campana).
+-- Reglas: solo reciben quienes aceptaron promociones y tienen un dispositivo con avisos; no se escribe a cuentas bloqueadas;
+-- tope de 1 campaña por comercio cada 48 h (8 por mes) y 1 campaña por persona cada 20 h; sin enlaces en el texto;
+-- el cupón elegido tiene que ser del comercio, estar activo y no vencido. Funciones: delivery_campana_audiencia (solo service_role),
+-- delivery_campana_conteo, delivery_campana_crear, delivery_admin_campana_crear, delivery_campana_destinatarios, delivery_campana_cerrar.
+-- La función de envío está en supabase/functions/push-campana.

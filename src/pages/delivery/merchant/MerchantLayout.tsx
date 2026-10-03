@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
+import { BarChart3, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Send, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { StoreLogo } from "@/components/delivery/StoreCard";
@@ -18,7 +18,7 @@ import { EmptyState } from "@/components/delivery/Common";
 import { roleLabel, type MerchantContext, type Permission, type StoreAccess } from "./context";
 
 /** Qué permiso hace falta para entrar a cada sección del panel. */
-const sectionPermission: Record<string, Permission> = { menu: "catalogo", promociones: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", configuracion: "ajustes" };
+const sectionPermission: Record<string, Permission> = { menu: "catalogo", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", configuracion: "ajustes" };
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
@@ -167,7 +167,7 @@ export default function MerchantLayout() {
           ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", icon: UtensilsCrossed }] : []),
         ] },
         { label: "Crecimiento", items: [
-          ...(can("promociones") ? [{ to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone }] : []),
+          ...(can("promociones") ? [{ to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone }, { to: "/app/comercio/campanas", label: "Campañas", icon: Send }] : []),
           ...(can("opiniones") ? [{ to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
           ...(can("estadisticas") ? [{ to: "/app/comercio/estadisticas", label: "Estadísticas", icon: BarChart3 }] : []),
         ] },
