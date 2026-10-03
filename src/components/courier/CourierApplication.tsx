@@ -1,12 +1,13 @@
 import { FormEvent, useState } from "react";
-import { Bike, Car, Clock3, Footprints, Loader2, ShieldCheck, XCircle } from "lucide-react";
+import { Bike, Car, Footprints, Loader2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
-import { DocumentChecklist, hasRequiredDocs } from "@/components/verification/DocumentChecklist";
+import { DocumentChecklist } from "@/components/verification/DocumentChecklist";
+import { IdentityVerification } from "@/components/verification/IdentityVerification";
 import { db, errorMessage } from "@/lib/delivery";
-import { courierDocs, VerificationDoc } from "@/lib/verification";
+import { courierDocs } from "@/lib/verification";
 import { cn } from "@/lib/utils";
 
 export type Courier = {
@@ -27,52 +28,51 @@ export function CourierApplication({ courier, onDone }: { courier: Courier | nul
   const [editing, setEditing] = useState(!courier);
   const [vehicle, setVehicle] = useState(courier?.vehiculo ?? "moto");
   const [phone, setPhone] = useState(courier?.telefono ?? "");
-  const [dni, setDni] = useState(courier?.dni ?? "");
   const [plate, setPlate] = useState(courier?.patente ?? "");
   const [saving, setSaving] = useState(false);
-  const [docs, setDocs] = useState<VerificationDoc[] | null>(null);
   const needsPlate = vehicle === "moto" || vehicle === "auto";
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!user) return;
-    const cleanDni = dni.replace(/\D/g, "");
     const cleanPlate = plate.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
-    if (cleanDni.length < 7 || cleanDni.length > 9) return toast.error("Ingresá tu DNI sin puntos (7 a 9 números)");
     if (phone.replace(/\D/g, "").length < 8) return toast.error("Ingresá un teléfono de contacto válido");
     if (needsPlate && (cleanPlate.length < 6 || cleanPlate.length > 7)) return toast.error("Ingresá la patente de tu vehículo");
     setSaving(true);
-    const values = { vehiculo: vehicle, telefono: phone.trim(), dni: cleanDni, patente: needsPlate ? cleanPlate : null };
+    const values = { vehiculo: vehicle, telefono: phone.trim(), patente: needsPlate ? cleanPlate : null };
     const { error } = courier
       ? await db.from("delivery_repartidores").update(values).eq("perfil_id", user.id)
       : await db.from("delivery_repartidores").insert({ perfil_id: user.id, ...values });
     setSaving(false);
     if (error) return toast.error(errorMessage(error));
-    toast.success(courier ? "Datos actualizados" : "¡Listo! Ahora subí tus documentos para que podamos verificarte.");
+    toast.success(courier ? "Datos actualizados" : "¡Listo! Ahora verificá tu identidad para empezar a repartir.");
     setEditing(false);
     onDone();
   };
 
   if (courier && !editing) {
-    const specs = courierDocs(courier.vehiculo);
-    const complete = hasRequiredDocs(docs, specs);
+    const extras = courierDocs(courier.vehiculo);
     return (
-      <div className="mx-auto max-w-xl px-4 py-14 text-center">
-        <span className={cn("mx-auto flex h-20 w-20 items-center justify-center rounded-full", courier.motivo_rechazo ? "bg-destructive/10 text-destructive" : "bg-warning/20")}>
-          {courier.motivo_rechazo ? <XCircle className="h-10 w-10" /> : <Clock3 className="h-10 w-10" />}
-        </span>
-        <h1 className="mt-5 text-2xl font-black">{courier.motivo_rechazo ? "No pudimos verificar tus datos" : docs && !complete ? "Subí tus documentos para verificarte" : "Estamos revisando tus datos"}</h1>
-        <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-          {courier.motivo_rechazo ? <>Motivo: <span className="font-bold text-foreground">{courier.motivo_rechazo}</span>. Corregí tus datos o documentos y volvemos a revisarlos.</> : docs && !complete ? "Necesitamos tu DNI (frente y dorso) y una selfie con el DNI. Sin eso no podemos aprobarte." : "Verificamos la identidad de cada repartidor antes de dejarlo conectarse. Te avisamos apenas esté listo."}
-        </p>
-        <div className="mt-6 text-left"><DocumentChecklist entidad="repartidor" entidadId={courier.perfil_id} specs={specs} onChange={setDocs} /></div>
-        <dl className="mx-auto mt-6 max-w-sm space-y-2 rounded-2xl border bg-card p-4 text-left text-sm">
+      <div className="mx-auto max-w-xl px-4 pb-16 pt-8">
+        <div className="text-center">
+          <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary"><ShieldCheck className="h-8 w-8" /></span>
+          <h1 className="mt-4 text-2xl font-black">Verificá tu identidad para repartir</h1>
+          <p className="mx-auto mt-2 max-w-md text-muted-foreground">Como en toda app de reparto, confirmamos quién es cada repartidor antes de dejarlo conectarse. Son unos minutos y solo se hace una vez.</p>
+        </div>
+        <div className="mt-6 rounded-3xl border bg-card p-4 sm:p-5"><IdentityVerification entidad="repartidor" onChanged={onDone} /></div>
+        {extras.length > 0 && (
+          <div className="mt-6 rounded-3xl border bg-card p-4 sm:p-5">
+            <h2 className="font-extrabold">Documentos de tu vehículo</h2>
+            <p className="mb-3 text-sm text-muted-foreground">Son opcionales, pero nos ayudan a habilitarte en zonas con controles.</p>
+            <DocumentChecklist entidad="repartidor" entidadId={courier.perfil_id} specs={extras} />
+          </div>
+        )}
+        <dl className="mt-6 space-y-2 rounded-2xl border bg-card p-4 text-sm">
           <div className="flex justify-between"><dt className="text-muted-foreground">Vehículo</dt><dd className="font-bold">{vehicles.find((item) => item.id === courier.vehiculo)?.label}</dd></div>
-          <div className="flex justify-between"><dt className="text-muted-foreground">DNI</dt><dd className="font-bold">{courier.dni || "—"}</dd></div>
           {courier.patente && <div className="flex justify-between"><dt className="text-muted-foreground">Patente</dt><dd className="font-bold">{courier.patente}</dd></div>}
           <div className="flex justify-between"><dt className="text-muted-foreground">Teléfono</dt><dd className="font-bold">{courier.telefono || "—"}</dd></div>
         </dl>
-        <Button variant="outline" className="mt-5 rounded-full" onClick={() => setEditing(true)}>Editar mis datos</Button>
+        <div className="mt-4 text-center"><Button variant="outline" className="rounded-full" onClick={() => setEditing(true)}>Editar vehículo y teléfono</Button></div>
       </div>
     );
   }
@@ -99,7 +99,6 @@ export function CourierApplication({ courier, onDone }: { courier: Courier | nul
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div><label htmlFor="courier-dni" className="font-bold">DNI</label><Input id="courier-dni" value={dni} onChange={(event) => setDni(event.target.value.replace(/\D/g, "").slice(0, 9))} inputMode="numeric" placeholder="Sin puntos" className="mt-2" /></div>
           <div><label htmlFor="courier-phone" className="font-bold">Teléfono de contacto</label><Input id="courier-phone" value={phone} onChange={(event) => setPhone(event.target.value)} maxLength={30} placeholder="2355 40-0000" className="mt-2" /></div>
           {needsPlate && <div><label htmlFor="courier-plate" className="font-bold">Patente</label><Input id="courier-plate" value={plate} onChange={(event) => setPlate(event.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 7))} placeholder="AB123CD" className="mt-2 uppercase" /></div>}
         </div>

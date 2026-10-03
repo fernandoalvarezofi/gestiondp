@@ -1,5 +1,6 @@
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Bell, Clock3, Info, MapPin, Settings2, ShieldCheck } from "lucide-react";
+import { Bell, Clock3, Info, Landmark, MapPin, Settings2, ShieldCheck } from "lucide-react";
+import { PayoutForm } from "@/components/account/PayoutForm";
 import { StoreVerification } from "@/components/merchant/StoreVerification";
 import { PrintAlertsPanel } from "@/components/merchant/PrintAlertsPanel";
 import { SettingsSection, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
@@ -12,7 +13,8 @@ const SECTIONS = [
   { id: "entrega", label: "Entrega y zona", hint: "Ubicación, costos y tiempos", icon: MapPin },
   { id: "operacion", label: "Operación", hint: "Retiro, programados y preparación", icon: Settings2 },
   { id: "impresion", label: "Impresión y avisos", hint: "Comandas y notificaciones", icon: Bell },
-  { id: "verificacion", label: "Verificación y datos legales", hint: "CUIT, razón social y documentos", icon: ShieldCheck },
+  { id: "cobros", label: "Cobros y liquidaciones", hint: "Cuenta donde te depositamos", icon: Landmark },
+  { id: "verificacion", label: "Verificación y datos legales", hint: "Identidad del titular, CUIT y documentos", icon: ShieldCheck },
 ] as const;
 
 /** Configuración del local dividida en secciones, cada una con su propia pantalla. */
@@ -20,7 +22,7 @@ export default function MerchantSettings() {
   const { store, saveSettings, access, loadStore } = useMerchant();
   const { seccion } = useParams();
   // Los datos legales y documentos son solo del dueño.
-  const sections = SECTIONS.filter((item) => item.id !== "verificacion" || access.permisos.includes("finanzas"));
+  const sections = SECTIONS.filter((item) => (item.id !== "verificacion" && item.id !== "cobros") || access.permisos.includes("finanzas"));
   const current = sections.find((item) => item.id === seccion);
   if (!current) return <Navigate to="/app/comercio/configuracion/general" replace />;
 
@@ -40,6 +42,11 @@ export default function MerchantSettings() {
         <p className="mb-5 text-sm text-muted-foreground">{current.hint}</p>
         {current.id === "impresion" ? (
           <PrintAlertsPanel className="max-w-md" />
+        ) : current.id === "cobros" ? (
+          <div className="max-w-xl space-y-3">
+            <PayoutForm entidad="comercio" entidadId={store.id} canEdit={access.rol === "dueno"} />
+            <p className="text-xs text-muted-foreground">Las liquidaciones se calculan con tus ventas entregadas menos la comisión, y se depositan en esta cuenta. Mirá el detalle en Finanzas.</p>
+          </div>
         ) : current.id === "verificacion" ? (
           <StoreVerification store={store} onSaved={loadStore} />
         ) : (

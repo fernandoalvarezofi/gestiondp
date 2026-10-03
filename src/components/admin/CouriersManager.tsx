@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Bike, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { PayoutForm } from "@/components/account/PayoutForm";
+import { IdentityReviewDialog, IdentityRow } from "@/components/admin/IdentityReview";
 import { CourierWallet } from "@/components/courier/CourierWallet";
 import { EmptyState } from "@/components/delivery/Common";
 import { DocumentViewer } from "@/components/verification/DocumentViewer";
@@ -10,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { db, errorMessage, formatDateTime } from "@/lib/delivery";
+import { Identity, IdentityState } from "@/lib/identity";
 import { cn } from "@/lib/utils";
 
 export type CourierRow = {
@@ -31,12 +34,28 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [refresh, setRefresh] = useState(0);
+  const [identities, setIdentities] = useState<Map<string, IdentityState>>(new Map());
+  const [reviewing, setReviewing] = useState<IdentityRow | null>(null);
 
-  const sorted = [...couriers].sort((a, b) => Number(statusOf(a) !== "pendiente") - Number(statusOf(b) !== "pendiente"));
+  const loadIdentities = useCallback(async () => {
+    const { data } = await db.from("delivery_identidad").select("perfil_id,estado");
+    setIdentities(new Map((data || []).map((item: { perfil_id: string; estado: IdentityState }) => [item.perfil_id, item.estado])));
+  }, []);
+  useEffect(() => { loadIdentities(); }, [loadIdentities, couriers]);
+
+  const waiting = (courier: CourierRow) => identities.get(courier.perfil_id) === "en_revision";
+  const sorted = [...couriers].sort((a, b) => Number(!(statusOf(a) === "pendiente" && waiting(a))) - Number(!(statusOf(b) === "pendiente" && waiting(b))));
+
+  const openReview = async (courier: CourierRow) => {
+    const { data, error } = await db.from("delivery_identidad").select("*").eq("perfil_id", courier.perfil_id).maybeSingle();
+    if (error || !data) { toast.error("Todavía no envió su identidad"); return; }
+    setReviewing({ ...(data as Identity), perfil: courier.perfil ?? null, es_repartidor: true });
+  };
 
   const verify = async (courier: CourierRow, approved: boolean, motive?: string) => {
     setSaving(true);
-    const { error } = await db.rpc("delivery_admin_verificar_repartidor", { p_repartidor: courier.perfil_id, p_aprobado: approved, p_motivo: motive ?? null });
+    if (approved) { await openReview(courier); return false; }
+    const { error } = await db.rpc("delivery_admin_verificar_repartidor", { p_repartidor: courier.perfil_id, p_aprobado: false, p_motivo: motive ?? null });
     setSaving(false);
     if (error) { toast.error(errorMessage(error)); return false; }
     toast.success(approved ? "Repartidor verificado" : "Repartidor rechazado");
@@ -76,9 +95,9 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
                 {status === "rechazado" && <p className="text-xs text-destructive">Rechazado: {courier.motivo_rechazo}</p>}
                 {status === "verificado" && <p className="text-xs text-muted-foreground">{courier.aceptadas} aceptadas · {courier.rechazadas} rechazadas · {courier.soltados} soltados</p>}
               </div>
-              <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", status === "verificado" ? "bg-success/10 text-success" : status === "pendiente" ? "bg-warning/20" : "bg-destructive/10 text-destructive")}>{status === "verificado" ? (courier.disponible ? "Conectado" : "Verificado") : status === "pendiente" ? "Por verificar" : "Rechazado"}</span>
+              <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", status === "verificado" ? "bg-success/10 text-success" : status === "pendiente" ? (waiting(courier) ? "bg-warning/20" : "bg-muted text-muted-foreground") : "bg-destructive/10 text-destructive")}>{status === "verificado" ? (courier.disponible ? "Conectado" : "Verificado") : status === "pendiente" ? (waiting(courier) ? "Por verificar" : "Sin enviar identidad") : "Rechazado"}</span>
               <Button size="sm" variant="outline" className="rounded-full" onClick={() => setDocsOf(courier)}>Documentos</Button>
-              {status !== "verificado" && <Button size="sm" className="rounded-full" disabled={saving} onClick={() => verify(courier, true)}>Verificar</Button>}
+              {status !== "verificado" && waiting(courier) && <Button size="sm" className="rounded-full" onClick={() => openReview(courier)}>Revisar identidad</Button>}
               {status !== "rechazado" && <Button size="sm" variant="outline" className="rounded-full" onClick={() => { setRejecting(courier); setReason(""); }}>{status === "verificado" ? "Revocar" : "Rechazar"}</Button>}
               {status === "verificado" && <Button size="sm" variant="outline" className="rounded-full" onClick={() => setAccount(courier)}>Cuenta</Button>}
               <label className="flex items-center gap-2 text-xs font-semibold">Habilitado<Switch checked={courier.activo} onCheckedChange={(checked) => setActive(courier, checked)} /></label>
@@ -86,6 +105,8 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
           );
         })}
       </ul>
+
+      <IdentityReviewDialog row={reviewing} onClose={() => setReviewing(null)} onDone={() => { onChange(); loadIdentities(); }} />
 
       <Dialog open={Boolean(docsOf)} onOpenChange={(open) => !open && setDocsOf(null)}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">
@@ -123,6 +144,7 @@ export function CouriersManager({ couriers, onChange }: { couriers: CourierRow[]
                   <Button className="rounded-full" onClick={register} disabled={saving || !amount}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Registrar</Button>
                 </div>
               </div>
+              <div className="rounded-2xl border p-3"><p className="mb-2 text-sm font-bold">Cuenta de cobro del repartidor</p><PayoutForm entidad="repartidor" entidadId={account.perfil_id} canEdit={false} reveal /></div>
               <CourierWallet courierId={account.perfil_id} refreshKey={refresh} />
             </>
           )}

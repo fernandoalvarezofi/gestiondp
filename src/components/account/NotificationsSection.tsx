@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { BellRing, Loader2, Moon, Sun } from "lucide-react";
+import { Appearance, readAppearance, saveAppearance, TextSize, textSizeLabel } from "@/lib/appearance";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +18,8 @@ export function NotificationsSection() {
   const push = usePushNotifications();
   const { theme, setTheme } = useTheme();
   const [prefs, setPrefs] = useState<Prefs | null>(null);
+  const [appearance, setAppearance] = useState<Appearance>(readAppearance);
+  const updateAppearance = (patch: Partial<Appearance>) => { const next = { ...appearance, ...patch }; setAppearance(next); saveAppearance(next); };
 
   const load = useCallback(async () => {
     if (!user) return;
@@ -74,6 +77,25 @@ export function NotificationsSection() {
             <button key={value} type="button" role="radio" aria-checked={theme === value} onClick={() => setTheme(value)} className={cn("flex items-center gap-2 rounded-2xl border p-3 font-bold", theme === value ? "border-primary bg-primary/5 text-primary" : "hover:bg-muted")}><Icon className="h-5 w-5" />{label}</button>
           ))}
         </div>
+      </section>
+
+      <section>
+        <h3 className="font-extrabold">Accesibilidad</h3>
+        <p className="mt-1 text-sm text-muted-foreground">Se guarda en este dispositivo.</p>
+        <div role="radiogroup" aria-label="Tamaño del texto" className="mt-3 grid max-w-md grid-cols-3 gap-2">
+          {(Object.keys(textSizeLabel) as TextSize[]).map((size) => (
+            <button key={size} type="button" role="radio" aria-checked={appearance.textSize === size} onClick={() => updateAppearance({ textSize: size })} className={cn("rounded-2xl border p-3 font-bold", appearance.textSize === size ? "border-primary bg-primary/5 text-primary" : "hover:bg-muted")}>
+              <span className={cn("block leading-none", size === "normal" ? "text-base" : size === "large" ? "text-xl" : "text-2xl")}>Aa</span>
+              <span className="mt-1 block text-xs">{textSizeLabel[size]}</span>
+            </button>
+          ))}
+        </div>
+        <ul className="mt-3 max-w-md divide-y rounded-2xl border">
+          <li className="flex items-center gap-3 p-4">
+            <span className="min-w-0 flex-1"><span className="block font-bold">Reducir animaciones</span><span className="block text-xs text-muted-foreground">Menos movimiento en transiciones y efectos.</span></span>
+            <Switch checked={appearance.reduceMotion} onCheckedChange={(checked) => updateAppearance({ reduceMotion: checked })} aria-label="Reducir animaciones" />
+          </li>
+        </ul>
       </section>
     </div>
   );

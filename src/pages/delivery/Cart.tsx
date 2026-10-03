@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Banknote, Bike, CalendarClock, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Store as StoreIcon, Tag, Trash2, Wallet, X, Zap } from "lucide-react";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { startOnlinePayment } from "@/lib/payments";
 import { ajusteValor, useAjustes } from "@/hooks/useAjustes";
 import { couponLabel, useMyCoupons } from "@/hooks/useMyCoupons";
 import { useRoute } from "@/lib/route";
+import { defaultOrderPreferences, deliveryNote, initialPayment, loadOrderPreferences, OrderPreferences, TIP_OPTIONS } from "@/lib/orderPreferences";
 import { cn } from "@/lib/utils";
 
 type CouponResult = { valido: boolean; codigo?: string; descuento?: number; envio_gratis?: boolean; mensaje: string };
@@ -27,7 +28,7 @@ const payments: { id: MetodoPago; label: string; hint: string; icon: typeof Bank
   { id: "tarjeta", label: "Tarjeta", hint: "Débito o crédito al recibir (posnet)", icon: CreditCard },
   { id: "transferencia", label: "Transferencia", hint: "Te pasamos el alias al confirmar", icon: Landmark },
 ];
-const tips = [0, 500, 1000, 1500];
+const tips = TIP_OPTIONS;
 // Complementos que suelen sumarse al pedido: se ofrecen primero.
 const ADDON_HINT = /bebida|gaseosa|agua|cerveza|jugo|postre|helado|acompa|papas|salsa|extra|sumá|café/i;
 
@@ -63,6 +64,9 @@ export default function Cart() {
   const road = useRoute(storePoint, point, { persist: true });
   const { user } = useAuth();
   const [onlineEnabled, setOnlineEnabled] = useState(false);
+  // Preferencias guardadas en Mi cuenta (pago, propina, instrucciones): se aplican una sola vez, sin pisar lo que la persona ya tocó.
+  const [prefs, setPrefs] = useState<OrderPreferences | null | undefined>(undefined);
+  const touched = useRef({ payment: false, tip: false, notes: false });
   const [mode, setMode] = useState<TipoEntrega>(() => (readPickupPreference() ? "retiro" : "delivery"));
   const [slots, setSlots] = useState<string[]>([]);
   const [scheduled, setScheduled] = useState(false);
@@ -77,9 +81,21 @@ export default function Cart() {
   useEffect(() => {
     db.rpc("delivery_pagos_online_activos").then(({ data }: { data: boolean | null }) => {
       setOnlineEnabled(Boolean(data));
-      if (data) setPayment((current) => (current === "efectivo" ? "mercadopago" : current));
     });
   }, []);
+
+  useEffect(() => {
+    if (!user) { setPrefs(null); return; }
+    loadOrderPreferences(user.id).then(setPrefs);
+  }, [user]);
+
+  useEffect(() => {
+    if (prefs === undefined) return;
+    const wanted = prefs ?? defaultOrderPreferences;
+    if (!touched.current.payment) setPayment(initialPayment(wanted.pago_preferido, onlineEnabled));
+    if (!touched.current.tip) setTip(wanted.propina_default);
+    if (!touched.current.notes) setNotes((current) => current || deliveryNote(wanted));
+  }, [prefs, onlineEnabled]);
 
   useEffect(() => {
     if (!user) return;
@@ -287,7 +303,7 @@ export default function Cart() {
               ))}
             </ul>
             <label htmlFor="order-notes" className="mt-2 block text-sm font-bold">Comentarios para el comercio</label>
-            <Textarea id="order-notes" value={notes} maxLength={500} onChange={(event) => setNotes(event.target.value)} placeholder="Ej.: sin cubiertos, tocar el timbre 2B…" className="mt-2 min-h-[64px] resize-none" />
+            <Textarea id="order-notes" value={notes} maxLength={500} onChange={(event) => { touched.current.notes = true; setNotes(event.target.value); }} placeholder="Ej.: sin cubiertos, tocar el timbre 2B…" className="mt-2 min-h-[64px] resize-none" />
           </section>
 
           {suggestions.length > 0 && (
@@ -373,7 +389,7 @@ export default function Cart() {
             <h2 className="text-lg font-extrabold">Medio de pago</h2>
             <div className={cn("mt-3 grid gap-2", onlineEnabled ? "sm:grid-cols-2" : "sm:grid-cols-3")}>
               {(onlineEnabled ? [onlinePayment, ...payments] : payments).map(({ id, label, hint, icon: Icon }) => (
-                <button key={id} type="button" onClick={() => setPayment(id)} className={cn("relative rounded-2xl border p-3 text-left transition-colors", payment === id ? "border-primary bg-primary/5" : "hover:bg-muted")}>
+                <button key={id} type="button" onClick={() => { touched.current.payment = true; setPayment(id); }} className={cn("relative rounded-2xl border p-3 text-left transition-colors", payment === id ? "border-primary bg-primary/5" : "hover:bg-muted")}>
                   <Icon className={cn("h-6 w-6", payment === id ? "text-primary" : "text-muted-foreground")} />
                   <span className="mt-2 block font-bold">{label}</span>
                   <span className="block text-xs text-muted-foreground">{id === "efectivo" && pickup ? "Pagás al retirar" : hint}</span>
@@ -409,7 +425,7 @@ export default function Cart() {
               <p className="text-sm text-muted-foreground">El 100% es para el repartidor.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {tips.map((value) => (
-                  <button key={value} type="button" onClick={() => setTip(value)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", tip === value ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted")}>{value === 0 ? "Sin propina" : money(value)}</button>
+                  <button key={value} type="button" onClick={() => { touched.current.tip = true; setTip(value); }} className={cn("rounded-full border px-4 py-2 text-sm font-bold", tip === value ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted")}>{value === 0 ? "Sin propina" : money(value)}</button>
                 ))}
               </div>
             </section>

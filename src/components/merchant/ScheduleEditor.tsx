@@ -1,14 +1,14 @@
 import { Copy, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { diasSemana, Horarios, scheduleSummary } from "@/lib/delivery";
+import { diasSemana, getClosures, Horarios, scheduleSummary, withClosures } from "@/lib/delivery";
 
 const order = [1, 2, 3, 4, 5, 6, 0];
 
 /** Editor de horarios por día: abierto/cerrado, hasta dos turnos (ej. mediodía y noche) y "copiar a todos". */
 export function ScheduleEditor({ value, onChange }: { value: Horarios; onChange: (value: Horarios) => void }) {
   const setDay = (day: number, turnos: Horarios[string]) => onChange({ ...value, [String(day)]: turnos });
-  const copyToAll = (day: number) => onChange(Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((target) => [String(target), (value[String(day)] || []).map((turno) => ({ ...turno }))])));
+  const copyToAll = (day: number) => onChange(withClosures(Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((target) => [String(target), (value[String(day)] || []).map((turno) => ({ ...turno }))])), getClosures(value)));
 
   return (
     <div className="space-y-2">

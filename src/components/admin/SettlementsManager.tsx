@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FilePlus2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { PayoutForm } from "@/components/account/PayoutForm";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { periodLabel, Settlement, SettlementDetail } from "@/components/finance/SettlementDetail";
 import { Button } from "@/components/ui/button";
@@ -93,6 +94,7 @@ export function SettlementsManager() {
         <DialogContent className="max-w-sm">
           <DialogTitle className="text-xl font-black">Saldar liquidación</DialogTitle>
           <DialogDescription>{paying && `${paying.comercio?.nombre} · ${Number(paying.balance) >= 0 ? "Le pagaste" : "Le cobraste"} ${money(Math.abs(Number(paying.balance)))}`}</DialogDescription>
+          {paying?.comercio_id && <div className="rounded-2xl border p-3"><p className="mb-2 text-sm font-bold">Dónde depositar</p><PayoutForm entidad="comercio" entidadId={paying.comercio_id} canEdit={false} reveal /></div>}
           <label htmlFor="settle-ref" className="text-sm font-bold">Referencia del pago (opcional)</label>
           <Input id="settle-ref" value={reference} maxLength={200} onChange={(event) => setReference(event.target.value)} placeholder="Ej.: transferencia 0001234" />
           <Button className="rounded-full" onClick={settle} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Marcar como saldada</Button>

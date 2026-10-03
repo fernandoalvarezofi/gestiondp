@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
-import { Download, Loader2, ShieldAlert, Trash2 } from "lucide-react";
+import { Download, Loader2, ShieldAlert, SlidersHorizontal, Trash2 } from "lucide-react";
+import { DevicePermissions } from "@/components/account/DevicePermissions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -49,6 +50,12 @@ export function PrivacySection() {
 
   return (
     <div className="space-y-8">
+      <section>
+        <h3 className="flex items-center gap-2 font-extrabold"><SlidersHorizontal className="h-5 w-5 text-primary" />Permisos de este dispositivo</h3>
+        <p className="mb-3 mt-1 max-w-xl text-sm text-muted-foreground">Woref solo usa lo que necesita para funcionar. Podés revisar qué permitiste.</p>
+        <DevicePermissions />
+      </section>
+
       <section>
         <h3 className="flex items-center gap-2 font-extrabold"><Download className="h-5 w-5 text-primary" />Descargar mis datos</h3>
         <p className="mt-1 max-w-xl text-sm text-muted-foreground">Te armamos un archivo con tu perfil, direcciones, favoritos, pedidos, envíos, opiniones y reclamos. Es tuyo: guardalo o llevalo adonde quieras.</p>

@@ -3,9 +3,11 @@ import { Bike, Loader2, Package, PowerOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ActiveBatch } from "@/components/courier/ActiveBatch";
 import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
+import { PayoutForm } from "@/components/account/PayoutForm";
 import { CourierWallet } from "@/components/courier/CourierWallet";
 import { OfferCard } from "@/components/courier/OfferCard";
 import { EmptyState } from "@/components/delivery/Common";
+import { IdentityVerification } from "@/components/verification/IdentityVerification";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -84,6 +86,17 @@ export function CourierProfilePage() {
           {courier.patente && <div className="flex justify-between"><dt className="text-muted-foreground">Patente</dt><dd className="font-bold">{courier.patente}</dd></div>}
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">Para cambiar vehículo, DNI o patente, escribile a soporte: se vuelve a verificar tu identidad.</p>
+      </section>
+
+      <section className="rounded-3xl border bg-card p-4 sm:p-5">
+        <h2 className="mb-3 font-extrabold">Verificación de identidad</h2>
+        <IdentityVerification entidad="repartidor" onChanged={reloadCourier} />
+      </section>
+
+      <section className="rounded-3xl border bg-card p-4 sm:p-5">
+        <h2 className="font-extrabold">Cobros</h2>
+        <p className="mb-3 text-sm text-muted-foreground">La cuenta donde te depositamos tus ganancias.</p>
+        <PayoutForm entidad="repartidor" entidadId={courier.perfil_id} />
       </section>
 
       <section className="rounded-3xl border bg-card p-4 sm:p-5">

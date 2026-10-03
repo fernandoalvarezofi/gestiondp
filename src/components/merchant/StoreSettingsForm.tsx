@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
+import { ClosuresEditor } from "@/components/merchant/ClosuresEditor";
 import { ScheduleEditor } from "@/components/merchant/ScheduleEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,7 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: {
       <fieldset>
         <legend className="mb-3 text-base font-extrabold">Horarios de atención</legend>
         <ScheduleEditor value={values.horarios} onChange={(horarios) => set("horarios", horarios)} />
+        <ClosuresEditor value={values.horarios} onChange={(horarios) => set("horarios", horarios)} />
         <label className="mt-3 flex items-center justify-between gap-3 rounded-xl border p-3">
           <span><span className="block text-sm font-bold">Recibir pedidos</span><span className="block text-xs text-muted-foreground">Apagalo para pausar el local aunque esté en horario (por ejemplo, si se cortó la luz).</span></span>
           <Switch checked={values.esta_abierto} onCheckedChange={(checked) => set("esta_abierto", checked)} />

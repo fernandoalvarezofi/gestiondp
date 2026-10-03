@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { db, errorMessage } from "@/lib/delivery";
 import { compress } from "@/lib/uploads";
 
-export type DocEntity = "repartidor" | "comercio";
+export type DocEntity = "repartidor" | "comercio" | "persona";
 export type DocType = "dni_frente" | "dni_dorso" | "selfie" | "licencia" | "cedula_vehiculo" | "habilitacion" | "constancia_afip" | "dni_titular";
 export type VerificationDoc = { id: string; entidad: DocEntity; entidad_id: string; tipo: DocType; path: string; created_at: string };
 export type DocSpec = { tipo: DocType; label: string; hint: string; required: boolean };
@@ -16,10 +16,8 @@ export const docLabel: Record<DocType, string> = {
   cedula_vehiculo: "Cédula del vehículo", habilitacion: "Habilitación comercial", constancia_afip: "Constancia de inscripción en AFIP", dni_titular: "DNI del titular",
 };
 
+/** Documentos del vehículo (opcionales). El DNI y la selfie se cargan en el paso de verificación de identidad. */
 export const courierDocs = (vehicle: string): DocSpec[] => [
-  { tipo: "dni_frente", label: docLabel.dni_frente, hint: "Foto clara, sin reflejos, con los cuatro bordes visibles.", required: true },
-  { tipo: "dni_dorso", label: docLabel.dni_dorso, hint: "El lado con tu domicilio y número de trámite.", required: true },
-  { tipo: "selfie", label: docLabel.selfie, hint: "Tu cara y el DNI en la misma foto, para confirmar que sos vos.", required: true },
   ...(vehicle === "moto" || vehicle === "auto" ? [
     { tipo: "licencia" as const, label: docLabel.licencia, hint: "Opcional por ahora, pero te va a servir para zonas con controles.", required: false },
     { tipo: "cedula_vehiculo" as const, label: docLabel.cedula_vehiculo, hint: "Opcional: cédula verde o azul del vehículo.", required: false },

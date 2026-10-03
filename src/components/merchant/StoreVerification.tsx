@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { BadgeCheck, Clock3, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { DocumentChecklist } from "@/components/verification/DocumentChecklist";
+import { IdentityVerification } from "@/components/verification/IdentityVerification";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,12 @@ export function StoreVerification({ store, onSaved }: { store: DeliveryStore; on
           <Button type="submit" className="rounded-full sm:col-span-2 sm:w-fit" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Guardar datos legales</Button>
         </form>
       )}
+
+      <div>
+        <h3 className="font-extrabold">Identidad del titular</h3>
+        <p className="mb-3 text-sm text-muted-foreground">Confirmamos quién está detrás del comercio con el DNI y una selfie del titular, como hacen todas las plataformas de pedidos.</p>
+        <IdentityVerification entidad="persona" />
+      </div>
 
       <div>
         <h3 className="font-extrabold">Documentación</h3>

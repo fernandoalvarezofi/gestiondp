@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 export type Settlement = {
   id: string; desde: string; hasta: string; pedidos: number; ventas: number; descuentos_comercio: number; comision_pct: number; comision: number;
   neto: number; cobrado_directo: number; balance: number; estado: "pendiente" | "pagada"; referencia?: string | null; pagada_at?: string | null; created_at: string;
-  comercio?: { nombre: string } | null;
+  comercio?: { nombre: string } | null; comercio_id?: string;
 };
 type Line = { pedido_id: string; fecha: string; tipo_entrega: string; metodo_pago: string; ventas: number; descuento_comercio: number; comision: number; neto: number; cobrado_directo: number; balance: number };
 

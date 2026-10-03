@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Check, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -20,6 +20,7 @@ import { AuditLog } from "@/components/admin/AuditLog";
 import { ErrorsPanel } from "@/components/admin/ErrorsPanel";
 import { Input } from "@/components/ui/input";
 import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager";
+import { IdentityQueue } from "@/components/admin/IdentityReview";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
 import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
@@ -48,7 +49,7 @@ export default function AdminDashboard() {
   const [editing, setEditing] = useState<DeliveryStore | null>(null);
   const [reviewing, setReviewing] = useState<DeliveryStore | null>(null);
   const [openClaims, setOpenClaims] = useState(0);
-  const pendingCouriers = couriers.filter((courier) => !courier.verificado && !courier.motivo_rechazo).length;
+  const [pendingIdentities, setPendingIdentities] = useState(0);
 
   const loadStores = useCallback(async () => {
     const { data } = await db.from("delivery_comercios").select("*").order("created_at", { ascending: false });
@@ -62,6 +63,10 @@ export default function AdminDashboard() {
     const { data } = await db.from("delivery_repartidores").select("*, perfil:perfiles(nombre)").order("created_at", { ascending: false });
     setCouriers(data || []);
   }, []);
+  const loadIdentities = useCallback(async () => {
+    const { count } = await db.from("delivery_identidad").select("perfil_id", { count: "exact", head: true }).eq("estado", "en_revision");
+    setPendingIdentities(count ?? 0);
+  }, []);
   const loadCoupons = useCallback(async () => {
     const { data } = await db.from("delivery_cupones").select("*, comercio:delivery_comercios(nombre)").order("created_at", { ascending: false });
     setCoupons(data || []);
@@ -69,10 +74,10 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!roles.isAdmin) return;
-    loadStores(); loadOrders(); loadCouriers(); loadCoupons();
+    loadStores(); loadOrders(); loadCouriers(); loadCoupons(); loadIdentities();
     const channel = db.channel("admin-pedidos").on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos" }, loadOrders).subscribe();
     return () => { db.removeChannel(channel); };
-  }, [roles.isAdmin, loadStores, loadOrders, loadCouriers, loadCoupons]);
+  }, [roles.isAdmin, loadStores, loadOrders, loadCouriers, loadCoupons, loadIdentities]);
 
   const stats = useMemo(() => {
     const today = new Date().toDateString();
@@ -167,7 +172,8 @@ export default function AdminDashboard() {
         ] },
         { label: "Red", items: [
           { to: "/app/admin/comercios", label: "Comercios", icon: Store, badge: pendingStores },
-          { to: "/app/admin/repartidores", label: "Repartidores", icon: Bike, badge: pendingCouriers },
+          { to: "/app/admin/repartidores", label: "Repartidores", icon: Bike },
+          { to: "/app/admin/identidades", label: "Verificar identidad", icon: Fingerprint, badge: pendingIdentities },
           { to: "/app/admin/clientes", label: "Clientes", icon: Users },
           { to: "/app/admin/zonas", label: "Zonas y tarifas", icon: Map },
           { to: "/app/admin/demanda", label: "Zonas sin cobertura", icon: MapPinOff },
@@ -217,7 +223,7 @@ export default function AdminDashboard() {
                 {[
                   { label: "Tickets de soporte abiertos", value: openClaims, to: "/app/admin/soporte" },
                   { label: "Comercios por aprobar", value: pendingStores, to: "/app/admin/comercios" },
-                  { label: "Repartidores por verificar", value: pendingCouriers, to: "/app/admin/repartidores" },
+                  { label: "Identidades por verificar", value: pendingIdentities, to: "/app/admin/identidades" },
                   { label: "Reintegros por hacer", value: refundCount, to: "/app/admin/pagos" },
                 ].map((item) => (
                   <li key={item.label}>
@@ -299,7 +305,8 @@ export default function AdminDashboard() {
           </ul>
         </TabsContent>
 
-        <TabsContent value="repartidores" className="mt-0"><CouriersManager couriers={couriers} onChange={loadCouriers} /></TabsContent>
+        <TabsContent value="repartidores" className="mt-0"><CouriersManager couriers={couriers} onChange={() => { loadCouriers(); loadIdentities(); }} /></TabsContent>
+        <TabsContent value="identidades" className="mt-0"><IdentityQueue onChange={() => { loadCouriers(); loadIdentities(); }} /></TabsContent>
 
         <TabsContent value="zonas" className="mt-0"><ZonesManager /></TabsContent>
         <TabsContent value="demanda" className="mt-0"><ZoneDemand /></TabsContent>

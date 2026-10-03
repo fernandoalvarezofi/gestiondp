@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Bell, ChevronRight, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, Trophy, UserCircle } from "lucide-react";
+import { Bell, ChevronRight, Fingerprint, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, Trophy, UserCircle, Wallet } from "lucide-react";
 import { AddressesSection } from "@/components/account/AddressesSection";
 import { GeneralSection } from "@/components/account/GeneralSection";
 import { HelpSection } from "@/components/account/HelpSection";
 import { NotificationsSection } from "@/components/account/NotificationsSection";
+import { OrderPrefsSection } from "@/components/account/OrderPrefsSection";
+import { VerificationSection } from "@/components/account/VerificationSection";
 import { PrivacySection } from "@/components/account/PrivacySection";
 import { SecuritySection } from "@/components/account/SecuritySection";
 import { TeamInvitations } from "@/components/merchant/TeamInvitations";
@@ -15,9 +17,11 @@ import { cn } from "@/lib/utils";
 
 const SECTIONS = [
   { id: "general", label: "Datos personales", hint: "Foto, nombre, teléfono y email", icon: UserCircle },
+  { id: "verificacion", label: "Verificación de identidad", hint: "DNI, selfie y nivel de tu cuenta", icon: Fingerprint },
   { id: "seguridad", label: "Seguridad", hint: "Contraseña, sesiones y dispositivos", icon: LockKeyhole },
   { id: "direcciones", label: "Direcciones", hint: "Tus lugares de entrega", icon: MapPin },
-  { id: "notificaciones", label: "Notificaciones y apariencia", hint: "Avisos, emails y tema", icon: Bell },
+  { id: "pedidos", label: "Pedidos y pagos", hint: "Pago, propina y cómo recibir", icon: Wallet },
+  { id: "notificaciones", label: "Notificaciones y apariencia", hint: "Avisos, tema y accesibilidad", icon: Bell },
   { id: "privacidad", label: "Privacidad y datos", hint: "Descargar o eliminar tu cuenta", icon: ShieldCheck },
   { id: "ayuda", label: "Ayuda y paneles", hint: "Preguntas, comercio, repartidor", icon: HelpCircle },
 ] as const;
@@ -97,6 +101,8 @@ export default function Profile() {
               <h2 className="text-xl font-extrabold">{current.label}</h2>
               <p className="mb-6 text-sm text-muted-foreground">{current.hint}</p>
               {current.id === "general" && <GeneralSection onSaved={refreshProfile} />}
+              {current.id === "verificacion" && <VerificationSection />}
+              {current.id === "pedidos" && <OrderPrefsSection />}
               {current.id === "seguridad" && <SecuritySection />}
               {current.id === "direcciones" && <AddressesSection />}
               {current.id === "notificaciones" && <NotificationsSection />}

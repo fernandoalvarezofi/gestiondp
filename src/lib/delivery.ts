@@ -57,6 +57,24 @@ export type Horarios = Record<string, Turno[]>;
 export const diasSemana = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
 export const defaultSchedule: Horarios = Object.fromEntries([0, 1, 2, 3, 4, 5, 6].map((day) => [String(day), [{ abre: "10:00", cierra: "23:00" }]]));
 
+/** Cierre especial (feriado, vacaciones): se guarda dentro de "horarios.cierres" y lo respeta la base al aceptar pedidos. */
+export type Cierre = { desde: string; hasta: string; motivo?: string };
+const DATE_KEY = /^\d{4}-\d{2}-\d{2}$/;
+export const getClosures = (horarios: Horarios | null | undefined): Cierre[] => {
+  const raw = (horarios as unknown as { cierres?: unknown } | null | undefined)?.cierres;
+  return Array.isArray(raw) ? raw.filter((item): item is Cierre => Boolean(item) && DATE_KEY.test(item.desde) && DATE_KEY.test(item.hasta ?? item.desde)).map((item) => ({ ...item, hasta: item.hasta ?? item.desde })) : [];
+};
+export const withClosures = (horarios: Horarios, cierres: Cierre[]): Horarios => {
+  const { cierres: _previous, ...days } = horarios as unknown as Record<string, unknown>;
+  return (cierres.length ? { ...days, cierres } : days) as unknown as Horarios;
+};
+/** Fecha (AAAA-MM-DD) en Argentina. */
+export const argentinaDateKey = (date = new Date()) => new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+export const activeClosure = (horarios: Horarios | null | undefined, date = new Date()): Cierre | null => {
+  const today = argentinaDateKey(date);
+  return getClosures(horarios).find((item) => today >= item.desde && today <= item.hasta) ?? null;
+};
+
 /** Hora actual en Argentina, independiente de la zona horaria del dispositivo. */
 function argentinaNow(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-US", { timeZone: "America/Argentina/Buenos_Aires", weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(date);
@@ -73,6 +91,7 @@ const toMinutes = (value: string) => {
 /** Misma regla que delivery_abierto_ahora en la base: turnos que cruzan la medianoche siguen abiertos al día siguiente. */
 export function withinSchedule(horarios: Horarios | null | undefined, date = new Date()) {
   if (!horarios) return true;
+  if (activeClosure(horarios, date)) return false;
   const { day, minutes } = argentinaNow(date);
   const today = horarios[String(day)] || [];
   const yesterday = horarios[String((day + 6) % 7)] || [];
@@ -100,6 +119,7 @@ export function nextOpening(horarios: Horarios | null | undefined) {
   const { day, minutes } = argentinaNow();
   for (let offset = 0; offset < 7; offset += 1) {
     const current = (day + offset) % 7;
+    if (activeClosure(horarios, new Date(Date.now() + offset * 86_400_000))) continue;
     const turnos = [...(horarios[String(current)] || [])].sort((a, b) => toMinutes(a.abre) - toMinutes(b.abre));
     const next = turnos.find((turno) => offset > 0 || toMinutes(turno.abre) > minutes);
     if (next) return offset === 0 ? `Abre hoy a las ${next.abre}` : offset === 1 ? `Abre mañana a las ${next.abre}` : `Abre el ${diasSemana[current].toLowerCase()} a las ${next.abre}`;

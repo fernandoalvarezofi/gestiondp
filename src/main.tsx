@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { applyAppearance, readAppearance } from "@/lib/appearance";
 import { initMonitoring } from "@/lib/monitor";
 import "./index.css";
 
@@ -30,4 +31,5 @@ if (!isPreviewHost && !isInIframe && "serviceWorker" in navigator) {
 }
 
 initMonitoring();
+applyAppearance(readAppearance());
 createRoot(document.getElementById("root")!).render(<ErrorBoundary><App /></ErrorBoundary>);
