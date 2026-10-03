@@ -63,6 +63,20 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ].filter(Boolean),
+  build: {
+    rollupOptions: {
+      output: {
+        // Librerías pesadas en archivos propios: se bajan en paralelo y quedan en caché entre versiones.
+        manualChunks(id: string) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/node_modules\/(react|react-dom|scheduler|react-router|react-router-dom|@remix-run)\//.test(id)) return "vendor-react";
+          if (id.includes("@supabase") || id.includes("iceberg-js")) return "vendor-supabase";
+          if (id.includes("@tanstack")) return "vendor-query";
+          return undefined;
+        },
+      },
+    },
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

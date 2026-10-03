@@ -13,10 +13,10 @@ import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe
 import { cn } from "@/lib/utils";
 
 const banners = [
-  { title: "30% OFF en tu primer pedido", text: "Con el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=1000&q=80&auto=format&fit=crop", tone: "from-[#F2402A] via-[#F2402A]/85", to: "/app/promociones", cta: "Ver cupones" },
-  { title: "Tu súper en minutos", text: "Frescos, almacén y bebidas", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1000&q=80&auto=format&fit=crop", tone: "from-emerald-700 via-emerald-700/80", to: "/app/categoria/super", cta: "Hacer el súper" },
-  { title: "Sumá puntos con cada pedido", text: "Woref Club: canjealos por descuentos y envíos gratis", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1000&q=80&auto=format&fit=crop", tone: "from-brand-deep via-brand-deep/80", to: "/app/club", cta: "Ver mi Club" },
-  { title: "Invitá a un amigo", text: "Los dos ganan descuento en su primer pedido", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=1000&q=80&auto=format&fit=crop", tone: "from-violet-800 via-violet-800/80", to: "/app/club", cta: "Invitar" },
+  { title: "30% OFF en tu primer pedido", text: "Con el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=760&q=62&auto=format&fit=crop", tone: "from-[#F2402A] via-[#F2402A]/85", to: "/app/promociones", cta: "Ver cupones" },
+  { title: "Tu súper en minutos", text: "Frescos, almacén y bebidas", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=760&q=62&auto=format&fit=crop", tone: "from-emerald-700 via-emerald-700/80", to: "/app/categoria/super", cta: "Hacer el súper" },
+  { title: "Sumá puntos con cada pedido", text: "Woref Club: canjealos por descuentos y envíos gratis", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=760&q=62&auto=format&fit=crop", tone: "from-brand-deep via-brand-deep/80", to: "/app/club", cta: "Ver mi Club" },
+  { title: "Invitá a un amigo", text: "Los dos ganan descuento en su primer pedido", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=760&q=62&auto=format&fit=crop", tone: "from-violet-800 via-violet-800/80", to: "/app/club", cta: "Invitar" },
 ];
 
 type Sort = "relevancia" | "rating" | "rapido";

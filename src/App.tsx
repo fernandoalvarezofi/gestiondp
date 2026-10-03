@@ -10,11 +10,11 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
 import { AppLayout } from "@/components/AppLayout";
-import Auth from "./pages/Auth";
-import Landing from "./pages/Landing";
-import NotFound from "./pages/NotFound";
 import DeliveryHome from "./pages/delivery/DeliveryHome";
 
+const Auth = lazy(() => import("./pages/Auth"));
+const Landing = lazy(() => import("./pages/Landing"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 const Search = lazy(() => import("./pages/delivery/Search"));
 const Category = lazy(() => import("./pages/delivery/Category"));
 const StoreDetail = lazy(() => import("./pages/delivery/StoreDetail"));
