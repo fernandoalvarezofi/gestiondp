@@ -29,6 +29,8 @@ const HelpTicket = lazy(() => import("./pages/delivery/HelpTicket"));
 const Club = lazy(() => import("./pages/delivery/Club"));
 const Envio = lazy(() => import("./pages/delivery/Envio"));
 const EnvioDetail = lazy(() => import("./pages/delivery/EnvioDetail"));
+const Remis = lazy(() => import("./pages/delivery/Remis"));
+const RemisDetail = lazy(() => import("./pages/delivery/RemisDetail"));
 const MerchantLayout = lazy(() => import("./pages/delivery/merchant/MerchantLayout"));
 const MerchantHome = lazy(() => import("./pages/delivery/merchant/MerchantHome"));
 const MerchantSettings = lazy(() => import("./pages/delivery/merchant/MerchantSettings"));
@@ -95,6 +97,8 @@ const App = () => (
                       <Route path="ayuda/:id" element={<HelpTicket />} />
                       <Route path="enviar" element={<Envio />} />
                       <Route path="envios/:id" element={<EnvioDetail />} />
+                      <Route path="remis" element={<Remis />} />
+                      <Route path="remis/:id" element={<RemisDetail />} />
                       <Route path="favoritos" element={<Favorites />} />
                       <Route path="promociones" element={<Promotions />} />
                       <Route path="perfil" element={<Profile />} />

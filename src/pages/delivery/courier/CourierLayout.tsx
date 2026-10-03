@@ -14,6 +14,7 @@ import { useShareCourierLocation } from "@/hooks/useCourierLocation";
 import { playChime, unlockAlarm } from "@/lib/alarm";
 import { db, DeliveryOrder, errorMessage } from "@/lib/delivery";
 import type { Envio, EnvioOferta } from "@/lib/envios";
+import type { Viaje, ViajeOferta } from "@/lib/remis";
 import type { GeoPoint } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +27,8 @@ export type CourierContext = {
   /** Todos los pedidos en curso (hay más de uno cuando se agrupan pedidos cercanos). */
   currents: DeliveryOrder[];
   currentEnvio: Envio | null;
+  currentViaje: Viaje | null;
+  viajeOffers: ViajeOferta[];
   delivered: DeliveryOrder[];
   deliveredEnvios: Envio[];
   offers: Offer[];
@@ -45,6 +48,8 @@ export default function CourierLayout() {
   const [mine, setMine] = useState<DeliveryOrder[]>([]);
   const [myEnvios, setMyEnvios] = useState<Envio[]>([]);
   const [envioOffers, setEnvioOffers] = useState<EnvioOferta[]>([]);
+  const [myViajes, setMyViajes] = useState<Viaje[]>([]);
+  const [viajeOffers, setViajeOffers] = useState<ViajeOferta[]>([]);
   const location = useLocation();
 
   const reloadCourier = useCallback(async () => {
@@ -66,6 +71,12 @@ export default function CourierLayout() {
     setMyEnvios(data || []);
   }, [user]);
 
+  const loadViajes = useCallback(async () => {
+    if (!user) return;
+    const { data } = await db.from("delivery_viajes").select("*").eq("conductor_id", user.id).order("created_at", { ascending: false }).limit(50);
+    setMyViajes(data || []);
+  }, [user]);
+
   useEffect(() => { reloadCourier(); }, [reloadCourier]);
 
   const approved = Boolean(courier?.activo && courier?.verificado);
@@ -74,9 +85,11 @@ export default function CourierLayout() {
   const current = currents[0] || null;
   const sharing = useShareCourierLocation(connected);
   const hasEnvio = Boolean(myEnvios.find((envio) => envio.estado === "asignado" || envio.estado === "retirado"));
+  const currentViaje = myViajes.find((trip) => ["asignado", "en_origen", "a_bordo"].includes(trip.estado)) || null;
+  const hasViaje = Boolean(currentViaje);
   // Con un pedido todavía sin retirar, el servidor puede ofrecer otro cercano para llevarlos juntos.
   const canBatch = currents.length > 0 && currents.length < 2 && currents.every((order) => order.tipo_entrega === "delivery" && !order.en_camino_at && order.estado !== "en_camino");
-  const { offers, refresh } = useOffers(connected && !hasEnvio && (!current || canBatch));
+  const { offers, refresh } = useOffers(connected && !hasEnvio && !hasViaje && (!current || canBatch));
 
   // Ofertas de envíos de paquetes: el servidor muestra solo las cercanas y mientras no estés ocupado.
   const refreshEnvioOffers = useCallback(async () => {
@@ -85,7 +98,7 @@ export default function CourierLayout() {
   }, []);
   const knownEnvios = useRef<Set<string> | null>(null);
   useEffect(() => {
-    if (!connected || current || hasEnvio) { setEnvioOffers([]); knownEnvios.current = null; return; }
+    if (!connected || current || hasEnvio || hasViaje) { setEnvioOffers([]); knownEnvios.current = null; return; }
     const poll = async () => {
       const { data, error } = await db.rpc("delivery_envios_disponibles");
       if (error) return;
@@ -97,18 +110,42 @@ export default function CourierLayout() {
     poll();
     const timer = window.setInterval(poll, 6000);
     return () => window.clearInterval(timer);
-  }, [connected, current, hasEnvio]);
+  }, [connected, current, hasEnvio, hasViaje]);
+
+  // Ofertas de remís: solo para conductores habilitados, libres y sin otro servicio en curso.
+  const knownViajes = useRef<Set<string> | null>(null);
+  const canRemis = Boolean(courier?.acepta_remis);
+  const refreshViajeOffers = useCallback(async () => {
+    const { data, error } = await db.rpc("delivery_viajes_disponibles");
+    if (!error) setViajeOffers((data || []) as ViajeOferta[]);
+  }, []);
+  useEffect(() => {
+    if (!connected || !canRemis || current || hasEnvio || hasViaje) { setViajeOffers([]); knownViajes.current = null; return; }
+    const poll = async () => {
+      const { data, error } = await db.rpc("delivery_viajes_disponibles");
+      if (error) return;
+      const list = (data || []) as ViajeOferta[];
+      if (knownViajes.current && list.some((offer) => !knownViajes.current!.has(offer.id))) playChime();
+      knownViajes.current = new Set(list.map((offer) => offer.id));
+      setViajeOffers(list);
+    };
+    poll();
+    const timer = window.setInterval(poll, 6000);
+    return () => window.clearInterval(timer);
+  }, [connected, canRemis, current, hasEnvio, hasViaje]);
 
   useEffect(() => {
     if (!approved) return;
     loadOrders();
     loadEnvios();
+    loadViajes();
     const channel = db.channel(`repartidor-${user?.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos", filter: `repartidor_id=eq.${user?.id}` }, loadOrders)
       .on("postgres_changes", { event: "*", schema: "public", table: "delivery_envios", filter: `repartidor_id=eq.${user?.id}` }, loadEnvios)
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_viajes", filter: `conductor_id=eq.${user?.id}` }, loadViajes)
       .subscribe();
     return () => { db.removeChannel(channel); };
-  }, [approved, user?.id, loadOrders, loadEnvios]);
+  }, [approved, user?.id, loadOrders, loadEnvios, loadViajes]);
 
   const delivered = useMemo(() => mine.filter((order) => order.estado === "entregado"), [mine]);
   const currentEnvio = myEnvios.find((envio) => envio.estado === "asignado" || envio.estado === "retirado") || null;
@@ -129,9 +166,9 @@ export default function CourierLayout() {
   if (!courier || !courier.verificado) return <CourierApplication courier={courier} onDone={reloadCourier} />;
   if (!courier.activo) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<Bike className="h-7 w-7" />} title="Tu cuenta de repartidor está pausada" text="Comunicate con soporte para reactivarla." /></div>;
 
-  const refreshAll = () => { loadOrders(); loadEnvios(); refresh(); refreshEnvioOffers(); };
-  const busyNow = Boolean(current) || hasEnvio;
-  const context: CourierContext = { courier, connected, current, currents, currentEnvio, delivered, deliveredEnvios, offers, envioOffers, position: sharing.position, sharingStatus: sharing.status, refreshAll, reloadCourier };
+  const refreshAll = () => { loadOrders(); loadEnvios(); loadViajes(); refresh(); refreshEnvioOffers(); refreshViajeOffers(); };
+  const busyNow = Boolean(current) || hasEnvio || hasViaje;
+  const context: CourierContext = { courier, connected, current, currents, currentEnvio, currentViaje, viajeOffers, delivered, deliveredEnvios, offers, envioOffers, position: sharing.position, sharingStatus: sharing.status, refreshAll, reloadCourier };
 
   return (
     <PanelShell
@@ -144,7 +181,7 @@ export default function CourierLayout() {
         </div>
       }
       groups={[{ items: [
-        { to: "/app/repartidor", label: "Pedidos", icon: ClipboardList, end: true, badge: busyNow ? undefined : offers.length + envioOffers.length },
+        { to: "/app/repartidor", label: "Pedidos", icon: ClipboardList, end: true, badge: busyNow ? undefined : offers.length + envioOffers.length + viajeOffers.length },
         { to: "/app/repartidor/ganancias", label: "Ganancias", icon: Wallet },
         { to: "/app/repartidor/incentivos", label: "Metas y turnos", icon: Target },
         { to: "/app/repartidor/historial", label: "Historial", icon: History },

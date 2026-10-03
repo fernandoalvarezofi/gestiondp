@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { ChevronRight, Package, Search, SlidersHorizontal, Star } from "lucide-react";
+import { Car, ChevronRight, Package, Search, SlidersHorizontal, Star } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/delivery/Common";
 import { OutOfZone } from "@/components/delivery/OutOfZone";
@@ -146,7 +146,7 @@ export default function DeliveryHome() {
       </div>
 
       <div className="relative z-10 mx-auto -mt-9 max-w-6xl px-4 sm:px-6 md:-mt-10 lg:px-8">
-        <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-8 md:p-5" aria-label="Categorías">
+        <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-9 md:p-5" aria-label="Categorías">
           {tiles.map(({ id, label, icon: Icon, color }) => (
             <Link key={id} to={`/app/categoria/${id}`} className="group flex flex-col items-center gap-1.5 text-center">
               <span className={cn("flex h-14 w-14 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 md:h-16 md:w-16", color)}><Icon className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
@@ -156,6 +156,10 @@ export default function DeliveryHome() {
           <Link to="/app/enviar" className="group flex flex-col items-center gap-1.5 text-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 dark:bg-amber-500/15 dark:text-amber-300 md:h-16 md:w-16"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Envíos</span>
+          </Link>
+          <Link to="/app/remis" className="group flex flex-col items-center gap-1.5 text-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700 transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 dark:bg-sky-500/15 dark:text-sky-300 md:h-16 md:w-16"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
+            <span className="text-[12px] font-bold leading-tight md:text-[13px]">Remís</span>
           </Link>
         </section>
       </div>

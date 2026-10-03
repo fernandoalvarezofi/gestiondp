@@ -3,6 +3,8 @@ import { Bike, Loader2, Package, PowerOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ActiveBatch } from "@/components/courier/ActiveBatch";
 import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
+import { ActiveViaje, ViajeOfferCard } from "@/components/courier/ViajeCards";
+import { RemisEnrollment } from "@/components/courier/RemisEnrollment";
 import { CourierIncentives } from "@/components/courier/Incentives";
 import { PayoutForm } from "@/components/account/PayoutForm";
 import { CourierWallet } from "@/components/courier/CourierWallet";
@@ -16,15 +18,17 @@ import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { useCourier } from "./CourierLayout";
 
 export function CourierOrdersPage() {
-  const { current, currents, currentEnvio, connected, offers, envioOffers, position, sharingStatus, refreshAll } = useCourier();
+  const { current, currents, currentEnvio, currentViaje, viajeOffers, connected, offers, envioOffers, position, sharingStatus, refreshAll } = useCourier();
   if (current) return <ActiveBatch orders={currents} offers={offers} position={position} sharing={sharingStatus} onChange={refreshAll} />;
   if (currentEnvio) return <ActiveEnvio envio={currentEnvio} position={position} sharing={sharingStatus} onChange={refreshAll} />;
+  if (currentViaje) return <ActiveViaje viaje={currentViaje} position={position} sharing={sharingStatus} onChange={refreshAll} />;
   if (!connected) return <EmptyState icon={<PowerOff className="h-7 w-7" />} title="Estás desconectado" text="Tocá “Conectarme” arriba para recibir ofertas de pedidos y envíos." />;
-  if (!offers.length && !envioOffers.length) return <EmptyState icon={<Bike className="h-7 w-7" />} title="Buscando pedidos para vos" text="Quedate conectado: apenas haya un pedido o un envío de paquete cerca, te suena el aviso." />;
+  if (!offers.length && !envioOffers.length && !viajeOffers.length) return <EmptyState icon={<Bike className="h-7 w-7" />} title="Buscando pedidos para vos" text="Quedate conectado: apenas haya un pedido o un envío de paquete cerca, te suena el aviso." />;
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       {offers.map((offer) => <OfferCard key={offer.pedido_id} offer={offer} onChange={refreshAll} />)}
       {envioOffers.map((offer) => <EnvioOfferCard key={offer.id} offer={offer} onChange={refreshAll} />)}
+      {viajeOffers.map((offer) => <ViajeOfferCard key={offer.id} offer={offer} onChange={refreshAll} />)}
     </div>
   );
 }
@@ -97,6 +101,8 @@ export function CourierProfilePage() {
         <h2 className="mb-3 font-extrabold">Verificación de identidad</h2>
         <IdentityVerification entidad="repartidor" onChanged={reloadCourier} />
       </section>
+
+      <RemisEnrollment courier={courier} onChanged={reloadCourier} />
 
       <section className="rounded-3xl border bg-card p-4 sm:p-5">
         <h2 className="font-extrabold">Cobros</h2>

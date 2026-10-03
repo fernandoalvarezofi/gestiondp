@@ -16,9 +16,10 @@ export function parentPath(pathname: string): string {
   if (ROOTS.has(path)) return "/app";
   if (/^\/app\/tienda\//.test(path) || /^\/app\/categoria\//.test(path) || path === "/app/carrito") return "/app";
   if (/^\/app\/pedidos\/[^/]+$/.test(path) || /^\/app\/envios\/[^/]+$/.test(path)) return "/app/pedidos";
+  if (/^\/app\/remis\/[^/]+$/.test(path)) return "/app/remis";
   if (/^\/app\/ayuda\/[^/]+$/.test(path)) return "/app/ayuda";
   if (path === "/app/ayuda") return "/app/perfil/ayuda";
-  if (["/app/club", "/app/promociones", "/app/enviar"].includes(path)) return "/app";
+  if (["/app/club", "/app/promociones", "/app/enviar", "/app/remis"].includes(path)) return "/app";
   if (/^\/app\/perfil\/[^/]+$/.test(path)) return "/app/perfil";
   const panel = PANELS.find((root) => path.startsWith(`${root}/`));
   if (panel) {
@@ -34,11 +35,12 @@ export function pageTitle(pathname: string): string {
   const path = normalize(pathname);
   const exact: Record<string, string> = {
     "/app/carrito": "Mi pedido", "/app/club": "Woref Club", "/app/promociones": "Cupones y promociones", "/app/ayuda": "Ayuda",
-    "/app/enviar": "Enviar un paquete", "/app/favoritos": "Favoritos", "/app/buscar": "Buscar", "/app/pedidos": "Mis pedidos",
+    "/app/enviar": "Enviar un paquete", "/app/remis": "Pedir un remís", "/app/favoritos": "Favoritos", "/app/buscar": "Buscar", "/app/pedidos": "Mis pedidos",
   };
   if (exact[path]) return exact[path];
   if (/^\/app\/ayuda\/[^/]+$/.test(path)) return "Consulta";
   if (/^\/app\/envios\/[^/]+$/.test(path)) return "Envío";
+  if (/^\/app\/remis\/[^/]+$/.test(path)) return "Tu viaje";
   if (/^\/app\/categoria\//.test(path)) return "Categoría";
   return "";
 }
