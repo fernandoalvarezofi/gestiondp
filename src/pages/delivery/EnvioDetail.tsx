@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Check, KeyRound, Loader2, MapPin, Package, PackageCheck, XCircle } from "lucide-react";
+import { Check, KeyRound, Loader2, MapPin, Package, PackageCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { MapView } from "@/components/maps/LazyMaps";
@@ -60,7 +60,6 @@ export default function EnvioDetail() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 pb-14 pt-4 sm:px-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-2 rounded-full"><Link to="/app/pedidos"><ArrowLeft className="h-4 w-4" />Mis pedidos</Link></Button>
       <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
         <div><p className="text-xs font-bold uppercase text-primary">Envío de paquete · {shortId(envio.id)}</p><h1 className="text-2xl font-extrabold">{envioEstadoLabel[envio.estado]}</h1></div>
         <p className="font-display text-2xl font-black">{money(envio.total)}</p>

@@ -27,7 +27,7 @@ export default function Promotions() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-14 pt-5 sm:px-6 lg:px-8">
-      <PageHeader back eyebrow="Ahorrá" title="Cupones y promociones" subtitle="Aplicá el código en el carrito antes de confirmar el pedido." />
+      <PageHeader eyebrow="Ahorrá" title="Cupones y promociones" subtitle="Aplicá el código en el carrito antes de confirmar el pedido." />
       {coupons.length ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {coupons.map((coupon) => (

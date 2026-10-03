@@ -45,7 +45,7 @@ export default function HelpTicket() {
   const closed = ticket.estado === "resuelto" || ticket.estado === "rechazado";
   return (
     <div className="mx-auto max-w-2xl pb-10">
-      <PageHeader back="/app/ayuda" eyebrow={ticket.pedido_id ? `Pedido ${shortId(ticket.pedido_id)}` : "Consulta"} title={reclamoTipoLabel[ticket.tipo]} subtitle={<span className={cn("rounded-full px-2.5 py-0.5 text-xs font-bold", ticketStateClass(ticket.estado))}>{estadoLabel[ticket.estado]}</span>} />
+      <PageHeader eyebrow={ticket.pedido_id ? `Pedido ${shortId(ticket.pedido_id)}` : "Consulta"} title={reclamoTipoLabel[ticket.tipo]} subtitle={<span className={cn("rounded-full px-2.5 py-0.5 text-xs font-bold", ticketStateClass(ticket.estado))}>{estadoLabel[ticket.estado]}</span>} />
       {ticket.pedido_id && <Link to={`/app/pedidos/${ticket.pedido_id}`} className="mt-3 inline-block text-sm font-bold text-primary hover:underline">Ver el pedido</Link>}
       <div className="mt-4"><TicketThread ticketId={ticket.id} canReply={isOpenTicket(ticket.estado) || closed} onSent={load} /></div>
       {closed && <p className="mt-2 text-xs text-muted-foreground">Si respondés, reabrimos la consulta.</p>}

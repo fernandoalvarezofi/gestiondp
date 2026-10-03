@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Bike, CalendarClock, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState, PageHeader } from "@/components/delivery/Common";
+import { BackBar, EmptyState, PageHeader } from "@/components/delivery/Common";
 import { OrderTimeline, StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -117,6 +117,7 @@ export default function OrderDetail() {
 
   return (
     <div className="mx-auto max-w-3xl pb-16 sm:px-6">
+      {!showMap && <BackBar className="-mx-0 mb-1 sm:rounded-b-2xl sm:border-x" />}
       {showMap && (
         <div className="relative sm:pt-5">
           <MapView markers={markers} className="h-[42vh] min-h-[280px] rounded-none sm:h-96 sm:rounded-3xl" />
@@ -128,7 +129,6 @@ export default function OrderDetail() {
       )}
       <div className={cn("relative z-10 bg-background px-4 pt-5", showMap ? "-mt-6 rounded-t-[28px] sm:mt-0 sm:rounded-none sm:px-0" : "sm:px-0")}>
       <PageHeader
-        back={showMap ? undefined : "/app/pedidos"}
         eyebrow={`Pedido ${shortId(order.id)}`}
         title={awaitingPayment ? "Falta completar el pago" : estadoTitulo(order)}
         subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : order.estado === "en_camino" && retiro ? statusCopy.listo : statusCopy[order.estado]}

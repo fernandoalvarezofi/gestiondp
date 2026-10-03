@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Bell, ChevronLeft, ChevronRight, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, Trophy, UserCircle } from "lucide-react";
+import { Bell, ChevronRight, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, Trophy, UserCircle } from "lucide-react";
 import { AddressesSection } from "@/components/account/AddressesSection";
 import { GeneralSection } from "@/components/account/GeneralSection";
 import { HelpSection } from "@/components/account/HelpSection";
@@ -94,7 +94,6 @@ export default function Profile() {
         <section className={cn("min-w-0 rounded-3xl border bg-card p-4 sm:p-6", !current && "max-lg:hidden")}>
           {current ? (
             <>
-              <Link to="/app/perfil" className="mb-3 inline-flex items-center gap-1 text-sm font-bold text-primary lg:hidden"><ChevronLeft className="h-4 w-4" />Mi cuenta</Link>
               <h2 className="text-xl font-extrabold">{current.label}</h2>
               <p className="mb-6 text-sm text-muted-foreground">{current.hint}</p>
               {current.id === "general" && <GeneralSection onSaved={refreshProfile} />}

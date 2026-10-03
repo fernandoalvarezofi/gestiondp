@@ -50,7 +50,7 @@ export default function Help() {
 
   return (
     <div className="mx-auto max-w-2xl pb-10">
-      <PageHeader back="/app/perfil/ayuda" eyebrow="Soporte" title="Ayuda" subtitle="Escribinos y te respondemos por acá, con aviso a tu celular." actions={<Button className="rounded-full" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva consulta</Button>} />
+      <PageHeader eyebrow="Soporte" title="Ayuda" subtitle="Escribinos y te respondemos por acá, con aviso a tu celular." actions={<Button className="rounded-full" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva consulta</Button>} />
       {loading ? <div className="mt-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> : tickets.length === 0 ? (
         <EmptyState className="mt-6" icon={<Headset className="h-8 w-8" />} title="No tenés consultas" text="Si tenés un problema con un pedido, abrilo desde Mis pedidos. Para cualquier otra cosa, escribinos acá." action={<Button className="rounded-full" onClick={() => setOpen(true)}>Escribir a soporte</Button>} />
       ) : (

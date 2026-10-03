@@ -3,6 +3,8 @@ import { Navigate, NavLink, Outlet, To, useLocation, useNavigate } from "react-r
 import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
+import { BackBar } from "@/components/delivery/Common";
+import { isRootPath } from "@/lib/navigation";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
 import { AppFooter } from "@/components/delivery/AppFooter";
 import { AddressDialog, toCartAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
@@ -67,6 +69,8 @@ export function AppLayout() {
   const hideNav = inPanel || location.pathname.startsWith("/app/carrito");
   // El seguimiento de un pedido es una pantalla completa con su propio botón de volver (como en las apps de delivery).
   const immersive = location.pathname.startsWith("/app/pedidos/");
+  // Todas las pantallas internas llevan el mismo botón de volver (el detalle del local y del pedido traen el suyo sobre la foto o el mapa).
+  const showBackBar = !isRootPath(location.pathname) && !/^\/app\/(tienda|pedidos)\/[^/]+$/.test(location.pathname);
   const showCartBar = itemCount > 0 && !inPanel && !location.pathname.startsWith("/app/carrito") && !location.pathname.startsWith("/app/pedidos/");
 
   return (
@@ -160,6 +164,8 @@ export function AppLayout() {
         </div>
       </header>
       )}
+
+      {showBackBar && <BackBar className="sticky top-16 z-30" />}
 
       <AddressDialog open={gateOpen} onOpenChange={setGateOpen} title="¿Dónde estás?" />
 

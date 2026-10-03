@@ -1,7 +1,25 @@
 import { ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowLeft, ChevronRight } from "lucide-react";
+import { isRootPath, pageTitle, useGoBack } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+
+/** Botón "Volver" y título de la pantalla actual; no aparece en las pantallas principales. */
+export function BackBar({ className }: { className?: string }) {
+  const { pathname } = useLocation();
+  const goBack = useGoBack();
+  if (isRootPath(pathname)) return null;
+  const title = pageTitle(pathname) || (/^\/app\/perfil\//.test(pathname) ? "Mi cuenta" : "");
+  return (
+    <div className={cn("border-b bg-card/95 backdrop-blur-xl", className)}>
+      <div className="mx-auto flex h-12 max-w-7xl items-center gap-2 px-2 sm:px-5 lg:px-7">
+        <button type="button" onClick={goBack} aria-label="Volver" className="flex h-10 items-center gap-1 rounded-full pl-2 pr-3 text-sm font-extrabold hover:bg-muted">
+          <ArrowLeft className="h-5 w-5" />{title || "Volver"}
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function Rail({ title, subtitle, to, children }: { title: string; subtitle?: string; to?: string; children: ReactNode }) {
   return (
@@ -29,16 +47,11 @@ export function EmptyState({ icon, title, text, action, className }: { icon?: Re
   );
 }
 
-export function PageHeader({ eyebrow, title, subtitle, back, actions }: { eyebrow?: string; title: string; subtitle?: ReactNode; back?: boolean | string; actions?: ReactNode }) {
-  const navigate = useNavigate();
+/** Encabezado de pantalla. El botón "Volver" lo pone la barra global (BackBar), así es igual en todas las pantallas. */
+export function PageHeader({ eyebrow, title, subtitle, actions }: { eyebrow?: string; title: string; subtitle?: ReactNode; actions?: ReactNode }) {
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
       <div className="flex min-w-0 items-start gap-3">
-        {back && (
-          <button type="button" aria-label="Volver" onClick={() => (typeof back === "string" ? navigate(back) : navigate(-1))} className="mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted hover:bg-muted/70">
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-        )}
         <div className="min-w-0">
           {eyebrow && <p className="text-xs font-bold uppercase tracking-wide text-primary">{eyebrow}</p>}
           <h1 className="mt-0.5 text-2xl font-extrabold sm:text-3xl">{title}</h1>

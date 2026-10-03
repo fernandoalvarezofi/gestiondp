@@ -252,7 +252,7 @@ export default function Cart() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-32 pt-5 sm:px-6 lg:pb-16">
-      <PageHeader back eyebrow="Tu pedido" title={store.nombre} subtitle={<Link to={`/app/tienda/${store.slug}`} className="font-bold text-primary">Agregar más productos</Link>} />
+      <PageHeader eyebrow="Tu pedido" title={store.nombre} subtitle={<Link to={`/app/tienda/${store.slug}`} className="font-bold text-primary">Agregar más productos</Link>} />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">

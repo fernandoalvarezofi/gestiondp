@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { ChevronsUpDown, ExternalLink, Home, LogOut, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ChevronsUpDown, ExternalLink, Home, LogOut, type LucideIcon } from "lucide-react";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { isRootPath, useGoBack } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
 export type PanelNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; badge?: number | string; hidden?: boolean };
@@ -70,6 +71,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
   const navigate = useNavigate();
   const { signOut } = useAuth();
   const roles = useDeliveryRoles();
+  const goBack = useGoBack();
   const items = groups.flatMap((group) => group.items).filter((item) => !item.hidden);
   // La sección activa es la que mejor coincide con la ruta (la más específica).
   const tabItems = (tabs ? tabs.map((to) => items.find((item) => item.to === to)).filter((item): item is PanelNavItem => Boolean(item)) : items).slice(0, 5);
@@ -121,6 +123,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
       <SidebarInset className={cn("min-w-0", bottomTabs && "pb-16 md:pb-0")}>
         <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-card/95 px-3 backdrop-blur-xl sm:px-5">
           <SidebarTrigger className="-ml-1" aria-label="Abrir o cerrar el menú" />
+          {!isRootPath(location.pathname) && <button type="button" onClick={goBack} aria-label="Volver" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"><ArrowLeft className="h-5 w-5" /></button>}
           <Separator orientation="vertical" className="mr-1 h-5" />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-base font-extrabold leading-tight">{current?.label ?? panel}</h1>

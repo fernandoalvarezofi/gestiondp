@@ -52,7 +52,7 @@ export default function Category() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-14 pt-5 sm:px-6 lg:px-8">
-      <PageHeader back="/app" title={vertical.label} subtitle={`${list.length} ${list.length === 1 ? "comercio" : "comercios"} cerca tuyo`} actions={<span className={cn("flex h-14 w-14 items-center justify-center rounded-2xl", vertical.color)}><Icon className="h-7 w-7" /></span>} />
+      <PageHeader title={vertical.label} subtitle={`${list.length} ${list.length === 1 ? "comercio" : "comercios"} cerca tuyo`} actions={<span className={cn("flex h-14 w-14 items-center justify-center rounded-2xl", vertical.color)}><Icon className="h-7 w-7" /></span>} />
 
       <div className="scrollbar-none -mx-4 mt-6 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         {sorts.map((item) => (
