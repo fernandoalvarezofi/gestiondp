@@ -45,6 +45,7 @@ const CourierLayout = lazy(() => import("./pages/delivery/courier/CourierLayout"
 const CourierPages = {
   Orders: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierOrdersPage }))),
   Earnings: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierEarningsPage }))),
+  Incentives: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierIncentivesPage }))),
   History: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierHistoryPage }))),
   Profile: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierProfilePage }))),
 };
@@ -113,6 +114,7 @@ const App = () => (
                       <Route path="repartidor" element={<CourierLayout />}>
                         <Route index element={<CourierPages.Orders />} />
                         <Route path="ganancias" element={<CourierPages.Earnings />} />
+                        <Route path="incentivos" element={<CourierPages.Incentives />} />
                         <Route path="historial" element={<CourierPages.History />} />
                         <Route path="perfil" element={<CourierPages.Profile />} />
                       </Route>

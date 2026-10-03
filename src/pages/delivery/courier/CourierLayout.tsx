@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useOutletContext } from "react-router-dom";
-import { Bike, ClipboardList, Loader2, Power, PowerOff, UserCircle, Wallet, History } from "lucide-react";
+import { Bike, ClipboardList, Loader2, Power, PowerOff, Target, UserCircle, Wallet, History } from "lucide-react";
 import { toast } from "sonner";
 import { Courier, CourierApplication } from "@/components/courier/CourierApplication";
 import { SelfieControl } from "@/components/courier/SelfieControl";
@@ -146,6 +146,7 @@ export default function CourierLayout() {
       groups={[{ items: [
         { to: "/app/repartidor", label: "Pedidos", icon: ClipboardList, end: true, badge: busyNow ? undefined : offers.length + envioOffers.length },
         { to: "/app/repartidor/ganancias", label: "Ganancias", icon: Wallet },
+        { to: "/app/repartidor/incentivos", label: "Metas y turnos", icon: Target },
         { to: "/app/repartidor/historial", label: "Historial", icon: History },
         { to: "/app/repartidor/perfil", label: "Mi perfil", icon: UserCircle },
       ] }]}

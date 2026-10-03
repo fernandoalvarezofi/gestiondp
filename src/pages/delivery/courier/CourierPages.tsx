@@ -3,6 +3,7 @@ import { Bike, Loader2, Package, PowerOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ActiveBatch } from "@/components/courier/ActiveBatch";
 import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
+import { CourierIncentives } from "@/components/courier/Incentives";
 import { PayoutForm } from "@/components/account/PayoutForm";
 import { CourierWallet } from "@/components/courier/CourierWallet";
 import { OfferCard } from "@/components/courier/OfferCard";
@@ -31,6 +32,10 @@ export function CourierOrdersPage() {
 export function CourierEarningsPage() {
   const { delivered, deliveredEnvios } = useCourier();
   return <CourierWallet refreshKey={delivered.length + deliveredEnvios.length} />;
+}
+
+export function CourierIncentivesPage() {
+  return <CourierIncentives />;
 }
 
 export function CourierHistoryPage() {
