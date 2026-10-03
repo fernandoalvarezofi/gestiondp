@@ -1,0 +1,45 @@
+-- Directorio de comercios de Lincoln que todavía no están en Woref: se muestran como "próximamente", no se les puede pedir.
+-- Datos públicos de OpenStreetMap (© colaboradores de OpenStreetMap, licencia ODbL) y altas manuales.
+-- Las tablas y funciones (delivery_directorio, delivery_directorio_interes, delivery_directorio_lista, delivery_directorio_interes, delivery_admin_directorio*) se aplicaron por MCP.
+-- Carga inicial: 38 comercios de OpenStreetMap (se descartó un local con rubro dudoso).
+
+INSERT INTO public.delivery_directorio (osm_id, nombre, rubro, direccion, telefono, web, horario, lat, lng) VALUES
+('node/2145362187', 'Confitería', 'Bar', NULL, NULL, NULL, NULL, -34.8560405, -61.5486113),
+('node/3802854237', 'Shell', 'Almacén', NULL, NULL, NULL, NULL, -34.8570774, -61.5165985),
+('node/3892813594', 'Supermercado La Paz', 'Supermercado', 'Avenida Massey 1202, Lincoln', '+54 2355 432374', NULL, NULL, -34.868643, -61.5307737),
+('node/4209117194', 'Blues Bar', 'Bar', 'Av. Massey, Lincoln', NULL, NULL, NULL, -34.8691049, -61.5314767),
+('node/4219859093', 'Panadería El Maestro', 'Panadería', 'San Martín, Lincoln', NULL, NULL, 'Mo-Su 07:30-21:00', -34.8697431, -61.5346956),
+('node/4219885290', 'Ferretería Pedro', 'Ferretería', 'Av. 25 de mayo, Lincoln', NULL, NULL, NULL, -34.8609947, -61.5379789),
+('node/4219885292', 'La Anónima', 'Supermercado', 'Ituzaingó, Lincoln', NULL, 'https://www.laanonima.com.ar/sucursales/101-lincoln', NULL, -34.8632003, -61.5285925),
+('node/4219892891', 'Super Chino', 'Almacén', 'Av. Massey, Lincoln', NULL, NULL, NULL, -34.8614163, -61.5221985),
+('node/4219893590', 'Carnicería y Despensa Ale-Vic', 'Carnicería', 'Suipacha, Lincoln', NULL, NULL, 'Mo-Su 08:00-22:00', -34.8704492, -61.5345398),
+('node/4219893591', 'Panadería Pan-Pan', 'Panadería', 'Moreno, Lincoln', NULL, NULL, NULL, -34.8681817, -61.5310916),
+('node/4219893790', 'Farmacia Verna', 'Farmacia', 'Avenida Massey 1301, Lincoln', '+54 2355 42 2091', NULL, NULL, -34.8692482, -61.5315195),
+('node/4219893792', 'Tellechea', 'Farmacia', 'Avenida Massey 897, Lincoln', NULL, NULL, NULL, -34.8662738, -61.5283235),
+('node/4219894690', 'Farmacia Sorgentini', 'Farmacia', 'Avenida Massey 1099, Lincoln', '+54 2355 42 2058', NULL, NULL, -34.8675319, -61.5299148),
+('node/4340539775', 'Cubyche', 'Restaurante', NULL, NULL, NULL, NULL, -34.8669456, -61.5306636),
+('node/4340540630', 'Pepperoni', 'Restaurante', NULL, NULL, NULL, NULL, -34.8673294, -61.5296664),
+('node/4340541245', 'Eva Luna Perfumería', 'Perfumería', 'Avenida Massey 90, Lincoln', '+54 2355 42 4000', NULL, NULL, -34.8664059, -61.5281069),
+('node/4340541402', 'Ferrelin', 'Ferretería', 'Avenida Massey 864, Lincoln', '+54 2355 42 2060', NULL, NULL, -34.866225, -61.5279088),
+('node/4340544047', 'Flamenco restaurant', 'Restaurante', 'Manuel Antas García 64, Lincoln', NULL, NULL, NULL, -34.8674934, -61.5283864),
+('node/4416883104', 'Farmacia Rodriguez', 'Farmacia', NULL, NULL, NULL, NULL, -34.8660085, -61.5302142),
+('node/4434419178', 'Farmacia Lincoln', 'Farmacia', NULL, NULL, NULL, NULL, -34.8697461, -61.5255384),
+('node/4474923813', 'Club Lincoln', 'Restaurante', NULL, NULL, NULL, NULL, -34.8651251, -61.527034),
+('node/4772871761', 'La Victoria Autoservicio', 'Supermercado', NULL, NULL, NULL, NULL, -34.8687028, -61.5446322),
+('node/5572458082', 'Rataplán Librería', 'Librería', 'Avenida Massey, Lincoln', NULL, NULL, NULL, -34.8671234, -61.529438),
+('node/5849480042', 'Edison', 'Café', NULL, NULL, NULL, NULL, -34.8646395, -61.5286383),
+('node/5849480043', 'Panadería Moreno', 'Panadería', NULL, NULL, NULL, NULL, -34.864801, -61.52884),
+('node/5849480045', 'Bulonería Lopez', 'Ferretería', NULL, NULL, NULL, NULL, -34.8651181, -61.5280718),
+('node/5849480059', 'Heladería Tuyayito', 'Heladería', NULL, NULL, NULL, NULL, -34.8680742, -61.5305309),
+('node/5849480062', 'Farmacia Cruz Roja', 'Farmacia', NULL, NULL, NULL, NULL, -34.8675155, -61.5320493),
+('node/5849480070', 'Los Vascos', 'Carnicería', NULL, NULL, NULL, NULL, -34.8687699, -61.5271989),
+('node/5849480072', 'Kiosco Avenida', 'Kiosco', NULL, NULL, NULL, NULL, -34.8623939, -61.5238),
+('node/5955742387', 'Despensa', 'Supermercado', 'Avenida 25 de Mayo 1150, Lincoln', NULL, NULL, 'Mo-Su 08:00-23:00', -34.8572687, -61.5426309),
+('node/7601191225', 'Naomi Original Forrajería', 'Pet shop', 'Avenida Tucumán 230, Lincoln', NULL, NULL, 'Mo-Sa 08:00-20:00', -34.8724828, -61.5404346),
+('node/8158264849', 'Farmacia Andrade', 'Farmacia', NULL, NULL, NULL, NULL, -34.8690542, -61.5317136),
+('node/8158264862', 'Rodamientos Gori', 'Ferretería', NULL, NULL, NULL, NULL, -34.8699309, -61.5256581),
+('node/12520396469', 'Dia', 'Supermercado', NULL, NULL, NULL, NULL, -34.8613265, -61.5389462),
+('node/12543448523', 'La Paz', 'Supermercado', NULL, NULL, NULL, NULL, -34.8640677, -61.5422216),
+('node/12775554313', 'La Linqueña', 'Café', NULL, NULL, NULL, NULL, -34.8658023, -61.5341717),
+('way/618900990', 'Colombo', 'Farmacia', NULL, NULL, NULL, NULL, -34.8657722, -61.5272381)
+ON CONFLICT (osm_id) DO NOTHING;

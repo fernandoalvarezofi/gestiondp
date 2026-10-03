@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Car, ChevronRight, Package, Search, SlidersHorizontal, Star } from "lucide-react";
+import { Car, ChevronRight, Package, Search, SlidersHorizontal, Star, Store } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/delivery/Common";
 import { OutOfZone } from "@/components/delivery/OutOfZone";
@@ -172,6 +172,12 @@ export default function DeliveryHome() {
       </div>
 
       <BannerCarousel />
+
+      <Link to="/app/directorio" className="mx-4 mt-6 flex items-center gap-3 rounded-3xl border bg-card p-4 transition-colors hover:bg-muted sm:mx-0">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Store className="h-6 w-6" /></span>
+        <span className="min-w-0 flex-1"><span className="block font-extrabold">¿No está tu comercio favorito?</span><span className="block text-sm text-muted-foreground">Mirá los comercios de Lincoln que todavía no están y pedí que se sumen.</span></span>
+        <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+      </Link>
 
       {cuisines.length > 2 && (
         <Section title="¿Qué se te antoja?">

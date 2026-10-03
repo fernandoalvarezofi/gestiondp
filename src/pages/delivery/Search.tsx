@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Search as SearchIcon, X } from "lucide-react";
 import { EmptyState } from "@/components/delivery/Common";
+import { Button } from "@/components/ui/button";
 import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
 import { db, DeliveryProduct, DeliveryStore, img, money, verticals } from "@/lib/delivery";
 
@@ -84,7 +85,7 @@ export default function Search() {
             </div>
           </section>
           {!loading && stores.length === 0 && productsByStore.length === 0 && (
-            <EmptyState className="mt-6" icon={<SearchIcon className="h-7 w-7" />} title={`No encontramos resultados para “${query}”`} text="Revisá cómo lo escribiste o probá con algo más general." />
+            <EmptyState className="mt-6" icon={<SearchIcon className="h-7 w-7" />} title={`No encontramos resultados para “${query}”`} text="Revisá cómo lo escribiste o probá con algo más general." action={<Button asChild variant="outline" className="rounded-full"><Link to="/app/directorio">Ver comercios que todavía no están</Link></Button>} />
           )}
         </>
       )}

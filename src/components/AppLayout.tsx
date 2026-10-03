@@ -55,7 +55,7 @@ export function AppLayout() {
   }
 
   // Como en las apps de delivery: se puede explorar sin cuenta (inicio, comercios, búsqueda, carrito) y se pide ingresar al confirmar un pedido o entrar a lo personal.
-  const publicRoute = /^\/app(\/(buscar|promociones|carrito|categoria\/[^/]+|tienda\/[^/]+))?\/?$/.test(location.pathname);
+  const publicRoute = /^\/app(\/(buscar|promociones|directorio|carrito|categoria\/[^/]+|tienda\/[^/]+))?\/?$/.test(location.pathname);
   if (!session && !publicRoute) return <Navigate to="/auth" replace state={{ from: location.pathname }} />;
   const guest = !session;
   const loginTarget: To = { pathname: "/auth", search: `?next=${encodeURIComponent(location.pathname)}` };

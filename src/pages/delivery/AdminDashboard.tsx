@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Target, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Store as StoreIcon2, Target, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -24,6 +24,7 @@ import { CouriersManager, CourierRow } from "@/components/admin/CouriersManager"
 import { IdentityQueue } from "@/components/admin/IdentityReview";
 import { IncentivesManager } from "@/components/admin/IncentivesManager";
 import { RemisManager } from "@/components/admin/RemisManager";
+import { DirectorioManager } from "@/components/admin/DirectorioManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
 import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
@@ -179,6 +180,7 @@ export default function AdminDashboard() {
           { to: "/app/admin/identidades", label: "Verificar identidad", icon: Fingerprint, badge: pendingIdentities },
           { to: "/app/admin/incentivos", label: "Metas y turnos", icon: Target },
           { to: "/app/admin/remises", label: "Remises", icon: Car },
+          { to: "/app/admin/directorio", label: "Directorio de Lincoln", icon: StoreIcon2 },
           { to: "/app/admin/clientes", label: "Clientes", icon: Users },
           { to: "/app/admin/zonas", label: "Zonas y tarifas", icon: Map },
           { to: "/app/admin/demanda", label: "Zonas sin cobertura", icon: MapPinOff },
@@ -312,6 +314,7 @@ export default function AdminDashboard() {
         </TabsContent>
 
         <TabsContent value="repartidores" className="mt-0"><CouriersManager couriers={couriers} onChange={() => { loadCouriers(); loadIdentities(); }} /></TabsContent>
+        <TabsContent value="directorio" className="mt-0"><DirectorioManager /></TabsContent>
         <TabsContent value="remises" className="mt-0"><RemisManager /></TabsContent>
         <TabsContent value="incentivos" className="mt-0"><IncentivesManager /></TabsContent>
         <TabsContent value="identidades" className="mt-0"><IdentityQueue onChange={() => { loadCouriers(); loadIdentities(); }} /></TabsContent>

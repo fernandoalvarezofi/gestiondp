@@ -19,7 +19,7 @@ export function parentPath(pathname: string): string {
   if (/^\/app\/remis\/[^/]+$/.test(path)) return "/app/remis";
   if (/^\/app\/ayuda\/[^/]+$/.test(path)) return "/app/ayuda";
   if (path === "/app/ayuda") return "/app/perfil/ayuda";
-  if (["/app/club", "/app/promociones", "/app/enviar", "/app/remis"].includes(path)) return "/app";
+  if (["/app/club", "/app/promociones", "/app/enviar", "/app/remis", "/app/directorio"].includes(path)) return "/app";
   if (/^\/app\/perfil\/[^/]+$/.test(path)) return "/app/perfil";
   const panel = PANELS.find((root) => path.startsWith(`${root}/`));
   if (panel) {
@@ -35,7 +35,7 @@ export function pageTitle(pathname: string): string {
   const path = normalize(pathname);
   const exact: Record<string, string> = {
     "/app/carrito": "Mi pedido", "/app/club": "Woref Club", "/app/promociones": "Cupones y promociones", "/app/ayuda": "Ayuda",
-    "/app/enviar": "Enviar un paquete", "/app/remis": "Pedir un remís", "/app/favoritos": "Favoritos", "/app/buscar": "Buscar", "/app/pedidos": "Mis pedidos",
+    "/app/enviar": "Enviar un paquete", "/app/remis": "Pedir un remís", "/app/directorio": "Comercios de Lincoln", "/app/favoritos": "Favoritos", "/app/buscar": "Buscar", "/app/pedidos": "Mis pedidos",
   };
   if (exact[path]) return exact[path];
   if (/^\/app\/ayuda\/[^/]+$/.test(path)) return "Consulta";
