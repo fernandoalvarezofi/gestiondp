@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
+import { NativeShell } from "@/components/NativeShell";
+import { isNativeApp } from "@/lib/native";
 import { Loader2 } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
@@ -81,9 +83,10 @@ const App = () => (
           <CartProvider>
             <FavoritesProvider>
               <BrowserRouter>
+                <NativeShell />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-                    <Route path="/" element={<Landing />} />
+                    <Route path="/" element={isNativeApp() ? <Navigate to="/app/repartidor" replace /> : <Landing />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/restablecer" element={<ResetPassword />} />
                     <Route path="/terminos" element={<Legal doc="terminos" />} />

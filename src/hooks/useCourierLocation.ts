@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/lib/delivery";
 import type { GeoPoint } from "@/lib/geo";
+import { isNativeApp, watchNativeLocation, type NativeWatch } from "@/lib/native";
 
 type Row = { latitud: number; longitud: number; updated_at: string };
 
@@ -31,16 +32,27 @@ export function useShareCourierLocation(active: boolean) {
 
   useEffect(() => {
     if (!active || !user) { setStatus("idle"); return; }
+    const userId = user.id;
+    const send = async (point: GeoPoint) => {
+      setPosition(point);
+      setStatus("sharing");
+      if (Date.now() - lastSent.current < 10000) return;
+      lastSent.current = Date.now();
+      await db.from("delivery_ubicaciones").upsert({ repartidor_id: userId, latitud: point.lat, longitud: point.lng, updated_at: new Date().toISOString() });
+    };
+
+    if (isNativeApp()) {
+      let cancelled = false;
+      let native: NativeWatch | null = null;
+      watchNativeLocation((lat, lng) => { send({ lat, lng }); }, (reason) => setStatus(reason === "denied" ? "denied" : "idle"))
+        .then((watch) => { if (cancelled) watch.stop(); else native = watch; })
+        .catch(() => setStatus("unsupported"));
+      return () => { cancelled = true; native?.stop(); };
+    }
+
     if (!("geolocation" in navigator)) { setStatus("unsupported"); return; }
     const watch = navigator.geolocation.watchPosition(
-      async (event) => {
-        const point = { lat: event.coords.latitude, lng: event.coords.longitude };
-        setPosition(point);
-        setStatus("sharing");
-        if (Date.now() - lastSent.current < 10000) return;
-        lastSent.current = Date.now();
-        await db.from("delivery_ubicaciones").upsert({ repartidor_id: user.id, latitud: point.lat, longitud: point.lng, updated_at: new Date().toISOString() });
-      },
+      (event) => { send({ lat: event.coords.latitude, lng: event.coords.longitude }); },
       (error) => setStatus(error.code === error.PERMISSION_DENIED ? "denied" : "idle"),
       { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 },
     );
