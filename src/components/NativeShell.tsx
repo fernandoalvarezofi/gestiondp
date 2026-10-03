@@ -8,11 +8,12 @@ export function NativeShell() {
   const navigate = useNavigate();
   useEffect(() => {
     if (!isNativeApp()) return;
+    // Si el plugin nativo no responde, la app sigue funcionando (solo sin el manejo del botón atrás).
     const handle = CapacitorApp.addListener("backButton", ({ canGoBack }) => {
       if (canGoBack) navigate(-1);
-      else CapacitorApp.exitApp();
-    });
-    return () => { handle.then((listener) => listener.remove()); };
+      else CapacitorApp.exitApp().catch(() => undefined);
+    }).catch(() => null);
+    return () => { handle.then((listener) => listener?.remove()).catch(() => undefined); };
   }, [navigate]);
   return null;
 }

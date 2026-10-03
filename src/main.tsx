@@ -17,7 +17,10 @@ const isPreviewHost =
 
 // En la app instalada los archivos ya viajan dentro del paquete: no se usa service worker.
 if (isPreviewHost || isInIframe || isNativeApp()) {
-  navigator.serviceWorker?.getRegistrations().then((regs) => regs.forEach((r) => r.unregister()));
+  const unregisterAll = () => navigator.serviceWorker?.getRegistrations().then((regs) => regs.forEach((r) => r.unregister())).catch(() => undefined);
+  unregisterAll();
+  // El registro automático del PWA ocurre al terminar de cargar: se vuelve a limpiar después.
+  window.addEventListener("load", () => { setTimeout(unregisterAll, 1500); });
 }
 
 // Cuando se publica una versión nueva, la app instalada se recarga una vez para mostrarla.
