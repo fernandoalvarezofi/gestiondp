@@ -1,7 +1,7 @@
 -- Directorio de comercios de Lincoln que todavía no están en Woref: se muestran como "próximamente", no se les puede pedir.
 -- Datos públicos de OpenStreetMap (© colaboradores de OpenStreetMap, licencia ODbL) y altas manuales.
 -- Las tablas y funciones (delivery_directorio, delivery_directorio_interes, delivery_directorio_lista, delivery_directorio_interes, delivery_admin_directorio*) se aplicaron por MCP.
--- Carga inicial: 38 comercios de OpenStreetMap (se descartó un local con rubro dudoso).
+-- Carga inicial: 38 comercios de OpenStreetMap (se descartó un local con rubro dudoso) y luego 31 más del resto del partido.
 
 INSERT INTO public.delivery_directorio (osm_id, nombre, rubro, direccion, telefono, web, horario, lat, lng) VALUES
 ('node/2145362187', 'Confitería', 'Bar', NULL, NULL, NULL, NULL, -34.8560405, -61.5486113),
@@ -42,4 +42,39 @@ INSERT INTO public.delivery_directorio (osm_id, nombre, rubro, direccion, telefo
 ('node/12543448523', 'La Paz', 'Supermercado', NULL, NULL, NULL, NULL, -34.8640677, -61.5422216),
 ('node/12775554313', 'La Linqueña', 'Café', NULL, NULL, NULL, NULL, -34.8658023, -61.5341717),
 ('way/618900990', 'Colombo', 'Farmacia', NULL, NULL, NULL, NULL, -34.8657722, -61.5272381)
+ON CONFLICT (osm_id) DO NOTHING;
+
+-- Ampliación a todo el partido de Lincoln (OpenStreetMap, relación 2559673): 31 comercios más, con rubros nuevos (indumentaria, regalería, electrónica, corralón, etc.).
+INSERT INTO public.delivery_directorio (osm_id, nombre, rubro, direccion, telefono, web, horario, lat, lng) VALUES
+('node/1671363870', 'Bessega', 'Farmacia', NULL, NULL, NULL, NULL, -35.3300855, -61.614139),
+('node/1671373785', 'Supermercado Caco''s', 'Supermercado', NULL, NULL, NULL, NULL, -35.3300548, -61.611296),
+('node/1671373790', 'Despensa "Los Abuelos"', 'Almacén', NULL, NULL, NULL, NULL, -35.3321205, -61.6103679),
+('node/1671373796', 'Despensa "La Esquina"', 'Almacén', 'Libertador', NULL, NULL, NULL, -35.3325582, -61.6106062),
+('node/1671386428', 'La Papa loca', 'Verdulería', NULL, NULL, NULL, NULL, -35.3289957, -61.6139622),
+('node/1671386429', 'Panadería y Almacén "El Progreso"', 'Panadería', NULL, NULL, NULL, NULL, -35.327504, -61.6157699),
+('node/1671386431', 'Ferretería Herrera', 'Corralón y pinturería', NULL, NULL, NULL, NULL, -35.3315823, -61.6173436),
+('node/1671386449', 'Panadería "La Nueva Estrella"', 'Panadería', NULL, NULL, NULL, NULL, -35.3282034, -61.6155072),
+('node/1671402554', 'Despensa "Gatilandia"', 'Almacén', NULL, NULL, NULL, NULL, -35.3325669, -61.6128945),
+('node/1671402555', 'Maxikiosco Nelly', 'Kiosco', NULL, NULL, NULL, NULL, -35.3301989, -61.616585),
+('node/1671402561', 'Tienda Sagus', 'Indumentaria', NULL, NULL, NULL, NULL, -35.3303391, -61.6177975),
+('node/1671402565', 'Bar de Moe', 'Bar', NULL, NULL, NULL, NULL, -35.3287157, -61.614021),
+('node/1671402578', 'Buen Corte', 'Carnicería', NULL, NULL, NULL, NULL, -35.3299802, -61.6166173),
+('node/1671402580', 'Regalería Huguito', 'Regalería', NULL, NULL, NULL, NULL, -35.329763, -61.6113392),
+('node/1671412281', 'Ferretería "Cross de Izquierda"', 'Corralón y pinturería', NULL, NULL, NULL, NULL, -35.3290264, -61.6142432),
+('node/1689678239', 'Autoservicio L.D.S', 'Almacén', NULL, NULL, NULL, NULL, -35.3288734, -61.6139965),
+('node/4340541308', 'Musimundo', 'Electrónica', NULL, NULL, NULL, NULL, -34.8668295, -61.5291615),
+('node/4473356889', 'Maricar', 'Restaurante', NULL, NULL, NULL, NULL, -35.1433433, -61.9753068),
+('node/5849480024', 'Santimaría Hnos.', 'Electrónica', NULL, NULL, NULL, NULL, -34.8656756, -61.5278127),
+('node/5849480041', 'Lenuage', 'Indumentaria', NULL, NULL, NULL, NULL, -34.8650827, -61.5297234),
+('node/5849480053', 'Naldo Lombardi', 'Electrónica', NULL, NULL, NULL, NULL, -34.8658509, -61.5287632),
+('node/5849480054', 'Soundtrack', 'Electrónica', NULL, NULL, NULL, NULL, -34.8660675, -61.5288832),
+('node/5849480056', 'Matilda', 'Indumentaria', NULL, NULL, NULL, NULL, -34.8660616, -61.5285591),
+('node/5849480057', 'Acuario', 'Indumentaria', NULL, NULL, NULL, NULL, -34.8659375, -61.5286815),
+('node/5849480058', 'Magestic', 'Indumentaria', NULL, NULL, NULL, NULL, -34.8657799, -61.5288928),
+('node/5849480064', 'For Men Sport', 'Indumentaria', NULL, NULL, NULL, NULL, -34.8676912, -61.5318405),
+('node/10086027257', 'Arenaza', 'Farmacia', 'Ingeniero Osvaldo Mendizabal 407, Arenaza', '+54 2355 49 5353', NULL, NULL, -34.9859177, -61.7743355),
+('node/10086027273', 'Viejo Garaje', 'Restaurante', 'Ingeniero Osvaldo Mendizabal 23, Arenaza', '+54 2355 49 5145', NULL, NULL, -34.9830036, -61.7774284),
+('node/12051833869', 'Regina', 'Indumentaria', 'Avenida Massey 1027, Lincoln', NULL, NULL, NULL, -34.8671828, -61.5295093),
+('node/12051840269', 'Mamma mía!', 'Indumentaria', 'Avenida Massey 1063, Lincoln', NULL, NULL, NULL, -34.8673944, -61.5297472),
+('way/1102250860', 'BaySot', 'Supermercado', 'Ingeniero Osvaldo Mendizabal 491, Arenaza', '+54 2355 49 5058', NULL, NULL, -34.9847439, -61.7752232)
 ON CONFLICT (osm_id) DO NOTHING;
