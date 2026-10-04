@@ -120,7 +120,13 @@ export default function StoreDetail() {
   return (
     <div className="mx-auto max-w-5xl pb-20 sm:px-6 sm:pt-6 lg:max-w-6xl">
       {/* Portada */}
-      <div className="relative h-48 w-full overflow-hidden border-b-4 border-brand-orange bg-muted sm:h-72 sm:rounded-3xl">
+      <div className="hidden items-center gap-2 pb-1 sm:flex">
+        <button type="button" aria-label="Volver" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full border bg-card hover:bg-muted"><ArrowLeft className="h-5 w-5" /></button>
+        <span className="flex-1" />
+        <button type="button" aria-label="Compartir" onClick={share} className="flex h-10 w-10 items-center justify-center rounded-full border bg-card hover:bg-muted"><Share2 className="h-[18px] w-[18px]" /></button>
+        <FavoriteButton storeId={store.id} className="h-10 w-10 border" />
+      </div>
+      <div className="relative h-48 w-full overflow-hidden border-b-4 border-brand-orange bg-muted sm:hidden">
         <SmartImage src={store.imagen_url} width={1400} loading="eager" className={cn(!open && "grayscale")} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/10" />
         <div className="absolute inset-x-3 top-3 flex items-center gap-2">
@@ -132,12 +138,14 @@ export default function StoreDetail() {
       </div>
 
       {/* Ficha del local */}
-      <div className="relative -mt-6 rounded-t-3xl bg-card px-4 pb-2 pt-1 sm:mt-4 sm:rounded-3xl sm:border sm:px-6 sm:pb-5">
+      <div className="relative -mt-6 rounded-t-3xl bg-card px-4 pb-2 pt-1 sm:mt-2 sm:rounded-3xl sm:border sm:border-t-4 sm:border-t-brand-orange sm:px-6 sm:pb-5 sm:pt-5">
+       <div className="sm:grid sm:grid-cols-[120px_1fr] sm:items-start sm:gap-x-6">
         <div className="flex items-end gap-3">
-          <StoreLogo store={store} className="-mt-10 h-20 w-20 border-4 border-card text-2xl shadow-pop sm:-mt-12 sm:h-24 sm:w-24" />
-          <button type="button" onClick={() => setInfoOpen(true)} className="mb-1 ml-auto flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px] font-bold hover:bg-muted"><Info className="h-4 w-4" />Info del local</button>
+          <StoreLogo store={store} className="-mt-10 h-20 w-20 border-4 border-card text-2xl shadow-pop sm:mt-0 sm:h-[120px] sm:w-[120px] sm:rounded-2xl sm:border sm:text-4xl sm:shadow-none" />
+          <button type="button" onClick={() => setInfoOpen(true)} className="mb-1 ml-auto flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px] font-bold hover:bg-muted sm:absolute sm:right-6 sm:top-5 sm:mb-0"><Info className="h-4 w-4" />Info del local</button>
         </div>
-        <h1 className="mt-3 text-2xl font-black leading-tight sm:text-3xl">{store.nombre}</h1>
+        <div className="min-w-0">
+        <h1 className="mt-3 text-2xl font-black leading-tight sm:mt-0 sm:text-4xl">{store.nombre}</h1>
         <p className="mt-0.5 text-sm font-semibold text-muted-foreground">{[store.rubro, reach.km != null ? `a ${formatKm(reach.km)}` : null, store.direccion.split(",")[0]].filter(Boolean).join(" · ")}</p>
 
         <button type="button" onClick={() => (reviews.length ? setReviewsOpen(true) : undefined)} className="mt-2 flex items-center gap-1.5 text-sm font-bold">
@@ -145,6 +153,8 @@ export default function StoreDetail() {
           {store.total_resenas > 0 && <span className="text-muted-foreground">{store.total_resenas.toLocaleString("es-AR")} calificaciones</span>}
           {reviews.length > 0 && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
         </button>
+        </div>
+       </div>
 
         <div className="mt-4 grid grid-cols-3 divide-x rounded-2xl border text-center">
           <div className="px-2 py-2.5"><p className="flex items-center justify-center gap-1 text-sm font-extrabold"><Clock3 className="h-4 w-4 text-muted-foreground" />{store.tiempo_min}-{store.tiempo_max} min</p><p className="text-[11px] font-semibold text-muted-foreground">Tiempo de entrega</p></div>

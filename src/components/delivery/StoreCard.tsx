@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Star } from "lucide-react";
+import { Bike, Clock, Star } from "lucide-react";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
 import { DeliveryStore, img, isOpenNow, money, nextOpening } from "@/lib/delivery";
@@ -63,31 +63,30 @@ function ClosedOverlay({ store, reachKm, open, inZone, zoneClosed }: { store: De
   );
 }
 
-/** Tarjeta con foto, para carruseles y grillas. */
+/** Tarjeta con foto grande, etiquetas de color y logo + datos debajo (patrón de las apps de delivery), para carruseles y grillas. */
 export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; variant?: "grid" | "row" }) {
   const { reach, fee, free, open } = useStoreState(store);
+  const showFree = free && open && !/env[ií]o gratis/i.test(store.promo_texto || "");
   return (
-    <Link to={`/app/tienda/${store.slug}`} className={cn("group block min-w-0", variant === "row" && "w-[248px] shrink-0 snap-start sm:w-[288px]")}>
-      <div className="relative">
-        <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-orange">
-          <SmartImage src={store.imagen_url} width={640} className={cn("transition-transform duration-500 group-hover:scale-[1.04]", (!open || !reach.inZone) && "grayscale")} />
-          <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
-            {store.promo_texto && <span className="rounded-full border border-brand-orange bg-[hsl(220_14%_16%)] px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">{store.promo_texto}</span>}
-            {free && open && !/env[ií]o gratis/i.test(store.promo_texto || "") && <span className="rounded-full bg-success px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">Envío gratis</span>}
-          </div>
-          <ClosedOverlay store={store} reachKm={reach.km} open={open} inZone={reach.inZone} zoneClosed={reach.zoneClosed} />
-          <FavoriteButton storeId={store.id} className="absolute right-2 top-2 h-8 w-8" />
-          {open && reach.inZone && <span className="absolute bottom-2 right-2 rounded-full bg-card px-2.5 py-1 text-[11px] font-extrabold shadow-soft">{store.tiempo_min}-{store.tiempo_max} min</span>}
+    <Link to={`/app/tienda/${store.slug}`} className={cn("group block min-w-0", variant === "row" && "w-[272px] shrink-0 snap-start sm:w-[300px]")}>
+      <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-orange">
+        <SmartImage src={store.imagen_url} width={640} className={cn("transition-transform duration-500 group-hover:scale-[1.04]", (!open || !reach.inZone) && "grayscale")} />
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
+          {store.promo_texto && <span className="rounded-md bg-[#FFE14D] px-2 py-0.5 text-xs font-extrabold text-black shadow-sm">{store.promo_texto}</span>}
+          {showFree && <span className="rounded-md bg-[#4FE3B8] px-2 py-0.5 text-xs font-extrabold text-black shadow-sm">Envío gratis</span>}
         </div>
-        <StoreLogo store={store} className="absolute -bottom-4 left-3 h-12 w-12 border-2 border-card text-sm" />
+        <ClosedOverlay store={store} reachKm={reach.km} open={open} inZone={reach.inZone} zoneClosed={reach.zoneClosed} />
+        <FavoriteButton storeId={store.id} className="absolute right-2 top-2 h-8 w-8" />
       </div>
-      <div className="px-0.5 pt-5">
-        <h3 className="truncate text-[15px] font-extrabold leading-tight">{store.nombre}</h3>
-        <div className="mt-1 flex items-center gap-1.5 whitespace-nowrap text-[13px] font-semibold text-muted-foreground">
-          <RatingBadge store={store} />
-          <span aria-hidden>·</span>
-          <span className={cn("truncate", free && "font-bold text-success")}>{fee}</span>
-          {reach.km != null && <><span aria-hidden>·</span><span className="shrink-0">{formatKm(reach.km)}</span></>}
+      <div className="mt-3 flex gap-3">
+        <StoreLogo store={store} className="h-14 w-14 shrink-0 rounded-xl text-base" />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="truncate text-base font-bold leading-tight">{store.nombre}</h3>
+            <RatingBadge store={store} className="shrink-0" />
+          </div>
+          <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground"><Clock className="h-4 w-4 shrink-0" />{open && reach.inZone ? `${store.tiempo_min}-${store.tiempo_max} min` : !open ? "Cerrado" : "Fuera de tu zona"}</p>
+          <p className={cn("flex items-center gap-1.5 text-sm text-muted-foreground", free && "font-semibold text-success")}><Bike className="h-4 w-4 shrink-0" /><span className="truncate">{free ? "Gratis" : fee.replace("Envío ", "")}</span>{reach.km != null && <span className="shrink-0 font-normal text-muted-foreground">· {formatKm(reach.km)}</span>}</p>
         </div>
       </div>
     </Link>
@@ -129,10 +128,9 @@ export function StoreListItem({ store }: { store: DeliveryStore }) {
 
 export function StoreCardSkeleton({ variant = "grid" }: { variant?: "grid" | "row" }) {
   return (
-    <div className={cn(variant === "row" && "w-[248px] shrink-0 sm:w-[288px]")}>
+    <div className={cn(variant === "row" && "w-[272px] shrink-0 sm:w-[300px]")}>
       <div className="aspect-[16/9] animate-pulse rounded-2xl bg-muted" />
-      <div className="mt-5 h-4 w-2/3 animate-pulse rounded bg-muted" />
-      <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-muted" />
+      <div className="mt-3 flex gap-3"><div className="h-14 w-14 animate-pulse rounded-xl bg-muted" /><div className="flex-1 space-y-2"><div className="h-4 w-2/3 animate-pulse rounded bg-muted" /><div className="h-3 w-1/2 animate-pulse rounded bg-muted" /><div className="h-3 w-1/3 animate-pulse rounded bg-muted" /></div></div>
     </div>
   );
 }

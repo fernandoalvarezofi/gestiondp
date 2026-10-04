@@ -8,6 +8,7 @@ import { readPickupPreference, writePickupPreference } from "@/lib/delivery";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { distanceKm } from "@/lib/geo";
 import { StoreCard, StoreCardSkeleton, StoreListItem, StoreListSkeleton, StoreLogo } from "@/components/delivery/StoreCard";
+import { SmartImage } from "@/components/delivery/SmartImage";
 import { useInZone } from "@/hooks/useAddressPoint";
 import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
@@ -135,7 +136,7 @@ export default function DeliveryHome() {
   return (
     <div className="pb-16">
       {/* Portada de marca: el buscador vive adentro, como en las apps de delivery */}
-      <div className="mx-auto max-w-6xl sm:px-6 md:pt-6 lg:px-8">
+      <div className="mx-auto max-w-6xl sm:px-6 md:hidden lg:px-8">
         <section className="border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] px-4 pb-14 pt-1 text-white max-md:rounded-b-[32px] md:rounded-3xl md:px-10 md:pb-16 md:pt-10">
           <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-tight md:text-5xl">¿Qué querés<br className="md:hidden" /> pedir hoy?</h1>
           <p className="mt-1 hidden text-lg font-semibold text-white/80 md:block">Comida, súper, farmacia y más, cerca tuyo.</p>
@@ -145,20 +146,20 @@ export default function DeliveryHome() {
         </section>
       </div>
 
-      <div className="relative z-10 mx-auto -mt-9 max-w-6xl px-4 sm:px-6 md:-mt-10 lg:px-8">
-        <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-9 md:p-5" aria-label="Categorías">
-          {tiles.map(({ id, label, icon: Icon }, index) => (
-            <Link key={id} to={`/app/categoria/${id}`} className={cn("group flex flex-col items-center gap-1.5 text-center", index >= 6 && "max-md:hidden")}>
-              <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-transparent bg-muted text-foreground transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-hover:text-brand-orange group-active:scale-95 md:h-16 md:w-16"><Icon className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
-              <span className="text-[12px] font-bold leading-tight md:text-[13px]">{label}</span>
+      <div className="relative z-10 mx-auto -mt-9 max-w-6xl px-4 sm:px-6 md:mt-6 lg:px-8">
+        <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-9 md:gap-3 md:bg-transparent md:p-0 md:shadow-none" aria-label="Categorías">
+          {tiles.map(({ id, label, image }, index) => (
+            <Link key={id} to={`/app/categoria/${id}`} className={cn("group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4", index >= 6 && "max-md:hidden")}>
+              <span className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-transparent bg-muted shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-active:scale-95 md:h-[72px] md:w-[72px] md:border-white"><SmartImage src={image} width={200} /></span>
+              <span className="text-[12px] font-bold leading-tight md:text-sm">{label}</span>
             </Link>
           ))}
-          <Link to="/app/enviar" className="group flex flex-col items-center gap-1.5 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-transparent bg-muted text-foreground transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-hover:text-brand-orange group-active:scale-95 md:h-16 md:w-16"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
+          <Link to="/app/enviar" className="group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent bg-[hsl(220_14%_16%)] text-brand-orange transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-active:scale-95 md:h-[72px] md:w-[72px]"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Envíos</span>
           </Link>
-          <Link to="/app/remis" className="group flex flex-col items-center gap-1.5 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-transparent bg-muted text-foreground transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-hover:text-brand-orange group-active:scale-95 md:h-16 md:w-16"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
+          <Link to="/app/remis" className="group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent bg-[hsl(220_14%_16%)] text-brand-orange transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-active:scale-95 md:h-[72px] md:w-[72px]"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Remís</span>
           </Link>
         </section>
@@ -312,7 +313,7 @@ function BannerCarousel() {
     <section className="mt-6">
       <div ref={track} onScroll={onScroll} className="scrollbar-none flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto scroll-smooth px-4 sm:scroll-px-0 sm:px-0">
         {banners.map((item) => (
-          <Link key={item.title} to={item.to} className="relative aspect-[2/1] w-[86%] shrink-0 snap-start overflow-hidden rounded-3xl sm:aspect-[3/1] sm:w-full">
+          <Link key={item.title} to={item.to} className="relative aspect-[2/1] w-[86%] shrink-0 snap-start overflow-hidden rounded-3xl sm:aspect-[4/1] sm:w-full">
             <img src={img(item.image, 1000)} alt="" className="absolute inset-0 h-full w-full object-cover" />
             <div className={cn("absolute inset-0 bg-gradient-to-r to-transparent", item.tone)} />
             <div className="relative flex h-full max-w-[70%] flex-col justify-center p-5 text-white sm:max-w-md sm:p-10">
