@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowDown, ArrowUp, Check, Copy, ExternalLink, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
+import { QrPoster } from "@/components/storefront/QrPoster";
+import { StorefrontStats } from "@/components/storefront/StorefrontStats";
 import { StorefrontView } from "@/components/storefront/StorefrontView";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,6 +100,18 @@ export default function MerchantStorefront() {
             <Button type="button" size="sm" variant="outline" className="shrink-0 rounded-full" onClick={copy}>{copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}{copied ? "Copiado" : "Copiar"}</Button>
             <Button asChild size="sm" className="shrink-0 rounded-full"><a href={storefrontPath(store.slug)} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />Abrir</a></Button>
           </div>
+        </section>
+
+        <section className="rounded-3xl border bg-card p-4 sm:p-5">
+          <h3 className="font-extrabold">Visitas a tu tienda</h3>
+          <p className="mb-3 mt-1 text-sm text-muted-foreground">Cuántas personas entraron a tu tienda online. No guardamos quién es cada una.</p>
+          <StorefrontStats storeId={store.id} />
+        </section>
+
+        <section className="rounded-3xl border bg-card p-4 sm:p-5">
+          <h3 className="font-extrabold">Cartel con QR</h3>
+          <p className="mb-4 mt-1 text-sm text-muted-foreground">Llevá a tus clientes del local a tu tienda online.</p>
+          <QrPoster store={store} url={url} color={theme.color} title={theme.titulo || store.nombre} />
         </section>
 
         <section className="rounded-3xl border bg-card p-4 sm:p-5">

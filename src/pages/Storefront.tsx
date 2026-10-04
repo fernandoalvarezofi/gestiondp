@@ -37,6 +37,15 @@ export default function Storefront() {
     return () => { alive = false; };
   }, [slug]);
 
+  // Cuenta una visita por sesión del navegador (anónima: solo suma un número al día, no guarda quién entra).
+  useEffect(() => {
+    if (!store) return;
+    const key = `woref-visita-${store.slug}`;
+    try { if (window.sessionStorage.getItem(key)) return; window.sessionStorage.setItem(key, "1"); } catch { /* sin almacenamiento: se cuenta igual */ }
+    // La llamada solo se envía al esperar su resultado; si falla, la visita simplemente no se cuenta.
+    db.rpc("delivery_tienda_visita", { p_slug: store.slug }).then(() => undefined, () => undefined);
+  }, [store]);
+
   // Título, descripción y datos estructurados para buscadores y para compartir el enlace.
   useEffect(() => {
     if (!store) return;

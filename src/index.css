@@ -134,3 +134,11 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after 
   transition-duration: 0.01ms !important;
   scroll-behavior: auto !important;
 }
+
+/* Cartel con QR de la tienda online: solo se muestra al imprimir desde el editor. */
+#poster-print { display: none; }
+@media print {
+  @page { size: A4; margin: 0; }
+  body.printing-poster > *:not(#poster-print) { display: none !important; }
+  body.printing-poster > #poster-print { display: block !important; width: 210mm; height: 297mm; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
