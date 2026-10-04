@@ -82,10 +82,10 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
   const change = order.efectivo_paga_con != null ? Number(order.efectivo_paga_con) - Number(order.total) : null;
 
   return (
-    <section className="mt-6 rounded-3xl border-2 border-primary bg-card p-4 sm:p-6">
+    <section className="mt-6 rounded-3xl border-2 border-brand-orange bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-bold uppercase text-primary">Entrega en curso · {shortId(order.id)}</p>
+          <p className="text-xs font-bold uppercase text-brand-orange">Entrega en curso · {shortId(order.id)}</p>
           <h2 className="text-2xl font-extrabold">
             {step === "ir_comercio" ? `Andá a ${order.comercio?.nombre}` : step === "en_comercio" ? "Retirá el pedido" : step === "ir_cliente" ? "Llevalo al cliente" : "Entregalo en la puerta"}
           </h2>
@@ -96,7 +96,7 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
       <ol className="mt-4 grid grid-cols-4 gap-1" aria-label="Pasos de la entrega">
         {STEPS.map((item, index) => (
           <li key={item.id} className="flex flex-col items-center text-center">
-            <span className={cn("flex h-8 w-8 items-center justify-center rounded-full text-xs font-black", index < stepIndex ? "bg-primary text-primary-foreground" : index === stepIndex ? "bg-primary/15 text-primary ring-2 ring-primary" : "bg-muted text-muted-foreground")}>{index < stepIndex ? <Check className="h-4 w-4" /> : index + 1}</span>
+            <span className={cn("flex h-8 w-8 items-center justify-center rounded-full text-xs font-black", index < stepIndex ? "bg-primary text-primary-foreground" : index === stepIndex ? "bg-brand-orange text-white ring-4 ring-brand-orange/20" : "bg-muted text-muted-foreground")}>{index < stepIndex ? <Check className="h-4 w-4" /> : index + 1}</span>
             <span className={cn("mt-1 text-[11px] font-bold leading-tight", index <= stepIndex ? "text-foreground" : "text-muted-foreground")}>{item.label}</span>
           </li>
         ))}
@@ -109,10 +109,10 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <a href={directions(order.comercio?.latitud, order.comercio?.longitud, order.comercio?.direccion || "")} target="_blank" rel="noopener noreferrer" className={cn("flex gap-3 rounded-2xl border p-3 hover:bg-muted", (step === "ir_comercio" || step === "en_comercio") && "border-primary bg-primary/5")}>
+        <a href={directions(order.comercio?.latitud, order.comercio?.longitud, order.comercio?.direccion || "")} target="_blank" rel="noopener noreferrer" className={cn("flex gap-3 rounded-2xl border p-3 hover:bg-muted", (step === "ir_comercio" || step === "en_comercio") && "border-brand-orange bg-brand-orange/5")}>
           <Store className="h-5 w-5 shrink-0 text-primary" /><span className="min-w-0"><span className="block font-bold">Retiro · {order.comercio?.nombre}</span><span className="block text-sm text-muted-foreground">{order.comercio?.direccion}</span></span><Navigation className="ml-auto h-4 w-4 shrink-0" />
         </a>
-        <a href={directions(order.latitud, order.longitud, order.direccion_entrega)} target="_blank" rel="noopener noreferrer" className={cn("flex gap-3 rounded-2xl border p-3 hover:bg-muted", (step === "ir_cliente" || step === "en_puerta") && "border-primary bg-primary/5")}>
+        <a href={directions(order.latitud, order.longitud, order.direccion_entrega)} target="_blank" rel="noopener noreferrer" className={cn("flex gap-3 rounded-2xl border p-3 hover:bg-muted", (step === "ir_cliente" || step === "en_puerta") && "border-brand-orange bg-brand-orange/5")}>
           <MapPin className="h-5 w-5 shrink-0 text-primary" /><span className="min-w-0"><span className="block font-bold">Entrega · {order.cliente?.nombre?.split(" ")[0] || "cliente"}</span><span className="block text-sm text-muted-foreground">{order.direccion_entrega}</span></span><Navigation className="ml-auto h-4 w-4 shrink-0" />
         </a>
       </div>
@@ -155,7 +155,7 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
               <label className="cursor-pointer rounded-full border px-3 py-2 text-sm font-bold hover:bg-muted">{photo ? "Cambiar" : "Sacar foto"}<input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => setPhoto(event.target.files?.[0] ?? null)} /></label>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
-            <label className="flex h-12 flex-1 items-center gap-2 rounded-full border px-4"><KeyRound className="h-5 w-5 text-muted-foreground" /><Input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoComplete="one-time-code" placeholder="Código de entrega del cliente" aria-label="Código de entrega" className="h-full border-0 p-0 font-mono text-lg tracking-widest shadow-none focus-visible:ring-0" /></label>
+            <label className="flex h-12 shrink-0 items-center gap-2 rounded-full border px-4 sm:flex-1"><KeyRound className="h-5 w-5 text-muted-foreground" /><Input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoComplete="one-time-code" placeholder="Código del cliente" aria-label="Código de entrega" className="h-full border-0 p-0 font-mono text-lg tracking-widest shadow-none placeholder:font-sans placeholder:text-base placeholder:tracking-normal focus-visible:ring-0" /></label>
             <Button type="submit" className="h-12 rounded-full px-6 text-base font-bold" disabled={busy || code.length !== 4}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Confirmar entrega</Button>
             </div>
           </form>

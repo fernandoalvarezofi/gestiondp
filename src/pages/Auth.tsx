@@ -121,13 +121,13 @@ export default function Auth() {
   return (
     <div className="flex min-h-screen max-lg:flex-col">
       {/* Portada de marca en el celular */}
-      <div className="bg-primary px-6 pb-14 pt-8 text-primary-foreground max-lg:rounded-b-[32px] lg:hidden">
+      <div className="border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] px-6 pb-14 pt-8 text-white max-lg:rounded-b-[32px] lg:hidden">
         <DeliveryBrand inverted />
         <h1 className="mt-7 text-[32px] font-extrabold leading-[1.05] tracking-tight">Lo que necesitás,<br />llega hoy.</h1>
-        <p className="mt-2 max-w-xs text-[15px] font-medium text-primary-foreground/85">Comida, súper, farmacia y más, con seguimiento en tiempo real.</p>
+        <p className="mt-2 max-w-xs text-[15px] font-medium text-white/85">Comida, súper, farmacia y más, con seguimiento en tiempo real.</p>
       </div>
       {/* Left panel */}
-      <div className={`hidden lg:flex lg:w-1/2 overflow-hidden ${leftPanelClasses}`}>
+      <div className={`hidden overflow-hidden border-r-4 border-brand-orange bg-[hsl(220_14%_16%)] lg:flex lg:w-1/2 ${leftPanelClasses}`}>
         {isPhoto && (
           <>
             <div
@@ -138,7 +138,7 @@ export default function Auth() {
                 backgroundPosition: "center",
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/95 via-primary/80 to-black/60" />
+            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220_14%_14%)]/95 via-[hsl(220_14%_16%)]/88 to-black/70" />
           </>
         )}
 
@@ -163,9 +163,10 @@ export default function Auth() {
               Comida, supermercado, farmacia y tiendas cerca tuyo, con seguimiento en tiempo real.
             </p>
             <ul className={`space-y-2 text-sm ${subtextColor}`}>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-white" /> Cientos de comercios en tu zona</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-white" /> Cupones y envíos gratis todas las semanas</li>
-              <li className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-white" /> Sumá tu comercio o repartí con nosotros</li>
+              <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-orange" /> Seguí tu pedido en vivo, del local a tu puerta</li>
+              <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-orange" /> Código de entrega en cada pedido</li>
+              <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-orange" /> Cupones de bienvenida y envíos gratis</li>
+              <li className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-brand-orange" /> Sumá tu comercio o repartí con nosotros</li>
             </ul>
           </div>
 
