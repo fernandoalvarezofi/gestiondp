@@ -11,11 +11,11 @@ export function LogoMark({ className, inverted = false }: { className?: string; 
     <svg viewBox="0 0 64 64" className={cn("h-9 w-9", className)} role="img" aria-label="Woref">
       <defs>
         <linearGradient id={gradient} x1="10" y1="4" x2="54" y2="62" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#FF7A45" />
-          <stop offset="1" stopColor="#F2402A" />
+          <stop offset="0" stopColor="#3B414D" />
+          <stop offset="1" stopColor="#1B1E24" />
         </linearGradient>
       </defs>
-      <rect width="64" height="64" rx="18" fill={inverted ? "#fff" : `url(#${gradient})`} />
+      <rect width="64" height="64" rx="18" fill={inverted ? "#fff" : `url(#${gradient})`} stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
       {/* Pin */}
       <path
         d="M32 9.5c-10.2 0-18.2 8-18.2 18 0 13 15.4 25.7 16.9 26.9a2 2 0 0 0 2.6 0c1.5-1.2 16.9-13.9 16.9-26.9 0-10-8-18-18.2-18Z"
@@ -25,7 +25,7 @@ export function LogoMark({ className, inverted = false }: { className?: string; 
       <path
         d="M21.5 22.5 25.6 34a1.4 1.4 0 0 0 2.6 0L32 24.6 35.8 34a1.4 1.4 0 0 0 2.6 0l4.1-11.5"
         fill="none"
-        stroke={inverted ? "#fff" : "#F2402A"}
+        stroke={inverted ? "#fff" : "#1B1E24"}
         strokeWidth="4.2"
         strokeLinecap="round"
         strokeLinejoin="round"
