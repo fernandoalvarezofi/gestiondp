@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeTheme, readableOn, TEMA_BASE } from "./storefront";
+import { normalizeTheme, readableOn, SECCIONES_BASE, TEMA_BASE } from "./storefront";
 
 describe("normalizeTheme", () => {
   it("usa los valores base cuando no hay tema", () => {
@@ -23,8 +23,23 @@ describe("normalizeTheme", () => {
     expect(normalizeTheme({ whatsapp: "abc" }).whatsapp).toBeUndefined();
   });
   it("ignora plantillas desconocidas y recorta textos largos", () => {
-    expect(normalizeTheme({ plantilla: "hackeada" }).plantilla).toBe("clasica");
+    expect(normalizeTheme({ plantilla: "hackeada" }).plantilla).toBe(TEMA_BASE.plantilla);
+    expect(normalizeTheme({ plantilla: "gourmet" }).plantilla).toBe("gourmet");
     expect(normalizeTheme({ titulo: "x".repeat(200) }).titulo).toHaveLength(80);
+    expect(normalizeTheme({ boton: "y".repeat(60) }).boton).toHaveLength(24);
+  });
+});
+
+describe("secciones", () => {
+  it("por defecto muestra todas", () => {
+    expect(normalizeTheme({}).secciones).toEqual(SECCIONES_BASE);
+  });
+  it("respeta el orden elegido, quita repetidas y desconocidas", () => {
+    expect(normalizeTheme({ secciones: ["acerca", "catalogo", "acerca", "xss", 4] }).secciones).toEqual(["acerca", "catalogo"]);
+  });
+  it("el catálogo nunca falta", () => {
+    expect(normalizeTheme({ secciones: ["acerca"] }).secciones).toEqual(["acerca", "catalogo"]);
+    expect(normalizeTheme({ secciones: [] }).secciones).toEqual(["catalogo"]);
   });
 });
 

@@ -63,7 +63,7 @@ export function ProductCard({ product, store, disabled, variant = "row" }: { pro
     <>
       {variant === "shop" ? (
         <article className={cn("group cursor-pointer", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
-          <div className="relative aspect-[4/5] overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius, 1rem)" }}>
+          <div className="relative overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius, 1rem)", aspectRatio: "var(--sf-aspect, 4 / 5)" }}>
             <SmartImage src={product.imagen_url} width={640} alt={product.nombre} className="transition-transform duration-500 group-hover:scale-105" />
             {off && <span className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-black" style={{ background: "var(--sf-accent)", color: "var(--sf-on-accent)" }}>-{off}%</span>}
             {outOfStock && <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-bold text-white">Sin stock</span>}

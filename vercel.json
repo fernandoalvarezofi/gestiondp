@@ -6,6 +6,17 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/t/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|twitterbot|slackbot|telegrambot|linkedinbot|discordbot|pinterest|googlebot|bingbot|applebot|skypeuripreview|embedly|redditbot|instagram).*"
+        }
+      ],
+      "destination": "/api/tienda?slug=:slug"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
