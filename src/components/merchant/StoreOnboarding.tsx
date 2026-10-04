@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Categoria, categoriaLabel, db, DeliveryProduct, DeliveryStore, errorMessage, money, scheduleSummary, slugify } from "@/lib/delivery";
-import { normalizeTheme, storefrontUrl, TiendaTema } from "@/lib/storefront";
+import { normalizeTheme, storefrontUrl, temaParaGuardar, TiendaTema } from "@/lib/storefront";
 import { cn } from "@/lib/utils";
 
 type QuickProduct = { id: string; nombre: string; precio: string; categoria: string; imagen_url: string };
@@ -81,7 +81,7 @@ function LivePreview({ store, tema, products }: { store: DeliveryStore; tema: Ti
 }
 
 /** Alta guiada de un comercio: negocio, ubicación, entrega, imagen, primeros productos y tienda online, con vista previa y borrador guardado. */
-export function StoreOnboarding({ userId, onDone }: { userId: string; onDone: () => Promise<void> | void }) {
+export function StoreOnboarding({ userId, onDone, onCancel }: { userId: string; onDone: (storeId: string) => Promise<void> | void; onCancel?: () => void }) {
   const saved = useMemo(readDraft, []);
   const [step, setStep] = useState(saved?.step ?? 0);
   const [values, setValues] = useState<StoreFormValues>(saved?.values ?? emptyStore);
@@ -176,14 +176,14 @@ export function StoreOnboarding({ userId, onDone }: { userId: string; onDone: ()
       return;
     }
     // Lo que no depende de que todo salga perfecto: si algo falla acá, el comercio ya existe y se completa desde el panel.
-    const themeResult = await db.rpc("delivery_guardar_tienda_tema", { p_comercio: storeId, p_tema: normalizeTheme(tema) });
+    const themeResult = await db.rpc("delivery_guardar_tienda_tema", { p_comercio: storeId, p_tema: temaParaGuardar(normalizeTheme(tema)) });
     const productResult = validProducts.length
       ? await db.from("delivery_productos").insert(validProducts.map((item, index) => ({ comercio_id: storeId, nombre: item.nombre.trim().slice(0, 120), precio: Number(item.precio), categoria: item.categoria.trim().slice(0, 60) || "Destacados", imagen_url: item.imagen_url || null, orden: index, destacado: index < 2 })))
       : { error: null };
     try { window.localStorage.removeItem(DRAFT_KEY); } catch { /* sin almacenamiento */ }
     if (themeResult.error || productResult.error) toast.warning("Tu comercio quedó creado, pero algunos datos de la tienda online o los productos no se guardaron. Completalos desde el panel.");
     else toast.success("¡Listo! Tu comercio y tu tienda online quedaron creados.");
-    await onDone();
+    await onDone(storeId);
   };
 
   const field = "space-y-1.5";
@@ -192,7 +192,10 @@ export function StoreOnboarding({ userId, onDone }: { userId: string; onDone: ()
   return (
     <div ref={top} className="mx-auto max-w-5xl px-4 pb-24 pt-5 sm:px-6">
       <div className="rounded-3xl bg-brand-deep p-6 text-white sm:p-8">
-        <p className="text-sm font-semibold text-white/70">Alta de comercio · paso {step + 1} de {STEPS.length}</p>
+        <div className="flex items-start justify-between gap-3">
+          <p className="text-sm font-semibold text-white/70">Alta de comercio · paso {step + 1} de {STEPS.length}</p>
+          {onCancel && <button type="button" onClick={onCancel} disabled={creating} className="rounded-full px-3 py-1 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-white">Cancelar</button>}
+        </div>
         <h1 className="mt-1 text-2xl font-extrabold sm:text-3xl">{current === "revisar" ? "Revisá y creá tu comercio" : "Sumá tu comercio a Woref"}</h1>
         <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1}><div className="h-full rounded-full bg-brand-orange transition-all duration-300" style={{ width: `${progress}%` }} /></div>
         <ol className="scrollbar-none mt-3 flex gap-1 overflow-x-auto text-xs font-semibold">

@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
-import { Building2, CheckCircle2, Clock3, Loader2, MapPin, Plus, Star } from "lucide-react";
+import { Building2, CheckCircle2, Clock3, Loader2, MapPin, Plus, Star, Store as StoreIcon } from "lucide-react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { AddressSearch } from "@/components/maps/AddressSearch";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,14 @@ export default function MerchantBranches() {
     <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-xl text-sm text-muted-foreground">Cada sucursal tiene su propio menú, horarios, equipo, pedidos y finanzas. Cambiás de una a otra desde el selector de arriba a la izquierda. Los clientes ven cada local por separado.</p>
-        <Button className="rounded-full" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Agregar sucursal</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button asChild className="rounded-full font-bold"><Link to="/app/comercio/nuevo"><StoreIcon className="h-4 w-4" />Crear otro comercio</Link></Button>
+          <Button variant="outline" className="rounded-full font-bold" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Agregar sucursal</Button>
+        </div>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-2xl border border-l-4 border-l-brand-orange bg-card p-4 text-sm"><p className="font-extrabold">Crear otro comercio</p><p className="mt-1 text-muted-foreground">Un negocio distinto: con su propio rubro, ubicación, horarios, productos y <strong>tienda online a tu modo</strong>. Te guiamos paso a paso.</p></div>
+        <div className="rounded-2xl border bg-card p-4 text-sm"><p className="font-extrabold">Agregar sucursal</p><p className="mt-1 text-muted-foreground">Otro local del mismo negocio: copia los datos y el menú de «{store.nombre}» para que lo ajustes.</p></div>
       </div>
 
       {rows.length > 1 && (

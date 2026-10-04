@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, Building2, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
+import { BarChart3, Building2, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -23,7 +23,7 @@ const ACTIVE_KEY = "woref-sucursal";
 const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
 
 /** Qué permiso hace falta para entrar a cada sección del panel. */
-const sectionPermission: Record<string, Permission> = { menu: "catalogo", sucursales: "equipo", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", tienda: "ajustes", configuracion: "ajustes" };
+const sectionPermission: Record<string, Permission> = { menu: "catalogo", sucursales: "equipo", nuevo: "equipo", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", tienda: "ajustes", configuracion: "ajustes" };
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
@@ -172,7 +172,7 @@ export default function MerchantLayout() {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
-            <DropdownMenuLabel>Mis sucursales</DropdownMenuLabel>
+            <DropdownMenuLabel>Mis comercios y sucursales</DropdownMenuLabel>
             {branches.map((branch) => (
               <DropdownMenuItem key={branch.id} onClick={() => { if (branch.id !== store.id) switchStore(branch.id); }}>
                 <Building2 className="h-4 w-4" /><span className="min-w-0 flex-1 truncate">{branch.nombre}</span>{branch.id === store.id && <span className="text-xs font-extrabold text-primary">Acá</span>}
@@ -180,6 +180,7 @@ export default function MerchantLayout() {
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link to="/app/comercio/sucursales">Ver todas las sucursales</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/app/comercio/nuevo" className="font-bold"><Plus className="h-4 w-4" />Crear otro comercio</Link></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
@@ -205,7 +206,7 @@ export default function MerchantLayout() {
         ] },
         { label: "Mi local", items: [
           ...(can("finanzas") ? [{ to: "/app/comercio/finanzas", label: "Finanzas", icon: Landmark }] : []),
-          ...(can("equipo") ? [{ to: "/app/comercio/equipo", label: "Equipo", icon: Users }, { to: "/app/comercio/sucursales", label: branches.length > 1 ? "Sucursales" : "Agregar sucursal", icon: Building2 }] : []),
+          ...(can("equipo") ? [{ to: "/app/comercio/equipo", label: "Equipo", icon: Users }, { to: "/app/comercio/sucursales", label: "Mis comercios", short: "Comercios", icon: Building2 }] : []),
           ...(can("ajustes") ? [{ to: "/app/comercio/configuracion", label: "Configuración", short: "Ajustes", icon: Settings }] : []),
         ] },
       ].filter((group) => group.items.length > 0)}

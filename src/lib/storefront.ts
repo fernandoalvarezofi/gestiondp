@@ -1,8 +1,104 @@
-/** Tienda online de cada comercio: tema editable (plantilla, color, portada, textos, secciones y redes) y utilidades para mostrarlo. */
+/**
+ * Tienda online de cada comercio.
+ *
+ * El tema tiene dos capas: el DISEÑO global (colores, letras, esquinas, botones, espaciado) y los BLOQUES (las partes de la
+ * página, en el orden que el comercio quiera). Las plantillas son solo puntos de partida que generan bloques y diseño.
+ * Todo lo que viene de la base se vuelve a validar acá antes de usarse en estilos, enlaces o imágenes.
+ */
 
 export type Plantilla = "boutique" | "galeria" | "impacto" | "gourmet";
 export type Seccion = "categorias" | "destacados" | "catalogo" | "acerca" | "opiniones" | "contacto";
 
+// ---------------------------------------------------------------- diseño global
+export type Radio = "cuadrado" | "suave" | "redondo" | "pildora";
+export type Fuente = "sans" | "serif" | "redondeada" | "display" | "mono";
+export type Diseno = {
+  /** Fondo y texto de la página (opcionales: si faltan se usan los de la app, claro u oscuro). */
+  fondo?: string;
+  texto?: string;
+  radio: Radio;
+  boton: "relleno" | "contorno";
+  fuente_titulos: Fuente;
+  fuente_texto: "sans" | "serif";
+  ancho: "normal" | "amplio";
+  espaciado: "compacto" | "normal" | "amplio";
+  aspecto: "1 / 1" | "4 / 5" | "3 / 4" | "16 / 10";
+  descripcion: boolean;
+  cabecera: "izquierda" | "centro";
+};
+
+export const RADIOS: Record<Radio, { nombre: string; css: string }> = {
+  cuadrado: { nombre: "Cuadradas", css: "0px" },
+  suave: { nombre: "Suaves", css: "0.5rem" },
+  redondo: { nombre: "Redondeadas", css: "1rem" },
+  pildora: { nombre: "Muy redondas", css: "1.75rem" },
+};
+
+export const FUENTES: Record<Fuente, { nombre: string; css: string | undefined; ejemplo: string }> = {
+  sans: { nombre: "Moderna", css: undefined, ejemplo: "Aa" },
+  serif: { nombre: "Elegante", css: "Georgia, 'Times New Roman', serif", ejemplo: "Aa" },
+  redondeada: { nombre: "Amistosa", css: "ui-rounded, 'SF Pro Rounded', 'Nunito', 'Segoe UI', system-ui, sans-serif", ejemplo: "Aa" },
+  display: { nombre: "Impacto", css: "Impact, 'Arial Narrow Bold', Haettenschweiler, 'Franklin Gothic Bold', sans-serif", ejemplo: "Aa" },
+  mono: { nombre: "Técnica", css: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace", ejemplo: "Aa" },
+};
+
+export const ASPECTOS: { id: Diseno["aspecto"]; nombre: string }[] = [
+  { id: "1 / 1", nombre: "Cuadrada" },
+  { id: "4 / 5", nombre: "Vertical" },
+  { id: "3 / 4", nombre: "Alta" },
+  { id: "16 / 10", nombre: "Horizontal" },
+];
+
+// ---------------------------------------------------------------- bloques
+export type EstiloPortada = "boutique" | "galeria" | "impacto" | "gourmet" | "simple";
+export type EnlaceTipo = "catalogo" | "whatsapp" | "url";
+type Base = { id: string; visible: boolean };
+
+export type BloquePortada = Base & { tipo: "portada"; estilo: EstiloPortada; imagen_url?: string; titulo?: string; subtitulo?: string; boton?: string; alineacion: "izquierda" | "centro"; alto: "chico" | "medio" | "grande"; oscurecer: number };
+export type BloqueTexto = Base & { tipo: "texto"; titulo?: string; texto?: string; alineacion: "izquierda" | "centro"; fondo: "ninguno" | "suave" | "color" };
+export type BloqueImagenTexto = Base & { tipo: "imagen_texto"; imagen_url?: string; lado: "izquierda" | "derecha"; titulo?: string; texto?: string; boton?: string; enlace_tipo: EnlaceTipo; enlace_url?: string };
+export type BloqueBanner = Base & { tipo: "banner"; imagen_url?: string; titulo?: string; texto?: string; boton?: string; enlace_tipo: EnlaceTipo; enlace_url?: string; alto: "chico" | "medio" | "grande" };
+export type BloqueColecciones = Base & { tipo: "colecciones"; titulo?: string; estilo: "tarjetas" | "circulos" | "lista" };
+export type BloqueProductos = Base & { tipo: "productos"; titulo?: string; fuente: "destacados" | "categoria" | "todos"; categoria?: string; cantidad: number; columnas: number };
+export type BloqueCatalogo = Base & { tipo: "catalogo"; titulo?: string; columnas: number; filtros: boolean };
+export type GaleriaItem = { url: string; texto?: string };
+export type BloqueGaleria = Base & { tipo: "galeria"; titulo?: string; imagenes: GaleriaItem[]; columnas: number };
+export type Icono = "envio" | "pago" | "calidad" | "tiempo" | "soporte" | "local";
+export type ConfianzaItem = { icono: Icono; titulo: string; texto?: string };
+export type BloqueConfianza = Base & { tipo: "confianza"; items: ConfianzaItem[] };
+export type FaqItem = { p: string; r: string };
+export type BloqueFaq = Base & { tipo: "faq"; titulo?: string; items: FaqItem[] };
+export type BloqueOpiniones = Base & { tipo: "opiniones"; titulo?: string };
+export type BloqueContacto = Base & { tipo: "contacto"; titulo?: string };
+export type BloqueSeparador = Base & { tipo: "separador"; alto: "chico" | "medio" | "grande"; linea: boolean };
+
+export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueContacto | BloqueSeparador;
+export type BloqueTipo = Bloque["tipo"];
+
+export const MAX_BLOQUES = 24;
+
+export const TIPOS_BLOQUE: { tipo: BloqueTipo; nombre: string; detalle: string; unico?: boolean }[] = [
+  { tipo: "portada", nombre: "Portada", detalle: "Lo primero que se ve: foto grande, título y botón", unico: true },
+  { tipo: "banner", nombre: "Banner de oferta", detalle: "Una imagen ancha con mensaje y botón" },
+  { tipo: "colecciones", nombre: "Colecciones", detalle: "Tus categorías como tarjetas con foto" },
+  { tipo: "productos", nombre: "Selección de productos", detalle: "Destacados, una categoría o los últimos" },
+  { tipo: "catalogo", nombre: "Catálogo completo", detalle: "Todos tus productos con filtros", unico: true },
+  { tipo: "imagen_texto", nombre: "Imagen con texto", detalle: "Foto a un lado y tu mensaje al otro" },
+  { tipo: "texto", nombre: "Texto", detalle: "Un título y un párrafo" },
+  { tipo: "galeria", nombre: "Galería de fotos", detalle: "Hasta 8 fotos de tu local o tus productos" },
+  { tipo: "confianza", nombre: "Ventajas", detalle: "Envío rápido, pago seguro, atención…" },
+  { tipo: "faq", nombre: "Preguntas frecuentes", detalle: "Respondé lo que siempre te preguntan" },
+  { tipo: "opiniones", nombre: "Opiniones de clientes", detalle: "Lo que dicen de vos", unico: true },
+  { tipo: "contacto", nombre: "Contacto y horarios", detalle: "Dirección, horarios y redes", unico: true },
+  { tipo: "separador", nombre: "Espacio", detalle: "Un respiro entre bloques, con línea opcional" },
+];
+
+export const ICONOS: { id: Icono; nombre: string }[] = [
+  { id: "envio", nombre: "Envío" }, { id: "pago", nombre: "Pago" }, { id: "calidad", nombre: "Calidad" },
+  { id: "tiempo", nombre: "Rapidez" }, { id: "soporte", nombre: "Atención" }, { id: "local", nombre: "Local" },
+];
+
+// ---------------------------------------------------------------- tema completo
 export type TiendaTema = {
   plantilla?: Plantilla;
   color?: string;
@@ -18,8 +114,9 @@ export type TiendaTema = {
   web?: string;
   whatsapp?: string;
   mostrar_opiniones?: boolean;
-  /** Secciones activas, en el orden en que se muestran debajo de la portada. */
   secciones?: Seccion[];
+  diseno?: Partial<Diseno>;
+  bloques?: Bloque[];
 };
 
 export const PLANTILLAS: { id: Plantilla; nombre: string; ideal: string; detalle: string }[] = [
@@ -37,27 +134,154 @@ export const SECCIONES: { id: Seccion; nombre: string; detalle: string; obligato
   { id: "opiniones", nombre: "Opiniones", detalle: "Lo que dicen tus clientes" },
   { id: "contacto", nombre: "Contacto y horarios", detalle: "Dirección, horarios y redes" },
 ];
-
 export const SECCIONES_BASE: Seccion[] = ["categorias", "destacados", "catalogo", "acerca", "opiniones", "contacto"];
 
 export const COLORES = ["#1F2A44", "#F2402A", "#0F766E", "#7C3AED", "#BE185D", "#B45309", "#15803D", "#111827"];
 
-export const TEMA_BASE: Required<Pick<TiendaTema, "plantilla" | "color" | "tipografia" | "mostrar_opiniones" | "secciones">> = {
-  plantilla: "boutique",
+const DISENO_BASE: Diseno = { radio: "redondo", boton: "relleno", fuente_titulos: "sans", fuente_texto: "sans", ancho: "normal", espaciado: "normal", aspecto: "4 / 5", descripcion: false, cabecera: "izquierda" };
+
+/** Diseño inicial de cada plantilla (lo que antes estaba fijo en el código). */
+export const DISENO_PLANTILLA: Record<Plantilla, Diseno> = {
+  boutique: { ...DISENO_BASE, radio: "suave", aspecto: "4 / 5" },
+  galeria: { ...DISENO_BASE, radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "sans", espaciado: "amplio", cabecera: "centro" },
+  impacto: { ...DISENO_BASE, radio: "pildora", aspecto: "1 / 1", fuente_titulos: "sans" },
+  gourmet: { ...DISENO_BASE, radio: "redondo", aspecto: "1 / 1", fuente_titulos: "serif", fuente_texto: "serif", descripcion: true },
+};
+
+export const TEMA_BASE = {
+  plantilla: "boutique" as Plantilla,
   color: "#1F2A44",
-  tipografia: "sans",
+  tipografia: "sans" as "sans" | "serif",
   mostrar_opiniones: true,
   secciones: SECCIONES_BASE,
 };
 
 const HEX = /^#[0-9A-F]{6}$/i;
 const text = (value: unknown, max: number) => (typeof value === "string" ? value.trim().slice(0, max) : "");
-const httpsUrl = (value: unknown, max: number) => {
+const httpsUrl = (value: unknown, max = 600) => {
   const v = text(value, max);
   return /^https:\/\//i.test(v) ? v : "";
 };
+const pick = <T extends string>(value: unknown, options: readonly T[], fallback: T): T => (options.find((option) => option === value) ?? fallback);
+const clampInt = (value: unknown, min: number, max: number, fallback: number) => {
+  const n = typeof value === "number" ? Math.round(value) : NaN;
+  return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+};
+const idOf = (value: unknown, index: number) => (typeof value === "string" && /^[a-z0-9-]{1,16}$/.test(value) ? value : `b${index}${Math.random().toString(36).slice(2, 6)}`);
 
-export type TemaNormalizado = TiendaTema & typeof TEMA_BASE;
+export const nuevoId = () => `b${Math.random().toString(36).slice(2, 9)}`;
+
+const ALTOS = ["chico", "medio", "grande"] as const;
+const ALINEACIONES = ["izquierda", "centro"] as const;
+const ENLACES = ["catalogo", "whatsapp", "url"] as const;
+const ESTILOS_PORTADA = ["boutique", "galeria", "impacto", "gourmet", "simple"] as const;
+const FONDOS_TEXTO = ["ninguno", "suave", "color"] as const;
+const ICONOS_IDS = ICONOS.map((item) => item.id);
+
+/** Valores iniciales de cada tipo de bloque (lo que se agrega al tocar "Agregar bloque"). */
+export function bloqueNuevo(tipo: BloqueTipo, plantilla: Plantilla = "boutique"): Bloque {
+  const base = { id: nuevoId(), visible: true };
+  switch (tipo) {
+    case "portada": return { ...base, tipo, estilo: plantilla, alineacion: "izquierda", alto: "grande", oscurecer: 55 };
+    case "texto": return { ...base, tipo, titulo: "Un título para tu mensaje", texto: "Escribí acá lo que quieras contarle a tus clientes.", alineacion: "centro", fondo: "ninguno" };
+    case "imagen_texto": return { ...base, tipo, lado: "izquierda", titulo: "Hecho con dedicación", texto: "Contá qué te hace distinto y por qué tus clientes te eligen.", boton: "Ver productos", enlace_tipo: "catalogo" };
+    case "banner": return { ...base, tipo, titulo: "Ofertas de la semana", texto: "Aprovechá precios especiales por tiempo limitado.", boton: "Ver ofertas", enlace_tipo: "catalogo", alto: "medio" };
+    case "colecciones": return { ...base, tipo, titulo: "Colecciones", estilo: plantilla === "gourmet" ? "circulos" : "tarjetas" };
+    case "productos": return { ...base, tipo, titulo: "Destacados", fuente: "destacados", cantidad: 4, columnas: 4 };
+    case "catalogo": return { ...base, tipo, titulo: "Todos los productos", columnas: 4, filtros: true };
+    case "galeria": return { ...base, tipo, titulo: "Galería", imagenes: [], columnas: 3 };
+    case "confianza": return { ...base, tipo, items: [{ icono: "envio", titulo: "Envío a domicilio", texto: "Te lo llevamos a tu puerta" }, { icono: "pago", titulo: "Pagá como quieras", texto: "Efectivo o tarjeta" }, { icono: "calidad", titulo: "Calidad asegurada", texto: "Productos frescos todos los días" }] };
+    case "faq": return { ...base, tipo, titulo: "Preguntas frecuentes", items: [{ p: "¿Hacen envíos?", r: "Sí, llegamos a toda la zona cercana al local." }] };
+    case "opiniones": return { ...base, tipo, titulo: "Lo que dicen nuestros clientes" };
+    case "contacto": return { ...base, tipo, titulo: "Contacto y horarios" };
+    case "separador": return { ...base, tipo, alto: "medio", linea: true };
+  }
+}
+
+/** Valida un bloque venido de la base o del editor; devuelve null si no se reconoce. */
+export function normalizeBloque(raw: unknown, index: number): Bloque | null {
+  if (!raw || typeof raw !== "object") return null;
+  const s = raw as Record<string, unknown>;
+  const base = { id: idOf(s.id, index), visible: s.visible !== false };
+  const opt = (value: unknown, max: number) => text(value, max) || undefined;
+  const enlace = { enlace_tipo: pick(s.enlace_tipo, ENLACES, "catalogo"), enlace_url: httpsUrl(s.enlace_url, 300) || undefined };
+  switch (s.tipo) {
+    case "portada": return { ...base, tipo: "portada", estilo: pick(s.estilo, ESTILOS_PORTADA, "simple"), imagen_url: httpsUrl(s.imagen_url) || undefined, titulo: opt(s.titulo, 80), subtitulo: opt(s.subtitulo, 200), boton: opt(s.boton, 24), alineacion: pick(s.alineacion, ALINEACIONES, "izquierda"), alto: pick(s.alto, ALTOS, "grande"), oscurecer: clampInt(s.oscurecer, 0, 80, 55) };
+    case "texto": return { ...base, tipo: "texto", titulo: opt(s.titulo, 80), texto: opt(s.texto, 800), alineacion: pick(s.alineacion, ALINEACIONES, "centro"), fondo: pick(s.fondo, FONDOS_TEXTO, "ninguno") };
+    case "imagen_texto": return { ...base, tipo: "imagen_texto", imagen_url: httpsUrl(s.imagen_url) || undefined, lado: pick(s.lado, ["izquierda", "derecha"] as const, "izquierda"), titulo: opt(s.titulo, 80), texto: opt(s.texto, 600), boton: opt(s.boton, 24), ...enlace };
+    case "banner": return { ...base, tipo: "banner", imagen_url: httpsUrl(s.imagen_url) || undefined, titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), alto: pick(s.alto, ALTOS, "medio"), ...enlace };
+    case "colecciones": return { ...base, tipo: "colecciones", titulo: opt(s.titulo, 80), estilo: pick(s.estilo, ["tarjetas", "circulos", "lista"] as const, "tarjetas") };
+    case "productos": return { ...base, tipo: "productos", titulo: opt(s.titulo, 80), fuente: pick(s.fuente, ["destacados", "categoria", "todos"] as const, "destacados"), categoria: opt(s.categoria, 60), cantidad: clampInt(s.cantidad, 2, 12, 4), columnas: clampInt(s.columnas, 2, 5, 4) };
+    case "catalogo": return { ...base, tipo: "catalogo", titulo: opt(s.titulo, 80), columnas: clampInt(s.columnas, 2, 5, 4), filtros: s.filtros !== false };
+    case "galeria": {
+      const imagenes = (Array.isArray(s.imagenes) ? s.imagenes : []).slice(0, 8).map((item): GaleriaItem | null => {
+        const entry = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+        const url = httpsUrl(entry.url);
+        return url ? { url, texto: opt(entry.texto, 80) } : null;
+      }).filter((item): item is GaleriaItem => item !== null);
+      return { ...base, tipo: "galeria", titulo: opt(s.titulo, 80), imagenes, columnas: clampInt(s.columnas, 2, 4, 3) };
+    }
+    case "confianza": {
+      const items = (Array.isArray(s.items) ? s.items : []).slice(0, 4).map((item): ConfianzaItem | null => {
+        const entry = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+        const titulo = text(entry.titulo, 40);
+        return titulo ? { icono: pick(entry.icono, ICONOS_IDS, "calidad"), titulo, texto: opt(entry.texto, 90) } : null;
+      }).filter((item): item is ConfianzaItem => item !== null);
+      return { ...base, tipo: "confianza", items };
+    }
+    case "faq": {
+      const items = (Array.isArray(s.items) ? s.items : []).slice(0, 8).map((item): FaqItem | null => {
+        const entry = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+        const p = text(entry.p, 120), r = text(entry.r, 400);
+        return p && r ? { p, r } : null;
+      }).filter((item): item is FaqItem => item !== null);
+      return { ...base, tipo: "faq", titulo: opt(s.titulo, 80), items };
+    }
+    case "opiniones": return { ...base, tipo: "opiniones", titulo: opt(s.titulo, 80) };
+    case "contacto": return { ...base, tipo: "contacto", titulo: opt(s.titulo, 80) };
+    case "separador": return { ...base, tipo: "separador", alto: pick(s.alto, ALTOS, "medio"), linea: s.linea !== false };
+    default: return null;
+  }
+}
+
+/** Bloques de una plantilla: el punto de partida que el comercio puede cambiar por completo. */
+export function bloquesDePlantilla(plantilla: Plantilla, tema: Pick<TiendaTema, "titulo" | "subtitulo" | "boton" | "banner_url" | "acerca" | "secciones" | "mostrar_opiniones"> = {}): Bloque[] {
+  const secciones = tema.secciones ?? SECCIONES_BASE;
+  // Identificadores fijos: así la misma tienda genera siempre los mismos bloques y el editor no ve cambios donde no los hay.
+  const con = <T extends Bloque>(bloque: T, id: string): T => ({ ...bloque, id });
+  const out: Bloque[] = [{ ...(con(bloqueNuevo("portada", plantilla), "portada") as BloquePortada), estilo: plantilla, titulo: tema.titulo, subtitulo: tema.subtitulo, boton: tema.boton, imagen_url: tema.banner_url }];
+  for (const id of secciones) {
+    if (id === "categorias") out.push(con(bloqueNuevo("colecciones", plantilla), "colecciones"));
+    else if (id === "destacados") out.push(con(bloqueNuevo("productos", plantilla), "destacados"));
+    else if (id === "catalogo") out.push({ ...(con(bloqueNuevo("catalogo", plantilla), "catalogo") as BloqueCatalogo), titulo: plantilla === "gourmet" ? "Nuestra carta" : "Todos los productos", columnas: plantilla === "galeria" ? 3 : 4 });
+    else if (id === "acerca") out.push({ ...(con(bloqueNuevo("texto", plantilla), "acerca") as BloqueTexto), titulo: "Sobre nosotros", texto: tema.acerca ?? "" });
+    else if (id === "opiniones") out.push(con(bloqueNuevo("opiniones", plantilla), "opiniones"));
+    else if (id === "contacto") out.push(con(bloqueNuevo("contacto", plantilla), "contacto"));
+  }
+  return out;
+}
+
+export type TemaNormalizado = TiendaTema & typeof TEMA_BASE & { diseno: Diseno; bloques: Bloque[] };
+
+export function normalizeDiseno(raw: unknown, plantilla: Plantilla, tipografia: "sans" | "serif" = "sans"): Diseno {
+  const source = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const base = { ...DISENO_PLANTILLA[plantilla] };
+  if (tipografia === "serif" && plantilla !== "gourmet") { base.fuente_titulos = "serif"; base.fuente_texto = "serif"; }
+  const color = (value: unknown) => (typeof value === "string" && HEX.test(value) ? value.toUpperCase() : undefined);
+  return {
+    fondo: color(source.fondo),
+    texto: color(source.texto),
+    radio: pick(source.radio, Object.keys(RADIOS) as Radio[], base.radio),
+    boton: pick(source.boton, ["relleno", "contorno"] as const, base.boton),
+    fuente_titulos: pick(source.fuente_titulos, Object.keys(FUENTES) as Fuente[], base.fuente_titulos),
+    fuente_texto: pick(source.fuente_texto, ["sans", "serif"] as const, base.fuente_texto),
+    ancho: pick(source.ancho, ["normal", "amplio"] as const, base.ancho),
+    espaciado: pick(source.espaciado, ["compacto", "normal", "amplio"] as const, base.espaciado),
+    aspecto: pick(source.aspecto, ASPECTOS.map((item) => item.id), base.aspecto),
+    descripcion: typeof source.descripcion === "boolean" ? source.descripcion : base.descripcion,
+    cabecera: pick(source.cabecera, ["izquierda", "centro"] as const, base.cabecera),
+  };
+}
 
 /** El tema viene de la base y puede haberse editado fuera de la app: se valida otra vez antes de usarlo en estilos o enlaces. */
 export function normalizeTheme(raw: unknown): TemaNormalizado {
@@ -67,13 +291,14 @@ export function normalizeTheme(raw: unknown): TemaNormalizado {
   const known = new Set<string>(SECCIONES_BASE);
   const chosen = Array.isArray(source.secciones) ? [...new Set(source.secciones.filter((item): item is Seccion => typeof item === "string" && known.has(item)))] : null;
   const secciones = chosen ? (chosen.includes("catalogo") ? chosen : [...chosen, "catalogo" as Seccion]) : TEMA_BASE.secciones;
-  return {
+  const tipografia: "sans" | "serif" = source.tipografia === "serif" ? "serif" : "sans";
+  const tema = {
     plantilla,
     color: typeof source.color === "string" && HEX.test(source.color) ? source.color.toUpperCase() : TEMA_BASE.color,
-    tipografia: source.tipografia === "serif" ? "serif" : "sans",
+    tipografia,
     mostrar_opiniones: source.mostrar_opiniones !== false,
     secciones,
-    banner_url: httpsUrl(source.banner_url, 600) || undefined,
+    banner_url: httpsUrl(source.banner_url) || undefined,
     titulo: text(source.titulo, 80) || undefined,
     subtitulo: text(source.subtitulo, 160) || undefined,
     boton: text(source.boton, 24) || undefined,
@@ -84,6 +309,18 @@ export function normalizeTheme(raw: unknown): TemaNormalizado {
     web: httpsUrl(source.web, 200) || undefined,
     whatsapp: /^[0-9]{8,15}$/.test(text(source.whatsapp, 15)) ? text(source.whatsapp, 15) : undefined,
   };
+  const guardados = Array.isArray(source.bloques) ? source.bloques.slice(0, MAX_BLOQUES).map((item, index) => normalizeBloque(item, index)).filter((item): item is Bloque => item !== null) : null;
+  // Sin bloques guardados (tiendas anteriores o recién creadas) la página se arma a partir de la plantilla y las secciones.
+  const bloques = guardados && guardados.length ? guardados : bloquesDePlantilla(plantilla, tema).map((item, index) => normalizeBloque(item, index)!).filter(Boolean);
+  const salida = { ...tema, diseno: normalizeDiseno(source.diseno, plantilla, tipografia), bloques };
+  // Si hay bloques guardados, el catálogo sigue siendo obligatorio.
+  if (!salida.bloques.some((item) => item.tipo === "catalogo")) salida.bloques = [...salida.bloques, normalizeBloque({ ...bloqueNuevo("catalogo", plantilla), id: "catalogo" }, salida.bloques.length)!];
+  return salida;
+}
+
+/** Lo que se guarda en la base: el tema normalizado con bloques y diseño explícitos. */
+export function temaParaGuardar(tema: TemaNormalizado): TiendaTema {
+  return { ...tema, bloques: tema.bloques, diseno: tema.diseno };
 }
 
 /** Negro o blanco según cuál se lee mejor sobre el color elegido (luminancia relativa WCAG). */
