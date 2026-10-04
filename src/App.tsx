@@ -38,6 +38,8 @@ const RemisDetail = lazy(() => import("./pages/delivery/RemisDetail"));
 const MerchantLayout = lazy(() => import("./pages/delivery/merchant/MerchantLayout"));
 const MerchantHome = lazy(() => import("./pages/delivery/merchant/MerchantHome"));
 const MerchantSettings = lazy(() => import("./pages/delivery/merchant/MerchantSettings"));
+const MerchantStorefront = lazy(() => import("./pages/delivery/merchant/MerchantStorefront"));
+const Storefront = lazy(() => import("./pages/Storefront"));
 const MerchantPages = {
   Orders: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantOrdersPage }))),
   Menu: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantMenuPage }))),
@@ -88,6 +90,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={isNativeApp() ? <Navigate to="/app/repartidor" replace /> : <Landing />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/t/:slug" element={<Storefront />} />
                     <Route path="/restablecer" element={<ResetPassword />} />
                     <Route path="/terminos" element={<Legal doc="terminos" />} />
                     <Route path="/arrepentimiento" element={<Arrepentimiento />} />
@@ -122,6 +125,7 @@ const App = () => (
                         <Route path="opiniones" element={<MerchantPages.Reviews />} />
                         <Route path="estadisticas" element={<MerchantPages.Stats />} />
                         <Route path="finanzas" element={<MerchantPages.Finance />} />
+                        <Route path="tienda" element={<MerchantStorefront />} />
                         <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />
                         <Route path="configuracion/:seccion" element={<MerchantSettings />} />

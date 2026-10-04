@@ -20,7 +20,7 @@ const groupHint = (group: ProductGroup) => {
   return group.maximo === 1 ? "Opcional" : `Opcional · hasta ${group.maximo}`;
 };
 
-export function ProductCard({ product, store, disabled, variant = "row" }: { product: DeliveryProduct; store: CartStore; disabled?: boolean; variant?: "row" | "tile" }) {
+export function ProductCard({ product, store, disabled, variant = "row" }: { product: DeliveryProduct; store: CartStore; disabled?: boolean; variant?: "row" | "tile" | "shop" }) {
   const { quantityOf, decrementProduct, addItem } = useCart();
   const [open, setOpen] = useState(false);
   const quantity = quantityOf(product.id);
@@ -61,7 +61,18 @@ export function ProductCard({ product, store, disabled, variant = "row" }: { pro
 
   return (
     <>
-      {variant === "tile" ? (
+      {variant === "shop" ? (
+        <article className={cn("group cursor-pointer", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
+          <div className="relative aspect-[4/5] overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius, 1rem)" }}>
+            <SmartImage src={product.imagen_url} width={640} alt={product.nombre} className="transition-transform duration-500 group-hover:scale-105" />
+            {off && <span className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-black" style={{ background: "var(--sf-accent)", color: "var(--sf-on-accent)" }}>-{off}%</span>}
+            {outOfStock && <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-bold text-white">Sin stock</span>}
+            {control}
+          </div>
+          <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug">{product.nombre}</h3>
+          <div className="mt-1 text-sm">{price}</div>
+        </article>
+      ) : variant === "tile" ? (
         <article className={cn("w-[150px] shrink-0 cursor-pointer snap-start", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
             <SmartImage src={product.imagen_url} width={320} alt={product.nombre} />

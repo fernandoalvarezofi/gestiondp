@@ -24,7 +24,7 @@ async function stores() {
     });
     if (!response.ok) return [];
     const rows = await response.json();
-    return rows.filter((row) => /^[a-z0-9-]+$/.test(row.slug)).map((row) => ({ path: `/app/tienda/${row.slug}`, changefreq: "daily", priority: "0.8", lastmod: row.updated_at }));
+    return rows.filter((row) => /^[a-z0-9-]+$/.test(row.slug)).map((row) => ({ path: `/t/${row.slug}`, changefreq: "daily", priority: "0.8", lastmod: row.updated_at }));
   } catch {
     return [];
   }

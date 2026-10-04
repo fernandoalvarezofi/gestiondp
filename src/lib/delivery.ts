@@ -19,6 +19,7 @@ export type DeliveryStore = {
   categoria: Categoria;
   rubro?: string | null;
   descripcion?: string | null;
+  tienda_tema?: unknown;
   direccion: string;
   telefono?: string | null;
   horario?: string | null;
