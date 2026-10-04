@@ -6,16 +6,17 @@ import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StoreLogo } from "@/components/delivery/StoreCard";
 import type { StoreReview } from "@/components/merchant/MerchantReviews";
-import { emptyStore, StoreFormValues, StoreSettingsForm } from "@/components/merchant/StoreSettingsForm";
 import { StoreStatusControl } from "@/components/merchant/StoreStatusControl";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { playChime } from "@/lib/alarm";
-import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, isPaused, money, productSelect, shortId, slugify } from "@/lib/delivery";
+import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, isPaused, money, productSelect, shortId } from "@/lib/delivery";
 import { notifyDesktop, printOrderTicket, readPrintSettings } from "@/lib/print";
 import { cn } from "@/lib/utils";
 import { TeamInvitations } from "@/components/merchant/TeamInvitations";
 import { EmptyState } from "@/components/delivery/Common";
+import { StoreOnboarding } from "@/components/merchant/StoreOnboarding";
+import type { StoreFormValues } from "@/components/merchant/StoreSettingsForm";
 import { roleLabel, type Branch, type MerchantContext, type Permission, type StoreAccess } from "./context";
 
 const ACTIVE_KEY = "woref-sucursal";
@@ -127,14 +128,6 @@ export default function MerchantLayout() {
     return () => { if (channel) db.removeChannel(channel); };
   }, [loadStore, loadOrders, loadProducts, loadCoupons, loadReviews]);
 
-  const createStore = async (values: StoreFormValues) => {
-    if (!user) return;
-    const { error } = await db.from("delivery_comercios").insert({ ...values, propietario_id: user.id, slug: `${slugify(values.nombre)}-${user.id.slice(0, 6)}` });
-    if (error) { toast.error(errorMessage(error)); return; }
-    toast.success("¡Listo! Tu comercio quedó en revisión. Mientras tanto, cargá tu menú.");
-    await loadStore();
-  };
-
   const saveSettings = async (values: StoreFormValues) => {
     if (!store) return;
     const { error } = await db.from("delivery_comercios").update(values).eq("id", store.id);
@@ -147,17 +140,10 @@ export default function MerchantLayout() {
 
   if (!store || !access) {
     return (
-      <div className="mx-auto max-w-3xl px-4 pb-16 pt-5 sm:px-6">
-        <TeamInvitations className="mb-6" onAccepted={() => { setLoading(true); loadStore(); }} />
-        <div className="flex flex-col items-center rounded-3xl bg-brand-deep px-6 py-10 text-center text-white">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10"><Store className="h-8 w-8" /></span>
-          <h1 className="mt-4 text-3xl font-extrabold">Sumá tu comercio a Woref</h1>
-          <p className="mt-2 max-w-md text-white/75">Recibí pedidos en tiempo real, gestioná tu menú y llegá a miles de clientes cerca tuyo.</p>
-        </div>
-        <section className="mt-6 rounded-3xl border bg-card p-4 sm:p-6">
-          <StoreSettingsForm initial={emptyStore} submitLabel="Crear mi comercio" onSubmit={createStore} />
-        </section>
-      </div>
+      <>
+        <div className="mx-auto max-w-5xl px-4 pt-5 sm:px-6"><TeamInvitations className="mb-2" onAccepted={() => { setLoading(true); loadStore(); }} /></div>
+        {user && <StoreOnboarding userId={user.id} onDone={async () => { await loadStore(); }} />}
+      </>
     );
   }
 

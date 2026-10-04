@@ -30,6 +30,7 @@ export default function MerchantHome() {
     { label: "Marcá tu local en el mapa", done: store.latitud != null && store.longitud != null, to: "/app/comercio/configuracion/entrega" },
     { label: "Cargá al menos 5 productos", done: products.length >= 5, to: "/app/comercio/menu" },
     { label: "Poné foto a todos tus productos", done: products.length > 0 && products.every((product) => Boolean(product.imagen_url)), to: "/app/comercio/menu" },
+    { label: "Personalizá tu tienda online y compartí el enlace", done: Boolean(store.tienda_tema && typeof store.tienda_tema === "object" && Object.keys(store.tienda_tema as object).length > 0), to: "/app/comercio/tienda" },
   ], [store, products]);
   const doneCount = steps.filter((step) => step.done).length;
   const progress = Math.round((doneCount / steps.length) * 100);
