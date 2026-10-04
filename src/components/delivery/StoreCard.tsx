@@ -6,6 +6,7 @@ import { DeliveryStore, img, isOpenNow, money, nextOpening } from "@/lib/deliver
 import { formatKm, storeReach } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { FavoriteButton } from "./FavoriteButton";
+import { SmartImage } from "./SmartImage";
 
 export type { DeliveryStore } from "@/lib/delivery";
 
@@ -68,10 +69,10 @@ export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; v
   return (
     <Link to={`/app/tienda/${store.slug}`} className={cn("group block min-w-0", variant === "row" && "w-[248px] shrink-0 snap-start sm:w-[288px]")}>
       <div className="relative">
-        <div className="relative aspect-[16/9] overflow-hidden rounded-2xl bg-muted">
-          <img src={img(store.imagen_url, 640)} alt="" loading="lazy" className={cn("h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]", (!open || !reach.inZone) && "grayscale")} />
+        <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-orange">
+          <SmartImage src={store.imagen_url} width={640} className={cn("transition-transform duration-500 group-hover:scale-[1.04]", (!open || !reach.inZone) && "grayscale")} />
           <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
-            {store.promo_texto && <span className="rounded-full bg-primary px-2.5 py-1 text-[11px] font-extrabold text-primary-foreground shadow-sm">{store.promo_texto}</span>}
+            {store.promo_texto && <span className="rounded-full border border-brand-orange bg-[hsl(220_14%_16%)] px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">{store.promo_texto}</span>}
             {free && open && !/env[ií]o gratis/i.test(store.promo_texto || "") && <span className="rounded-full bg-success px-2.5 py-1 text-[11px] font-extrabold text-white shadow-sm">Envío gratis</span>}
           </div>
           <ClosedOverlay store={store} reachKm={reach.km} open={open} inZone={reach.inZone} zoneClosed={reach.zoneClosed} />

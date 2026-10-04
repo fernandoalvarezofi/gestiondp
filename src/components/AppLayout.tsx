@@ -107,7 +107,7 @@ export function AppLayout() {
         </header>
       )}
       {!inPanel && (
-      <header className={cn("sticky top-0 z-40 border-b bg-card shadow-[0_1px_0_rgba(0,0,0,0.02)]", isHome && "max-md:border-transparent max-md:bg-primary max-md:shadow-none max-md:backdrop-blur-none", immersive && "max-md:hidden")}>
+      <header className={cn("sticky top-0 z-40 border-b border-t-[3px] border-t-brand-orange bg-card shadow-[0_1px_0_rgba(0,0,0,0.02)]", isHome && "max-md:border-transparent max-md:bg-primary max-md:shadow-none max-md:backdrop-blur-none", immersive && "max-md:hidden")}>
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:gap-6 lg:px-8">
           <NavLink to="/app" className="hidden shrink-0 md:block" aria-label="Inicio"><DeliveryBrand /></NavLink>
 

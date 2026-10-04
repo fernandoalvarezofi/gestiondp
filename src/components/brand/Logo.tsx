@@ -25,7 +25,7 @@ export function LogoMark({ className, inverted = false }: { className?: string; 
       <path
         d="M21.5 22.5 25.6 34a1.4 1.4 0 0 0 2.6 0L32 24.6 35.8 34a1.4 1.4 0 0 0 2.6 0l4.1-11.5"
         fill="none"
-        stroke={inverted ? "#fff" : "#1B1E24"}
+        stroke={inverted ? "#fff" : "#F2402A"}
         strokeWidth="4.2"
         strokeLinecap="round"
         strokeLinejoin="round"

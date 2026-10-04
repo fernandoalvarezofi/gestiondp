@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { SmartImage } from "./SmartImage";
 import { Check, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -63,7 +64,7 @@ export function ProductCard({ product, store, disabled, variant = "row" }: { pro
       {variant === "tile" ? (
         <article className={cn("w-[150px] shrink-0 cursor-pointer snap-start", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
           <div className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
-            <img src={img(product.imagen_url, 320)} alt={product.nombre} loading="lazy" className="h-full w-full object-cover" />
+            <SmartImage src={product.imagen_url} width={320} alt={product.nombre} />
             {control}
           </div>
           <div className="mt-2 text-sm">{price}</div>
@@ -79,7 +80,7 @@ export function ProductCard({ product, store, disabled, variant = "row" }: { pro
             {outOfStock && <p className="mt-1 text-xs font-bold text-muted-foreground">Sin stock por ahora</p>}
           </div>
           <div className="relative h-[104px] w-[104px] shrink-0 overflow-hidden rounded-2xl bg-muted">
-            <img src={img(product.imagen_url, 300)} alt={product.nombre} loading="lazy" className="h-full w-full object-cover" />
+            <SmartImage src={product.imagen_url} width={300} alt={product.nombre} />
             {control}
           </div>
         </article>
@@ -130,7 +131,7 @@ function ProductDialog({ product, groups, store, onClose }: { product: DeliveryP
     <Dialog open onOpenChange={(next) => !next && onClose()}>
       <DialogContent className="flex max-h-[92vh] max-w-md flex-col gap-0 overflow-hidden p-0">
         <div className="overflow-y-auto">
-          <img src={img(product.imagen_url, 900)} alt={product.nombre} className="aspect-[4/3] w-full object-cover" />
+          <div className="relative aspect-[4/3] w-full"><SmartImage src={product.imagen_url} width={900} alt={product.nombre} loading="eager" /></div>
           <div className="p-5">
             <DialogTitle className="text-2xl font-extrabold">{product.nombre}</DialogTitle>
             {product.descripcion && <DialogDescription className="mt-2">{product.descripcion}</DialogDescription>}

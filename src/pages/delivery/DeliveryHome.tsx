@@ -27,8 +27,8 @@ function Section({ title, subtitle, to, children }: { title: string; subtitle?: 
     <section className="mt-8">
       <div className="mb-3 flex items-end justify-between gap-4 px-4 sm:px-0">
         <div className="min-w-0">
-          <h2 className="truncate text-lg font-black sm:text-xl">{title}</h2>
-          {subtitle && <p className="text-[13px] font-semibold text-muted-foreground">{subtitle}</p>}
+          <h2 className="flex items-center gap-2 truncate text-lg font-black sm:text-xl"><span aria-hidden className="h-5 w-1.5 shrink-0 rounded-full bg-brand-orange" />{title}</h2>
+          {subtitle && <p className="pl-3.5 text-[13px] font-semibold text-muted-foreground">{subtitle}</p>}
         </div>
         {to && <Link to={to} className="flex shrink-0 items-center text-sm font-extrabold text-primary">Ver todos<ChevronRight className="h-4 w-4" /></Link>}
       </div>
@@ -136,29 +136,29 @@ export default function DeliveryHome() {
     <div className="pb-16">
       {/* Portada de marca: el buscador vive adentro, como en las apps de delivery */}
       <div className="mx-auto max-w-6xl sm:px-6 md:pt-6 lg:px-8">
-        <section className="bg-primary px-4 pb-14 pt-1 text-primary-foreground max-md:rounded-b-[32px] md:rounded-3xl md:px-10 md:pb-16 md:pt-10">
+        <section className="border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] px-4 pb-14 pt-1 text-white max-md:rounded-b-[32px] md:rounded-3xl md:px-10 md:pb-16 md:pt-10">
           <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-tight md:text-5xl">¿Qué querés<br className="md:hidden" /> pedir hoy?</h1>
-          <p className="mt-1 hidden text-lg font-semibold text-primary-foreground/85 md:block">Comida, súper, farmacia y más, cerca tuyo.</p>
+          <p className="mt-1 hidden text-lg font-semibold text-white/80 md:block">Comida, súper, farmacia y más, cerca tuyo.</p>
           <Link to="/app/buscar" className="mt-4 flex h-12 items-center gap-3 rounded-full bg-card px-4 text-[15px] font-semibold text-muted-foreground shadow-pop transition-transform active:scale-[0.99] md:mt-6 md:h-14 md:max-w-xl md:text-base">
-            <Search className="h-5 w-5 text-primary" />Buscar locales, platos y productos
+            <Search className="h-5 w-5 text-brand-orange" />Buscar locales, platos y productos
           </Link>
         </section>
       </div>
 
       <div className="relative z-10 mx-auto -mt-9 max-w-6xl px-4 sm:px-6 md:-mt-10 lg:px-8">
         <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-9 md:p-5" aria-label="Categorías">
-          {tiles.map(({ id, label, icon: Icon, color }, index) => (
+          {tiles.map(({ id, label, icon: Icon }, index) => (
             <Link key={id} to={`/app/categoria/${id}`} className={cn("group flex flex-col items-center gap-1.5 text-center", index >= 6 && "max-md:hidden")}>
-              <span className={cn("flex h-14 w-14 items-center justify-center rounded-2xl transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 md:h-16 md:w-16", color)}><Icon className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
+              <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-transparent bg-muted text-foreground transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-hover:text-brand-orange group-active:scale-95 md:h-16 md:w-16"><Icon className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
               <span className="text-[12px] font-bold leading-tight md:text-[13px]">{label}</span>
             </Link>
           ))}
           <Link to="/app/enviar" className="group flex flex-col items-center gap-1.5 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 dark:bg-amber-500/15 dark:text-amber-300 md:h-16 md:w-16"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-transparent bg-muted text-foreground transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-hover:text-brand-orange group-active:scale-95 md:h-16 md:w-16"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Envíos</span>
           </Link>
           <Link to="/app/remis" className="group flex flex-col items-center gap-1.5 text-center">
-            <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700 transition-transform duration-200 group-hover:-translate-y-0.5 group-active:scale-95 dark:bg-sky-500/15 dark:text-sky-300 md:h-16 md:w-16"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={2.2} /></span>
+            <span className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-transparent bg-muted text-foreground transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-hover:text-brand-orange group-active:scale-95 md:h-16 md:w-16"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Remís</span>
           </Link>
         </section>
@@ -184,7 +184,7 @@ export default function DeliveryHome() {
           <Rail>
             {cuisines.map(({ rubro, image }) => (
               <Link key={rubro} to={`/app/buscar?q=${encodeURIComponent(rubro)}`} className="group flex w-[84px] shrink-0 snap-start flex-col items-center gap-2 text-center">
-                <span className="relative h-[84px] w-[84px] overflow-hidden rounded-full bg-muted ring-2 ring-transparent transition-all duration-300 group-hover:ring-primary group-active:scale-95">
+                <span className="relative h-[84px] w-[84px] overflow-hidden rounded-full bg-muted ring-2 ring-transparent transition-all duration-300 group-hover:ring-brand-orange group-active:scale-95">
                   <img src={img(image, 240)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   <span className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]" />
                 </span>
@@ -222,7 +222,7 @@ export default function DeliveryHome() {
 
       <section className="mt-10">
         <div className="px-4 sm:px-0">
-          <h2 className="text-lg font-black sm:text-xl">Todos los locales</h2>
+          <h2 className="flex items-center gap-2 text-lg font-black sm:text-xl"><span aria-hidden className="h-5 w-1.5 shrink-0 rounded-full bg-brand-orange" />Todos los locales</h2>
           <p className="text-[13px] font-semibold text-muted-foreground">{list.length} {list.length === 1 ? "resultado" : "resultados"}</p>
         </div>
         <div className="scrollbar-none mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:px-0">

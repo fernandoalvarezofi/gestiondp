@@ -2,10 +2,11 @@ import { Link, Navigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Bike, CheckCircle2, Clock3, CreditCard, KeyRound, MapPin, Navigation, ShieldCheck, Star, Store, Ticket } from "lucide-react";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
+import { SmartImage } from "@/components/delivery/SmartImage";
 import { StoreLogo } from "@/components/delivery/StoreCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { db, DeliveryStore, img, money, verticals } from "@/lib/delivery";
+import { db, DeliveryStore, money, verticals } from "@/lib/delivery";
 
 const photo = (id: string, width = 900) => `https://images.unsplash.com/photo-${id}?w=${width}&q=75&auto=format&fit=crop`;
 
@@ -54,7 +55,7 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-[hsl(220_14%_16%)] text-white">
+      <section className="relative overflow-hidden border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] text-white">
         <div aria-hidden className="pointer-events-none absolute -right-32 -top-32 h-[520px] w-[520px] rounded-full bg-white/10 blur-2xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-40 left-1/4 h-[420px] w-[420px] rounded-full bg-black/10 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-24 pt-24 sm:px-6 sm:pb-28 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-8 lg:pb-32 lg:pt-32">
@@ -86,10 +87,10 @@ export default function Landing() {
       </section>
 
       <section className="relative z-10 mx-auto -mt-10 max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-px overflow-hidden rounded-3xl border bg-border shadow-pop sm:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded-3xl border-2 border-brand-orange bg-border shadow-pop sm:grid-cols-3">
           {trust.map(({ icon: Icon, title, text }) => (
             <div key={title} className="flex items-start gap-3 bg-card p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[hsl(220_14%_16%)] text-brand-orange"><Icon className="h-5 w-5" /></span>
               <div><p className="font-extrabold">{title}</p><p className="text-sm text-muted-foreground">{text}</p></div>
             </div>
           ))}
@@ -101,7 +102,7 @@ export default function Landing() {
         <p className="mt-2 text-muted-foreground">Elegí qué querés pedir y te mostramos lo que hay cerca.</p>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {verticals.slice(0, 8).map(({ id, label, image }) => (
-            <Link key={id} to="/auth?registro=1" className="group relative aspect-[4/3] overflow-hidden rounded-3xl bg-muted">
+            <Link key={id} to="/auth?registro=1" className="group relative aspect-[4/3] overflow-hidden rounded-3xl border-2 border-transparent bg-muted transition-colors hover:border-brand-orange">
               <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
               <span className="absolute inset-x-0 bottom-0 p-4 text-lg font-extrabold text-white">{label}</span>
@@ -120,9 +121,9 @@ export default function Landing() {
             <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {stores.data.slice(0, 8).map((store, index) => (
                 <li key={store.id} className={index >= 4 ? "hidden sm:block" : undefined}>
-                  <Link to={`/app/tienda/${store.slug}`} className="group block overflow-hidden rounded-3xl border bg-card shadow-soft transition-shadow hover:shadow-pop">
+                  <Link to={`/app/tienda/${store.slug}`} className="group block overflow-hidden rounded-3xl border-2 bg-card shadow-soft transition-all hover:border-brand-orange hover:shadow-pop">
                     <div className="relative aspect-[16/9] overflow-hidden bg-muted">
-                      <img src={img(store.imagen_url, 480)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <SmartImage src={store.imagen_url} width={480} className="transition-transform duration-500 group-hover:scale-105" />
                       <StoreLogo store={store} className="absolute bottom-2 left-3 h-12 w-12 border-2 border-white text-sm" />
                     </div>
                     <div className="p-3 sm:p-4">
@@ -147,9 +148,9 @@ export default function Landing() {
           <h2 className="text-2xl font-extrabold sm:text-4xl">Así de fácil</h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {steps.map(({ icon: Icon, title, text }, index) => (
-              <div key={title} className="relative rounded-3xl bg-card p-6 shadow-soft">
-                <span className="absolute right-5 top-4 font-display text-5xl font-black text-primary/10">{index + 1}</span>
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground"><Icon className="h-6 w-6" /></span>
+              <div key={title} className="relative rounded-3xl border-t-4 border-brand-orange bg-card p-6 shadow-soft">
+                <span className="absolute right-5 top-4 font-display text-5xl font-black text-brand-orange/20">{index + 1}</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(220_14%_16%)] text-white"><Icon className="h-6 w-6" /></span>
                 <h3 className="mt-4 text-xl font-extrabold">{title}</h3>
                 <p className="mt-1 text-muted-foreground">{text}</p>
               </div>
@@ -159,7 +160,7 @@ export default function Landing() {
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-4 px-4 py-14 sm:px-6 md:grid-cols-2 lg:px-8 lg:py-20">
-        <div id="negocios" className="relative scroll-mt-24 overflow-hidden rounded-3xl bg-brand-deep p-8 text-white lg:p-10">
+        <div id="negocios" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-2 border-brand-orange bg-brand-deep p-8 text-white lg:p-10">
           <img src={photo("1555396273-367ea4eb4db5", 900)} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25" />
           <div className="relative">
             <Store className="h-9 w-9" />
@@ -172,7 +173,7 @@ export default function Landing() {
             <Button asChild className="mt-6 rounded-full bg-white font-bold text-foreground hover:bg-white/90"><Link to="/auth?registro=1">Sumar mi comercio</Link></Button>
           </div>
         </div>
-        <div id="repartir" className="relative scroll-mt-24 overflow-hidden rounded-3xl bg-foreground p-8 text-background lg:p-10">
+        <div id="repartir" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] p-8 text-white lg:p-10">
           <Bike className="absolute -bottom-10 -right-6 h-56 w-56 opacity-10" />
           <div className="relative">
             <Bike className="h-9 w-9" />
@@ -182,12 +183,12 @@ export default function Landing() {
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Cobrás por viaje, con billetera</li>
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Bonos y turnos con cupo</li>
             </ul>
-            <Button asChild className="mt-6 rounded-full font-bold"><Link to="/auth?registro=1">Quiero repartir</Link></Button>
+            <Button asChild className="mt-6 rounded-full bg-brand-orange font-bold text-white hover:bg-brand-orange/90"><Link to="/auth?registro=1">Quiero repartir</Link></Button>
           </div>
         </div>
       </section>
 
-      <footer className="border-t bg-card">
+      <footer className="border-t-4 border-brand-orange bg-card">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
           <div className="space-y-3">
             <DeliveryBrand />

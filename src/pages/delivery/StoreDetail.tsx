@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/delivery/ProductCard";
 import { StoreCartPanel } from "@/components/delivery/StoreCartPanel";
 import { deliveryFeeLabel, RatingBadge, StoreLogo } from "@/components/delivery/StoreCard";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { SmartImage } from "@/components/delivery/SmartImage";
 import { CartStore } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
@@ -119,8 +120,8 @@ export default function StoreDetail() {
   return (
     <div className="mx-auto max-w-5xl pb-20 sm:px-6 sm:pt-6 lg:max-w-6xl">
       {/* Portada */}
-      <div className="relative h-48 w-full overflow-hidden bg-muted sm:h-72 sm:rounded-3xl">
-        <img src={img(store.imagen_url, 1400)} alt="" className={cn("h-full w-full object-cover", !open && "grayscale")} />
+      <div className="relative h-48 w-full overflow-hidden border-b-4 border-brand-orange bg-muted sm:h-72 sm:rounded-3xl">
+        <SmartImage src={store.imagen_url} width={1400} loading="eager" className={cn(!open && "grayscale")} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/10" />
         <div className="absolute inset-x-3 top-3 flex items-center gap-2">
           <button type="button" aria-label="Volver" onClick={() => navigate(-1)} className="flex h-10 w-10 items-center justify-center rounded-full bg-card shadow-soft"><ArrowLeft className="h-5 w-5" /></button>
