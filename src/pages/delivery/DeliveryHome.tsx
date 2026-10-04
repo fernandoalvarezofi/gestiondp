@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Car, ChevronRight, Package, Search, SlidersHorizontal, Star, Store } from "lucide-react";
+import { Car, ChevronLeft, ChevronRight, Package, Search, SlidersHorizontal, Star, Store } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/delivery/Common";
 import { OutOfZone } from "@/components/delivery/OutOfZone";
 import { readPickupPreference, writePickupPreference } from "@/lib/delivery";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { distanceKm } from "@/lib/geo";
-import { StoreCard, StoreCardSkeleton, StoreListItem, StoreListSkeleton, StoreLogo } from "@/components/delivery/StoreCard";
+import { StoreCard, StoreTile, StoreCardSkeleton, StoreListItem, StoreListSkeleton, StoreLogo } from "@/components/delivery/StoreCard";
 import { SmartImage } from "@/components/delivery/SmartImage";
 import { useInZone } from "@/hooks/useAddressPoint";
 import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe, verticals } from "@/lib/delivery";
@@ -41,9 +41,25 @@ function Section({ title, subtitle, to, children }: { title: string; subtitle?: 
 // Una fila con menos de 3 locales se ve vacía y repetida: se oculta hasta que haya más oferta.
 const RAIL_MIN = 3;
 
-const Rail = ({ children }: { children: React.ReactNode }) => (
-  <div className="scrollbar-none flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:scroll-px-0 sm:px-0">{children}</div>
-);
+/** Carrusel horizontal con flechas redondas en escritorio, como en las apps de delivery. */
+const Rail = ({ children }: { children: React.ReactNode }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ start: true, end: false });
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (el) setEdge({ start: el.scrollLeft < 8, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 8 });
+  }, []);
+  useEffect(() => { update(); }, [update, children]);
+  const move = (direction: 1 | -1) => ref.current?.scrollBy({ left: direction * ref.current.clientWidth * 0.8, behavior: "smooth" });
+  const arrow = "absolute top-[28%] z-10 hidden h-10 w-10 items-center justify-center rounded-full border bg-card shadow-soft transition hover:border-brand-orange md:flex";
+  return (
+    <div className="group/rail relative">
+      <div ref={ref} onScroll={update} className="scrollbar-none flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:scroll-px-0 sm:px-0">{children}</div>
+      {!edge.start && <button type="button" aria-label="Anterior" onClick={() => move(-1)} className={cn(arrow, "-left-5")}><ChevronLeft className="h-5 w-5" /></button>}
+      {!edge.end && <button type="button" aria-label="Siguiente" onClick={() => move(1)} className={cn(arrow, "-right-5")}><ChevronRight className="h-5 w-5" /></button>}
+    </div>
+  );
+};
 
 export default function DeliveryHome() {
   const { user } = useAuth();
@@ -216,7 +232,7 @@ export default function DeliveryHome() {
           {popular.length > 0 && <Section title="Los más pedidos" subtitle="Lo que más se pide cerca tuyo"><Rail>{popular.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
           {promos.length > 0 && <Section title="Descuentos imperdibles" to="/app/promociones"><Rail>{promos.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
           {freeShipping.length > 0 && <Section title="Con envío gratis"><Rail>{freeShipping.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
-          {fast.length > 0 && <Section title="Te llega rapidísimo" subtitle="Los que menos tardan"><Rail>{fast.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
+          {fast.length > 0 && <Section title="Te llega rapidísimo" subtitle="Los que menos tardan"><Rail>{fast.map((store) => <StoreTile key={store.id} store={store} />)}</Rail></Section>}
           {newStores.length > 0 && <Section title="Nuevos en Woref"><Rail>{newStores.map((store) => <StoreCard key={store.id} store={store} variant="row" />)}</Rail></Section>}
         </>
       )}

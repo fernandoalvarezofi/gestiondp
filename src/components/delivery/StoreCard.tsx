@@ -93,6 +93,23 @@ export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; v
   );
 }
 
+/** Tarjeta compacta: foto con el logo en el centro, para filas de "populares" y "más rápidos". */
+export function StoreTile({ store }: { store: DeliveryStore }) {
+  const { reach, free, open } = useStoreState(store);
+  const available = open && reach.inZone;
+  return (
+    <Link to={`/app/tienda/${store.slug}`} className="group block w-[136px] shrink-0 snap-start sm:w-[156px]">
+      <div className="relative aspect-[5/4] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-orange">
+        <SmartImage src={store.imagen_url} width={320} className={cn("transition-transform duration-500 group-hover:scale-[1.05]", !available && "grayscale")} />
+        {store.promo_texto && <span className="absolute left-0 top-2 max-w-[90%] truncate rounded-r-md bg-[#FFE14D] px-2 py-0.5 text-[11px] font-extrabold text-black">{store.promo_texto}</span>}
+        <span className="absolute inset-0 flex items-center justify-center"><StoreLogo store={store} className="h-12 w-12 rounded-xl border-2 border-white text-sm shadow-pop" /></span>
+      </div>
+      <h3 className="mt-2 line-clamp-2 text-sm font-bold leading-tight">{store.nombre}</h3>
+      <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground"><Clock className="h-3.5 w-3.5" />{available ? `${store.tiempo_min}-${store.tiempo_max} min` : "No disponible"}{free && available && <span className="font-bold text-success">· Gratis</span>}</p>
+    </Link>
+  );
+}
+
 /** Fila de lista, como en el listado de locales de las apps de delivery. */
 export function StoreListItem({ store }: { store: DeliveryStore }) {
   const { reach, fee, free, open } = useStoreState(store);
