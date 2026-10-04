@@ -1,5 +1,5 @@
-import { FormEvent, useState } from "react";
-import { Banknote, Check, KeyRound, Loader2, MapPin, Navigation, Phone, Store, Wallet } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Banknote, Camera, Check, KeyRound, Loader2, MapPin, Navigation, Phone, Store, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { ChatButton } from "@/components/delivery/OrderChat";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { db, DeliveryOrder, errorMessage, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
 import { formatKm, GeoPoint } from "@/lib/geo";
+import { uploadDeliveryProof } from "@/lib/uploads";
 import { cn } from "@/lib/utils";
 
 const RELEASE_REASONS = ["Tuve un problema con mi vehículo", "Me surgió un imprevisto", "El comercio demora demasiado"];
@@ -39,6 +40,9 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [releasing, setReleasing] = useState(false);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const photoUrl = useMemo(() => (photo ? URL.createObjectURL(photo) : null), [photo]);
+  useEffect(() => () => { if (photoUrl) URL.revokeObjectURL(photoUrl); }, [photoUrl]);
   const step = currentStep(order);
   const stepIndex = STEPS.findIndex((item) => item.id === step);
   const earning = Number(order.ganancia_repartidor ?? Number(order.costo_envio) + Number(order.propina));
@@ -65,9 +69,14 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
   const deliver = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
+    let proof: string | null = null;
+    if (photo) {
+      try { proof = await uploadDeliveryProof(photo, order.id); } catch (cause) { toast.error(errorMessage(cause)); setBusy(false); return; }
+    }
     const ok = await changeOrderStatus(order.id, "entregado", undefined, code.trim());
+    if (ok && proof) await db.rpc("delivery_registrar_foto_entrega", { p_pedido: order.id, p_path: proof });
     setBusy(false);
-    if (ok) { toast.success(`¡Entregado! Ganaste ${money(earning)}`); setCode(""); onChange(); }
+    if (ok) { toast.success(`¡Entregado! Ganaste ${money(earning)}`); setCode(""); setPhoto(null); onChange(); }
   };
 
   const change = order.efectivo_paga_con != null ? Number(order.efectivo_paga_con) - Number(order.total) : null;
@@ -139,9 +148,16 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
         )}
         {step === "ir_cliente" && <Button className="h-12 w-full rounded-full text-base font-bold" onClick={() => arrived("cliente")} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Llegué al cliente</Button>}
         {step === "en_puerta" && (
-          <form onSubmit={deliver} className="flex flex-col gap-2 sm:flex-row">
+          <form onSubmit={deliver} className="space-y-2">
+            <div className="flex items-center gap-3 rounded-2xl border p-3">
+              {photoUrl ? <img src={photoUrl} alt="Foto de la entrega" className="h-14 w-14 rounded-xl object-cover" /> : <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-muted"><Camera className="h-6 w-6 text-muted-foreground" /></span>}
+              <div className="min-w-0 flex-1 text-sm"><p className="font-bold">Foto de la entrega <span className="font-normal text-muted-foreground">(opcional)</span></p><p className="text-muted-foreground">Te cuida si el cliente dice que no le llegó.</p></div>
+              <label className="cursor-pointer rounded-full border px-3 py-2 text-sm font-bold hover:bg-muted">{photo ? "Cambiar" : "Sacar foto"}<input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(event) => setPhoto(event.target.files?.[0] ?? null)} /></label>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
             <label className="flex h-12 flex-1 items-center gap-2 rounded-full border px-4"><KeyRound className="h-5 w-5 text-muted-foreground" /><Input value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 4))} inputMode="numeric" autoComplete="one-time-code" placeholder="Código de entrega del cliente" aria-label="Código de entrega" className="h-full border-0 p-0 font-mono text-lg tracking-widest shadow-none focus-visible:ring-0" /></label>
-            <Button type="submit" className="h-12 rounded-full px-6 text-base font-bold" disabled={busy || code.length !== 4}>Confirmar entrega</Button>
+            <Button type="submit" className="h-12 rounded-full px-6 text-base font-bold" disabled={busy || code.length !== 4}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Confirmar entrega</Button>
+            </div>
           </form>
         )}
         {(step === "ir_comercio" || step === "en_comercio") && order.estado !== "en_camino" && <Button variant="ghost" className="mt-2 w-full text-destructive" onClick={() => setReleasing(true)}>No puedo hacer este pedido</Button>}

@@ -239,6 +239,7 @@ export type DeliveryOrder = {
   ganancia_repartidor?: number | null;
   llegada_comercio_at?: string | null;
   llegada_cliente_at?: string | null;
+  foto_entrega_path?: string | null;
   comercio?: Pick<DeliveryStore, "nombre" | "slug" | "imagen_url" | "logo_url" | "direccion" | "telefono" | "latitud" | "longitud"> | null;
   cliente?: { nombre: string } | null;
 };

@@ -13,6 +13,7 @@ import { startOnlinePayment } from "@/lib/payments";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { ChatButton } from "@/components/delivery/OrderChat";
+import { DeliveryProof } from "@/components/delivery/DeliveryProof";
 import { OrderClaims } from "@/components/delivery/OrderClaims";
 import { MapView } from "@/components/maps/LazyMaps";
 import { OrderAdjustments } from "@/components/delivery/OrderAdjustments";
@@ -172,6 +173,8 @@ export default function OrderDetail() {
           <span className="font-display text-3xl font-extrabold tracking-[0.3em]">{code}</span>
         </section>
       )}
+
+      {order.estado === "entregado" && <DeliveryProof path={order.foto_entrega_path} />}
 
       {active && !awaitingPayment && (
         <div className="mt-4 flex flex-wrap gap-2">
