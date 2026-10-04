@@ -80,7 +80,7 @@ export function AppLayout() {
   return (
     <div className={cn("min-h-screen bg-background", !inPanel && "pb-24 md:pb-0")}>
       {inPanel && (
-        <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-xl">
+        <header className="sticky top-0 z-40 border-b border-t-[3px] border-t-brand-orange bg-card/95 backdrop-blur-xl">
           <div className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:px-8">
             <NavLink to="/app" className="shrink-0" aria-label="Volver a Woref"><DeliveryBrand /></NavLink>
             <span className="hidden rounded-full bg-muted px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-muted-foreground sm:inline">

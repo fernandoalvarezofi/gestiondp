@@ -51,7 +51,7 @@ function SidebarNav({ groups }: { groups: PanelNavGroup[] }) {
                       </SidebarMenuButton>
                     )}
                   </NavLink>
-                  {item.badge !== undefined && item.badge !== 0 && <SidebarMenuBadge className="top-2.5 bg-primary text-primary-foreground">{item.badge}</SidebarMenuBadge>}
+                  {item.badge !== undefined && item.badge !== 0 && <SidebarMenuBadge className="top-2.5 bg-brand-orange text-white">{item.badge}</SidebarMenuBadge>}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -121,7 +121,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
       </Sidebar>
 
       <SidebarInset className={cn("min-w-0", bottomTabs && "pb-16 md:pb-0")}>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-card/95 px-3 backdrop-blur-xl sm:px-5">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-t-[3px] border-t-brand-orange bg-card/95 px-3 backdrop-blur-xl sm:px-5">
           <SidebarTrigger className="-ml-1" aria-label="Abrir o cerrar el menú" />
           {!isRootPath(location.pathname) && <button type="button" onClick={goBack} aria-label="Volver" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"><ArrowLeft className="h-5 w-5" /></button>}
           <Separator orientation="vertical" className="mr-1 h-5" />
