@@ -248,6 +248,8 @@ export type DeliveryOrder = {
   longitud?: number | null;
   distancia_km?: number | null;
   tipo_entrega: TipoEntrega;
+  /** De dónde vino el pedido: la app o la tienda online del comercio. */
+  canal?: "app" | "tienda";
   programado_para?: string | null;
   efectivo_paga_con?: number | null;
   listo_at?: string | null;

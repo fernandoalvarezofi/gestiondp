@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowDownRight, ArrowUpRight, Clock3, Loader2, Receipt, ShieldCheck, Star, Timer, TrendingUp, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Clock3, Globe, Loader2, Receipt, ShieldCheck, Star, Timer, TrendingUp, Wallet } from "lucide-react";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { db, errorMessage, metodoPagoLabel, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,16 @@ export function MerchantStats({ storeId, rating, reviews }: { storeId: string; r
   const [days, setDays] = useState<(typeof PERIODS)[number]>(30);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tienda, setTienda] = useState<{ pedidos: number; ventas: number } | null>(null);
+
+  // Lo vendido a través de la tienda online (pedidos entregados cuyo cliente llegó desde /t/...).
+  useEffect(() => {
+    let active = true;
+    const desde = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+    db.from("delivery_pedidos").select("subtotal").eq("comercio_id", storeId).eq("canal", "tienda").eq("estado", "entregado").gte("created_at", desde).limit(5000)
+      .then(({ data }: { data: { subtotal: number }[] | null }) => { if (active) setTienda({ pedidos: (data || []).length, ventas: (data || []).reduce((total, row) => total + Number(row.subtotal), 0) }); }, () => undefined);
+    return () => { active = false; };
+  }, [storeId, days]);
 
   useEffect(() => {
     let active = true;
@@ -78,6 +88,10 @@ export function MerchantStats({ storeId, rating, reviews }: { storeId: string; r
         <StatCard label="Ticket promedio" value={money(stats.ticket_promedio)} icon={<TrendingUp className="h-4 w-4" />} hint={stats.descuentos > 0 ? `Descuentos aplicados: ${money(stats.descuentos)}` : "Sin envío ni propinas"} />
         <StatCard label="Calificación" value={ratingTotal ? Number(stats.calificacion.promedio).toFixed(1) : reviews ? Number(rating).toFixed(1) : "—"} icon={<Star className="h-4 w-4" />} hint={ratingTotal ? `${ratingTotal} opiniones en el período` : `${reviews} opiniones en total`} />
       </div>
+
+      {tienda && tienda.pedidos > 0 && (
+        <p className="flex items-center gap-2 rounded-2xl border bg-card p-3.5 text-sm"><Globe className="h-4 w-4 shrink-0" /><span><span className="font-extrabold">Tienda online:</span> {tienda.pedidos} {tienda.pedidos === 1 ? "pedido entregado" : "pedidos entregados"} por {money(tienda.ventas)} en este período.</span></p>
+      )}
 
       {empty ? (
         <EmptyState title="Todavía no hay datos en este período" text="Cuando recibas pedidos vas a ver ventas, horarios pico, productos estrella y tu desempeño acá." />

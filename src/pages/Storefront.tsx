@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { marcarOrigenTienda } from "@/lib/canal";
 import { Link, useParams } from "react-router-dom";
 import { Loader2, Store as StoreIcon } from "lucide-react";
 import { StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
@@ -32,6 +33,7 @@ export default function Storefront() {
       ]);
       if (!alive) return;
       setStore(found);
+      marcarOrigenTienda(found.id);
       setProducts(catalog || []);
       setSections(configured || []);
       setReviews(opinions || []);

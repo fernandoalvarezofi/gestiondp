@@ -1,3 +1,4 @@
+import { vinoDeTienda } from "@/lib/canal";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Banknote, Bike, CalendarClock, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Store as StoreIcon, Tag, Trash2, Wallet, X, Zap } from "lucide-react";
@@ -252,6 +253,8 @@ export default function Cart() {
       ? await db.rpc("delivery_crear_pedido_online", params)
       : await db.rpc("delivery_crear_pedido", { ...params, p_metodo_pago: payment, p_paga_con: payment === "efectivo" ? cashWith : null, p_usar_saldo: walletUsed > 0 });
     if (error || !orderId) { setSubmitting(false); return toast.error(errorMessage(error, "No pudimos crear el pedido")); }
+    // Dato informativo: si el cliente llegó desde la tienda online del comercio, el pedido se marca como tal.
+    if (vinoDeTienda(store.id)) db.rpc("delivery_marcar_canal", { p_pedido: orderId, p_canal: "tienda" }).then(() => undefined, () => undefined);
     clearCart();
     if (!online) {
       setSubmitting(false);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlarmClock, BellRing, Settings2, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, PackageCheck, Phone, Printer, Search, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
+import { AlarmClock, BellRing, Globe, Settings2, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, PackageCheck, Phone, Printer, Search, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { ChatButton } from "@/components/delivery/OrderChat";
@@ -210,6 +210,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
 
       <div className="mt-2 flex flex-wrap gap-1.5">
         <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold", retiro ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" : "bg-primary/10 text-primary")}>{retiro ? <Store className="h-3 w-3" /> : <Bike className="h-3 w-3" />}{retiro ? "Retira en el local" : "Envío"}</span>
+        {order.canal === "tienda" && <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-[11px] font-extrabold text-background"><Globe className="h-3 w-3" />Tienda online</span>}
         {order.programado_para && <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-extrabold"><CalendarClock className="h-3 w-3" />Programado · {formatSlot(order.programado_para)}</span>}
         {(order.demora_extra_min ?? 0) > 0 && <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-extrabold">+{order.demora_extra_min} min de demora</span>}
       </div>

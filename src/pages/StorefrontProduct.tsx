@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { marcarOrigenTienda } from "@/lib/canal";
 import { Bike, ChevronRight, Clock3, Heart, Loader2, Minus, Plus, Share2, ShoppingBag, Store as StoreIcon, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AddressDialog } from "@/components/delivery/AddressDialog";
@@ -59,6 +60,7 @@ export default function StorefrontProduct() {
       if (!alive) return;
       if (!item) { setState("missing"); return; }
       setStore(found);
+      marcarOrigenTienda(found.id);
       setProduct(item);
       setOthers(((catalog ?? []) as DeliveryProduct[]).filter((other) => other.id !== item.id));
       setVendedor((resumen as VendedorResumen | null) ?? null);
