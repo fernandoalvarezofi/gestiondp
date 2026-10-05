@@ -85,6 +85,7 @@
 - Carrito y checkout multi-vendedor (una orden por vendedor), **comisiones de marketplace** registradas en el libro, protección al comprador y reclamos.
 **Estado Fase 4:**
 - ✅ Paso 1 — `categorias` (2 niveles, 12 raíces y 50 hijas sembradas, administradas por Woref), `delivery_productos.categoria_id/marca/atributos` (validados en la base) y canales `en_market`/`en_tienda` (el comercio elige dónde se muestra cada producto); editor de producto con selector de categoría, características y canales. Pruebas: `supabase/tests/010_categorias.sql`, `src/services/categories.test.ts`.
+- ✅ Paso 2 — buscador en la base (`market_buscar`, `market_facetas`; texto sin tildes y tolerante a errores con `pg_trgm`/`unaccent`, filtros de categoría/marca/precio/ofertas/stock, orden y cercanía, topes anti-abuso); `SearchService` (`src/services/search.ts`, interfaz + implementación Postgres); pantalla de búsqueda con filtros en la URL, facetas con conteos, ver más y filtros en celular; categorías iniciales asignadas a los productos existentes. Pruebas: `supabase/tests/011_buscador.sql`, `src/services/search.test.ts` + recorrido en navegador.
 
 **Tamaño:** L. **Riesgo:** dinero y confianza → depende de la fase 5 para registrar comisiones correctamente.
 
