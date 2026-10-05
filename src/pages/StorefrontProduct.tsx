@@ -39,6 +39,7 @@ export default function StorefrontProduct() {
   const [vendedor, setVendedor] = useState<VendedorResumen | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
   const [quantity, setQuantity] = useState(1);
+  const [varianteId, setVarianteId] = useState<string | null>(null);
   const [options, setOptions] = useState(false);
   const [favs, setFavs] = useState<string[]>(readFavs);
 
@@ -50,6 +51,7 @@ export default function StorefrontProduct() {
     let alive = true;
     setState("loading");
     setQuantity(1);
+    setVarianteId(null);
     (async () => {
       const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
       if (!alive) return;
@@ -131,9 +133,17 @@ export default function StorefrontProduct() {
   const conVariantes = Boolean(product.usa_variantes);
   const outOfStock = !product.disponible || product.stock === 0 || (conVariantes && variantesDisponibles(product).length === 0);
   const groups = sortGroups(product.grupos);
-  const hasOptions = conVariantes || groups.some((group) => group.opciones.some((option) => option.disponible));
-  const maxQty = Math.min(product.stock ?? 50, 50);
-  const off = descuentoPct(product);
+  // Variantes sin grupos de opciones se eligen acá mismo (talle, color…), con precio y stock propios; con grupos se sigue usando el detalle emergente.
+  const inlineVariantes = conVariantes && groups.length === 0;
+  const variantes = inlineVariantes ? [...(product.variantes ?? [])].sort((a, b) => a.orden - b.orden) : [];
+  const variante = inlineVariantes ? (variantes.find((v) => v.id === varianteId && v.disponible && v.stock !== 0) ?? variantesDisponibles(product)[0] ?? null) : null;
+  const precioActual = variante?.precio != null ? Number(variante.precio) : Number(product.precio);
+  const stockActual = variante ? variante.stock : product.stock;
+  const maxQty = Math.min(stockActual ?? 50, 50);
+  const hasOptions = (conVariantes && !inlineVariantes) || groups.some((group) => group.opciones.some((option) => option.disponible));
+  // Con variante elegida el descuento se calcula sobre el precio de esa variante, no sobre el del producto.
+  const anterior = Number(product.precio_anterior ?? 0);
+  const off = inlineVariantes ? (anterior > precioActual ? Math.round((1 - precioActual / anterior) * 100) : null) : descuentoPct(product);
   const fotos = fotosDe(product);
   const lista = insignias(product, masVendidos);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
@@ -149,7 +159,7 @@ export default function StorefrontProduct() {
   const related = [...others.filter((other) => other.categoria === product.categoria), ...others.filter((other) => other.categoria !== product.categoria)].slice(0, 8);
 
   const add = (goToCart: boolean) => {
-    const sameStore = addItem(product, cartStore, quantity);
+    const sameStore = addItem(product, cartStore, quantity, undefined, [], variante ? { id: variante.id, nombre: variante.nombre, precio: variante.precio } : undefined);
     if (!sameStore) toast.info(`Vaciamos tu carrito anterior para pedir en ${store.nombre}`);
     else if (!goToCart) toast.success("Agregado al carrito");
     if (goToCart) navigate("/app/carrito");
@@ -208,7 +218,7 @@ export default function StorefrontProduct() {
 
             <div className="mt-4">
               {off && <p className="text-base text-muted-foreground line-through">{money(product.precio_anterior ?? 0)}</p>}
-              <p className="flex flex-wrap items-baseline gap-3"><span className="text-4xl font-black tabular-nums">{conVariantes && <span className="mr-2 text-lg font-bold text-muted-foreground">Desde</span>}{money(precioDesde(product))}</span>{off && <span className="text-lg font-extrabold text-success">{off}% OFF</span>}</p>
+              <p className="flex flex-wrap items-baseline gap-3"><span className="text-4xl font-black tabular-nums">{conVariantes && !inlineVariantes && <span className="mr-2 text-lg font-bold text-muted-foreground">Desde</span>}{money(inlineVariantes ? precioActual : precioDesde(product))}</span>{off && <span className="text-lg font-extrabold text-success">{off}% OFF</span>}</p>
             </div>
 
             <ul className="mt-5 space-y-2.5 rounded-2xl border bg-card p-4 text-sm text-card-foreground">
@@ -225,7 +235,7 @@ export default function StorefrontProduct() {
 
             <p className="mt-4 text-sm font-semibold">
               {outOfStock ? <span className="text-destructive">Sin stock por el momento</span>
-                : !conVariantes && product.stock != null && product.stock <= 5 ? <span className="text-destructive">¡Últimas {product.stock} unidades disponibles!</span>
+                : stockActual != null && stockActual <= 5 && (!conVariantes || inlineVariantes) ? <span className="text-destructive">¡Últimas {stockActual} unidades disponibles!</span>
                 : <span className="text-success">Stock disponible</span>}
             </p>
 
@@ -237,6 +247,24 @@ export default function StorefrontProduct() {
 
             {!outOfStock && !unavailable && (
               <div ref={ctaRef} className="mt-5 space-y-3">
+                {inlineVariantes && variantes.length > 0 && (
+                  <fieldset>
+                    <legend className="text-sm font-bold">Elegí una opción{variante && <span className="ml-1 font-semibold text-muted-foreground">· {variante.nombre}</span>}</legend>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {variantes.map((v) => {
+                        const agotada = !v.disponible || v.stock === 0;
+                        const active = v.id === variante?.id;
+                        return (
+                          <button key={v.id} type="button" disabled={agotada} aria-pressed={active} onClick={() => { setVarianteId(v.id); setQuantity(1); }}
+                            className={cn("min-w-[3rem] border-2 px-4 py-2 text-sm font-bold transition-colors", agotada && "cursor-not-allowed line-through opacity-40")}
+                            style={{ ...radiusButton, ...(active ? { borderColor: "var(--sf-accent)", background: "var(--sf-accent)", color: "var(--sf-on-accent)" } : {}) }}>
+                            {v.nombre}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </fieldset>
+                )}
                 {hasOptions ? (
                   <button type="button" onClick={() => setOptions(true)} className="h-13 w-full py-3.5 text-base font-bold" style={cta()}>{conVariantes ? "Elegir opción y agregar" : "Elegir opciones y agregar"}</button>
                 ) : (
@@ -248,9 +276,9 @@ export default function StorefrontProduct() {
                         <span className="w-10 text-center font-extrabold tabular-nums" aria-live="polite">{quantity}</span>
                         <button type="button" aria-label="Más" className="flex h-10 w-10 items-center justify-center disabled:opacity-40" disabled={quantity >= maxQty} onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}><Plus className="h-4 w-4" /></button>
                       </div>
-                      {product.stock != null && <span className="text-xs text-muted-foreground">({product.stock} disponibles)</span>}
+                      {stockActual != null && <span className="text-xs text-muted-foreground">({stockActual} disponibles)</span>}
                     </div>
-                    <button type="button" onClick={() => add(true)} className="w-full py-3.5 text-base font-bold" style={cta()}>Comprar ahora · {money(Number(product.precio) * quantity)}</button>
+                    <button type="button" onClick={() => add(true)} className="w-full py-3.5 text-base font-bold" style={cta()}>Comprar ahora · {money(precioActual * quantity)}</button>
                     <button type="button" onClick={() => add(false)} className="w-full border-2 py-3 text-base font-bold" style={{ borderColor: "var(--sf-accent)", color: "var(--sf-accent)", ...radiusButton }}>Agregar al carrito</button>
                   </>
                 )}
@@ -293,7 +321,7 @@ export default function StorefrontProduct() {
       {!outOfStock && !unavailable && !ctaVisible && (
         <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur md:hidden" role="region" aria-label="Comprar este producto">
           <div className="mx-auto flex max-w-md items-center gap-3">
-            <div className="min-w-0"><p className="truncate text-xs text-muted-foreground">{product.nombre}</p><p className="font-black tabular-nums">{conVariantes && <span className="mr-1 text-xs font-bold text-muted-foreground">Desde</span>}{money(precioDesde(product))}</p></div>
+            <div className="min-w-0"><p className="truncate text-xs text-muted-foreground">{product.nombre}</p><p className="font-black tabular-nums">{conVariantes && !inlineVariantes && <span className="mr-1 text-xs font-bold text-muted-foreground">Desde</span>}{money(inlineVariantes ? precioActual : precioDesde(product))}</p></div>
             <button type="button" onClick={() => (hasOptions ? setOptions(true) : add(true))} className="ml-auto shrink-0 px-6 py-3 text-base font-bold" style={cta()}>{hasOptions ? "Elegir opción" : "Comprar ahora"}</button>
           </div>
         </div>
