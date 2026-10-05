@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, To, useLocation, useNavigate } from "react-router-dom";
-import { Bike, ChevronDown, Heart, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
+import { Bike, BookUser, CarTaxiFront, ChevronDown, Heart, LayoutGrid, Package, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { MfaChallenge } from "@/components/account/MfaChallenge";
@@ -135,6 +135,17 @@ export function AppLayout() {
                 <Button asChild variant="outline" className="rounded-full font-bold"><NavLink to={{ pathname: "/auth", search: `?registro=1&next=${encodeURIComponent(location.pathname)}` }}>Crear cuenta</NavLink></Button>
               </>
             ) : (<>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="rounded-full font-bold"><LayoutGrid className="h-4 w-4" />Servicios<ChevronDown className="h-4 w-4" /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-60">
+                <DropdownMenuItem onClick={() => navigate("/app/enviar")}><Package className="h-4 w-4" />Enviar un paquete</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/app/remis")}><CarTaxiFront className="h-4 w-4" />Pedir un remis</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/app/directorio")}><BookUser className="h-4 w-4" />Directorio de la ciudad</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/app/club")}><Trophy className="h-4 w-4" />Woref Club</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button asChild variant="ghost" className="rounded-full font-bold"><NavLink to="/app/pedidos"><Receipt className="h-4 w-4" />Pedidos</NavLink></Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

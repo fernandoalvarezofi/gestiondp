@@ -212,10 +212,12 @@ export default function MerchantLayout() {
           { to: "/app/comercio/pedidos", label: "Pedidos", icon: ClipboardList, badge: pendingCount },
           ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", short: "Menú", icon: UtensilsCrossed }] : []),
         ] },
+        { label: "Tienda online", items: [
+          ...(can("ajustes") ? [{ to: "/app/comercio/tienda", label: "Diseño de mi tienda", short: "Tienda", icon: Globe }] : []),
+          ...(can("opiniones") ? [{ to: "/app/comercio/preguntas", label: "Preguntas", icon: MessageCircleQuestion, badge: preguntasPendientes }, { to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
+        ] },
         { label: "Crecimiento", items: [
           ...(can("promociones") ? [{ to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone }, { to: "/app/comercio/campanas", label: "Campañas", icon: Send }] : []),
-          ...(can("ajustes") ? [{ to: "/app/comercio/tienda", label: "Tienda online", short: "Tienda", icon: Globe }] : []),
-          ...(can("opiniones") ? [{ to: "/app/comercio/preguntas", label: "Preguntas", icon: MessageCircleQuestion, badge: preguntasPendientes }, { to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
           ...(can("estadisticas") ? [{ to: "/app/comercio/estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3 }] : []),
         ] },
         { label: "Mi local", items: [
