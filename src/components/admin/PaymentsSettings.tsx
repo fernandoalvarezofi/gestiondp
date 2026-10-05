@@ -14,6 +14,7 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
   const [token, setToken] = useState("");
   const [saving, setSaving] = useState(false);
   const [firma, setFirma] = useState("");
+  const [concil, setConcil] = useState<{ cobrado: number; reintegrado: number; contracargos: number; neto: number; diferencias: { pago_id: string }[] } | null>(null);
   const [pagos, setPagos] = useState<{ pagos: PagoFila[]; incidentes_24h: number } | null>(null);
 
   const load = useCallback(async () => {
@@ -21,6 +22,8 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
     setStatus(data);
     const { data: lista } = await db.rpc("delivery_admin_pagos", { p_limite: 20 });
     setPagos(lista ?? null);
+    const { data: conc } = await db.rpc("delivery_admin_conciliacion_pagos");
+    setConcil(conc ?? null);
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -102,6 +105,14 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
 
       <section className="rounded-3xl border bg-card p-4 sm:p-5 lg:col-span-2">
         <h3 className="font-extrabold">Cobros recientes {pagos && pagos.incidentes_24h > 0 && <span className="ml-2 rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive">{pagos.incidentes_24h} avisos con firma inválida en 24 h</span>}</h3>
+        {concil && (
+          <div className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
+            <p className="rounded-2xl bg-muted p-3"><span className="block text-xs text-muted-foreground">Cobrado</span><b>{money(concil.cobrado)}</b></p>
+            <p className="rounded-2xl bg-muted p-3"><span className="block text-xs text-muted-foreground">Reintegrado</span><b>{money(concil.reintegrado)}</b></p>
+            <p className="rounded-2xl bg-muted p-3"><span className="block text-xs text-muted-foreground">Contracargos</span><b>{money(concil.contracargos)}</b></p>
+            <p className={`rounded-2xl p-3 ${concil.diferencias.length ? "bg-destructive/10 text-destructive" : "bg-success/10"}`}><span className="block text-xs text-muted-foreground">Neto en el libro</span><b>{money(concil.neto)}</b>{concil.diferencias.length > 0 && <span className="block text-xs font-bold">{concil.diferencias.length} pagos no concilian</span>}</p>
+          </div>
+        )}
         {pagos?.pagos.length ? (
           <ul className="mt-3 divide-y rounded-2xl border">
             {pagos.pagos.map((pago) => (
