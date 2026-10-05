@@ -1,5 +1,5 @@
-import { CSSProperties, ReactNode, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { CSSProperties, ReactNode, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, BadgeCheck, Bike, SlidersHorizontal, X, Clock3, CreditCard, Globe, Headphones, Instagram, MapPin, MessageCircle, Search, ShoppingBag, Star, Store as StoreIcon, Zap } from "lucide-react";
 import { ProductCard } from "@/components/delivery/ProductCard";
 import { SmartImage } from "@/components/delivery/SmartImage";
@@ -9,11 +9,13 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
 import { DeliveryProduct, DeliverySection, DeliveryStore, isOpenNow, money, nextOpening, orderSections, scheduleSummary } from "@/lib/delivery";
 import { storeReach } from "@/lib/geo";
-import { Bloque, BloqueBanner, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { Bloque, BloqueBanner, BloqueCatalogo, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
 import { NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
 import { StoreFooter } from "@/components/storefront/StoreFooter";
+import { CategoriesMenu, StoreMobileMenu, StoreSearch } from "@/components/storefront/StoreNav";
+import { collectionPath, offersPath, searchPath, storePath, tieneDescuento, Vista, VISTA_INICIO, vistaKey } from "@/lib/storeRoutes";
 import { MiniCart } from "@/components/storefront/MiniCart";
 import { SellerCard } from "@/components/storefront/SellerCard";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -35,6 +37,8 @@ type Props = {
   selectedBlock?: string | null;
   /** Reputación y datos reales del vendedor (la tienda pública los pide a la base). */
   vendedor?: VendedorResumen | null;
+  /** Página de la tienda que se muestra: inicio (con los bloques), colección, ofertas o búsqueda. */
+  vista?: Vista;
 };
 
 type Group = { name: string; items: DeliveryProduct[] };
@@ -53,15 +57,26 @@ const ALTO_SEP = { chico: "h-4", medio: "h-10", grande: "h-20" } as const;
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 /** Tienda online de un comercio: arma la página con los bloques y el diseño elegidos. Es la misma pantalla para el sitio público y la vista previa del editor. */
-export function StorefrontView({ store, tema, products, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null }: Props) {
+export function StorefrontView({ store, tema, products, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista }: Props) {
   const theme = useMemo(() => tema ?? normalizeTheme(store.tienda_tema), [tema, store.tienda_tema]);
   const d = theme.diseno;
   const { itemCount, subtotal } = useCart();
   const point = useAddressPoint();
   const tariff = useTariff(point);
-  const [term, setTerm] = useState("");
-  const [category, setCategory] = useState<string | null>(null);
-  const [filtros, setFiltros] = useState<FiltrosCatalogo>(SIN_FILTROS);
+  const navigate = useNavigate();
+  const vistaActual = vista ?? VISTA_INICIO;
+  const esInicio = vistaActual.tipo === "inicio";
+  const [term, setTerm] = useState(vistaActual.tipo === "buscar" ? vistaActual.q : "");
+  const [category, setCategory] = useState<string | null>(vistaActual.tipo === "coleccion" ? vistaActual.categoria : null);
+  const [filtros, setFiltros] = useState<FiltrosCatalogo>(vistaActual.tipo === "ofertas" ? { ...SIN_FILTROS, soloOferta: true } : SIN_FILTROS);
+  // Al pasar de una página de la tienda a otra se reinician la búsqueda, la categoría y los filtros.
+  const claveVista = vistaKey(vistaActual);
+  useEffect(() => {
+    setTerm(vistaActual.tipo === "buscar" ? vistaActual.q : "");
+    setCategory(vistaActual.tipo === "coleccion" ? vistaActual.categoria : null);
+    setFiltros(vistaActual.tipo === "ofertas" ? { ...SIN_FILTROS, soloOferta: true } : SIN_FILTROS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [claveVista]);
   const [rango, setRango] = useState({ min: "", max: "" });
   const [drawer, setDrawer] = useState(false);
   const masVendidos = useMemo(() => (vendedor?.mas_vendidos ?? []).map((item) => item.producto_id), [vendedor]);
@@ -96,7 +111,23 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
   ].filter(Boolean) as { href: string; label: string; icon: typeof Globe }[];
 
   const go = (id: string) => { if (!preview) scrollToId(id); };
-  const pickCategory = (name: string | null) => { setCategory(name); if (!preview) setTimeout(() => scrollToId("catalogo"), 30); };
+  const pickCategory = (name: string | null) => {
+    // Cada colección tiene su propia página; en la vista previa del editor solo se filtra.
+    if (!preview && name) { navigate(collectionPath(store.slug, name)); return; }
+    setCategory(name);
+    if (!preview) setTimeout(() => scrollToId("catalogo"), 30);
+  };
+  const selectCategory = (name: string | null) => {
+    if (!preview && !esInicio) { navigate(name ? collectionPath(store.slug, name) : searchPath(store.slug, "")); return; }
+    setCategory(name);
+  };
+  // Al llegar a la portada con un ancla (#acerca, #contacto) se baja hasta esa sección.
+  useEffect(() => {
+    if (!esInicio || preview || !window.location.hash) return;
+    const id = window.location.hash.slice(1);
+    const timer = window.setTimeout(() => scrollToId(id), 400);
+    return () => window.clearTimeout(timer);
+  }, [esInicio, preview]);
   const follow = (tipo: "catalogo" | "whatsapp" | "url", url?: string) => {
     if (preview) return;
     if (tipo === "catalogo") scrollToId("catalogo");
@@ -316,7 +347,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
               <p className="mb-2 font-extrabold">Categorías</p>
               <ul className="space-y-1">
                 {[{ name: null as string | null, count: available.length }, ...allGroups.map((group) => ({ name: group.name as string | null, count: group.items.length }))].map((item) => (
-                  <li key={item.name ?? "todas"}><button type="button" onClick={() => setCategory(item.name)} aria-pressed={category === item.name} className={cn("flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left hover:bg-muted/60", category === item.name && "bg-muted font-bold")}><span>{item.name ?? "Todas"}</span><span className="opacity-60">{item.count}</span></button></li>
+                  <li key={item.name ?? "todas"}><button type="button" onClick={() => selectCategory(item.name)} aria-pressed={category === item.name} className={cn("flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left hover:bg-muted/60", category === item.name && "bg-muted font-bold")}><span>{item.name ?? "Todas"}</span><span className="opacity-60">{item.count}</span></button></li>
                 ))}
               </ul>
             </div>
@@ -394,7 +425,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
         );
         return (
           <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
-            <Titulo id="catalogo">{b.titulo || "Todos los productos"} <span className="ml-1 text-base font-normal opacity-60">({visible.length})</span></Titulo>
+            {esInicio ? <Titulo id="catalogo">{b.titulo || "Todos los productos"} <span className="ml-1 text-base font-normal opacity-60">({visible.length})</span></Titulo> : <span id="catalogo" className="block" />}
             {marketplace ? (
               <div className="lg:grid lg:grid-cols-[250px_1fr] lg:gap-8">
                 <aside className="hidden self-start lg:sticky lg:top-24 lg:block" aria-label="Filtros">{panelFiltros}</aside>
@@ -568,21 +599,36 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
 
   // ---- encabezado y navegación
   const bloques = theme.bloques.filter((b) => b.visible);
-  const hasColecciones = bloques.some((b) => b.tipo === "colecciones") && allGroups.length >= 2;
-  const navLinks = [
-    hasColecciones && { id: "colecciones", label: "Colecciones" },
-    { id: "catalogo", label: "Productos" },
-    bloques.some((b) => b.tipo === "texto" && b.id === "acerca") && { id: "acerca", label: "Nosotros" },
-    bloques.some((b) => b.tipo === "contacto") && { id: "contacto", label: "Contacto" },
-  ].filter(Boolean) as { id: string; label: string }[];
-  const brand = <span className="flex min-w-0 items-center gap-3"><StoreLogo store={store} className={cn("h-10 w-10 shrink-0 text-sm", d.radio === "cuadrado" && "!rounded-none")} /><span className={cn("truncate text-lg font-extrabold", centered && "uppercase tracking-[0.18em] text-sm font-semibold")} style={headingStyle}>{store.nombre}</span></span>;
-  const navigation = <nav className="hidden items-center gap-1 lg:flex" aria-label="Secciones">{navLinks.map((link) => <button key={link.id} type="button" onClick={() => go(link.id)} className="rounded-full px-3 py-1.5 text-sm font-semibold opacity-80 hover:opacity-100">{link.label}</button>)}</nav>;
-  const searchBox = (
-    <label className="hidden h-10 w-56 items-center gap-2 border bg-background/80 px-3 text-foreground xl:flex" style={radiusButton}>
-      <Search className="h-4 w-4 text-muted-foreground" />
-      <input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar" aria-label="Buscar productos" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
-    </label>
+  const brandContent = <span className="flex min-w-0 items-center gap-3"><StoreLogo store={store} className={cn("h-10 w-10 shrink-0 text-sm", d.radio === "cuadrado" && "!rounded-none")} /><span className={cn("truncate text-lg font-extrabold", centered && "uppercase tracking-[0.18em] text-sm font-semibold")} style={headingStyle}>{store.nombre}</span></span>;
+  const brand = preview ? brandContent : <Link to={storePath(store.slug)} aria-label={`Inicio de ${store.nombre}`} className="min-w-0">{brandContent}</Link>;
+  const categorias = allGroups.map((group) => group.name);
+  const hayOfertas = available.some(tieneDescuento);
+  const linkClass = "rounded-full px-3 py-1.5 text-sm font-semibold opacity-80 hover:opacity-100";
+  const aSeccion = (id: string) => `${storePath(store.slug)}#${id}`;
+  const navItem = (label: string, id: string, to: string) => (esInicio || preview
+    ? <button key={label} type="button" onClick={() => go(id)} className={linkClass}>{label}</button>
+    : <Link key={label} to={to} className={linkClass}>{label}</Link>);
+  const hayAcerca = bloques.some((b) => b.tipo === "texto" && b.id === "acerca");
+  const hayContacto = bloques.some((b) => b.tipo === "contacto");
+  const navigation = (
+    <nav className="hidden items-center gap-1 lg:flex" aria-label="Secciones">
+      {!esInicio && !preview && <Link to={storePath(store.slug)} className={linkClass}>Inicio</Link>}
+      <CategoriesMenu slug={store.slug} categorias={categorias} preview={preview} />
+      {navItem("Productos", "catalogo", searchPath(store.slug, ""))}
+      {hayOfertas && (preview ? <span className={linkClass}>Ofertas</span> : <Link to={offersPath(store.slug)} className={linkClass}>Ofertas</Link>)}
+      {hayAcerca && navItem("Nosotros", "acerca", aSeccion("acerca"))}
+      {hayContacto && navItem("Contacto", "contacto", aSeccion("contacto"))}
+    </nav>
   );
+  const menuMovil = (
+    <StoreMobileMenu nombre={store.nombre} slug={store.slug} categorias={categorias} hayOfertas={hayOfertas} preview={preview} scope={pageStyle}
+      enlaces={[
+        { label: "Todos los productos", to: searchPath(store.slug, "") },
+        ...(hayAcerca ? [esInicio ? { label: "Nosotros", onClick: () => go("acerca") } : { label: "Nosotros", to: aSeccion("acerca") }] : []),
+        ...(hayContacto ? [esInicio ? { label: "Contacto", onClick: () => go("contacto") } : { label: "Contacto", to: aSeccion("contacto") }] : []),
+      ]} />
+  );
+  const searchBox = <StoreSearch key={claveVista} slug={store.slug} products={available} categorias={categorias} preview={preview} radius={radiusButton} initial={vistaActual.tipo === "buscar" ? vistaActual.q : ""} className="hidden w-64 xl:block" />;
   const cartClass = "inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-bold";
   const cart = preview
     ? <span className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</span>
@@ -593,15 +639,46 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
     <header className={cn("z-30 border-b bg-card/95 text-card-foreground backdrop-blur", preview ? "relative" : "sticky top-0")}>
       <div className={cn("mx-auto flex h-16 items-center gap-4 px-4 sm:px-6", width, centered && "justify-between")}>
         {centered ? (
-          <><div className="flex-1">{navigation}</div>{brand}<div className="flex flex-1 items-center justify-end gap-3">{searchBox}{cart}</div></>
+          <><div className="flex flex-1 items-center">{menuMovil}{navigation}</div>{brand}<div className="flex flex-1 items-center justify-end gap-3">{searchBox}{cart}</div></>
         ) : (
-          <>{brand}<div className="mx-auto">{navigation}</div><div className="ml-auto flex items-center gap-3 lg:ml-0">{searchBox}{cart}</div></>
+          <>{menuMovil}{brand}<div className="mx-auto">{navigation}</div><div className="ml-auto flex items-center gap-3 lg:ml-0">{searchBox}{cart}</div></>
         )}
       </div>
     </header>
   );
 
-  const nombreDe = (tipo: Bloque["tipo"]) => TIPOS_BLOQUE.find((item) => item.tipo === tipo)?.nombre ?? tipo;
+  // ---- páginas internas de la tienda (colección, ofertas, búsqueda): cabecera con ruta + catálogo con filtros + confianza/newsletter/políticas
+  const renderPagina = () => {
+    const base = bloques.find((b): b is BloqueCatalogo => b.tipo === "catalogo");
+    const titulo = vistaActual.tipo === "coleccion" ? vistaActual.categoria : vistaActual.tipo === "ofertas" ? "Ofertas" : vistaActual.tipo === "buscar" ? (vistaActual.q ? `Resultados para “${vistaActual.q}”` : "Todos los productos") : "";
+    const descripcion = vistaActual.tipo === "ofertas" ? "Productos con precio rebajado." : vistaActual.tipo === "coleccion" ? "Todo lo que tenemos en esta colección." : vistaActual.tipo === "buscar" ? "Buscá por nombre y filtrá por categoría o precio." : "";
+    const existe = vistaActual.tipo !== "coleccion" || allGroups.some((group) => group.name === vistaActual.categoria);
+    const bloque: BloqueCatalogo = { id: "catalogo", tipo: "catalogo", visible: true, titulo, columnas: base?.columnas ?? 4, filtros: true };
+    const extras = bloques.filter((b) => b.tipo === "confianza" || b.tipo === "newsletter" || b.tipo === "politicas");
+    return (
+      <>
+        <section className={cn("mx-auto px-4 pt-8 sm:px-6", width)}>
+          <nav aria-label="Ruta" className="mb-3 flex flex-wrap items-center gap-1.5 text-sm opacity-70">
+            <Link to={storePath(store.slug)} className="font-semibold hover:underline">Inicio</Link>
+            <span aria-hidden>›</span>
+            <span aria-current="page">{titulo}</span>
+          </nav>
+          <h1 className="text-3xl font-black leading-tight sm:text-5xl" style={headingStyle}>{titulo}</h1>
+          {descripcion && <p className="mt-2 max-w-2xl opacity-70">{descripcion}</p>}
+        </section>
+        {existe ? renderBloque(bloque) : (
+          <section className={cn("mx-auto px-4 py-16 text-center sm:px-6", width)}>
+            <p className="text-xl font-extrabold">No encontramos esa colección</p>
+            <p className="mt-1 opacity-70">Puede que haya cambiado de nombre. Mirá todo lo que tenemos.</p>
+            <Link to={searchPath(store.slug, "")} className="mt-5 inline-flex items-center gap-2 px-6 py-3 font-bold" style={{ ...accent, ...radiusButton }}>Ver todos los productos</Link>
+          </section>
+        )}
+        {extras.map((b) => <div key={b.id}>{renderBloque(b)}</div>)}
+      </>
+    );
+  };
+
+  const nombreDe = (tipo: Bloque["tipo"]) =>TIPOS_BLOQUE.find((item) => item.tipo === tipo)?.nombre ?? tipo;
 
   return (
     <div style={pageStyle} className={cn("min-h-screen bg-background text-foreground", darkPage && "dark")}>
@@ -615,7 +692,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
       )}
 
       <main className="pb-28">
-        {bloques.map((bloque) => {
+        {!esInicio ? renderPagina() : bloques.map((bloque) => {
           const content = renderBloque(bloque);
           if (!content) return null;
           const selected = selectedBlock === bloque.id;
@@ -638,7 +715,15 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
         store={store}
         preview={preview}
         widthClass={width}
-        enlaces={[...navLinks.map((l) => ({ label: l.label, onClick: () => go(l.id) })), ...(bloques.some((b) => b.tipo === "politicas") ? [{ label: "Envíos y cambios", onClick: () => go("politicas") }] : [])]}
+        enlaces={[
+          ...(esInicio ? [] : [{ label: "Inicio", onClick: () => navigate(storePath(store.slug)) }]),
+          ...categorias.slice(0, 6).map((c) => ({ label: c, onClick: () => navigate(collectionPath(store.slug, c)) })),
+          ...(hayOfertas ? [{ label: "Ofertas", onClick: () => navigate(offersPath(store.slug)) }] : []),
+          { label: "Todos los productos", onClick: () => (esInicio ? go("catalogo") : navigate(searchPath(store.slug, ""))) },
+          ...(hayAcerca ? [{ label: "Nosotros", onClick: () => (esInicio ? go("acerca") : navigate(aSeccion("acerca"))) }] : []),
+          ...(hayContacto ? [{ label: "Contacto", onClick: () => (esInicio ? go("contacto") : navigate(aSeccion("contacto"))) }] : []),
+          ...(bloques.some((b) => b.tipo === "politicas") ? [{ label: "Envíos y cambios", onClick: () => (esInicio ? go("politicas") : navigate(aSeccion("politicas"))) }] : []),
+        ]}
         redes={social.map((x) => ({ href: x.href, label: x.label, icon: <x.icon className="h-4 w-4" /> }))}
       />
 

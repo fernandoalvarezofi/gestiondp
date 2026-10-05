@@ -1,16 +1,20 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { marcarOrigenTienda } from "@/lib/canal";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { Loader2, Store as StoreIcon } from "lucide-react";
 import { StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
 import { Button } from "@/components/ui/button";
 import { COMERCIO_COLS, db, DeliveryProduct, DeliverySection, DeliveryStore, img, productSelect } from "@/lib/delivery";
 import type { VendedorResumen } from "@/lib/marketplace";
 import { storefrontUrl } from "@/lib/storefront";
+import { parseVista } from "@/lib/storeRoutes";
 
 /** Tienda online pública de un comercio (/t/:slug): se puede ver y armar el pedido sin cuenta; al confirmar se pide ingresar. */
 export default function Storefront() {
-  const { slug } = useParams();
+  const { slug, categoria } = useParams();
+  const location = useLocation();
+  // Página de la tienda según la dirección: inicio, /c/<categoría>, /ofertas o /buscar?q=
+  const vista = useMemo(() => parseVista(location.pathname, location.search, categoria), [location.pathname, location.search, categoria]);
   const [store, setStore] = useState<DeliveryStore | null>(null);
   const [products, setProducts] = useState<DeliveryProduct[]>([]);
   const [sections, setSections] = useState<DeliverySection[]>([]);
@@ -56,7 +60,7 @@ export default function Storefront() {
   useEffect(() => {
     if (!store) return;
     const previousTitle = document.title;
-    document.title = `${store.nombre} · Tienda online`;
+    document.title = vista.tipo === "coleccion" ? `${vista.categoria} · ${store.nombre}` : vista.tipo === "ofertas" ? `Ofertas · ${store.nombre}` : vista.tipo === "buscar" ? `${vista.q ? `Resultados para ${vista.q}` : "Productos"} · ${store.nombre}` : `${store.nombre} · Tienda online`;
     const description = (store.descripcion || `Pedí online en ${store.nombre}. Envío a domicilio o retiro en el local.`).slice(0, 155);
     const meta = document.querySelector('meta[name="description"]');
     const previousDescription = meta?.getAttribute("content") ?? null;
@@ -79,7 +83,7 @@ export default function Storefront() {
       if (previousDescription !== null) meta?.setAttribute("content", previousDescription);
       script.remove();
     };
-  }, [store]);
+  }, [store, vista]);
 
   if (state === "loading") return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   if (state === "missing" || !store) {
@@ -92,5 +96,5 @@ export default function Storefront() {
       </div>
     );
   }
-  return <StorefrontView store={store} products={products} sections={sections} reviews={reviews} vendedor={vendedor} />;
+  return <StorefrontView store={store} products={products} sections={sections} reviews={reviews} vendedor={vendedor} vista={vista} />;
 }
