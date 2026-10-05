@@ -19,11 +19,11 @@
 
 | Ítem | Qué | Tamaño |
 |---|---|---|
-| 0.1 | **Cerrar T1**: dejar de exponer `perfiles` a `anon` y limitar columnas (teléfono solo a uno mismo y a quien tenga una relación legítima: comercio del pedido, repartidor asignado, soporte). Exponer nombre/avatar mediante vista o función `perfil_publico`. | S |
-| 0.2 | **Cerrar T2**: ocultar `comision_pct`, `liquidacion_frecuencia`, `propietario_id`, `motivo_rechazo` y coordenadas exactas a `anon` (vista `tiendas_publicas` o permisos de columna). Probar que el front público sigue funcionando (storefront, búsqueda, tarjetas). | S |
-| 0.3 | Conciliar migraciones **repo ↔ base**: mover las 51 migraciones UUID heredadas a `supabase/legacy/` (documentadas como NO aplicadas), verificar las 3 migraciones sin equivalente por nombre, y fijar una convención: el nombre del archivo = nombre aplicado. | S |
-| 0.4 | Activar protección de contraseñas filtradas y fijar `search_path` en `_ts_*`. | S |
-| 0.5 | Revisión **función por función** de las 212 `SECURITY DEFINER` y política por política de las 102 de RLS (cerrar la cobertura pendiente de la auditoría). Generar tests de RLS (suite con roles anon/usuario/comercio/repartidor/admin). | M |
+| 0.1 ✅ **HECHO 2026-10-05** — **Cerrar T1**: dejar de exponer `perfiles` a `anon` y limitar columnas (teléfono solo a uno mismo y a quien tenga una relación legítima: comercio del pedido, repartidor asignado, soporte). Exponer nombre/avatar mediante vista o función `perfil_publico`. | S |
+| 0.2 ✅ **HECHO 2026-10-05** (comisión y frecuencia de liquidación; `propietario_id` se mantiene por depender de él las políticas) — **Cerrar T2**: ocultar `comision_pct`, `liquidacion_frecuencia`, `propietario_id`, `motivo_rechazo` y coordenadas exactas a `anon` (vista `tiendas_publicas` o permisos de columna). Probar que el front público sigue funcionando (storefront, búsqueda, tarjetas). | S |
+| 0.3 ✅ **HECHO 2026-10-05** (queda generar la línea base de `base_perfiles_y_roles`) — Conciliar migraciones **repo ↔ base**: mover las 51 migraciones UUID heredadas a `supabase/legacy/` (documentadas como NO aplicadas), verificar las 3 migraciones sin equivalente por nombre, y fijar una convención: el nombre del archivo = nombre aplicado. | S |
+| 0.4 ◐ **`search_path` hecho**; la protección de contraseñas filtradas es un ajuste del panel de Supabase (Authentication → Passwords) que debe activar el dueño — Activar protección de contraseñas filtradas y fijar `search_path` en `_ts_*`. | S |
+| 0.5 ◐ **Suite `supabase/tests/001_exposicion.sql` hecha y pasando**; falta la lectura manual de las 212 funciones y las 102 políticas — Revisión **función por función** de las 212 `SECURITY DEFINER` y política por política de las 102 de RLS (cerrar la cobertura pendiente de la auditoría). Generar tests de RLS (suite con roles anon/usuario/comercio/repartidor/admin). | M |
 | 0.6 | Regenerar `types.ts` desde la base real; reemplazar `db as any` por tipos (módulo por módulo, sin big-bang). Reescribir `README.md`. | M |
 | 0.7 | CI: agregar `typecheck`, tests de RLS y un E2E mínimo (login → pedido → estado) con Playwright. | M |
 

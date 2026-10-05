@@ -207,7 +207,7 @@ Una sola app: **"Woref Repartidor"** (`app.woref.repartidor`, `webDir: dist`, pl
 ## S. Deuda técnica
 
 1. **`src/integrations/supabase/types.ts` (4 435 líneas) es de otra aplicación** (comunidades, foros, propiedades, `marketplace_*`, etc.; solo 5 tablas `delivery_*`). Por eso existe `db = supabase as any`: la capa de datos está **sin tipos**.
-2. **`supabase/migrations/` mezcla dos historias**: 51 migraciones con nombre UUID (proyecto original, feb-2026, **nunca aplicadas en esta base**) + las `delivery_*`. Un `supabase db push` ciego aplicaría el esquema viejo sobre producción. También hay 3 migraciones del repo sin equivalente aplicado por nombre (`delivery_billetera_cliente`, `delivery_comision_12`, `delivery_libro_contable`): **[no verificado]** si se aplicaron bajo otro nombre (las tablas/funciones correspondientes existen).
+2. ~~`supabase/migrations/` mezclaba dos historias~~ **Resuelto 2026-10-05**: las 52 migraciones del proyecto original (nunca aplicadas aquí) se archivaron en `supabase/legacy/` (con README de advertencia); una de ellas era en realidad la base de delivery y volvió a `migrations/` como `20261001210911_delivery_base.sql`. Las 3 migraciones dudosas (`delivery_billetera_cliente`, `delivery_comision_12`, `delivery_libro_contable`) **están aplicadas** (sus objetos existen). **Faltante conocido:** el archivo de la migración aplicada `base_perfiles_y_roles` no existe en el repo (ver `supabase/migrations/README.md`).
 3. Las versiones/timestamps de migraciones del repo no coinciden con las aplicadas (se aplicaron con la herramienta de Supabase): no hay trazabilidad 1:1.
 4. Sin **capa de servicios** en el front: 113 archivos tocan la base directamente.
 5. Validaciones duplicadas cliente/servidor (tienda) y lógica de estados de envío/viaje con strings sueltos.
@@ -222,13 +222,13 @@ Una sola app: **"Woref Repartidor"** (`app.woref.repartidor`, `webDir: dist`, pl
 
 | # | Severidad | Hallazgo | Estado |
 |---|---|---|---|
-| T1 | **P0 — Alta** | `perfiles` es legible por **anon** con `USING (true)` y permiso de columnas completo: nombre, username, avatar y **teléfono** de todos los usuarios, sin sesión. Comprobado: un rol anon ve los perfiles y sus teléfonos. | Sin corregir (la auditoría no modifica) |
-| T2 | Alta | `delivery_comercios` expone a anon `comision_pct`, `liquidacion_frecuencia`, `propietario_id`, `motivo_rechazo`, `latitud/longitud` exactas. Datos internos del negocio de Woref y de los comercios. | Sin corregir |
+| T1 | ~~P0 — Alta~~ | `perfiles` era legible por **anon** con el teléfono de todos los usuarios. **CERRADO 2026-10-05** (Fase 0): permisos de columna sin `telefono`; cada usuario lee el suyo con `delivery_mi_perfil()`. Verificado con prueba como anon/usuario y recorrido del front. | **Resuelto** |
+| T2 | ~~Alta~~ | `delivery_comercios` exponía a anon `comision_pct` y `liquidacion_frecuencia`. **CERRADO 2026-10-05**: el front usa columnas públicas explícitas (`COMERCIO_COLS`) y administración lee todo con `delivery_admin_comercios()`. Siguen públicos a propósito: `propietario_id` (las políticas lo usan), `motivo_rechazo` (solo existe en comercios no públicos, que RLS oculta), coordenadas y teléfono del local. | **Resuelto** |
 | T3 | Media | Admin de plataforma **dentro** de la base de usuarios (`has_role` + MFA). Un fallo de política afecta todo. Plan de separación en curso (fase 1 hecha). | Parcial |
 | T4 | Media | 151 funciones `SECURITY DEFINER` ejecutables por `authenticated` y 15 por `anon`. Comprobación automática: todas validan al llamante (`auth.uid()`, `has_role`, `delivery_permiso`, `delivery_puede_*` o `delivery_pedido_puede_ver`) salvo cotizaciones/parámetros públicos de solo lectura. Revisión manual **completa** pendiente (ver §Cobertura). Casos a mirar a mano: `delivery_arrepentimiento_crear/resolver` (anon), `delivery_reportar_error` (anon), `delivery_tienda_visita`. | Revisión pendiente |
 | T5 | Media | `mp-webhook` no verifica la firma `x-signature` de Mercado Pago (mitigado por la reconsulta a la API). | Pendiente |
 | T6 | Media | Contraseñas filtradas: protección desactivada. | Pendiente (configuración) |
-| T7 | Baja | `_ts_*` (validadores) sin `search_path` fijo (aviso del analizador); sin riesgo práctico por ser `IMMUTABLE` y no `SECURITY DEFINER`, pero conviene fijarlo. | Pendiente |
+| T7 | ~~Baja~~ | `_ts_*` sin `search_path` fijo. **CERRADO 2026-10-05.** | **Resuelto** |
 | T8 | Baja | `delivery_ajustes` es público: contiene tarifas y comisiones (`comision_default_pct`, `remis_comision_pct`…). No hay secretos, pero revela el modelo de comisión. | Decidir |
 | T9 | Info | Claves: solo la publicable en el front y en `api/tienda.js` (correcto). Secretos (`mp_access_token`, `push_webhook_secret`, `admin_ingest_secret`) en `app_config`, sin políticas. | OK |
 
