@@ -14,6 +14,7 @@ export function estiloTienda(theme: TemaNormalizado) {
     "--sf-accent": theme.color,
     "--sf-on-accent": readableOn(theme.color),
     "--sf-radius": RADIOS[d.radio].css,
+    "--sf-radius-button": d.radio === "pildora" ? "9999px" : d.radio === "cuadrado" ? "0px" : RADIOS[d.radio].css,
     "--sf-aspect": d.aspecto,
     fontFamily: bodyFont,
     ...(d.fondo ? { backgroundColor: d.fondo, color: d.texto ?? readableOn(d.fondo) } : d.texto ? { color: d.texto } : {}),

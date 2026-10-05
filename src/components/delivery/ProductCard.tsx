@@ -55,6 +55,21 @@ export function ProductCard({ product, store, disabled, variant = "row", badges,
     </button>
   ));
 
+  // Segunda foto: se muestra al pasar el mouse (solo si hay una distinta de la principal).
+  const segundaFoto = (product.imagenes ?? []).find((url) => url && url !== product.imagen_url) ?? null;
+  const ultimas = !outOfStock && product.stock != null && product.stock > 0 && product.stock <= 5 ? product.stock : null;
+
+  // Escritorio: botón ancho que sube desde abajo (como Tiendanube). Celular: queda el "+" redondo de siempre.
+  const shopControl = unavailable ? null : quantity > 0 ? control : (
+    <>
+      <div className="md:hidden">{control}</div>
+      <button type="button" className="absolute inset-x-2 bottom-2 hidden translate-y-[140%] items-center justify-center gap-1.5 rounded-[var(--sf-radius-button,9999px)] py-2.5 text-sm font-bold opacity-0 shadow-pop transition-all duration-300 focus-visible:translate-y-0 focus-visible:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 md:flex"
+        style={{ background: "var(--sf-accent)", color: "var(--sf-on-accent)" }} onClick={(event) => { event.stopPropagation(); quickAdd(); }}>
+        <Plus className="h-4 w-4" strokeWidth={2.6} />{needsChoice ? "Elegir opciones" : "Agregar al carrito"}
+      </button>
+    </>
+  );
+
   const price = (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
       <span className="font-black">{needsChoice ? "Desde " : ""}{money(precioDesde(product))}</span>
@@ -68,17 +83,20 @@ export function ProductCard({ product, store, disabled, variant = "row", badges,
       {variant === "shop" ? (
         <article className={cn("group cursor-pointer", outOfStock && "opacity-60")} onClick={() => { if (href) navigate(href); else if (!unavailable) setOpen(true); }}>
           <div className="relative overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius, 1rem)", aspectRatio: "var(--sf-aspect, 4 / 5)" }}>
-            <SmartImage src={product.imagen_url} width={640} alt={product.nombre} className="transition-transform duration-500 group-hover:scale-105" />
+            <SmartImage src={product.imagen_url} width={640} alt={product.nombre} className={cn("transition-all duration-500", segundaFoto ? "group-hover:opacity-0" : "group-hover:scale-105")} />
+            {segundaFoto && <div className="absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"><SmartImage src={segundaFoto} width={640} alt="" className="transition-transform duration-500 group-hover:scale-105" /></div>}
             <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
               {outOfStock && <span className="rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-bold text-white">Sin stock</span>}
               {!outOfStock && (badges ?? (off ? [{ id: "oferta", texto: `${off}% OFF` } as Insignia] : [])).map((badge) => (
                 <span key={badge.id} className={cn("rounded-full px-2 py-0.5 text-[11px] font-black shadow-sm", badge.id === "oferta" ? "" : badge.id === "masvendido" ? "bg-[#FFE14D] text-black" : badge.id === "nuevo" ? "bg-[#4FE3B8] text-black" : "bg-black/75 text-white")} style={badge.id === "oferta" ? { background: "var(--sf-accent)", color: "var(--sf-on-accent)" } : undefined}>{badge.texto}</span>
               ))}
             </div>
-            {control}
+            {shopControl}
           </div>
           <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug">{href ? <Link to={href} onClick={(event) => event.stopPropagation()} className="hover:underline">{product.nombre}</Link> : product.nombre}</h3>
           <div className="mt-1 text-sm">{price}</div>
+          {off && <p className="mt-0.5 text-xs font-semibold text-muted-foreground">Ahorrás {money(Number(product.precio_anterior) - Number(product.precio))}</p>}
+          {ultimas && <p className="mt-0.5 text-xs font-bold text-destructive">¡Últimas {ultimas} unidades!</p>}
         </article>
       ) : variant === "tile" ? (
         <article className={cn("w-[150px] shrink-0 cursor-pointer snap-start", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
