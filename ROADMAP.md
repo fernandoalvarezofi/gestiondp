@@ -118,6 +118,10 @@
 - `delivery_envios` (mensajería entre personas) pasa a ser un caso de `shipment` sin perder funcionalidad.
 **Tamaño:** M–L.
 
+**Estado Fase 6:**
+- ✅ Paso 1 — capa común de **trabajos** (JOB): `trabajos` + `trabajos_eventos` (línea de tiempo inmodificable), sincronizadas por disparadores desde pedidos con envío, mensajería (`delivery_envios`) y viajes (`delivery_viajes`) **sin tocar su lógica** (si la capa falla, la operación original sigue); estados comunes (pendiente/asignado/en_curso/completado/cancelado); relleno de lo existente; **seguimiento común** `trabajo_seguimiento` (estado, línea de tiempo, nombre de pila y vehículo de quien lo lleva, ubicación en vivo mientras está en marcha, ETA; solo cliente, comercio, quien lo lleva o administración); tablero **Trabajos de logística** en administración con alerta de trabajos sin asignar hace más de 10 min. `delivery_envios` queda como un caso de trabajo sin perder funcionalidad. Pruebas: `supabase/tests/013_trabajos.sql`, `src/services/jobs.test.ts` + recorrido en navegador.
+- ⏳ Paquetes, retiros programados y proveedores externos de logística (correos/transportistas): se construyen cuando haya un transportista contratado y su API; hoy serían tablas sin uso. La interfaz quedaría igual que `ProveedorPagos`.
+
 ## FASE 7 — NETWORK + DISPATCH
 
 - `providers` con tipos COURIER/DRIVER/MESSENGER/TRANSPORTER/LOGISTICS_PROVIDER; perfil, vehículo, documentos, zonas, disponibilidad, reputación, ganancias, historial. Reutiliza `delivery_repartidores` (no se renombra).
