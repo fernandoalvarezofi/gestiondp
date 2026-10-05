@@ -24,6 +24,9 @@ export type MerchantContext = {
   coupons: Coupon[];
   reviews: StoreReview[];
   pendingCount: number;
+  /** Preguntas de clientes sin responder (para el aviso del menú). */
+  preguntasPendientes: number;
+  loadPreguntas: () => Promise<void>;
   loadStore: () => Promise<DeliveryStore | null>;
   loadOrders: () => Promise<void>;
   loadProducts: () => Promise<void>;

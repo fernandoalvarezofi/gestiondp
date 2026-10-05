@@ -4,6 +4,7 @@ import { Loader2, Store as StoreIcon } from "lucide-react";
 import { StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
 import { Button } from "@/components/ui/button";
 import { db, DeliveryProduct, DeliverySection, DeliveryStore, img, productSelect } from "@/lib/delivery";
+import type { VendedorResumen } from "@/lib/marketplace";
 import { storefrontUrl } from "@/lib/storefront";
 
 /** Tienda online pública de un comercio (/t/:slug): se puede ver y armar el pedido sin cuenta; al confirmar se pide ingresar. */
@@ -13,6 +14,7 @@ export default function Storefront() {
   const [products, setProducts] = useState<DeliveryProduct[]>([]);
   const [sections, setSections] = useState<DeliverySection[]>([]);
   const [reviews, setReviews] = useState<StorefrontReview[]>([]);
+  const [vendedor, setVendedor] = useState<VendedorResumen | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
 
   useEffect(() => {
@@ -22,16 +24,18 @@ export default function Storefront() {
       const { data: found } = await db.from("delivery_comercios").select("*").eq("slug", slug).maybeSingle();
       if (!alive) return;
       if (!found) { setState("missing"); return; }
-      const [{ data: catalog }, { data: configured }, { data: opinions }] = await Promise.all([
+      const [{ data: catalog }, { data: configured }, { data: opinions }, { data: resumen }] = await Promise.all([
         db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).order("orden").order("nombre"),
         db.from("delivery_secciones").select("*").eq("comercio_id", found.id),
         db.from("delivery_resenas").select("id,puntaje,comentario,created_at,cliente:perfiles(nombre)").eq("comercio_id", found.id).order("created_at", { ascending: false }).limit(12),
+        db.rpc("delivery_vendedor_resumen", { p_slug: found.slug }),
       ]);
       if (!alive) return;
       setStore(found);
       setProducts(catalog || []);
       setSections(configured || []);
       setReviews(opinions || []);
+      setVendedor((resumen as VendedorResumen | null) ?? null);
       setState("ready");
     })();
     return () => { alive = false; };
@@ -86,5 +90,5 @@ export default function Storefront() {
       </div>
     );
   }
-  return <StorefrontView store={store} products={products} sections={sections} reviews={reviews} />;
+  return <StorefrontView store={store} products={products} sections={sections} reviews={reviews} vendedor={vendedor} />;
 }

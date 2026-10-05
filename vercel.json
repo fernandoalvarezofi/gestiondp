@@ -17,6 +17,17 @@
       "destination": "/api/tienda?slug=:slug"
     },
     {
+      "source": "/t/:slug/p/:id",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|twitterbot|slackbot|telegrambot|linkedinbot|discordbot|pinterest|googlebot|bingbot|applebot|skypeuripreview|embedly|redditbot|instagram).*"
+        }
+      ],
+      "destination": "/api/tienda?slug=:slug&producto=:id"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

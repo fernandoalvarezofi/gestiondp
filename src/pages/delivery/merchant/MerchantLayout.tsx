@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, Building2, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
+import { BarChart3, Building2, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, MessageCircleQuestion, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -23,7 +23,7 @@ const ACTIVE_KEY = "woref-sucursal";
 const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
 
 /** Qué permiso hace falta para entrar a cada sección del panel. */
-const sectionPermission: Record<string, Permission> = { menu: "catalogo", sucursales: "equipo", nuevo: "equipo", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", tienda: "ajustes", configuracion: "ajustes" };
+const sectionPermission: Record<string, Permission> = { menu: "catalogo", sucursales: "equipo", nuevo: "equipo", preguntas: "opiniones", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", tienda: "ajustes", configuracion: "ajustes" };
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
@@ -108,6 +108,20 @@ export default function MerchantLayout() {
     setCoupons(data || []);
   }, []);
 
+  const [preguntasPendientes, setPreguntasPendientes] = useState(0);
+  const loadPreguntas = useCallback(async () => {
+    const current = storeRef.current;
+    if (!current) return;
+    const { count } = await db.from("delivery_producto_preguntas").select("id", { count: "exact", head: true }).eq("comercio_id", current.id).is("respondida_at", null).eq("visible", true);
+    setPreguntasPendientes(count ?? 0);
+  }, []);
+  useEffect(() => {
+    if (!store) return;
+    loadPreguntas();
+    const timer = window.setInterval(loadPreguntas, 60000);
+    return () => window.clearInterval(timer);
+  }, [store?.id, loadPreguntas]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadReviews = useCallback(async () => {
     const current = storeRef.current;
     if (!current) return;
@@ -154,7 +168,7 @@ export default function MerchantLayout() {
   const needed = sectionPermission[section];
   const blocked = needed ? !can(needed) : false;
   const tabs = [["/app/comercio", true], ["/app/comercio/pedidos", true], ["/app/comercio/menu", can("catalogo")], ["/app/comercio/estadisticas", can("estadisticas")], ["/app/comercio/configuracion", can("ajustes")]] as const;
-  const context: MerchantContext = { store, access, orders, products, coupons, reviews, pendingCount, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings, branches, switchStore, reloadBranches };
+  const context: MerchantContext = { store, access, orders, products, coupons, reviews, pendingCount, preguntasPendientes, loadPreguntas, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings, branches, switchStore, reloadBranches };
 
   return (
     <PanelShell
@@ -201,7 +215,7 @@ export default function MerchantLayout() {
         { label: "Crecimiento", items: [
           ...(can("promociones") ? [{ to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone }, { to: "/app/comercio/campanas", label: "Campañas", icon: Send }] : []),
           ...(can("ajustes") ? [{ to: "/app/comercio/tienda", label: "Tienda online", short: "Tienda", icon: Globe }] : []),
-          ...(can("opiniones") ? [{ to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
+          ...(can("opiniones") ? [{ to: "/app/comercio/preguntas", label: "Preguntas", icon: MessageCircleQuestion, badge: preguntasPendientes }, { to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
           ...(can("estadisticas") ? [{ to: "/app/comercio/estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3 }] : []),
         ] },
         { label: "Mi local", items: [

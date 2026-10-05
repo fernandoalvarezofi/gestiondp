@@ -40,8 +40,10 @@ const MerchantHome = lazy(() => import("./pages/delivery/merchant/MerchantHome")
 const MerchantSettings = lazy(() => import("./pages/delivery/merchant/MerchantSettings"));
 const MerchantStorefront = lazy(() => import("./pages/delivery/merchant/MerchantStorefront"));
 const MerchantNewStore = lazy(() => import("./pages/delivery/merchant/MerchantNewStore"));
+const MerchantQuestions = lazy(() => import("./pages/delivery/merchant/MerchantQuestions"));
 const Storefront = lazy(() => import("./pages/Storefront"));
 const StorefrontPreviewFrame = lazy(() => import("./pages/StorefrontPreviewFrame"));
+const StorefrontProduct = lazy(() => import("./pages/StorefrontProduct"));
 const MerchantPages = {
   Orders: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantOrdersPage }))),
   Menu: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantMenuPage }))),
@@ -93,6 +95,7 @@ const App = () => (
                     <Route path="/" element={isNativeApp() ? <Navigate to="/app/repartidor" replace /> : <Landing />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/t/:slug" element={<Storefront />} />
+                    <Route path="/t/:slug/p/:id" element={<StorefrontProduct />} />
                     <Route path="/vista-previa-tienda" element={<StorefrontPreviewFrame />} />
                     <Route path="/restablecer" element={<ResetPassword />} />
                     <Route path="/terminos" element={<Legal doc="terminos" />} />
@@ -130,6 +133,7 @@ const App = () => (
                         <Route path="finanzas" element={<MerchantPages.Finance />} />
                         <Route path="tienda" element={<MerchantStorefront />} />
                         <Route path="nuevo" element={<MerchantNewStore />} />
+                        <Route path="preguntas" element={<MerchantQuestions />} />
                         <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />
                         <Route path="configuracion/:seccion" element={<MerchantSettings />} />

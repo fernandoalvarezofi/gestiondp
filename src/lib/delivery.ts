@@ -151,6 +151,9 @@ export type DeliveryProduct = {
   descripcion?: string | null;
   categoria: string;
   imagen_url?: string | null;
+  /** Fotos extra del producto (hasta 6), además de la principal. */
+  imagenes?: string[] | null;
+  created_at?: string;
   precio: number;
   precio_anterior?: number | null;
   stock?: number | null;

@@ -1,6 +1,6 @@
 import { CSSProperties, ReactNode, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BadgeCheck, Bike, Clock3, CreditCard, Globe, Headphones, Instagram, MapPin, MessageCircle, Search, ShoppingBag, Star, Store as StoreIcon, Zap } from "lucide-react";
+import { ArrowRight, BadgeCheck, Bike, SlidersHorizontal, X, Clock3, CreditCard, Globe, Headphones, Instagram, MapPin, MessageCircle, Search, ShoppingBag, Star, Store as StoreIcon, Zap } from "lucide-react";
 import { ProductCard } from "@/components/delivery/ProductCard";
 import { SmartImage } from "@/components/delivery/SmartImage";
 import { deliveryFeeLabel, StoreLogo } from "@/components/delivery/StoreCard";
@@ -9,7 +9,11 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
 import { DeliveryProduct, DeliverySection, DeliveryStore, isOpenNow, money, nextOpening, orderSections, scheduleSummary } from "@/lib/delivery";
 import { storeReach } from "@/lib/geo";
-import { Bloque, BloqueBanner, BloqueImagenTexto, BloquePortada, FUENTES, Icono, normalizeTheme, RADIOS, readableOn, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { Bloque, BloqueBanner, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { estiloTienda } from "@/lib/storefrontStyle";
+import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
+import { SellerCard } from "@/components/storefront/SellerCard";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
 export type StorefrontReview = { id: string; puntaje: number; comentario?: string | null; created_at: string; cliente?: { nombre: string } | null };
@@ -26,6 +30,8 @@ type Props = {
   /** Editor: al tocar un bloque se avisa cuál es. Con esto cada bloque se puede seleccionar con un clic. */
   onSelectBlock?: (id: string) => void;
   selectedBlock?: string | null;
+  /** Reputación y datos reales del vendedor (la tienda pública los pide a la base). */
+  vendedor?: VendedorResumen | null;
 };
 
 type Group = { name: string; items: DeliveryProduct[] };
@@ -36,7 +42,6 @@ const COLUMNAS: Record<number, string> = {
   4: "grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
   5: "grid-cols-2 md:grid-cols-3 lg:grid-cols-5",
 };
-const ESPACIO: Record<string, string> = { compacto: "pt-8 sm:pt-10", normal: "pt-12 sm:pt-16", amplio: "pt-16 sm:pt-24" };
 const ICONOS: Record<Icono, typeof Bike> = { envio: Bike, pago: CreditCard, calidad: BadgeCheck, tiempo: Zap, soporte: Headphones, local: StoreIcon };
 const ALTO_PORTADA = { chico: "min-h-[240px] sm:min-h-[320px]", medio: "min-h-[340px] sm:min-h-[440px]", grande: "min-h-[420px] sm:min-h-[560px]" } as const;
 const ALTO_BANNER = { chico: "min-h-[140px] sm:min-h-[180px]", medio: "min-h-[200px] sm:min-h-[260px]", grande: "min-h-[280px] sm:min-h-[380px]" } as const;
@@ -45,7 +50,7 @@ const ALTO_SEP = { chico: "h-4", medio: "h-10", grande: "h-20" } as const;
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 /** Tienda online de un comercio: arma la página con los bloques y el diseño elegidos. Es la misma pantalla para el sitio público y la vista previa del editor. */
-export function StorefrontView({ store, tema, products, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock }: Props) {
+export function StorefrontView({ store, tema, products, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null }: Props) {
   const theme = useMemo(() => tema ?? normalizeTheme(store.tienda_tema), [tema, store.tienda_tema]);
   const d = theme.diseno;
   const { itemCount, subtotal } = useCart();
@@ -53,6 +58,10 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
   const tariff = useTariff(point);
   const [term, setTerm] = useState("");
   const [category, setCategory] = useState<string | null>(null);
+  const [filtros, setFiltros] = useState<FiltrosCatalogo>(SIN_FILTROS);
+  const [rango, setRango] = useState({ min: "", max: "" });
+  const [drawer, setDrawer] = useState(false);
+  const masVendidos = useMemo(() => (vendedor?.mas_vendidos ?? []).map((item) => item.producto_id), [vendedor]);
 
   const open = isOpenNow(store);
   const reach = storeReach(store, point, undefined, tariff);
@@ -60,24 +69,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
   const fee = deliveryFeeLabel(store, reach.fee);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
 
-  const onAccent = readableOn(theme.color);
-  const darkPage = d.fondo ? readableOn(d.fondo) === "#FFFFFF" : false;
-  const titleFont = FUENTES[d.fuente_titulos].css;
-  const bodyFont = d.fuente_texto === "serif" ? FUENTES.serif.css : undefined;
-  const pageStyle = {
-    "--sf-accent": theme.color,
-    "--sf-on-accent": onAccent,
-    "--sf-radius": RADIOS[d.radio].css,
-    "--sf-aspect": d.aspecto,
-    fontFamily: bodyFont,
-    ...(d.fondo ? { backgroundColor: d.fondo, color: d.texto ?? readableOn(d.fondo) } : d.texto ? { color: d.texto } : {}),
-  } as unknown as CSSProperties;
-  const accent: CSSProperties = { background: "var(--sf-accent)", color: "var(--sf-on-accent)" };
-  const headingStyle: CSSProperties = titleFont ? { fontFamily: titleFont } : {};
-  const radiusButton: CSSProperties = { borderRadius: d.radio === "pildora" ? 9999 : d.radio === "cuadrado" ? 0 : "var(--sf-radius)" };
-  const width = d.ancho === "amplio" ? "max-w-7xl" : "max-w-6xl";
-  const centered = d.cabecera === "centro";
-  const space = ESPACIO[d.espaciado];
+  const { darkPage, pageStyle, accent, headingStyle, radiusButton, width, centered, space } = estiloTienda(theme);
 
   const visible = useMemo(() => {
     const value = term.trim().toLowerCase();
@@ -132,7 +124,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
   ];
   const grid = (items: DeliveryProduct[], columnas: number) => (
     <div className={cn("grid", d.descripcion ? "grid-cols-1 gap-x-8 md:grid-cols-2" : cn(COLUMNAS[columnas] ?? COLUMNAS[4], "gap-x-4 gap-y-8"))}>
-      {items.map((product) => <ProductCard key={product.id} product={product} store={cartStore} disabled={unavailable} variant={d.descripcion ? "row" : "shop"} />)}
+      {items.map((product) => <ProductCard key={product.id} product={product} store={cartStore} disabled={unavailable} variant={d.descripcion ? "row" : "shop"} badges={insignias(product, masVendidos)} href={preview ? undefined : `/t/${store.slug}/p/${product.id}`} />)}
     </div>
   );
 
@@ -305,31 +297,117 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
         );
       }
       case "catalogo": {
-        const flat = !category && visible.length <= 12 && !d.descripcion;
-        const filters = b.filtros && allGroups.length > 1 && (
-          <div className={cn("scrollbar-none -mx-4 mb-6 flex gap-2 overflow-x-auto px-4 sm:mx-0 sm:px-0", centered && "sm:justify-center")}>
-            {[{ name: null as string | null, label: "Todo" }, ...allGroups.map((group) => ({ name: group.name as string | null, label: group.name }))].map((item) => {
-              const on = category === item.name;
-              return <button key={item.label} type="button" aria-pressed={on} onClick={() => setCategory(item.name)} className={cn("shrink-0 border px-4 py-1.5 text-sm font-bold transition-colors", !on && "hover:bg-muted/60")} style={{ borderRadius: d.radio === "cuadrado" ? 0 : 9999, ...(on ? { ...accent, borderColor: "var(--sf-accent)" } : {}) }}>{item.label}</button>;
-            })}
+        const marketplace = b.filtros;
+        const base = shown.flatMap((group) => group.items);
+        const activos = filtros.min != null || filtros.max != null || filtros.soloOferta || filtros.orden !== "relevancia";
+        const lista = marketplace ? filtrarYOrdenar(base, filtros, masVendidos) : base;
+        const flatOriginal = !category && visible.length <= 12 && !d.descripcion;
+        const agrupar = marketplace ? d.descripcion && !activos : !flatOriginal;
+        const tramos = tramosDePrecio(available.map((product) => Number(product.precio)));
+        const limpiar = () => { setFiltros(SIN_FILTROS); setRango({ min: "", max: "" }); setCategory(null); };
+        const aplicarRango = () => setFiltros((current) => ({ ...current, min: rango.min === "" ? null : Math.max(0, Number(rango.min)), max: rango.max === "" ? null : Math.max(0, Number(rango.max)) }));
+        const nFiltros = (category ? 1 : 0) + (filtros.min != null || filtros.max != null ? 1 : 0) + (filtros.soloOferta ? 1 : 0);
+        const panelFiltros = (
+          <div className="space-y-6 text-sm">
+            <div>
+              <p className="mb-2 font-extrabold">Categorías</p>
+              <ul className="space-y-1">
+                {[{ name: null as string | null, count: available.length }, ...allGroups.map((group) => ({ name: group.name as string | null, count: group.items.length }))].map((item) => (
+                  <li key={item.name ?? "todas"}><button type="button" onClick={() => setCategory(item.name)} aria-pressed={category === item.name} className={cn("flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left hover:bg-muted/60", category === item.name && "bg-muted font-bold")}><span>{item.name ?? "Todas"}</span><span className="opacity-60">{item.count}</span></button></li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="mb-2 font-extrabold">Precio</p>
+              {tramos.length > 0 && (
+                <ul className="mb-3 space-y-1">
+                  {tramos.map((tramo) => {
+                    const on = filtros.min === (tramo.min || null) && filtros.max === tramo.max;
+                    return (
+                      <li key={tramo.min}>
+                        <button type="button" aria-pressed={on} onClick={() => { setFiltros((current) => ({ ...current, min: tramo.min || null, max: tramo.max })); setRango({ min: tramo.min ? String(tramo.min) : "", max: tramo.max ? String(tramo.max) : "" }); }} className={cn("w-full rounded-lg px-2 py-1.5 text-left hover:bg-muted/60", on && "bg-muted font-bold")}>{tramo.texto(money)}</button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              <form className="flex items-center gap-2" onSubmit={(event) => { event.preventDefault(); aplicarRango(); }}>
+                <input aria-label="Precio mínimo" inputMode="numeric" value={rango.min} onChange={(event) => setRango((current) => ({ ...current, min: event.target.value.replace(/\D/g, "") }))} placeholder="Mínimo" className="h-9 w-full min-w-0 rounded-lg border bg-background px-2 text-foreground" />
+                <span className="opacity-50">–</span>
+                <input aria-label="Precio máximo" inputMode="numeric" value={rango.max} onChange={(event) => setRango((current) => ({ ...current, max: event.target.value.replace(/\D/g, "") }))} placeholder="Máximo" className="h-9 w-full min-w-0 rounded-lg border bg-background px-2 text-foreground" />
+                <button type="submit" aria-label="Aplicar precio" className="h-9 shrink-0 rounded-lg px-3 font-bold" style={accent}>Ir</button>
+              </form>
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 font-semibold"><input type="checkbox" checked={filtros.soloOferta} onChange={(event) => setFiltros((current) => ({ ...current, soloOferta: event.target.checked }))} className="h-4 w-4" style={{ accentColor: "var(--sf-accent)" }} />Solo con descuento</label>
+            {(nFiltros > 0 || filtros.orden !== "relevancia") && <button type="button" onClick={limpiar} className="font-bold underline underline-offset-4">Limpiar filtros</button>}
           </div>
         );
-        return (
-          <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
-            <Titulo id="catalogo">{b.titulo || "Todos los productos"} <span className="ml-1 text-base font-normal opacity-60">({visible.length})</span></Titulo>
-            {filters}
+        const chips = marketplace && nFiltros > 0 && (
+          <div className="mb-4 flex flex-wrap gap-2">
+            {category && <button type="button" onClick={() => setCategory(null)} className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold">{category}<X className="h-3 w-3" /></button>}
+            {(filtros.min != null || filtros.max != null) && (
+              <button type="button" onClick={() => { setFiltros((current) => ({ ...current, min: null, max: null })); setRango({ min: "", max: "" }); }} className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold">
+                {filtros.min != null && filtros.max != null ? `${money(filtros.min)} a ${money(filtros.max)}` : filtros.min != null ? `Desde ${money(filtros.min)}` : `Hasta ${money(filtros.max ?? 0)}`}<X className="h-3 w-3" />
+              </button>
+            )}
+            {filtros.soloOferta && <button type="button" onClick={() => setFiltros((current) => ({ ...current, soloOferta: false }))} className="inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-bold">Con descuento<X className="h-3 w-3" /></button>}
+          </div>
+        );
+        const contenido = (
+          <div className="min-w-0">
+            {marketplace && (
+              <div className="mb-4 flex flex-wrap items-center gap-3">
+                <p className="text-sm opacity-70" role="status">{lista.length} {lista.length === 1 ? "resultado" : "resultados"}</p>
+                <div className="ml-auto flex items-center gap-2">
+                  <button type="button" onClick={() => setDrawer(true)} className="inline-flex h-10 items-center gap-2 border px-3 text-sm font-bold lg:hidden" style={radiusButton}><SlidersHorizontal className="h-4 w-4" />Filtros{nFiltros > 0 && <span className="rounded-full px-1.5 text-xs" style={accent}>{nFiltros}</span>}</button>
+                  <label className="flex items-center gap-2 text-sm">
+                    <span className="hidden opacity-70 sm:inline">Ordenar por</span>
+                    <select aria-label="Ordenar por" value={filtros.orden} onChange={(event) => setFiltros((current) => ({ ...current, orden: event.target.value as FiltrosCatalogo["orden"] }))} className="h-10 border bg-background px-2 text-sm text-foreground" style={radiusButton}>
+                      {ORDENES.map((orden) => <option key={orden.id} value={orden.id}>{orden.nombre}</option>)}
+                    </select>
+                  </label>
+                </div>
+              </div>
+            )}
+            {chips}
             <label className="mb-6 flex h-11 items-center gap-2 border bg-card px-4 text-card-foreground xl:hidden" style={radiusButton}>
               <Search className="h-4 w-4 text-muted-foreground" />
               <input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar productos" aria-label="Buscar productos" className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
             </label>
-            {shown.length === 0 && <p className="py-16 text-center opacity-60">No encontramos productos{term ? ` para “${term}”` : ""}.</p>}
-            {flat && shown.length > 0 && grid(shown.flatMap((group) => group.items), b.columnas)}
-            {!flat && shown.map((group) => (
+            {lista.length === 0 && (
+              <div className="py-16 text-center opacity-70">
+                <p>No encontramos productos{term ? ` para “${term}”` : " con esos filtros"}.</p>
+                {marketplace && nFiltros > 0 && <button type="button" onClick={limpiar} className="mt-3 font-bold underline underline-offset-4">Quitar filtros</button>}
+              </div>
+            )}
+            {!agrupar && lista.length > 0 && grid(lista, b.columnas)}
+            {agrupar && shown.map((group) => (
               <div key={group.name} className="mb-12">
                 {(category === null || d.descripcion) && <h3 className="mb-4 flex items-center gap-4 text-xl font-bold" style={headingStyle}><span>{group.name}</span>{d.descripcion && <span className="h-px flex-1" style={{ background: "var(--sf-accent)", opacity: 0.35 }} />}</h3>}
                 {grid(group.items, b.columnas)}
               </div>
             ))}
+          </div>
+        );
+        return (
+          <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+            <Titulo id="catalogo">{b.titulo || "Todos los productos"} <span className="ml-1 text-base font-normal opacity-60">({visible.length})</span></Titulo>
+            {marketplace ? (
+              <div className="lg:grid lg:grid-cols-[250px_1fr] lg:gap-8">
+                <aside className="hidden self-start lg:sticky lg:top-24 lg:block" aria-label="Filtros">{panelFiltros}</aside>
+                {contenido}
+              </div>
+            ) : contenido}
+            {marketplace && (
+              <Dialog open={drawer} onOpenChange={setDrawer}>
+                <DialogContent className="max-h-[88vh] max-w-sm overflow-y-auto">
+                  <DialogTitle className="text-xl font-black">Filtros</DialogTitle>
+                  <DialogDescription className="sr-only">Filtrá los productos por categoría, precio y descuento.</DialogDescription>
+                  {panelFiltros}
+                  <button type="button" onClick={() => setDrawer(false)} className="mt-2 h-11 w-full font-bold" style={{ ...accent, ...radiusButton }}>Ver {lista.length} {lista.length === 1 ? "resultado" : "resultados"}</button>
+                </DialogContent>
+              </Dialog>
+            )}
           </section>
         );
       }
@@ -404,6 +482,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
         return (
           <section id="contacto" className={cn("mx-auto scroll-mt-24 px-4 sm:px-6", width, space)}>
             <Titulo>{b.titulo || "Contacto y horarios"}</Titulo>
+            {vendedor && <SellerCard store={store} vendedor={vendedor} className="mb-4" />}
             <div className="grid gap-4 md:grid-cols-3">
               <div className="border bg-card p-5 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
                 <p className="flex items-center gap-2 font-extrabold"><MapPin className="h-5 w-5" style={{ color: "var(--sf-accent)" }} />Dónde estamos</p>

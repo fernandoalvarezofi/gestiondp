@@ -15,8 +15,8 @@ import { downloadCsv, toCsv } from "@/lib/csv";
 import { db, DeliveryProduct, DeliverySection, errorMessage, img, money, orderSections, tagLabels } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
-type Draft = { id?: string; nombre: string; descripcion: string; categoria: string; precio: string; precio_anterior: string; stock: string; imagen_url: string; destacado: boolean; disponible: boolean; etiquetas: string[] };
-const emptyDraft: Draft = { nombre: "", descripcion: "", categoria: "", precio: "", precio_anterior: "", stock: "", imagen_url: "", destacado: false, disponible: true, etiquetas: [] };
+type Draft = { id?: string; nombre: string; descripcion: string; categoria: string; precio: string; precio_anterior: string; stock: string; imagen_url: string; imagenes: string[]; destacado: boolean; disponible: boolean; etiquetas: string[] };
+const emptyDraft: Draft = { nombre: "", descripcion: "", categoria: "", precio: "", precio_anterior: "", stock: "", imagen_url: "", imagenes: [], destacado: false, disponible: true, etiquetas: [] };
 type Filter = "todos" | "agotados" | "sin_foto";
 
 const toDraft = (product: DeliveryProduct): Draft => ({
@@ -28,6 +28,7 @@ const toDraft = (product: DeliveryProduct): Draft => ({
   precio_anterior: product.precio_anterior ? String(product.precio_anterior) : "",
   stock: product.stock === null || product.stock === undefined ? "" : String(product.stock),
   imagen_url: product.imagen_url || "",
+  imagenes: product.imagenes || [],
   destacado: Boolean(product.destacado),
   disponible: product.disponible,
   etiquetas: product.etiquetas || [],
@@ -294,6 +295,7 @@ function ProductEditor({ storeId, draft, categories, products, onClose, onSaved,
       precio_anterior: anterior,
       stock: values.stock === "" ? null : Math.max(0, Math.floor(Number(values.stock))),
       imagen_url: values.imagen_url.trim() || null,
+      imagenes: values.imagenes.slice(0, 5),
       destacado: values.destacado,
       disponible: values.disponible,
       etiquetas: values.etiquetas,
@@ -334,7 +336,21 @@ function ProductEditor({ storeId, draft, categories, products, onClose, onSaved,
               {Object.entries(tagLabels).map(([tag, label]) => <button key={tag} type="button" aria-pressed={values.etiquetas.includes(tag)} onClick={() => toggleTag(tag)} className={cn("rounded-full border px-3 py-1 text-xs font-bold", values.etiquetas.includes(tag) ? "border-primary bg-primary/10 text-primary" : "bg-card hover:bg-muted")}>{label}</button>)}
             </div>
           </div>
-          <ImageUpload label="Foto del producto" folder="productos" shape="square" value={values.imagen_url} onChange={(url) => set("imagen_url", url)} className="sm:col-span-2" />
+          <ImageUpload label="Foto principal" folder="productos" shape="square" value={values.imagen_url} onChange={(url) => set("imagen_url", url)} className="sm:col-span-2" />
+          <div className="space-y-2 sm:col-span-2">
+            <p className="text-sm font-semibold">Más fotos <span className="font-normal text-muted-foreground">(opcional, hasta 5: se ven en la galería de la ficha del producto)</span></p>
+            {values.imagenes.length > 0 && (
+              <ul className="flex flex-wrap gap-2">
+                {values.imagenes.map((url, index) => (
+                  <li key={`${url}-${index}`} className="relative">
+                    <img src={img(url, 160)} alt={`Foto extra ${index + 1}`} className="h-16 w-16 rounded-xl border object-cover" />
+                    <button type="button" aria-label={`Quitar foto extra ${index + 1}`} onClick={() => set("imagenes", values.imagenes.filter((_, i) => i !== index))} className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs font-bold text-white shadow">×</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {values.imagenes.length < 5 && <ImageUpload label={`Agregar foto (${values.imagenes.length}/5)`} folder="productos" shape="square" value="" onChange={(url) => set("imagenes", [...values.imagenes, url])} />}
+          </div>
           <div className="flex flex-col justify-center gap-3 sm:col-span-2 sm:flex-row sm:justify-start sm:gap-6">
             <label className="flex items-center gap-2 text-sm font-semibold"><Switch checked={values.disponible} onCheckedChange={(checked) => set("disponible", checked)} />Disponible</label>
             <label className="flex items-center gap-2 text-sm font-semibold"><Switch checked={values.destacado} onCheckedChange={(checked) => set("destacado", checked)} />Destacado</label>

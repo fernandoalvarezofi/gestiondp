@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
 import type { DeliveryProduct, DeliverySection, DeliveryStore } from "@/lib/delivery";
+import type { VendedorResumen } from "@/lib/marketplace";
 import type { TemaNormalizado } from "@/lib/storefront";
 
-export type PreviewData = { store: DeliveryStore; tema: TemaNormalizado; products: DeliveryProduct[]; sections: DeliverySection[]; reviews: StorefrontReview[] };
+export type PreviewData = { store: DeliveryStore; tema: TemaNormalizado; products: DeliveryProduct[]; sections: DeliverySection[]; reviews: StorefrontReview[]; vendedor?: VendedorResumen | null };
 
 /**
  * Página que se carga dentro del marco de vista previa del editor. No lee nada de la base: muestra solo lo que le manda
@@ -37,6 +38,7 @@ export default function StorefrontPreviewFrame() {
       products={data.products}
       sections={data.sections}
       reviews={data.reviews}
+      vendedor={data.vendedor ?? null}
       preview
       selectedBlock={selected}
       onSelectBlock={(id) => { setSelected(id); window.parent.postMessage({ tipo: "woref-bloque", id }, window.location.origin); }}

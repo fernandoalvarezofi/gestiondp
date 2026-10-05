@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db, DeliverySection, errorMessage, orderSections } from "@/lib/delivery";
 import { Bloque, bloqueNuevo, bloquesDePlantilla, Diseno, MAX_BLOQUES, nuevoId, normalizeDiseno, normalizeTheme, Plantilla, storefrontPath, storefrontUrl, temaParaGuardar, TemaNormalizado, TIPOS_BLOQUE } from "@/lib/storefront";
+import type { VendedorResumen } from "@/lib/marketplace";
 import { cn } from "@/lib/utils";
 import { useMerchant } from "./context";
 
@@ -41,6 +42,7 @@ export default function MerchantStorefront() {
   const wide = useWide();
   const [draft, setDraft] = useState<TemaNormalizado>(() => normalizeTheme(store.tienda_tema));
   const [sections, setSections] = useState<DeliverySection[]>([]);
+  const [vendedor, setVendedor] = useState<VendedorResumen | null>(null);
   const [tab, setTab] = useState("constructor");
   const [openId, setOpenId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
@@ -57,14 +59,15 @@ export default function MerchantStorefront() {
   useEffect(() => {
     let alive = true;
     db.from("delivery_secciones").select("*").eq("comercio_id", store.id).then(({ data }: { data: DeliverySection[] | null }) => { if (alive) setSections(data ?? []); });
+    db.rpc("delivery_vendedor_resumen", { p_slug: store.slug }).then(({ data }: { data: VendedorResumen | null }) => { if (alive) setVendedor(data ?? null); });
     return () => { alive = false; };
-  }, [store.id]);
+  }, [store.id, store.slug]);
 
   const url = storefrontUrl(store.slug);
   const saved = useMemo(() => serializarTema(normalizeTheme(store.tienda_tema)), [store.tienda_tema]);
   const dirty = useMemo(() => serializarTema(draft) !== saved, [draft, saved]);
   const categorias = useMemo(() => orderSections(products, sections, true).map((item) => item.name), [products, sections]);
-  const previewData = useMemo(() => ({ store, tema: normalizeTheme(draft), products, sections, reviews }), [store, draft, products, sections, reviews]);
+  const previewData = useMemo(() => ({ store, tema: normalizeTheme(draft), products, sections, reviews, vendedor }), [store, draft, products, sections, reviews, vendedor]);
 
   // ---- cambios del tema
   const setTema = useCallback((cambios: Partial<TemaNormalizado>) => setDraft((current) => ({ ...current, ...cambios })), []);

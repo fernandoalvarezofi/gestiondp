@@ -48,6 +48,35 @@ export function buildHtml(template, store, slug) {
   return html;
 }
 
+const money = (value) => "$ " + Math.round(Number(value) || 0).toLocaleString("es-AR");
+
+/** Vista previa de una ficha de producto: foto, nombre y precio del producto, con el nombre de la tienda. */
+export function buildProductHtml(template, store, product, slug, productId) {
+  const url = `${SITE}/t/${encodeURIComponent(slug)}/p/${encodeURIComponent(productId)}`;
+  const title = clip(`${product.nombre} · ${store.nombre}`, 70);
+  const description = clip(`${money(product.precio)} · ${product.descripcion || `Pedilo online en ${store.nombre}, con envío a domicilio o retiro en el local.`}`, 200);
+  const photo = [product.imagen_url, ...(Array.isArray(product.imagenes) ? product.imagenes : []), store.imagen_url].find((u) => typeof u === "string" && /^https:\/\//i.test(u));
+  const image = photo ? (photo.includes("images.unsplash.com") ? photo.replace(/([?&])w=\d+/, "$1w=1200") : photo) : null;
+  const t = escapeHtml(title), d = escapeHtml(description), u = escapeHtml(url);
+  let html = template;
+  const swap = (pattern, replacement) => { html = html.replace(pattern, () => replacement); };
+  swap(/<title>[\s\S]*?<\/title>/, `<title>${t}</title>`);
+  swap(/<meta name="description"[^>]*>/, `<meta name="description" content="${d}" />`);
+  swap(/<link rel="canonical"[^>]*>/, `<link rel="canonical" href="${u}" />`);
+  swap(/<meta property="og:url"[^>]*>/, `<meta property="og:url" content="${u}" />`);
+  swap(/<meta property="og:type"[^>]*>/, '<meta property="og:type" content="product" />');
+  swap(/<meta property="og:title"[^>]*>/, `<meta property="og:title" content="${t}">`);
+  swap(/<meta property="og:description"[^>]*>/, `<meta property="og:description" content="${d}">`);
+  swap(/<meta name="twitter:title"[^>]*>/, `<meta name="twitter:title" content="${t}">`);
+  swap(/<meta name="twitter:description"[^>]*>/, `<meta name="twitter:description" content="${d}">`);
+  if (image) {
+    const i = escapeHtml(image);
+    swap(/<meta property="og:image"[^>]*>/, `<meta property="og:image" content="${i}">`);
+    swap(/<meta name="twitter:image"[^>]*>/, `<meta name="twitter:image" content="${i}">`);
+  }
+  return html;
+}
+
 export default async function handler(req, res) {
   const slug = String(req.query?.slug ?? "");
   const host = req.headers["x-forwarded-host"] || req.headers.host || "woref.vercel.app";
@@ -57,10 +86,21 @@ export default async function handler(req, res) {
     const template = await page.text();
     let html = template;
     if (/^[a-z0-9-]{1,80}$/.test(slug)) {
-      const query = `${SUPABASE_URL}/rest/v1/delivery_comercios?slug=eq.${slug}&activo=eq.true&select=nombre,descripcion,imagen_url,logo_url,tienda_tema&limit=1`;
-      const response = await fetch(query, { headers: { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` } });
+      const headers = { apikey: SUPABASE_KEY, authorization: `Bearer ${SUPABASE_KEY}` };
+      const query = `${SUPABASE_URL}/rest/v1/delivery_comercios?slug=eq.${slug}&activo=eq.true&select=id,nombre,descripcion,imagen_url,logo_url,tienda_tema&limit=1`;
+      const response = await fetch(query, { headers });
       const rows = response.ok ? await response.json() : [];
-      if (Array.isArray(rows) && rows[0]) html = buildHtml(template, rows[0], slug);
+      const store = Array.isArray(rows) ? rows[0] : null;
+      if (store) {
+        const productId = String(req.query?.producto ?? "");
+        if (/^[0-9a-f-]{36}$/i.test(productId)) {
+          const pr = await fetch(`${SUPABASE_URL}/rest/v1/delivery_productos?id=eq.${productId}&comercio_id=eq.${store.id}&select=nombre,descripcion,imagen_url,imagenes,precio&limit=1`, { headers });
+          const products = pr.ok ? await pr.json() : [];
+          html = Array.isArray(products) && products[0] ? buildProductHtml(template, store, products[0], slug, productId) : buildHtml(template, store, slug);
+        } else {
+          html = buildHtml(template, store, slug);
+        }
+      }
     }
     res.setHeader("content-type", "text/html; charset=utf-8");
     res.setHeader("cache-control", "public, s-maxage=300, stale-while-revalidate=3600");

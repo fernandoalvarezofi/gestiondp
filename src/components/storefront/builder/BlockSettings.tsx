@@ -100,7 +100,7 @@ export function BlockSettings({ bloque, categorias, onChange }: { bloque: Bloque
         <div className="space-y-4">
           <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
           <Numero label="Columnas en pantalla grande" value={bloque.columnas} min={2} max={5} onChange={(columnas) => onChange({ columnas })} />
-          <Interruptor label="Mostrar filtros por categoría" value={bloque.filtros} onChange={(filtros) => onChange({ filtros })} />
+          <Interruptor label="Filtros y orden (estilo marketplace)" hint="Categorías, rango de precio, solo ofertas y ordenar por precio, descuento o novedad." value={bloque.filtros} onChange={(filtros) => onChange({ filtros })} />
         </div>
       );
     case "galeria":

@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import type { Insignia } from "@/lib/marketplace";
 import { SmartImage } from "./SmartImage";
 import { Check, Minus, Plus } from "lucide-react";
 import { toast } from "sonner";
@@ -20,8 +22,9 @@ const groupHint = (group: ProductGroup) => {
   return group.maximo === 1 ? "Opcional" : `Opcional · hasta ${group.maximo}`;
 };
 
-export function ProductCard({ product, store, disabled, variant = "row" }: { product: DeliveryProduct; store: CartStore; disabled?: boolean; variant?: "row" | "tile" | "shop" }) {
+export function ProductCard({ product, store, disabled, variant = "row", badges, href }: { product: DeliveryProduct; store: CartStore; disabled?: boolean; variant?: "row" | "tile" | "shop"; /** Insignias (oferta, nuevo, últimas unidades, más vendido). */ badges?: Insignia[]; /** Si se indica, tocar la tarjeta abre la ficha del producto en vez del detalle emergente. */ href?: string }) {
   const { quantityOf, decrementProduct, addItem } = useCart();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const quantity = quantityOf(product.id);
   const off = discount(product);
@@ -62,14 +65,18 @@ export function ProductCard({ product, store, disabled, variant = "row" }: { pro
   return (
     <>
       {variant === "shop" ? (
-        <article className={cn("group cursor-pointer", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
+        <article className={cn("group cursor-pointer", outOfStock && "opacity-60")} onClick={() => { if (href) navigate(href); else if (!unavailable) setOpen(true); }}>
           <div className="relative overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius, 1rem)", aspectRatio: "var(--sf-aspect, 4 / 5)" }}>
             <SmartImage src={product.imagen_url} width={640} alt={product.nombre} className="transition-transform duration-500 group-hover:scale-105" />
-            {off && <span className="absolute left-2 top-2 rounded-full px-2 py-0.5 text-[11px] font-black" style={{ background: "var(--sf-accent)", color: "var(--sf-on-accent)" }}>-{off}%</span>}
-            {outOfStock && <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-bold text-white">Sin stock</span>}
+            <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
+              {outOfStock && <span className="rounded-full bg-black/70 px-2 py-0.5 text-[11px] font-bold text-white">Sin stock</span>}
+              {!outOfStock && (badges ?? (off ? [{ id: "oferta", texto: `${off}% OFF` } as Insignia] : [])).map((badge) => (
+                <span key={badge.id} className={cn("rounded-full px-2 py-0.5 text-[11px] font-black shadow-sm", badge.id === "oferta" ? "" : badge.id === "masvendido" ? "bg-[#FFE14D] text-black" : badge.id === "nuevo" ? "bg-[#4FE3B8] text-black" : "bg-black/75 text-white")} style={badge.id === "oferta" ? { background: "var(--sf-accent)", color: "var(--sf-on-accent)" } : undefined}>{badge.texto}</span>
+              ))}
+            </div>
             {control}
           </div>
-          <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug">{product.nombre}</h3>
+          <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug">{href ? <Link to={href} onClick={(event) => event.stopPropagation()} className="hover:underline">{product.nombre}</Link> : product.nombre}</h3>
           <div className="mt-1 text-sm">{price}</div>
         </article>
       ) : variant === "tile" ? (
@@ -101,7 +108,7 @@ export function ProductCard({ product, store, disabled, variant = "row" }: { pro
   );
 }
 
-function ProductDialog({ product, groups, store, onClose }: { product: DeliveryProduct; groups: ProductGroup[]; store: CartStore; onClose: () => void }) {
+export function ProductDialog({ product, groups, store, onClose }: { product: DeliveryProduct; groups: ProductGroup[]; store: CartStore; onClose: () => void }) {
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
