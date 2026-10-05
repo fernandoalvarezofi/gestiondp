@@ -3,9 +3,18 @@ import { CheckCircle2, ExternalLink, KeyRound, Loader2, Wallet } from "lucide-re
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
 import { db, DeliveryOrder, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
 
 type MpStatus = { configurado: boolean; modo: "prueba" | "produccion" | null; termina_en: string | null; actualizado: string | null; firma_configurada?: boolean };
+const ESTADO_PAGO: Record<string, { texto: string; clase: string }> = {
+  pendiente: { texto: "Pendiente", clase: "bg-warning/15 text-warning" },
+  aprobado: { texto: "Aprobado", clase: "bg-success/15 text-success" },
+  rechazado: { texto: "Rechazado", clase: "bg-muted text-muted-foreground" },
+  reintegrado: { texto: "Reintegrado", clase: "bg-primary/10 text-primary" },
+  contracargo: { texto: "Contracargo", clase: "bg-destructive/10 text-destructive" },
+};
 type PagoFila = { id: string; pedido_id: string; estado: string; monto: number; actualizado_at: string; alertas: number };
 
 /** Configuración de Mercado Pago (la credencial se guarda en el servidor y no se puede volver a leer) y reintegros pendientes. */
@@ -13,6 +22,8 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
   const [status, setStatus] = useState<MpStatus | null>(null);
   const [token, setToken] = useState("");
   const [saving, setSaving] = useState(false);
+  const [aReintegrar, setAReintegrar] = useState<DeliveryOrder | null>(null);
+  const [reintegrando, setReintegrando] = useState(false);
   const [firma, setFirma] = useState("");
   const [concil, setConcil] = useState<{ cobrado: number; reintegrado: number; contracargos: number; neto: number; diferencias: { pago_id: string }[] } | null>(null);
   const [pagos, setPagos] = useState<{ pagos: PagoFila[]; incidentes_24h: number } | null>(null);
@@ -20,7 +31,7 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
   const load = useCallback(async () => {
     const { data } = await db.rpc("delivery_admin_estado_mp");
     setStatus(data);
-    const { data: lista } = await db.rpc("delivery_admin_pagos", { p_limite: 20 });
+    const { data: lista } = await db.rpc("delivery_admin_pagos", { p_limite: 100 });
     setPagos(lista ?? null);
     const { data: conc } = await db.rpc("delivery_admin_conciliacion_pagos");
     setConcil(conc ?? null);
@@ -53,6 +64,23 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
     if (error) return toast.error(errorMessage(error));
     toast.success("Pago online desactivado");
     load();
+  };
+
+  const pagoDe = (order: DeliveryOrder) => pagos?.pagos.find((pago) => pago.pedido_id === order.id && pago.estado === "aprobado");
+
+  // Devuelve el dinero por Mercado Pago (la función del servidor lo pide con clave de idempotencia y lo asienta en el libro de pagos).
+  const refundNow = async () => {
+    const order = aReintegrar;
+    const pago = order && pagoDe(order);
+    if (!order || !pago) return;
+    setReintegrando(true);
+    const { data, error } = await supabase.functions.invoke("mp-reintegrar", { body: { pago_id: pago.id } });
+    setReintegrando(false);
+    setAReintegrar(null);
+    if (error || data?.error) return toast.error(data?.error || "No se pudo reintegrar. Probá desde el panel de Mercado Pago y marcalo acá.");
+    toast.success("Dinero devuelto por Mercado Pago");
+    await load();
+    onChange();
   };
 
   const markRefunded = async (order: DeliveryOrder) => {
@@ -119,7 +147,7 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
               <li key={pago.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
                 <span className="min-w-0 flex-1"><span className="block font-bold">{shortId(pago.pedido_id)} · {money(pago.monto)}</span><span className="block text-muted-foreground">{formatDateTime(pago.actualizado_at)}</span></span>
                 {pago.alertas > 0 && <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs font-bold text-destructive">Revisar ({pago.alertas})</span>}
-                <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold capitalize">{pago.estado}</span>
+                <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${ESTADO_PAGO[pago.estado]?.clase ?? "bg-muted"}`}>{ESTADO_PAGO[pago.estado]?.texto ?? pago.estado}</span>
               </li>
             ))}
           </ul>
@@ -128,19 +156,32 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
 
       <section className="rounded-3xl border bg-card p-4 sm:p-5">
         <h3 className="font-extrabold">Reintegros pendientes ({refunds.length})</h3>
-        <p className="text-sm text-muted-foreground">Pedidos pagados online que se cancelaron. Devolvé el dinero desde tu cuenta de Mercado Pago (Actividad → el pago → Devolver) y marcalo acá.</p>
+        <p className="text-sm text-muted-foreground">Pedidos pagados online que se cancelaron. Devolvé el dinero con un clic desde acá, o hacelo en tu cuenta de Mercado Pago y marcalo como devuelto.</p>
         {refunds.length ? (
           <ul className="mt-3 divide-y rounded-2xl border">
             {refunds.map((order) => (
               <li key={order.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
                 <span className="min-w-0 flex-1"><span className="block font-bold">{shortId(order.id)} · {order.comercio?.nombre}</span><span className="block text-muted-foreground">{money(order.total)} · {formatDateTime(order.created_at)}</span></span>
-                <Button size="sm" variant="outline" className="rounded-full" onClick={() => markRefunded(order)}>Marcar reintegrado</Button>
+                {pagoDe(order) && <Button size="sm" className="rounded-full" onClick={() => setAReintegrar(order)}>Devolver por Mercado Pago</Button>}
+                <Button size="sm" variant="ghost" className="rounded-full" onClick={() => markRefunded(order)}>{pagoDe(order) ? "Ya lo devolví a mano" : "Marcar reintegrado"}</Button>
               </li>
             ))}
           </ul>
         ) : <p className="mt-3 rounded-2xl bg-muted p-3 text-sm text-muted-foreground">No hay reintegros pendientes.</p>}
         <p className="mt-4 text-sm text-muted-foreground">Cobrado online en los últimos pedidos: <b className="text-foreground">{money(paidOnline.reduce((total, order) => total + Number(order.total), 0))}</b> ({paidOnline.length} pedidos)</p>
       </section>
+      <AlertDialog open={!!aReintegrar} onOpenChange={(open) => { if (!open && !reintegrando) setAReintegrar(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Devolver {aReintegrar ? money(aReintegrar.total) : ""} al cliente?</AlertDialogTitle>
+            <AlertDialogDescription>Se pide el reintegro total del pago a Mercado Pago y queda registrado en el libro de pagos. No se puede deshacer.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={reintegrando}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={reintegrando} onClick={(event) => { event.preventDefault(); refundNow(); }}>{reintegrando ? <Loader2 className="h-4 w-4 animate-spin" /> : null}Devolver dinero</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
