@@ -94,7 +94,8 @@
 - ✅ Paso 1 — `pagos` + `pagos_eventos` (historial inmutable), `pago_aplicar_notificacion` (máquina de estados, monto, idempotencia, orden de avisos), `mp-webhook` v2 con firma `x-signature`, pantalla de cobros y clave del webhook en Administración → Pagos. Pruebas: `supabase/tests/005_pagos.sql`, `src/test/mpFirma.test.ts`. No toca libro ni liquidaciones.
 - ✅ Paso 2 — `pagos_libro` (libro aparte, solo altas: cobro, reintegro, contracargo; `delivery_libro` y liquidaciones intactos) + conciliación en Administración → Pagos. Pruebas: `supabase/tests/006_pagos_libro.sql`.
 - ✅ Paso 3 — reintegro desde la app (`mp-reintegrar`: administrador, idempotente, asienta en `pagos_libro`) y reintegro manual conectado al pago. Prueba: `supabase/tests/007_reintegro_manual.sql`.
-- ⏳ Paso 4 — interfaz `PaymentProvider` y wallet.
+- ✅ Paso 4a — interfaz `ProveedorPagos` (`supabase/functions/_shared/pagos/`: `proveedor.ts`, adaptador `mercadopago.ts`, `firma.ts`); webhook y reintegro ya la usan. Sumar otro proveedor = implementar la interfaz.
+- ⏳ Paso 4b — billetera (`wallet`/`wallet_transactions` sobre libro con asientos): se difiere hasta tener un uso concreto (pagos a comercios/repartidores); hoy sería funcionalidad sin uso.
 
 ## FASE 6 — LOGISTICS
 

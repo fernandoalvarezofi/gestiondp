@@ -2,6 +2,7 @@
 // Pide el reintegro a Mercado Pago con clave de idempotencia (un doble clic no devuelve dos veces) y recién después lo registra
 // con pago_aplicar_notificacion, que lo asienta en el libro de pagos. El aviso posterior de Mercado Pago queda como duplicado.
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
+import { mercadoPago } from "../_shared/pagos/mercadopago.ts";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -35,13 +36,10 @@ Deno.serve(async (req) => {
   const { data: tokenRow } = await admin.from("app_config").select("valor").eq("clave", "mp_access_token").maybeSingle();
   if (!tokenRow?.valor) return json({ error: "Mercado Pago no está configurado" }, 400);
 
-  const response = await fetch(`https://api.mercadopago.com/v1/payments/${encodeURIComponent(pago.external_id)}/refunds`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${tokenRow.valor}`, "Content-Type": "application/json", "X-Idempotency-Key": `woref-reintegro-${pago.id}` },
-    body: "{}",
-  });
-  if (!response.ok) {
-    console.error("mercadopago refund", response.status);
+  try {
+    await mercadoPago({ token: tokenRow.valor }).reintegrar(pago.external_id, `woref-reintegro-${pago.id}`);
+  } catch (error) {
+    console.error("reintegro", (error as { estadoHttp?: number }).estadoHttp);
     return json({ error: "Mercado Pago no pudo reintegrar el pago. Probá desde su panel y marcalo acá." }, 502);
   }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { firmar, leerCabecera, verificarFirma } from "../../supabase/functions/mp-webhook/firma";
+import { firmar, leerCabecera, verificarFirma } from "../../supabase/functions/_shared/pagos/firma";
 
 const secreto = "clave-secreta-de-prueba-123";
 const ahora = 1_800_000_000_000;
