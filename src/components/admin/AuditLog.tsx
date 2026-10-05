@@ -1,66 +1,17 @@
-import { useEffect, useState } from "react";
-import { Loader2, ScrollText } from "lucide-react";
-import { toast } from "sonner";
-import { EmptyState } from "@/components/delivery/Common";
-import { db, errorMessage, formatDateTime } from "@/lib/delivery";
-import { cn } from "@/lib/utils";
+import { ExternalLink, ShieldCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-type Entry = { id: number; fecha: string; actor: string; accion: string; entidad: string; entidad_id: string | null; detalle: Record<string, { de?: unknown; a?: unknown } | unknown> };
-
-const entities: [string, string][] = [["", "Todo"], ["delivery_comercios", "Comercios"], ["delivery_repartidores", "Repartidores"], ["delivery_pedidos", "Pedidos"], ["delivery_envios", "Envíos"], ["delivery_clientes_control", "Clientes"], ["delivery_liquidaciones", "Liquidaciones"], ["delivery_ajustes", "Ajustes"], ["delivery_cupones", "Cupones"]];
-const entityLabel = Object.fromEntries(entities.filter(([key]) => key).map(([key, label]) => [key, label]));
-const fieldLabel: Record<string, string> = {
-  aprobado: "Aprobado", activo: "Activo", comision_pct: "Comisión %", destacado: "Destacado", motivo_rechazo: "Motivo de rechazo", propietario_id: "Dueño", verificado: "Verificado", bloqueado: "Suspendido", motivo: "Motivo",
-  valor: "Valor", estado: "Estado", referencia: "Referencia", balance: "Balance", repartidor_id: "Repartidor", motivo_cancelacion: "Motivo de cancelación", pago_estado: "Estado de pago", codigo: "Código", cliente_id: "Cliente",
-  repartidor: "Repartidor", pedido: "Pedido",
-};
-const show = (value: unknown) => (value === null || value === undefined ? "—" : typeof value === "boolean" ? (value ? "sí" : "no") : typeof value === "string" && value.length > 24 && /^[0-9a-f-]{36}$/.test(value) ? `${value.slice(0, 6)}…` : String(value));
-
-/** Registro de cambios hechos por administración: quién, cuándo y qué cambió. */
+/**
+ * La auditoría ya no se guarda ni se lee en la base de los usuarios: vive en una base aparte, solo de lectura para
+ * la administración, con login propio y verificación en dos pasos. Esta pantalla solo lleva hacia allá.
+ */
 export function AuditLog() {
-  const [rows, setRows] = useState<Entry[] | null>(null);
-  const [entity, setEntity] = useState("");
-
-  useEffect(() => {
-    let active = true;
-    setRows(null);
-    db.rpc("delivery_admin_auditoria", { p_entidad: entity || null, p_limite: 200 }).then(({ data, error }: { data: Entry[] | null; error: unknown }) => {
-      if (!active) return;
-      if (error) { toast.error(errorMessage(error)); setRows([]); } else setRows(data || []);
-    });
-    return () => { active = false; };
-  }, [entity]);
-
   return (
-    <div className="space-y-4">
-      <div className="scrollbar-none flex gap-2 overflow-x-auto">
-        {entities.map(([key, label]) => <button key={label} type="button" onClick={() => setEntity(key)} className={cn("shrink-0 rounded-full border px-4 py-2 text-sm font-bold", entity === key ? "border-foreground bg-foreground text-background" : "bg-card")}>{label}</button>)}
-      </div>
-      {!rows ? <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> : rows.length === 0 ? <EmptyState icon={<ScrollText className="h-7 w-7" />} title="Todavía no hay cambios registrados" text="Acá queda el detalle de cada acción de administración." /> : (
-        <div className="overflow-x-auto rounded-3xl border bg-card">
-          <table className="w-full min-w-[760px] text-sm">
-            <thead className="border-b text-left text-muted-foreground"><tr><th className="p-3">Fecha</th><th className="p-3">Quién</th><th className="p-3">Qué</th><th className="p-3">Cambios</th></tr></thead>
-            <tbody className="divide-y">
-              {rows.map((row) => (
-                <tr key={row.id} className="align-top">
-                  <td className="whitespace-nowrap p-3">{formatDateTime(row.fecha)}</td>
-                  <td className="p-3 font-bold">{row.actor}</td>
-                  <td className="p-3"><span className="font-semibold">{entityLabel[row.entidad] ?? row.entidad}</span><span className="block text-xs text-muted-foreground">{row.accion.split(".")[1]} · {row.entidad_id ? show(row.entidad_id) : ""}</span></td>
-                  <td className="p-3">
-                    <ul className="space-y-0.5">
-                      {Object.entries(row.detalle).map(([field, value]) => {
-                        const change = value as { de?: unknown; a?: unknown };
-                        const isChange = typeof value === "object" && value !== null && ("de" in change || "a" in change);
-                        return <li key={field} className="text-xs"><span className="font-bold">{fieldLabel[field] ?? field}:</span> {isChange ? <>{show(change.de)} → <span className="font-bold">{show(change.a)}</span></> : show(value)}</li>;
-                      })}
-                    </ul>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+    <div className="mx-auto max-w-xl rounded-3xl border border-l-4 border-l-brand-orange bg-card p-6 sm:p-8">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(220_14%_16%)] text-brand-orange"><ShieldCheck className="h-6 w-6" /></span>
+      <h2 className="mt-4 text-xl font-extrabold">La auditoría está en la Consola</h2>
+      <p className="mt-2 text-sm text-muted-foreground">Por seguridad, el registro de acciones de administración se guarda en una base de datos aparte, que no comparte nada con las cuentas de la app. Nadie puede modificarlo ni borrarlo, y cada registro está encadenado al anterior para detectar cualquier alteración.</p>
+      <Button asChild className="mt-5 rounded-full font-bold"><a href="/consola" target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4" />Abrir la Consola</a></Button>
     </div>
   );
 }

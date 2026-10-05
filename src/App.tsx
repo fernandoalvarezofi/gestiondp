@@ -44,6 +44,7 @@ const MerchantQuestions = lazy(() => import("./pages/delivery/merchant/MerchantQ
 const Storefront = lazy(() => import("./pages/Storefront"));
 const StorefrontPreviewFrame = lazy(() => import("./pages/StorefrontPreviewFrame"));
 const StorefrontProduct = lazy(() => import("./pages/StorefrontProduct"));
+const Console = lazy(() => import("./pages/Console"));
 const MerchantPages = {
   Orders: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantOrdersPage }))),
   Menu: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantMenuPage }))),
@@ -94,6 +95,7 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={isNativeApp() ? <Navigate to="/app/repartidor" replace /> : <Landing />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/consola" element={<Console />} />
                     <Route path="/t/:slug" element={<Storefront />} />
                     <Route path="/t/:slug/p/:id" element={<StorefrontProduct />} />
                     <Route path="/vista-previa-tienda" element={<StorefrontPreviewFrame />} />
