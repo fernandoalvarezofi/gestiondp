@@ -146,7 +146,7 @@ delivery_comercios ─┬─< delivery_productos ─┬─< producto_grupos ─<
 delivery_libro (titular_tipo + titular_id + cuenta + tipo + monto)   ← sin FK a un único dueño
 ```
 
-No existe `business`, `store` ni `organization` como tablas. La "sucursal" es **otra fila de `delivery_comercios`** (la función `delivery_crear_sucursal` la copia); no hay `parent_id`.
+**Actualización 2026-10-05 (Fase 1, paso 1):** ya existen `core_businesses` y `core_business_members` (un negocio por dueño, con su vínculo `owner`), `delivery_comercios.business_id` y `parent_store_id` (la sucursal queda enlazada a su origen). Los permisos todavía se deciden con el modelo anterior (`propietario_id` + `delivery_comercio_equipo`); el nuevo modelo se irá habilitando por pasos. Antes: la "sucursal" es otra fila de `delivery_comercios` (la copia `delivery_crear_sucursal`) y no existía `business`.
 
 ## H. RLS
 

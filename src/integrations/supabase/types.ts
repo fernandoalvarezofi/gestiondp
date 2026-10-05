@@ -35,6 +35,65 @@ export type Database = {
         }
         Relationships: []
       }
+      core_business_members: {
+        Row: {
+          business_id: string
+          created_at: string
+          estado: string
+          rol: string
+          user_id: string
+        }
+        Insert: {
+          business_id: string
+          created_at?: string
+          estado?: string
+          rol: string
+          user_id: string
+        }
+        Update: {
+          business_id?: string
+          created_at?: string
+          estado?: string
+          rol?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "core_business_members_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "core_businesses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      core_businesses: {
+        Row: {
+          created_at: string
+          estado: string
+          id: string
+          nombre: string
+          owner_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          estado?: string
+          id?: string
+          nombre: string
+          owner_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          estado?: string
+          id?: string
+          nombre?: string
+          owner_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       delivery_ajustes: {
         Row: {
           ayuda: string | null
@@ -404,6 +463,7 @@ export type Database = {
           acepta_retiro: boolean
           activo: boolean
           aprobado: boolean
+          business_id: string | null
           categoria: Database["public"]["Enums"]["delivery_categoria"]
           comision_pct: number
           costo_envio: number
@@ -424,6 +484,7 @@ export type Database = {
           longitud: number | null
           motivo_rechazo: string | null
           nombre: string
+          parent_store_id: string | null
           pausado_hasta: string | null
           pedido_minimo: number
           promo_texto: string | null
@@ -445,6 +506,7 @@ export type Database = {
           acepta_retiro?: boolean
           activo?: boolean
           aprobado?: boolean
+          business_id?: string | null
           categoria: Database["public"]["Enums"]["delivery_categoria"]
           comision_pct?: number
           costo_envio?: number
@@ -465,6 +527,7 @@ export type Database = {
           longitud?: number | null
           motivo_rechazo?: string | null
           nombre: string
+          parent_store_id?: string | null
           pausado_hasta?: string | null
           pedido_minimo?: number
           promo_texto?: string | null
@@ -486,6 +549,7 @@ export type Database = {
           acepta_retiro?: boolean
           activo?: boolean
           aprobado?: boolean
+          business_id?: string | null
           categoria?: Database["public"]["Enums"]["delivery_categoria"]
           comision_pct?: number
           costo_envio?: number
@@ -506,6 +570,7 @@ export type Database = {
           longitud?: number | null
           motivo_rechazo?: string | null
           nombre?: string
+          parent_store_id?: string | null
           pausado_hasta?: string | null
           pedido_minimo?: number
           promo_texto?: string | null
@@ -523,6 +588,20 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "delivery_comercios_business_id_fkey"
+            columns: ["business_id"]
+            isOneToOne: false
+            referencedRelation: "core_businesses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_comercios_parent_store_id_fkey"
+            columns: ["parent_store_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_comercios"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "delivery_comercios_propietario_id_fkey"
             columns: ["propietario_id"]
@@ -3079,6 +3158,7 @@ export type Database = {
         Args: { k: string; max_len: number; v: Json }
         Returns: string
       }
+      core_rol_en_negocio: { Args: { p_business: string }; Returns: string }
       delivery_abierto_ahora: {
         Args: { p_horarios: Json; p_momento?: string }
         Returns: boolean
@@ -3132,6 +3212,7 @@ export type Database = {
           acepta_retiro: boolean
           activo: boolean
           aprobado: boolean
+          business_id: string | null
           categoria: Database["public"]["Enums"]["delivery_categoria"]
           comision_pct: number
           costo_envio: number
@@ -3152,6 +3233,7 @@ export type Database = {
           longitud: number | null
           motivo_rechazo: string | null
           nombre: string
+          parent_store_id: string | null
           pausado_hasta: string | null
           pedido_minimo: number
           promo_texto: string | null
@@ -3778,6 +3860,7 @@ export type Database = {
       }
       delivery_mis_comercios: { Args: never; Returns: Json }
       delivery_mis_metas: { Args: never; Returns: Json }
+      delivery_mis_negocios: { Args: never; Returns: Json }
       delivery_mis_ofertas: {
         Args: never
         Returns: {

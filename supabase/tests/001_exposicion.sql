@@ -10,7 +10,7 @@ do $t$
 declare
   fallos text := '';
   n bigint; u uuid; otro uuid; rel text; v jsonb;
-  privadas text[] := array['delivery_pedidos','delivery_pedido_items','delivery_envios','delivery_viajes','delivery_libro','delivery_liquidaciones','delivery_repartidores','delivery_identidad','delivery_documentos','delivery_direcciones','delivery_datos_cobro','delivery_mensajes','delivery_reclamos','delivery_comercio_legal','delivery_push_suscripciones','user_roles'];
+  privadas text[] := array['delivery_pedidos','delivery_pedido_items','delivery_envios','delivery_viajes','delivery_libro','delivery_liquidaciones','delivery_repartidores','delivery_identidad','delivery_documentos','delivery_direcciones','delivery_datos_cobro','delivery_mensajes','delivery_reclamos','delivery_comercio_legal','delivery_push_suscripciones','user_roles','core_businesses','core_business_members'];
   cerradas text[] := array['app_config','delivery_auditoria','delivery_errores','delivery_comercio_equipo','delivery_clientes_control','delivery_campana_envios','delivery_ofertas_rechazos','delivery_rutas','delivery_tienda_visitas'];
 begin
   select id into u from perfiles where telefono is not null limit 1;

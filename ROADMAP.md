@@ -45,6 +45,8 @@
 - `delivery_mi_acceso()` devuelve **todos** los negocios/tiendas del usuario (hoy solo uno).
 - Dirección y `GeoPoint` como tipo de dominio común (`latitude`, `longitude`, `address`).
 
+**AVANCE 2026-10-05 — Paso 1 HECHO** (migración `20261029100000_core_negocios.sql`, probado con `supabase/tests/002_negocios.sql`): tablas `core_businesses` y `core_business_members` con RLS (solo lectura; escritura únicamente por funciones/disparadores), `delivery_comercios.business_id` y `parent_store_id`, relleno de lo existente (un negocio por dueño, vínculo `owner`), disparador que mete cada comercio nuevo en el negocio de su dueño, `delivery_crear_sucursal` enlaza la sucursal con su origen, función `delivery_mis_negocios()` y servicio `src/services/business.ts`. **No cambió ningún permiso**. **Pasos siguientes:** (2) que `delivery_permiso` lea también las membresías del negocio, con el modelo viejo de respaldo; (3) equipo por negocio y por tienda (hoy `delivery_comercio_equipo` es por tienda) con roles admin/manager/operator/seller; (4) selector de negocio en el panel y `delivery_mi_acceso` con todas las tiendas; (5) retirar el modelo viejo cuando todo coincida.
+
 **Archivos afectados (previstos):** `useDeliveryRoles`, `MerchantLayout` y contexto de comercio, `MerchantBranches`, `MerchantTeam`, `StoreOnboarding`, nuevas `services/core/*`. **Migraciones:** 3–4, todas aditivas. **Riesgos:** permisos (el cambio de `delivery_permiso` es el punto más sensible) → pruebas de RLS por rol antes y después, despliegue con el modelo viejo como respaldo. **Salida:** un usuario puede pertenecer a varios negocios con roles distintos y todo lo existente sigue igual.
 **Tamaño:** L.
 
