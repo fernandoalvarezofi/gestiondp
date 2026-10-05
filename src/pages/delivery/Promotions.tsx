@@ -3,7 +3,7 @@ import { Copy, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, PageHeader, Rail } from "@/components/delivery/Common";
 import { StoreCard } from "@/components/delivery/StoreCard";
-import { Coupon, couponValue, db, DeliveryStore, money } from "@/lib/delivery";
+import { COMERCIO_COLS, Coupon, couponValue, db, DeliveryStore, money } from "@/lib/delivery";
 
 export default function Promotions() {
   const [coupons, setCoupons] = useState<(Coupon & { comercio?: { nombre: string } | null })[]>([]);
@@ -13,7 +13,7 @@ export default function Promotions() {
     db.from("delivery_cupones").select("*, comercio:delivery_comercios(nombre)").eq("activo", true).order("created_at").then(({ data }: { data: (Coupon & { comercio?: { nombre: string } | null })[] | null }) => {
       setCoupons((data || []).filter((coupon) => !coupon.vence_at || new Date(coupon.vence_at) > new Date()));
     });
-    db.from("delivery_comercios").select("*").eq("activo", true).not("promo_texto", "is", null).then(({ data }: { data: DeliveryStore[] | null }) => setStores(data || []));
+    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).not("promo_texto", "is", null).then(({ data }: { data: DeliveryStore[] | null }) => setStores(data || []));
   }, []);
 
   const copy = async (code: string) => {

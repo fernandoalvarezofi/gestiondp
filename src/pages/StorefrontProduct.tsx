@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { CartStore, useCart } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
-import { db, DeliveryProduct, DeliveryStore, isOpenNow, money, nextOpening, precioDesde, productSelect, sortGroups, tagLabels, variantesDisponibles } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryProduct, DeliveryStore, isOpenNow, money, nextOpening, precioDesde, productSelect, sortGroups, tagLabels, variantesDisponibles } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { descuentoPct, fotosDe, insignias, type VendedorResumen } from "@/lib/marketplace";
 import { normalizeTheme, storefrontUrl } from "@/lib/storefront";
@@ -51,7 +51,7 @@ export default function StorefrontProduct() {
     setState("loading");
     setQuantity(1);
     (async () => {
-      const { data: found } = await db.from("delivery_comercios").select("*").eq("slug", slug).maybeSingle();
+      const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
       if (!alive) return;
       if (!found) { setState("missing"); return; }
       const [{ data: item }, { data: catalog }, { data: resumen }] = await Promise.all([

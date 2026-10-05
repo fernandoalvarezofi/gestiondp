@@ -1,13 +1,13 @@
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
-import { db, DeliveryOrder, DeliveryProduct, productSelect, sortGroups } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryOrder, DeliveryProduct, productSelect, sortGroups } from "@/lib/delivery";
 
 /** Vuelve a cargar en el carrito los productos de un pedido anterior que sigan disponibles, con sus opciones. */
 export function useReorder() {
   const { replaceCart } = useCart();
   return async (order: DeliveryOrder) => {
     const [{ data: store }, { data: products }] = await Promise.all([
-      db.from("delivery_comercios").select("*").eq("id", order.comercio_id).maybeSingle(),
+      db.from("delivery_comercios").select(COMERCIO_COLS).eq("id", order.comercio_id).maybeSingle(),
       db.from("delivery_productos").select(productSelect).eq("comercio_id", order.comercio_id).eq("disponible", true),
     ]);
     if (!store) return toast.error("El comercio ya no está disponible");

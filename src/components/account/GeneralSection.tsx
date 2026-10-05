@@ -26,7 +26,7 @@ export function GeneralSection({ onSaved }: { onSaved: () => void }) {
 
   useEffect(() => {
     if (!user) return;
-    db.from("perfiles").select("nombre,telefono,avatar_url").eq("id", user.id).maybeSingle().then(({ data }: { data: { nombre: string; telefono: string | null; avatar_url: string | null } | null }) => {
+    db.rpc("delivery_mi_perfil").then(({ data }: { data: { nombre: string; telefono: string | null; avatar_url: string | null } | null }) => {
       setName(data?.nombre ?? ""); setPhone(data?.telefono ?? ""); setAvatar(data?.avatar_url ?? "");
       setSaved({ name: data?.nombre ?? "", phone: data?.telefono ?? "" });
       setLoaded(true);

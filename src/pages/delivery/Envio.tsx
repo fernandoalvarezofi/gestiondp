@@ -46,7 +46,7 @@ export default function Envio() {
   useEffect(() => { if (roles.nombre && !oName) setOName(roles.nombre); }, [roles.nombre]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!user) return;
-    db.from("perfiles").select("telefono").eq("id", user.id).maybeSingle().then(({ data }: { data: { telefono: string | null } | null }) => { if (data?.telefono) setOPhone((current) => current || data.telefono!); });
+    db.rpc("delivery_mi_perfil").then(({ data }: { data: { telefono: string | null } | null }) => { if (data?.telefono) setOPhone((current) => current || data.telefono!); });
   }, [user]);
 
   useEffect(() => {

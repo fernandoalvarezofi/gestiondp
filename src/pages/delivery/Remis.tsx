@@ -39,7 +39,7 @@ export default function Remis() {
 
   useEffect(() => {
     if (!user) return;
-    db.from("perfiles").select("telefono").eq("id", user.id).maybeSingle().then(({ data }: { data: { telefono: string | null } | null }) => { if (data?.telefono) setPhone((current) => current || data.telefono!); });
+    db.rpc("delivery_mi_perfil").then(({ data }: { data: { telefono: string | null } | null }) => { if (data?.telefono) setPhone((current) => current || data.telefono!); });
   }, [user]);
   const loadRecent = useCallback(async () => {
     if (!user) return;

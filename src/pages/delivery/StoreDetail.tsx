@@ -12,7 +12,7 @@ import { SmartImage } from "@/components/delivery/SmartImage";
 import { CartStore } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
-import { Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary, tagLabels } from "@/lib/delivery";
+import { COMERCIO_COLS, Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary, tagLabels } from "@/lib/delivery";
 
 const dietTags = ["vegano", "vegetariano", "sin_tacc", "apto_celiacos", "sin_azucar"];
 import { formatKm, storeReach } from "@/lib/geo";
@@ -42,7 +42,7 @@ export default function StoreDetail() {
 
   useEffect(() => {
     (async () => {
-      const { data: found } = await db.from("delivery_comercios").select("*").eq("slug", slug).maybeSingle();
+      const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
       if (!found) { setNotFound(true); return; }
       setStore(found);
       const [{ data: catalog }, { data: opinions }, { data: storeCoupons }, { data: configured }] = await Promise.all([

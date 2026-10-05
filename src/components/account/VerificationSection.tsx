@@ -18,7 +18,7 @@ export function VerificationSection() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data }, identity] = await Promise.all([db.from("perfiles").select("telefono").eq("id", user.id).maybeSingle(), loadIdentity(user.id)]);
+      const [{ data }, identity] = await Promise.all([db.rpc("delivery_mi_perfil"), loadIdentity(user.id)]);
       setPhone(data?.telefono ?? null);
       setState(identity?.estado ?? null);
     })();

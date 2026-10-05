@@ -59,7 +59,7 @@ export default function AdminDashboard() {
   const [pendingIdentities, setPendingIdentities] = useState(0);
 
   const loadStores = useCallback(async () => {
-    const { data } = await db.from("delivery_comercios").select("*").order("created_at", { ascending: false });
+    const { data } = await db.rpc("delivery_admin_comercios");
     setStores(data || []);
   }, []);
   const loadOrders = useCallback(async () => {

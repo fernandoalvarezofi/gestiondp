@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
-import { db, DeliveryProduct, DeliveryStore, errorMessage, img, isOpenNow, MetodoPago, money, optionsLabel, productSelect, readPickupPreference, slotDay, slotTime, sortGroups, TipoEntrega } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryProduct, DeliveryStore, errorMessage, img, isOpenNow, MetodoPago, money, optionsLabel, productSelect, readPickupPreference, slotDay, slotTime, sortGroups, TipoEntrega } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { startOnlinePayment } from "@/lib/payments";
 import { ajusteValor, useAjustes } from "@/hooks/useAjustes";
@@ -110,7 +110,7 @@ export default function Cart() {
 
   useEffect(() => {
     if (!user) return;
-    db.from("perfiles").select("telefono").eq("id", user.id).maybeSingle().then(({ data }: { data: { telefono: string | null } | null }) => {
+    db.rpc("delivery_mi_perfil").then(({ data }: { data: { telefono: string | null } | null }) => {
       if (data?.telefono) setPhone((current) => current || data.telefono || "");
     });
   }, [user]);
@@ -118,7 +118,7 @@ export default function Cart() {
   // Datos actuales del comercio (ubicación, radio, costo por km, retiro y programados) para estimar igual que el servidor.
   useEffect(() => {
     if (!store?.id) return;
-    db.from("delivery_comercios").select("*").eq("id", store.id).maybeSingle().then(({ data }: { data: DeliveryStore | null }) => setStoreInfo(data));
+    db.from("delivery_comercios").select(COMERCIO_COLS).eq("id", store.id).maybeSingle().then(({ data }: { data: DeliveryStore | null }) => setStoreInfo(data));
     db.rpc("delivery_franjas", { p_comercio: store.id }).then(({ data }: { data: string[] | null }) => setSlots(Array.isArray(data) ? data : []));
     db.from("delivery_productos").select(productSelect).eq("comercio_id", store.id).eq("disponible", true).order("destacado", { ascending: false }).order("nombre")
       .then(({ data }: { data: DeliveryProduct[] | null }) => setCatalog(data || []));

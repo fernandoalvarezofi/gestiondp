@@ -6,7 +6,7 @@ import { SmartImage } from "@/components/delivery/SmartImage";
 import { StoreLogo } from "@/components/delivery/StoreCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
-import { db, DeliveryStore, money, verticals } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryStore, money, verticals } from "@/lib/delivery";
 
 const photo = (id: string, width = 900) => `https://images.unsplash.com/photo-${id}?w=${width}&q=75&auto=format&fit=crop`;
 
@@ -27,7 +27,7 @@ function useLandingStores() {
     queryKey: ["landing-stores"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data } = await db.from("delivery_comercios").select("*").eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false }).limit(8);
+      const { data } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false }).limit(8);
       return (data ?? []) as DeliveryStore[];
     },
   });

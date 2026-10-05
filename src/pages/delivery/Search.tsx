@@ -4,7 +4,7 @@ import { Search as SearchIcon, X } from "lucide-react";
 import { EmptyState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
-import { db, DeliveryProduct, DeliveryStore, img, money, verticals } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryProduct, DeliveryStore, img, money, verticals } from "@/lib/delivery";
 
 type ProductHit = DeliveryProduct & { comercio: Pick<DeliveryStore, "nombre" | "slug" | "esta_abierto"> };
 const suggestions = ["Hamburguesa", "Pizza", "Sushi", "Helado", "Café", "Ensalada", "Cerveza", "Vitaminas"];
@@ -23,7 +23,7 @@ export default function Search() {
     const timer = window.setTimeout(async () => {
       const like = `%${query.replace(/[%_,()]/g, " ")}%`;
       const [storeResult, productResult] = await Promise.all([
-        db.from("delivery_comercios").select("*").eq("activo", true).or(`nombre.ilike.${like},descripcion.ilike.${like},rubro.ilike.${like}`).limit(24),
+        db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).or(`nombre.ilike.${like},descripcion.ilike.${like},rubro.ilike.${like}`).limit(24),
         db.from("delivery_productos").select("*, comercio:delivery_comercios!inner(nombre,slug,esta_abierto,activo)").eq("disponible", true).eq("comercio.activo", true).or(`nombre.ilike.${like},descripcion.ilike.${like},categoria.ilike.${like}`).limit(30),
       ]);
       setStores(storeResult.data || []);

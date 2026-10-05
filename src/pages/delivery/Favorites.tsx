@@ -5,7 +5,7 @@ import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
 import { Button } from "@/components/ui/button";
 import { useFavorites } from "@/contexts/FavoritesContext";
-import { db, DeliveryStore } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryStore } from "@/lib/delivery";
 
 export default function Favorites() {
   const { ids } = useFavorites();
@@ -16,7 +16,7 @@ export default function Favorites() {
   useEffect(() => {
     const list = key ? key.split(",") : [];
     if (!list.length) { setStores([]); setLoading(false); return; }
-    db.from("delivery_comercios").select("*").in("id", list).then(({ data }: { data: DeliveryStore[] | null }) => {
+    db.from("delivery_comercios").select(COMERCIO_COLS).in("id", list).then(({ data }: { data: DeliveryStore[] | null }) => {
       setStores(data || []);
       setLoading(false);
     });

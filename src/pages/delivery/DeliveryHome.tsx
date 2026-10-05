@@ -4,7 +4,7 @@ import { Car, ChevronLeft, ChevronRight, Package, Search, SlidersHorizontal, Sta
 import { useAuth } from "@/contexts/AuthContext";
 import { EmptyState } from "@/components/delivery/Common";
 import { OutOfZone } from "@/components/delivery/OutOfZone";
-import { readPickupPreference, writePickupPreference } from "@/lib/delivery";
+import { COMERCIO_COLS, readPickupPreference, writePickupPreference } from "@/lib/delivery";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { distanceKm } from "@/lib/geo";
 import { StoreCard, StoreTile, StoreCardSkeleton, StoreListItem, StoreListSkeleton, StoreLogo } from "@/components/delivery/StoreCard";
@@ -72,7 +72,7 @@ export default function DeliveryHome() {
   const [filters, setFilters] = useState<Filters>(() => ({ retiro: readPickupPreference(), gratis: false, promos: false, abiertos: false, top: false }));
 
   useEffect(() => {
-    db.from("delivery_comercios").select("*").eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
+    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
       .then(({ data }: { data: DeliveryStore[] | null }) => { setStores(data || []); setLoading(false); });
   }, []);
 

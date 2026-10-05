@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { Loader2, Store as StoreIcon } from "lucide-react";
 import { StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
 import { Button } from "@/components/ui/button";
-import { db, DeliveryProduct, DeliverySection, DeliveryStore, img, productSelect } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryProduct, DeliverySection, DeliveryStore, img, productSelect } from "@/lib/delivery";
 import type { VendedorResumen } from "@/lib/marketplace";
 import { storefrontUrl } from "@/lib/storefront";
 
@@ -22,7 +22,7 @@ export default function Storefront() {
     let alive = true;
     setState("loading");
     (async () => {
-      const { data: found } = await db.from("delivery_comercios").select("*").eq("slug", slug).maybeSingle();
+      const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
       if (!alive) return;
       if (!found) { setState("missing"); return; }
       const [{ data: catalog }, { data: configured }, { data: opinions }, { data: resumen }] = await Promise.all([

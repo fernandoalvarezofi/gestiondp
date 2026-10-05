@@ -4,7 +4,7 @@ import { Store } from "lucide-react";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
 import { StoreCard, StoreCardSkeleton } from "@/components/delivery/StoreCard";
 import { useInZone } from "@/hooks/useAddressPoint";
-import { db, DeliveryStore, isOpenNow, matchesVertical, verticals } from "@/lib/delivery";
+import { COMERCIO_COLS, db, DeliveryStore, isOpenNow, matchesVertical, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 type Sort = "recomendados" | "rating" | "rapido" | "envio";
@@ -28,7 +28,7 @@ export default function Category() {
     if (!vertical) return;
     setLoading(true);
     setRubro(null);
-    let query = db.from("delivery_comercios").select("*").eq("activo", true);
+    let query = db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true);
     if (vertical.categoria) query = query.eq("categoria", vertical.categoria);
     if (vertical.rubro) query = query.eq("rubro", vertical.rubro);
     query.order("destacado", { ascending: false }).then(({ data }: { data: DeliveryStore[] | null }) => {

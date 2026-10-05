@@ -10,7 +10,7 @@ import { StoreStatusControl } from "@/components/merchant/StoreStatusControl";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { playChime } from "@/lib/alarm";
-import { Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, isPaused, money, productSelect, shortId } from "@/lib/delivery";
+import { COMERCIO_COLS, Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, isPaused, money, productSelect, shortId } from "@/lib/delivery";
 import { notifyDesktop, printOrderTicket, readPrintSettings } from "@/lib/print";
 import { cn } from "@/lib/utils";
 import { TeamInvitations } from "@/components/merchant/TeamInvitations";
@@ -50,7 +50,7 @@ export default function MerchantLayout() {
     let { data: acceso } = await db.rpc("delivery_mi_acceso", { p_comercio: activeId });
     // Si la sucursal guardada ya no es accesible, se vuelve a la primera.
     if (activeId && !acceso?.comercio_id) { ({ data: acceso } = await db.rpc("delivery_mi_acceso", { p_comercio: null })); }
-    const { data } = acceso?.comercio_id ? await db.from("delivery_comercios").select("*").eq("id", acceso.comercio_id).maybeSingle() : { data: null };
+    const { data } = acceso?.comercio_id ? await db.from("delivery_comercios").select(COMERCIO_COLS).eq("id", acceso.comercio_id).maybeSingle() : { data: null };
     setAccess(data && acceso ? { rol: acceso.rol, permisos: acceso.permisos } : null);
     setStore(data || null);
     storeRef.current = data || null;
