@@ -151,6 +151,10 @@
 - Reutiliza Core (Business/Store), Payments y Communication; no reutiliza tablas de pedidos.
 **Tamaño:** L.
 
+**Estado Fase 9:**
+- ✅ Paso 1 — **turnos y reservas** completos: `servicios`, `profesionales`, `profesional_servicios`, `disponibilidad` (agenda semanal con varios tramos por día), `bloqueos` y `turnos`; sobre el Core (cada servicio es de un comercio y respeta sus permisos), sin reutilizar tablas de pedidos. La reserva se valida entera en el servidor (`turno_slot_libre`: agenda, bloqueos, anticipación, 60 días de horizonte, mismo local, horario de Argentina) y una **restricción de exclusión** impide que dos turnos se pisen para el mismo profesional o la misma persona aun con pedidos simultáneos; límites por persona (3 próximos por local, 10 en total); cancelación de la persona hasta N horas antes, del comercio cuando quiera; cierre por el comercio (realizado / no vino). `servicio_horarios_libres` público, `locales_con_servicios` para descubrir. Pantallas: reservar en la tienda del comercio (`/t/:slug/reservar`, con el diseño de su tienda y calendario .ics/Google), **Mis turnos**, **Reservar un turno** (locales con turnos) en Servicios, y en el panel del comercio **Turnos y servicios** (Agenda del día, Servicios, Equipo con horarios y bloqueos). Pruebas: `supabase/tests/016_servicios_turnos.sql`, `src/services/bookings.test.ts` + recorrido real en navegador con comercio, clienta y clienta cancelando.
+- ⏳ Cobro de seña por Mercado Pago al reservar y recordatorios por notificación: se hacen sobre la interfaz de pagos (Fase 5) y la comunicación (Fase 10).
+
 ## FASE 10 — COMMUNICATION
 
 - `notifications` (in-app) + canales push/email; WhatsApp como canal futuro desacoplado del dominio.

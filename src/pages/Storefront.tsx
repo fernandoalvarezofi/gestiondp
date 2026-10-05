@@ -20,6 +20,7 @@ export default function Storefront() {
   const [sections, setSections] = useState<DeliverySection[]>([]);
   const [reviews, setReviews] = useState<StorefrontReview[]>([]);
   const [vendedor, setVendedor] = useState<VendedorResumen | null>(null);
+  const [conTurnos, setConTurnos] = useState(false);
   const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export default function Storefront() {
       setSections(configured || []);
       setReviews(opinions || []);
       setVendedor((resumen as VendedorResumen | null) ?? null);
+      db.from("servicios").select("id", { count: "exact", head: true }).eq("comercio_id", found.id).eq("activo", true).then(({ count }: { count: number | null }) => { if (alive) setConTurnos((count ?? 0) > 0); }, () => undefined);
       setState("ready");
     })();
     return () => { alive = false; };
@@ -96,5 +98,5 @@ export default function Storefront() {
       </div>
     );
   }
-  return <StorefrontView store={store} products={products} sections={sections} reviews={reviews} vendedor={vendedor} vista={vista} />;
+  return <StorefrontView store={store} products={products} sections={sections} reviews={reviews} vendedor={vendedor} vista={vista} reservaHref={conTurnos ? `/t/${store.slug}/reservar` : null} />;
 }

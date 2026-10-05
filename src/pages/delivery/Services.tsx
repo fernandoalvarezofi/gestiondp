@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bike, BookUser, CarTaxiFront, ChevronRight, CircleHelp, Globe, Heart, Package, Receipt, Store, Ticket, Trophy, UserCircle, Wallet } from "lucide-react";
+import { Bike, BookUser, CalendarCheck, CarTaxiFront, ChevronRight, CircleHelp, Globe, Heart, Package, Receipt, Store, Ticket, Trophy, UserCircle, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { verticals } from "@/lib/delivery";
@@ -21,6 +21,7 @@ export function gruposDeServicios(roles: { storeId: string | null; isCourier: bo
       items: [
         { to: "/app/enviar", titulo: "Enviar un paquete", texto: "Retiramos y entregamos donde necesites", icon: Package },
         { to: "/app/remis", titulo: "Pedir un remis", texto: "Viajes con conductores de tu ciudad", icon: CarTaxiFront },
+        { to: "/app/turnos/locales", titulo: "Reservar un turno", texto: "Peluquerías, consultorios, talleres y más", icon: CalendarCheck },
       ],
     },
     {
@@ -49,6 +50,7 @@ export function gruposDeServicios(roles: { storeId: string | null; isCourier: bo
       subtitulo: "Pedidos, pagos y ayuda",
       items: [
         { to: "/app/pedidos", titulo: "Mis pedidos", texto: "Seguimiento e historial", icon: Receipt },
+        { to: "/app/turnos", titulo: "Mis turnos", texto: "Tus reservas próximas y pasadas", icon: CalendarCheck },
         { to: "/app/perfil/billetera", titulo: "Billetera", texto: "Saldo a favor y movimientos", icon: Wallet },
         { to: "/app/perfil", titulo: "Perfil y direcciones", texto: "Tus datos y lugares de entrega", icon: UserCircle },
         { to: "/app/ayuda", titulo: "Ayuda", texto: "Preguntas y soporte", icon: CircleHelp },

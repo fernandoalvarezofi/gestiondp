@@ -39,6 +39,8 @@ type Props = {
   vendedor?: VendedorResumen | null;
   /** Página de la tienda que se muestra: inicio (con los bloques), colección, ofertas o búsqueda. */
   vista?: Vista;
+  /** Si el local ofrece turnos en línea: enlace a la página de reservas. */
+  reservaHref?: string | null;
 };
 
 type Group = { name: string; items: DeliveryProduct[] };
@@ -57,7 +59,7 @@ const ALTO_SEP = { chico: "h-4", medio: "h-10", grande: "h-20" } as const;
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 /** Tienda online de un comercio: arma la página con los bloques y el diseño elegidos. Es la misma pantalla para el sitio público y la vista previa del editor. */
-export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista }: Props) {
+export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista, reservaHref = null }: Props) {
   // Solo se muestra en la tienda lo que el comercio publicó en este canal.
   const products = useMemo(() => allProducts.filter((product) => product.en_tienda !== false), [allProducts]);
   const theme = useMemo(() => tema ?? normalizeTheme(store.tienda_tema), [tema, store.tienda_tema]);
@@ -771,6 +773,9 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     <div style={pageStyle} className={cn("min-h-screen bg-background text-foreground", darkPage && "dark")}>
       {anuncio}
       {header}
+      {reservaHref && !preview && (
+        <div className="border-b bg-card/80 text-card-foreground"><div className={cn("mx-auto flex items-center justify-between gap-3 px-4 py-2.5 text-sm sm:px-6", width)}><span className="font-semibold">¿Querés un turno? Reservá en línea.</span><Link to={reservaHref} className="shrink-0 px-4 py-1.5 font-bold" style={{ ...accent, ...radiusButton }}>Reservar turno</Link></div></div>
+      )}
 
       {unavailable && (
         <p className={cn("mx-auto mt-6 rounded-2xl bg-muted px-4 py-3 text-sm text-foreground sm:mx-6 lg:mx-auto", width)}>

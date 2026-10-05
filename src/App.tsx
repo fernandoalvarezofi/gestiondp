@@ -25,6 +25,9 @@ const Cart = lazy(() => import("./pages/delivery/Cart"));
 const Orders = lazy(() => import("./pages/delivery/Orders"));
 const OrderDetail = lazy(() => import("./pages/delivery/OrderDetail"));
 const Favorites = lazy(() => import("./pages/delivery/Favorites"));
+const MyAppointments = lazy(() => import("./pages/delivery/MyAppointments"));
+const ServiceLocals = lazy(() => import("./pages/delivery/ServiceLocals"));
+const Booking = lazy(() => import("./pages/Booking"));
 const Promotions = lazy(() => import("./pages/delivery/Promotions"));
 const Profile = lazy(() => import("./pages/delivery/Profile"));
 const Help = lazy(() => import("./pages/delivery/Help"));
@@ -43,6 +46,7 @@ const MerchantStorefront = lazy(() => import("./pages/delivery/merchant/Merchant
 const MerchantNewStore = lazy(() => import("./pages/delivery/merchant/MerchantNewStore"));
 const MerchantQuestions = lazy(() => import("./pages/delivery/merchant/MerchantQuestions"));
 const MerchantReturns = lazy(() => import("./pages/delivery/merchant/MerchantReturns"));
+const MerchantBookings = lazy(() => import("./pages/delivery/merchant/MerchantBookings"));
 const Storefront = lazy(() => import("./pages/Storefront"));
 const StorefrontPreviewFrame = lazy(() => import("./pages/StorefrontPreviewFrame"));
 const StorefrontProduct = lazy(() => import("./pages/StorefrontProduct"));
@@ -103,6 +107,7 @@ const App = () => (
                     <Route path="/t/:slug/ofertas" element={<Storefront />} />
                     <Route path="/t/:slug/buscar" element={<Storefront />} />
                     <Route path="/t/:slug/p/:id" element={<StorefrontProduct />} />
+                    <Route path="/t/:slug/reservar" element={<Booking />} />
                     <Route path="/vista-previa-tienda" element={<StorefrontPreviewFrame />} />
                     <Route path="/restablecer" element={<ResetPassword />} />
                     <Route path="/terminos" element={<Legal doc="terminos" />} />
@@ -126,6 +131,8 @@ const App = () => (
                       <Route path="servicios" element={<Services />} />
                       <Route path="remis/:id" element={<RemisDetail />} />
                       <Route path="favoritos" element={<Favorites />} />
+                      <Route path="turnos" element={<MyAppointments />} />
+                      <Route path="turnos/locales" element={<ServiceLocals />} />
                       <Route path="promociones" element={<Promotions />} />
                       <Route path="perfil" element={<Profile />} />
                       <Route path="perfil/:seccion" element={<Profile />} />
@@ -143,6 +150,7 @@ const App = () => (
                         <Route path="nuevo" element={<MerchantNewStore />} />
                         <Route path="preguntas" element={<MerchantQuestions />} />
                         <Route path="devoluciones" element={<MerchantReturns />} />
+                        <Route path="turnos" element={<MerchantBookings />} />
                         <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />
                         <Route path="configuracion/:seccion" element={<MerchantSettings />} />
