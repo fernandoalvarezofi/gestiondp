@@ -6,12 +6,12 @@
  * Todo lo que viene de la base se vuelve a validar acá antes de usarse en estilos, enlaces o imágenes.
  */
 
-export type Plantilla = "boutique" | "galeria" | "impacto" | "gourmet";
+export type Plantilla = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado";
 export type Seccion = "categorias" | "destacados" | "catalogo" | "acerca" | "opiniones" | "contacto";
 
 // ---------------------------------------------------------------- diseño global
 export type Radio = "cuadrado" | "suave" | "redondo" | "pildora";
-export type Fuente = "sans" | "serif" | "redondeada" | "display" | "mono";
+export type Fuente = "sans" | "serif" | "redondeada" | "display" | "mono" | "geometrica" | "editorial";
 export type Diseno = {
   /** Fondo y texto de la página (opcionales: si faltan se usan los de la app, claro u oscuro). */
   fondo?: string;
@@ -36,11 +36,16 @@ export const RADIOS: Record<Radio, { nombre: string; css: string }> = {
 
 export const FUENTES: Record<Fuente, { nombre: string; css: string | undefined; ejemplo: string }> = {
   sans: { nombre: "Moderna", css: undefined, ejemplo: "Aa" },
-  serif: { nombre: "Elegante", css: "Georgia, 'Times New Roman', serif", ejemplo: "Aa" },
-  redondeada: { nombre: "Amistosa", css: "ui-rounded, 'SF Pro Rounded', 'Nunito', 'Segoe UI', system-ui, sans-serif", ejemplo: "Aa" },
-  display: { nombre: "Impacto", css: "Impact, 'Arial Narrow Bold', Haettenschweiler, 'Franklin Gothic Bold', sans-serif", ejemplo: "Aa" },
-  mono: { nombre: "Técnica", css: "ui-monospace, 'SF Mono', Menlo, Consolas, monospace", ejemplo: "Aa" },
+  serif: { nombre: "Elegante", css: "'Playfair Display Variable', Georgia, 'Times New Roman', serif", ejemplo: "Aa" },
+  editorial: { nombre: "Editorial", css: "'Fraunces Variable', Georgia, serif", ejemplo: "Aa" },
+  geometrica: { nombre: "Geométrica", css: "'Space Grotesk Variable', 'Helvetica Neue', Arial, sans-serif", ejemplo: "Aa" },
+  redondeada: { nombre: "Amistosa", css: "'Nunito Variable', ui-rounded, 'SF Pro Rounded', 'Segoe UI', system-ui, sans-serif", ejemplo: "Aa" },
+  display: { nombre: "Impacto", css: "'Bebas Neue', Impact, 'Arial Narrow Bold', Haettenschweiler, sans-serif", ejemplo: "Aa" },
+  mono: { nombre: "Técnica", css: "'Space Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace", ejemplo: "Aa" },
 };
+
+/** Letra del texto corrido cuando se elige "serif" (los títulos usan la familia elegida aparte). */
+export const TEXTO_SERIF = "'Lora Variable', Georgia, 'Times New Roman', serif";
 
 export const ASPECTOS: { id: Diseno["aspecto"]; nombre: string }[] = [
   { id: "1 / 1", nombre: "Cuadrada" },
@@ -50,7 +55,7 @@ export const ASPECTOS: { id: Diseno["aspecto"]; nombre: string }[] = [
 ];
 
 // ---------------------------------------------------------------- bloques
-export type EstiloPortada = "boutique" | "galeria" | "impacto" | "gourmet" | "simple";
+export type EstiloPortada = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado" | "simple";
 export type EnlaceTipo = "catalogo" | "whatsapp" | "url";
 type Base = { id: string; visible: boolean };
 
@@ -71,13 +76,14 @@ export type BloqueFaq = Base & { tipo: "faq"; titulo?: string; items: FaqItem[] 
 export type BloqueOpiniones = Base & { tipo: "opiniones"; titulo?: string };
 export type BloqueContacto = Base & { tipo: "contacto"; titulo?: string };
 export type BloqueSeparador = Base & { tipo: "separador"; alto: "chico" | "medio" | "grande"; linea: boolean };
+export type BloqueCinta = Base & { tipo: "cinta"; items: string[]; estilo: "acento" | "oscuro" | "claro" };
 export type BloqueNewsletter = Base & { tipo: "newsletter"; titulo?: string; texto?: string; boton?: string };
 export type PoliticaItem = { t: string; x: string };
 export type BloquePoliticas = Base & { tipo: "politicas"; titulo?: string; items: PoliticaItem[] };
 export type BloqueOferta = Base & { tipo: "oferta"; titulo?: string; texto?: string; boton?: string; hasta?: string; enlace_tipo: EnlaceTipo; enlace_url?: string };
 export type BloqueVideo = Base & { tipo: "video"; titulo?: string; texto?: string; url?: string };
 
-export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador;
+export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueCinta | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador;
 export type BloqueTipo = Bloque["tipo"];
 
 export const MAX_BLOQUES = 24;
@@ -95,6 +101,7 @@ export const TIPOS_BLOQUE: { tipo: BloqueTipo; nombre: string; detalle: string; 
   { tipo: "faq", nombre: "Preguntas frecuentes", detalle: "Respondé lo que siempre te preguntan" },
   { tipo: "opiniones", nombre: "Opiniones de clientes", detalle: "Lo que dicen de vos", unico: true },
   { tipo: "contacto", nombre: "Contacto y horarios", detalle: "Dirección, horarios y redes", unico: true },
+  { tipo: "cinta", nombre: "Cinta de anuncios", detalle: "Una franja con frases que se mueven (envío gratis, novedades…)" },
   { tipo: "oferta", nombre: "Oferta con cuenta regresiva", detalle: "Un mensaje con reloj hasta que termina la promo" },
   { tipo: "newsletter", nombre: "Suscripción por email", detalle: "Juntá los emails de tus clientes y avisales de novedades" },
   { tipo: "politicas", nombre: "Envíos, cambios y garantía", detalle: "Tus políticas en desplegables, también en cada producto" },
@@ -128,11 +135,14 @@ export type TiendaTema = {
   bloques?: Bloque[];
 };
 
-export const PLANTILLAS: { id: Plantilla; nombre: string; ideal: string; detalle: string }[] = [
-  { id: "boutique", nombre: "Boutique", ideal: "Moda, regalos, decoración", detalle: "Portada a pantalla completa, colecciones con foto y catálogo en grilla amplia." },
-  { id: "galeria", nombre: "Galería", ideal: "Productos de autor, cosmética", detalle: "Estilo editorial y aireado: mucho espacio, tipografía fina y las fotos como protagonistas." },
-  { id: "impacto", nombre: "Impacto", ideal: "Súper, kioscos, bebidas, ofertas", detalle: "Portada de color con título gigante, tarjetas redondeadas y compra rápida." },
-  { id: "gourmet", nombre: "Gourmet", ideal: "Restaurantes, panaderías, cafés", detalle: "Carta con fotos, secciones con título decorado y lectura cómoda de precios." },
+export const PLANTILLAS: { id: Plantilla; nombre: string; ideal: string; detalle: string; color: string }[] = [
+  { id: "boutique", nombre: "Boutique", ideal: "Moda, regalos, decoración", detalle: "Portada a pantalla completa, colecciones con foto y catálogo en grilla amplia.", color: "#1F2A44" },
+  { id: "atelier", nombre: "Atelier", ideal: "Moda de autor, objetos, hogar", detalle: "Papel cálido, tipografía editorial y líneas finas. Mucho aire, fotos grandes y un tono de revista.", color: "#3B2F2F" },
+  { id: "galeria", nombre: "Galería", ideal: "Cosmética, productos de autor", detalle: "Estilo aireado y minimalista: las fotos son las protagonistas y todo lo demás se corre.", color: "#27272A" },
+  { id: "urbano", nombre: "Urbano", ideal: "Streetwear, tecnología, bebidas", detalle: "Fondo negro, titulares gigantes condensados y un color de acento que se ve desde lejos.", color: "#C8F031" },
+  { id: "impacto", nombre: "Impacto", ideal: "Súper, kioscos, ofertas", detalle: "Portada de color con título gigante, cuenta regresiva y compra rápida.", color: "#E2552C" },
+  { id: "mercado", nombre: "Mercado", ideal: "Súper, ferretería, catálogos grandes", detalle: "Denso y directo: banner principal, ofertas, categorías y muchos productos a la vista.", color: "#2563EB" },
+  { id: "gourmet", nombre: "Gourmet", ideal: "Restaurantes, panaderías, cafés", detalle: "Carta con fotos, secciones con título decorado y lectura cómoda de precios.", color: "#7A2E2E" },
 ];
 
 export const SECCIONES: { id: Seccion; nombre: string; detalle: string; obligatoria?: boolean }[] = [
@@ -152,9 +162,15 @@ const DISENO_BASE: Diseno = { radio: "redondo", boton: "relleno", fuente_titulos
 /** Diseño inicial de cada plantilla (lo que antes estaba fijo en el código). */
 export const DISENO_PLANTILLA: Record<Plantilla, Diseno> = {
   boutique: { ...DISENO_BASE, radio: "suave", aspecto: "4 / 5" },
-  galeria: { ...DISENO_BASE, radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "sans", espaciado: "amplio", cabecera: "centro" },
+  galeria: { ...DISENO_BASE, radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "editorial", espaciado: "amplio", cabecera: "centro" },
   impacto: { ...DISENO_BASE, radio: "pildora", aspecto: "1 / 1", fuente_titulos: "sans" },
   gourmet: { ...DISENO_BASE, radio: "redondo", aspecto: "1 / 1", fuente_titulos: "serif", fuente_texto: "serif", descripcion: true },
+  // Atelier: papel cálido, tipografía editorial, líneas finas y mucho aire. Pensada para moda, decoración y objetos de autor.
+  atelier: { ...DISENO_BASE, fondo: "#FAF7F2", texto: "#1C1917", radio: "cuadrado", boton: "contorno", aspecto: "3 / 4", fuente_titulos: "editorial", ancho: "amplio", espaciado: "amplio", cabecera: "centro" },
+  // Urbano: fondo negro, titulares condensados y color de acento fuerte. Pensada para streetwear, tecnología, bebidas y deportes.
+  urbano: { ...DISENO_BASE, fondo: "#0A0A0B", texto: "#F4F4F5", radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "display", ancho: "amplio" },
+  // Mercado: denso y directo, con ofertas y categorías a la vista como en un marketplace. Pensada para súper, kioscos, ferretería y catálogos grandes.
+  mercado: { ...DISENO_BASE, radio: "suave", aspecto: "1 / 1", fuente_titulos: "sans", ancho: "amplio", espaciado: "compacto" },
 };
 
 export const TEMA_BASE = {
@@ -212,7 +228,7 @@ export const nuevoId = () => `b${Math.random().toString(36).slice(2, 9)}`;
 const ALTOS = ["chico", "medio", "grande"] as const;
 const ALINEACIONES = ["izquierda", "centro"] as const;
 const ENLACES = ["catalogo", "whatsapp", "url"] as const;
-const ESTILOS_PORTADA = ["boutique", "galeria", "impacto", "gourmet", "simple"] as const;
+const ESTILOS_PORTADA = ["boutique", "galeria", "impacto", "gourmet", "atelier", "urbano", "mercado", "simple"] as const;
 const FONDOS_TEXTO = ["ninguno", "suave", "color"] as const;
 const ICONOS_IDS = ICONOS.map((item) => item.id);
 
@@ -233,6 +249,7 @@ export function bloqueNuevo(tipo: BloqueTipo, plantilla: Plantilla = "boutique")
     case "opiniones": return { ...base, tipo, titulo: "Lo que dicen nuestros clientes" };
     case "contacto": return { ...base, tipo, titulo: "Contacto y horarios" };
     case "separador": return { ...base, tipo, alto: "medio", linea: true };
+    case "cinta": return { ...base, tipo, items: ["Envío a domicilio", "Pagá como quieras", "Novedades cada semana"], estilo: "acento" };
     case "newsletter": return { ...base, tipo, titulo: "Enterate primero de las novedades", texto: "Dejanos tu email y te avisamos de nuevos productos y ofertas.", boton: "Quiero enterarme" };
     case "politicas": return { ...base, tipo, titulo: "Envíos, cambios y garantía", items: [{ t: "Envíos", x: "Entregamos en la zona cercana al local. El costo y el tiempo se calculan con tu dirección." }, { t: "Cambios y devoluciones", x: "Podés cambiar tu compra dentro de los 10 días con el comprobante." }, { t: "Medios de pago", x: "Efectivo, transferencia o tarjeta." }] };
     case "oferta": return { ...base, tipo, titulo: "Oferta por tiempo limitado", texto: "Aprovechá antes de que termine.", boton: "Ver productos", hasta: finDeSemana(), enlace_tipo: "catalogo" };
@@ -282,6 +299,10 @@ export function normalizeBloque(raw: unknown, index: number): Bloque | null {
     case "opiniones": return { ...base, tipo: "opiniones", titulo: opt(s.titulo, 80) };
     case "contacto": return { ...base, tipo: "contacto", titulo: opt(s.titulo, 80) };
     case "separador": return { ...base, tipo: "separador", alto: pick(s.alto, ALTOS, "medio"), linea: s.linea !== false };
+    case "cinta": {
+      const items = (Array.isArray(s.items) ? s.items : []).map((item) => text(item, 60)).filter(Boolean).slice(0, 6);
+      return { ...base, tipo: "cinta", items, estilo: pick(s.estilo, ["acento", "oscuro", "claro"] as const, "acento") };
+    }
     case "newsletter": return { ...base, tipo: "newsletter", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24) };
     case "politicas": {
       const items = (Array.isArray(s.items) ? s.items : []).slice(0, 4).map((item): PoliticaItem | null => {
@@ -294,6 +315,109 @@ export function normalizeBloque(raw: unknown, index: number): Bloque | null {
     case "oferta": return { ...base, tipo: "oferta", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), hasta: fechaIso(s.hasta), ...enlace };
     case "video": return { ...base, tipo: "video", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), url: videoUrl(s.url) };
     default: return null;
+  }
+}
+
+/**
+ * Página COMPLETA de cada plantilla: portada, beneficios, colecciones, selecciones de productos, banners, catálogo, opiniones,
+ * suscripción, políticas y contacto, ya ordenados y con textos de ejemplo para que el comercio solo los ajuste. Los identificadores son
+ * fijos para que la misma tienda genere siempre los mismos bloques. Solo se usa al ELEGIR una plantilla; las tiendas ya armadas no cambian.
+ */
+export function paginaDePlantilla(plantilla: Plantilla, tema: Pick<TiendaTema, "titulo" | "subtitulo" | "boton" | "banner_url" | "acerca"> = {}): Bloque[] {
+  const b = <T extends Bloque>(tipo: T["tipo"], id: string, cambios: Partial<T> = {}): T => ({ ...(bloqueNuevo(tipo, plantilla) as Bloque), id, ...cambios }) as T;
+  const portada = b<BloquePortada>("portada", "portada", { estilo: plantilla, titulo: tema.titulo, subtitulo: tema.subtitulo, boton: tema.boton, imagen_url: tema.banner_url });
+  const beneficios = (items: ConfianzaItem[]) => b<BloqueConfianza>("confianza", "beneficios", { items });
+  const envio: ConfianzaItem = { icono: "envio", titulo: "Envío a domicilio", texto: "Te lo llevamos a tu puerta" };
+  const pago: ConfianzaItem = { icono: "pago", titulo: "Pagá como quieras", texto: "Efectivo, transferencia o tarjeta" };
+  const calidad: ConfianzaItem = { icono: "calidad", titulo: "Calidad asegurada", texto: "Productos elegidos con cuidado" };
+  const soporte: ConfianzaItem = { icono: "soporte", titulo: "Atención personalizada", texto: "Escribinos y te ayudamos" };
+  const catalogo = (titulo: string, columnas = 4) => b<BloqueCatalogo>("catalogo", "catalogo", { titulo, columnas, filtros: true });
+  const acerca = tema.acerca ? b<BloqueTexto>("texto", "acerca", { titulo: "Sobre nosotros", texto: tema.acerca, alineacion: plantilla === "gourmet" ? "izquierda" : "centro", fondo: "ninguno" }) : null;
+  const cierre: Bloque[] = [b<BloqueOpiniones>("opiniones", "opiniones"), b<BloqueNewsletter>("newsletter", "newsletter"), b<BloqueContacto>("contacto", "contacto")];
+  const quitar = (lista: (Bloque | null)[]) => lista.filter((x): x is Bloque => x !== null);
+
+  switch (plantilla) {
+    case "atelier":
+      return quitar([
+        portada,
+        b<BloqueCinta>("cinta", "cinta", { estilo: "claro", items: ["Nuevos ingresos", "Envíos a domicilio", "Pagá como quieras"] }),
+        acerca ?? b<BloqueTexto>("texto", "manifiesto", { titulo: "Pocas cosas, bien elegidas", texto: "Contá en dos líneas qué hacés y por qué lo hacés así. Una tienda con una voz propia se recuerda más que una con mil productos.", alineacion: "centro", fondo: "ninguno" }),
+        b<BloqueProductos>("productos", "seleccion", { titulo: "La selección de la casa", fuente: "destacados", cantidad: 3, columnas: 3 }),
+        b<BloqueImagenTexto>("imagen_texto", "historia", { lado: "derecha", titulo: "Hecho con tiempo", texto: "Explicá cómo nace cada pieza, quién la hace y qué la hace distinta. Cambiá esta foto por una tuya.", boton: "Ver la colección", enlace_tipo: "catalogo" }),
+        b<BloqueColecciones>("colecciones", "colecciones", { titulo: "Explorá por colección", estilo: "lista" }),
+        catalogo("Todo el catálogo", 3),
+        ...cierre,
+        b<BloquePoliticas>("politicas", "politicas"),
+      ]);
+    case "urbano":
+      return quitar([
+        b<BloqueCinta>("cinta", "cinta", { estilo: "acento", items: ["Nuevo drop", "Stock limitado", "Envíos a todo el país", "Pagá como quieras"] }),
+        portada,
+        b<BloqueProductos>("productos", "drop", { titulo: "Último drop", fuente: "destacados", cantidad: 4, columnas: 4 }),
+        b<BloqueBanner>("banner", "banner", { titulo: "Edición limitada", texto: "Cuando se agota, no vuelve. Elegí el tuyo.", boton: "Ver todo", enlace_tipo: "catalogo", alto: "grande" }),
+        b<BloqueColecciones>("colecciones", "colecciones", { titulo: "Categorías", estilo: "tarjetas" }),
+        catalogo("Todo el catálogo", 4),
+        b<BloqueOferta>("oferta", "oferta", { titulo: "Descuento por tiempo limitado", texto: "Aprovechalo antes de que termine.", boton: "Ir a comprar" }),
+        ...cierre,
+      ]);
+    case "mercado":
+      return quitar([
+        portada,
+        beneficios([envio, pago, soporte]),
+        b<BloqueColecciones>("colecciones", "colecciones", { titulo: "Categorías", estilo: "circulos" }),
+        b<BloqueProductos>("productos", "ofertas", { titulo: "Los más elegidos", fuente: "destacados", cantidad: 5, columnas: 5 }),
+        b<BloqueBanner>("banner", "banner", { titulo: "Ofertas de la semana", texto: "Precios especiales en productos seleccionados.", boton: "Ver ofertas", enlace_tipo: "catalogo", alto: "chico" }),
+        catalogo("Todos los productos", 5),
+        b<BloqueFaq>("faq", "faq"),
+        b<BloquePoliticas>("politicas", "politicas"),
+        b<BloqueNewsletter>("newsletter", "newsletter"),
+        b<BloqueContacto>("contacto", "contacto"),
+      ]);
+    case "impacto":
+      return quitar([
+        b<BloqueCinta>("cinta", "cinta", { estilo: "oscuro", items: ["Pedí ahora", "Ofertas todos los días", "Envío rápido"] }),
+        portada,
+        b<BloqueOferta>("oferta", "oferta", { titulo: "Oferta por tiempo limitado", texto: "Aprovechá antes de que termine.", boton: "Ver ofertas" }),
+        b<BloqueColecciones>("colecciones", "colecciones", { titulo: "¿Qué estás buscando?", estilo: "circulos" }),
+        b<BloqueProductos>("productos", "destacados", { titulo: "Los más pedidos", fuente: "destacados", cantidad: 4, columnas: 4 }),
+        beneficios([envio, pago, calidad]),
+        catalogo("Todos los productos", 4),
+        b<BloqueFaq>("faq", "faq"),
+        ...cierre.slice(1),
+      ]);
+    case "gourmet":
+      return quitar([
+        portada,
+        acerca ?? b<BloqueImagenTexto>("imagen_texto", "cocina", { lado: "izquierda", titulo: "Cocina de la casa", texto: "Contá de dónde vienen tus recetas y tus ingredientes. Cambiá esta foto por una de tu cocina.", boton: "Ver la carta", enlace_tipo: "catalogo" }),
+        b<BloqueColecciones>("colecciones", "colecciones", { titulo: "La carta", estilo: "circulos" }),
+        b<BloqueProductos>("productos", "destacados", { titulo: "Para empezar", fuente: "destacados", cantidad: 4, columnas: 4 }),
+        catalogo("Nuestra carta", 4),
+        beneficios([envio, calidad, pago]),
+        b<BloqueOpiniones>("opiniones", "opiniones"),
+        b<BloqueFaq>("faq", "faq"),
+        b<BloqueContacto>("contacto", "contacto"),
+      ]);
+    case "galeria":
+      return quitar([
+        portada,
+        acerca ?? b<BloqueTexto>("texto", "manifiesto", { titulo: "Hecho con intención", texto: "Una frase sobre tu forma de trabajar. Dejá que las fotos hagan el resto.", alineacion: "centro", fondo: "ninguno" }),
+        b<BloqueProductos>("productos", "seleccion", { titulo: "Selección", fuente: "destacados", cantidad: 3, columnas: 3 }),
+        b<BloqueImagenTexto>("imagen_texto", "historia", { lado: "izquierda", titulo: "Nuestra historia", texto: "Contá cómo empezó todo. Cambiá esta foto por una tuya.", boton: "Ver productos", enlace_tipo: "catalogo" }),
+        catalogo("Catálogo", 3),
+        ...cierre,
+      ]);
+    default: // boutique
+      return quitar([
+        portada,
+        beneficios([envio, pago, calidad, soporte]),
+        b<BloqueColecciones>("colecciones", "colecciones", { titulo: "Comprá por categoría", estilo: "tarjetas" }),
+        b<BloqueProductos>("productos", "destacados", { titulo: "Lo más elegido", fuente: "destacados", cantidad: 4, columnas: 4 }),
+        b<BloqueImagenTexto>("imagen_texto", "historia", { lado: "izquierda", titulo: tema.acerca ? "Sobre nosotros" : "Hecho con dedicación", texto: tema.acerca ?? "Contá qué te hace distinto y por qué tus clientes te eligen. Cambiá esta foto por una tuya.", boton: "Ver productos", enlace_tipo: "catalogo" }),
+        b<BloqueBanner>("banner", "banner", { titulo: "Novedades de la temporada", texto: "Mirá lo último que llegó.", boton: "Ver novedades", enlace_tipo: "catalogo", alto: "medio" }),
+        catalogo("Todos los productos", 4),
+        ...cierre,
+        b<BloquePoliticas>("politicas", "politicas"),
+      ]);
   }
 }
 
@@ -322,8 +446,9 @@ export function normalizeDiseno(raw: unknown, plantilla: Plantilla, tipografia: 
   if (tipografia === "serif" && plantilla !== "gourmet") { base.fuente_titulos = "serif"; base.fuente_texto = "serif"; }
   const color = (value: unknown) => (typeof value === "string" && HEX.test(value) ? value.toUpperCase() : undefined);
   return {
-    fondo: color(source.fondo),
-    texto: color(source.texto),
+    // El fondo y el texto de la plantilla (papel cálido, negro…) valen salvo que el comercio elija otros.
+    fondo: color(source.fondo) ?? base.fondo,
+    texto: color(source.texto) ?? base.texto,
     radio: pick(source.radio, Object.keys(RADIOS) as Radio[], base.radio),
     boton: pick(source.boton, ["relleno", "contorno"] as const, base.boton),
     fuente_titulos: pick(source.fuente_titulos, Object.keys(FUENTES) as Fuente[], base.fuente_titulos),

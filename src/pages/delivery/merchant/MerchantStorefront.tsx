@@ -6,6 +6,7 @@ import { DesignPanel, serializarTema } from "@/components/storefront/builder/Des
 import { Campo, Interruptor, Texto } from "@/components/storefront/builder/fields";
 import { PreviewPane } from "@/components/storefront/builder/PreviewPane";
 import { QrPoster } from "@/components/storefront/QrPoster";
+import { MerchantMenu } from "@/components/merchant/MerchantMenu";
 import { SubscribersPanel } from "@/components/storefront/SubscribersPanel";
 import { StorefrontStats } from "@/components/storefront/StorefrontStats";
 import { TemplateGrid } from "@/components/storefront/TemplatePicker";
@@ -14,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db, DeliverySection, errorMessage, orderSections } from "@/lib/delivery";
-import { Bloque, bloqueNuevo, bloquesDePlantilla, Diseno, MAX_BLOQUES, nuevoId, normalizeDiseno, normalizeTheme, Plantilla, storefrontPath, storefrontUrl, temaParaGuardar, TemaNormalizado, TIPOS_BLOQUE } from "@/lib/storefront";
+import { Bloque, bloqueNuevo, Diseno, MAX_BLOQUES, nuevoId, normalizeDiseno, normalizeTheme, paginaDePlantilla, Plantilla, PLANTILLAS, TEMA_BASE, storefrontPath, storefrontUrl, temaParaGuardar, TemaNormalizado, TIPOS_BLOQUE } from "@/lib/storefront";
 import type { VendedorResumen } from "@/lib/marketplace";
 import { cn } from "@/lib/utils";
 import { useMerchant } from "./context";
@@ -39,12 +40,15 @@ function useWide() {
 
 /** Constructor de la tienda online: el comercio arma su página con bloques, elige el diseño y ve el resultado al instante. */
 export default function MerchantStorefront() {
-  const { store, products, reviews, loadStore } = useMerchant();
+  const { store, products, reviews, loadStore, loadProducts, access } = useMerchant();
+  const puedeCatalogo = access.permisos.includes("catalogo");
   const wide = useWide();
+
   const [draft, setDraft] = useState<TemaNormalizado>(() => normalizeTheme(store.tienda_tema));
   const [sections, setSections] = useState<DeliverySection[]>([]);
   const [vendedor, setVendedor] = useState<VendedorResumen | null>(null);
   const [tab, setTab] = useState("constructor");
+  const sinVista = tab === "compartir" || tab === "productos";
   const [openId, setOpenId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropOn, setDropOn] = useState<string | null>(null);
@@ -131,12 +135,19 @@ export default function MerchantStorefront() {
   }, []);
 
   const aplicarPlantilla = () => {
-    setDraft((current) => ({
-      ...current,
-      plantilla: plantillaElegida,
-      bloques: bloquesDePlantilla(plantillaElegida, { titulo: current.titulo, subtitulo: current.subtitulo, boton: current.boton, banner_url: current.banner_url, acerca: current.acerca }),
-      diseno: normalizeDiseno({}, plantillaElegida, current.tipografia),
-    }));
+    setDraft((current) => {
+      // El color solo cambia si todavía era el de la plantilla anterior: si el comercio ya eligió el suyo, se respeta.
+      const colorAnterior = PLANTILLAS.find((item) => item.id === current.plantilla)?.color;
+      const colorNuevo = PLANTILLAS.find((item) => item.id === plantillaElegida)?.color ?? current.color;
+      const sinPersonalizar = current.color === colorAnterior || current.color === TEMA_BASE.color;
+      return {
+        ...current,
+        plantilla: plantillaElegida,
+        color: sinPersonalizar ? colorNuevo : current.color,
+        bloques: paginaDePlantilla(plantillaElegida, { titulo: current.titulo, subtitulo: current.subtitulo, boton: current.boton, banner_url: current.banner_url, acerca: current.acerca }),
+        diseno: normalizeDiseno({}, plantillaElegida, current.tipografia),
+      };
+    });
     setOpenId(null);
     setTemplates(false);
     toast.success("Plantilla aplicada. Guardá cuando estés conforme.");
@@ -170,10 +181,11 @@ export default function MerchantStorefront() {
         </div>
       </section>
 
-      <div className={cn("grid gap-6", tab !== "compartir" && "xl:grid-cols-[minmax(0,460px)_1fr]")}>
+      <div className={cn("grid gap-6", !sinVista && "xl:grid-cols-[minmax(0,460px)_1fr]")}>
         <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-          <TabsList className="grid h-auto w-full grid-cols-4 rounded-2xl p-1">
+          <TabsList className="grid h-auto w-full grid-cols-5 rounded-2xl p-1">
             <TabsTrigger value="constructor" className="rounded-xl py-2 font-bold">Bloques</TabsTrigger>
+            {puedeCatalogo && <TabsTrigger value="productos" className="rounded-xl py-2 font-bold">Productos</TabsTrigger>}
             <TabsTrigger value="diseno" className="rounded-xl py-2 font-bold">Diseño</TabsTrigger>
             <TabsTrigger value="datos" className="rounded-xl py-2 font-bold">Datos</TabsTrigger>
             <TabsTrigger value="compartir" className="rounded-xl py-2 font-bold">Compartir</TabsTrigger>
@@ -222,6 +234,11 @@ export default function MerchantStorefront() {
           </TabsContent>
 
           {/* ---------- DISEÑO ---------- */}
+          <TabsContent value="productos" className="mt-4">
+            <p className="mb-4 rounded-2xl bg-muted p-3 text-sm text-muted-foreground">Cargá tus productos por sección (categoría): foto, precio, stock, variantes y descripción. Cada sección se vuelve una colección con su propia página en tu tienda.</p>
+            <MerchantMenu storeId={store.id} products={products} onChange={loadProducts} />
+          </TabsContent>
+
           <TabsContent value="diseno" className="mt-4">
             <div className="rounded-3xl border bg-card p-4 sm:p-5"><DesignPanel tema={draft} onChange={setDiseno} /></div>
           </TabsContent>
@@ -260,14 +277,14 @@ export default function MerchantStorefront() {
           </TabsContent>
         </Tabs>
 
-        {tab !== "compartir" && wide && (
+        {!sinVista && wide && (
           <aside className="min-w-0 xl:sticky xl:top-20 xl:self-start">
             <PreviewPane data={previewData} selected={openId} onSelect={seleccionar} />
           </aside>
         )}
       </div>
 
-      {tab !== "compartir" && !wide && (
+      {!sinVista && !wide && (
         <Button type="button" variant="outline" className="w-full rounded-full font-bold" onClick={() => setPhonePreview(true)}><Monitor className="h-4 w-4" />Ver vista previa</Button>
       )}
 

@@ -68,7 +68,7 @@
 - SEO por tienda (títulos, descripciones, Open Graph por página, sitemap con colecciones) y **dominios propios**.
 - Productos organizados por sección desde el propio editor.
 - Validación única: pasar de doble implementación (TS + SQL) a un esquema compartido y versionado.
-**Tamaño:** L. *(Trabajo ya iniciado: bloques de marketing, carrito lateral, pie y WhatsApp. Es aditivo y vive dentro del módulo Store, por lo que puede continuar en paralelo a las fases 0–2.)*
+**Tamaño:** L. *(**Avance 2026-10-05:** bloques de marketing, carrito lateral, pie y WhatsApp; **páginas internas** por tienda (`/t/:slug/c/:categoria`, `/ofertas`, `/buscar`) con menú de categorías, menú móvil, ruta de navegación y buscador con sugerencias; pestaña **Productos** (carga por sección) dentro del editor; **7 plantillas** (Boutique, Atelier, Galería, Urbano, Impacto, Mercado, Gourmet) con página completa de ejemplo, tipografías reales (Playfair, Fraunces, Space Grotesk, Nunito, Bebas Neue, Space Mono, Lora) y bloque nuevo "cinta de anuncios". **Falta de la Fase 3:** dominios propios, SEO por página (sitemap con colecciones), tarjetas de producto con segunda foto y compra rápida, editor visual de páginas adicionales.)*
 
 ## FASE 4 — WOREF MARKET
 

@@ -16,14 +16,17 @@ export function Wireframe({ id, color }: { id: Plantilla; color: string }) {
       {id === "galeria" && <><div className="mx-auto mt-0.5 h-1 w-1/3 bg-foreground/60" /><div className="mx-auto mt-1 h-px w-5" style={{ background: color }} /><div className={cn("mt-1.5 h-[30%]", block)} />{products("")}</>}
       {id === "impacto" && <><div className="flex h-[42%] items-center gap-1 rounded-xl p-1.5" style={{ background: color }}><div className="h-2.5 w-1/2 rounded bg-white/80" /><div className="ml-auto h-full w-1/3 rotate-3 rounded-lg bg-white/30" /></div>{products("rounded-md")}</>}
       {id === "gourmet" && <><div className="flex h-[42%] items-center gap-1.5 px-1"><div className="flex-1 space-y-1"><div className="h-1 w-1/3" style={{ background: color }} /><div className="h-1.5 w-4/5 bg-foreground/60" /></div><div className="h-full w-[28%] rounded-t-full rounded-b-sm" style={{ background: `${color}55` }} /></div>{products("rounded-[3px]", 2)}</>}
+      {id === "atelier" && <div className="flex h-full gap-1.5" style={{ background: "#FAF7F2" }}><div className="flex w-[38%] flex-col justify-center gap-1 pl-1"><div className="h-0.5 w-1/3 bg-foreground/50" /><div className="h-2 w-full bg-foreground/70" /><div className="h-2 w-3/4 bg-foreground/70" /><div className="mt-1 h-px w-1/2" style={{ background: color }} /></div><div className="flex-1 bg-muted-foreground/30" /></div>}
+      {id === "urbano" && <div className="flex h-full flex-col justify-end gap-1 rounded-sm p-1.5" style={{ background: "#0A0A0B" }}><div className="h-1.5 w-1/4" style={{ background: color }} /><div className="h-3 w-4/5 bg-white/85" /><div className="h-3 w-1/2 bg-white/85" /><div className="mt-1 h-2 w-8" style={{ background: color }} /></div>}
+      {id === "mercado" && <><div className="grid h-[58%] grid-cols-3 gap-1"><div className="col-span-2 rounded-sm" style={{ background: color }} /><div className="grid gap-1"><div className="rounded-sm bg-muted-foreground/30" /><div className="rounded-sm bg-muted-foreground/20" /></div></div><div className="mt-1.5 grid grid-cols-5 gap-1">{Array.from({ length: 5 }, (_, n) => <div key={n} className="aspect-square rounded-sm bg-muted-foreground/25" />)}</div></>}
     </div>
   );
 }
 
-/** Las 4 plantillas para elegir, con su dibujo, para qué rubro sirve y una frase. */
+/** Las plantillas para elegir, con su dibujo, para qué rubro sirve y una frase. */
 export function TemplateGrid({ value, color, onChange }: { value: Plantilla; color: string; onChange: (id: Plantilla) => void }) {
   return (
-    <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Plantilla">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Plantilla">
       {PLANTILLAS.map((item) => (
         <button key={item.id} type="button" role="radio" aria-checked={value === item.id} onClick={() => onChange(item.id)}
           className={cn("rounded-2xl border-2 p-2.5 text-left transition-colors", value === item.id ? "border-brand-orange bg-brand-orange/5" : "border-transparent bg-muted/40 hover:bg-muted")}>

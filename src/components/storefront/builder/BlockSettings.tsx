@@ -158,6 +158,20 @@ export function BlockSettings({ bloque, categorias, onChange }: { bloque: Bloque
       return <div className="space-y-4"><Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} /><p className="text-xs text-muted-foreground">Muestra las opiniones con comentario que dejan tus clientes. Aparece cuando hay al menos una.</p></div>;
     case "contacto":
       return <div className="space-y-4"><Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} /><p className="text-xs text-muted-foreground">Usa la dirección, los horarios y las redes que cargaste en tu comercio y en Datos y redes.</p></div>;
+    case "cinta":
+      return (
+        <div className="space-y-3">
+          <Opciones label="Estilo" value={bloque.estilo} options={[{ id: "acento", label: "Color de la tienda" }, { id: "oscuro", label: "Oscuro" }, { id: "claro", label: "Con líneas" }]} onChange={(estilo) => onChange({ estilo })} />
+          {bloque.items.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Input aria-label={`Frase ${index + 1}`} value={item} maxLength={60} placeholder="Ej.: Envío gratis desde $20.000" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? event.target.value : row)) })} />
+              <Button type="button" variant="ghost" size="icon" aria-label={`Quitar frase ${index + 1}`} onClick={() => onChange({ items: bloque.items.filter((_, i) => i !== index) })}><Trash2 className="h-4 w-4" /></Button>
+            </div>
+          ))}
+          {bloque.items.length < 6 && <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => onChange({ items: [...bloque.items, ""] })}><Plus className="h-4 w-4" />Agregar frase</Button>}
+          <p className="text-xs text-muted-foreground">Las frases se repiten y se mueven de a una. Con "reducir movimiento" activado en el dispositivo quedan quietas.</p>
+        </div>
+      );
     case "newsletter":
       return (
         <div className="space-y-4">

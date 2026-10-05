@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Categoria, categoriaLabel, db, DeliveryProduct, DeliveryStore, errorMessage, money, scheduleSummary, slugify } from "@/lib/delivery";
-import { normalizeTheme, storefrontUrl, temaParaGuardar, TiendaTema } from "@/lib/storefront";
+import { normalizeTheme, paginaDePlantilla, storefrontUrl, temaParaGuardar, TiendaTema } from "@/lib/storefront";
 import { cn } from "@/lib/utils";
 
 type QuickProduct = { id: string; nombre: string; precio: string; categoria: string; imagen_url: string };
@@ -176,7 +176,10 @@ export function StoreOnboarding({ userId, onDone, onCancel }: { userId: string; 
       return;
     }
     // Lo que no depende de que todo salga perfecto: si algo falla acá, el comercio ya existe y se completa desde el panel.
-    const themeResult = await db.rpc("delivery_guardar_tienda_tema", { p_comercio: storeId, p_tema: temaParaGuardar(normalizeTheme(tema)) });
+    // Una tienda nueva arranca con la página COMPLETA de la plantilla elegida (no solo portada y catálogo).
+    const base = normalizeTheme(tema);
+    const completo = tema.bloques?.length ? base : { ...base, bloques: paginaDePlantilla(base.plantilla, { titulo: base.titulo, subtitulo: base.subtitulo, boton: base.boton, banner_url: base.banner_url, acerca: base.acerca }) };
+    const themeResult = await db.rpc("delivery_guardar_tienda_tema", { p_comercio: storeId, p_tema: temaParaGuardar(completo) });
     const productResult = validProducts.length
       ? await db.from("delivery_productos").insert(validProducts.map((item, index) => ({ comercio_id: storeId, nombre: item.nombre.trim().slice(0, 120), precio: Number(item.precio), categoria: item.categoria.trim().slice(0, 60) || "Destacados", imagen_url: item.imagen_url || null, orden: index, destacado: index < 2 })))
       : { error: null };

@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
-import { FUENTES, RADIOS, readableOn, type TemaNormalizado } from "@/lib/storefront";
+import { FUENTES, RADIOS, readableOn, TEXTO_SERIF, type TemaNormalizado } from "@/lib/storefront";
+import "@/lib/storefrontFonts";
 
 const ESPACIO: Record<string, string> = { compacto: "pt-8 sm:pt-10", normal: "pt-12 sm:pt-16", amplio: "pt-16 sm:pt-24" };
 
@@ -8,7 +9,7 @@ export function estiloTienda(theme: TemaNormalizado) {
   const d = theme.diseno;
   const darkPage = d.fondo ? readableOn(d.fondo) === "#FFFFFF" : false;
   const titleFont = FUENTES[d.fuente_titulos].css;
-  const bodyFont = d.fuente_texto === "serif" ? FUENTES.serif.css : undefined;
+  const bodyFont = d.fuente_texto === "serif" ? TEXTO_SERIF : undefined;
   const pageStyle = {
     "--sf-accent": theme.color,
     "--sf-on-accent": readableOn(theme.color),

@@ -9,7 +9,7 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
 import { DeliveryProduct, DeliverySection, DeliveryStore, isOpenNow, money, nextOpening, orderSections, scheduleSummary } from "@/lib/delivery";
 import { storeReach } from "@/lib/geo";
-import { Bloque, BloqueBanner, BloqueCatalogo, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { Bloque, BloqueBanner, BloqueCatalogo, readableOn, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
 import { NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
@@ -139,7 +139,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
   // ---- piezas comunes
   const Boton = ({ children, onClick, tone = "accent" }: { children: ReactNode; onClick?: () => void; tone?: "accent" | "light" | "ghost-light" }) => {
     const filled = d.boton === "relleno";
-    const style: CSSProperties = tone === "light" ? { background: "#fff", color: "var(--sf-accent)", ...radiusButton }
+    const style: CSSProperties = tone === "light" ? { background: "#fff", color: readableOn(theme.color) === "#FFFFFF" ? "var(--sf-accent)" : "#111111", ...radiusButton }
       : tone === "ghost-light" ? { border: "1px solid rgba(255,255,255,0.7)", color: "#fff", ...radiusButton }
       : filled ? { ...accent, ...radiusButton } : { border: "2px solid var(--sf-accent)", color: "var(--sf-accent)", ...radiusButton };
     return <button type="button" onClick={onClick} className="inline-flex items-center gap-2 px-6 py-3 text-base font-bold transition-opacity hover:opacity-90" style={style}>{children}</button>;
@@ -219,6 +219,75 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
               <div className="flex justify-center lg:justify-start">{buttons(false)}</div>
             </div>
             <div className="relative mx-auto aspect-[4/5] w-full max-w-sm overflow-hidden rounded-b-3xl rounded-t-[999px] bg-muted shadow-pop lg:max-w-none"><SmartImage src={image} width={900} loading="eager" /></div>
+          </div>
+        </section>
+      );
+    }
+    if (b.estilo === "atelier") {
+      return (
+        <section className={cn("mx-auto px-4 pb-12 pt-10 sm:px-6 sm:pt-16", width)}>
+          <div className="grid items-end gap-10 lg:grid-cols-12 lg:gap-16">
+            <div className="pb-2 lg:col-span-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.4em] opacity-60">{store.rubro || "Colección"}</p>
+              <h1 className="mt-6 text-5xl font-medium leading-[1] tracking-tight sm:text-7xl" style={headingStyle}>{title}</h1>
+              {sub && <p className="mt-6 max-w-sm text-lg leading-relaxed opacity-70">{sub}</p>}
+              <button type="button" onClick={() => go("catalogo")} className="mt-9 inline-flex items-center gap-3 border-b-2 pb-1 text-sm font-semibold uppercase tracking-[0.2em]" style={{ borderColor: "var(--sf-accent)" }}>{cta}<ArrowRight className="h-4 w-4" /></button>
+              <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs uppercase tracking-widest opacity-70"><span className="font-semibold">{statusChip}</span>{info.slice(0, 3).map(({ label, value }) => <span key={label}>{label}: {value}</span>)}</div>
+            </div>
+            <div className="relative lg:col-span-7">
+              <div className="relative aspect-[4/5] overflow-hidden bg-muted lg:aspect-[5/6]"><SmartImage src={image} width={1400} loading="eager" /></div>
+              <div aria-hidden className="absolute -bottom-4 -left-4 hidden h-28 w-28 border sm:block" style={{ borderColor: "var(--sf-accent)" }} />
+            </div>
+          </div>
+        </section>
+      );
+    }
+    if (b.estilo === "urbano") {
+      return (
+        <section className="relative isolate overflow-hidden">
+          <div className="absolute inset-0 -z-10"><SmartImage src={image} width={1600} loading="eager" /></div>
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black via-black/70 to-black/20" />
+          <div className={cn("mx-auto flex min-h-[460px] flex-col justify-center px-4 py-20 text-white sm:min-h-[640px] sm:px-6 sm:py-32", width)}>
+            <span className="mb-5 inline-flex w-fit items-center px-3 py-1 text-xs font-black uppercase tracking-[0.25em]" style={accent}>{store.rubro || "Nueva colección"}</span>
+            <h1 className="max-w-4xl text-[3.6rem] uppercase leading-[0.88] sm:text-[9rem]" style={headingStyle}>{title}</h1>
+            {sub && <p className="mt-6 max-w-lg text-lg text-white/75">{sub}</p>}
+            <div className="mt-8 flex flex-wrap items-center gap-5">
+              <button type="button" onClick={() => go("catalogo")} className="inline-flex items-center gap-3 px-8 py-4 text-base font-black uppercase tracking-widest transition-opacity hover:opacity-90" style={{ ...accent, borderRadius: 0 }}>{cta}<ArrowRight className="h-5 w-5" /></button>
+              <span className="text-sm font-semibold text-white/80">{statusChip}</span>
+            </div>
+          </div>
+        </section>
+      );
+    }
+    if (b.estilo === "mercado") {
+      const conFoto = available.filter((item) => item.imagen_url);
+      const primero = conFoto[0];
+      const segundo = conFoto[1] ?? conFoto[0];
+      const nOfertas = available.filter(tieneDescuento).length;
+      const tile = (foto: string | null | undefined, etiqueta: string, titulo2: string, onClick: () => void) => (
+        <button type="button" onClick={onClick} className="group relative isolate aspect-[4/3] overflow-hidden bg-muted text-left text-white lg:aspect-auto lg:min-h-[170px]" style={{ borderRadius: "var(--sf-radius)" }}>
+          <div className="absolute inset-0 -z-10"><SmartImage src={foto} width={700} className="transition-transform duration-700 group-hover:scale-105" /></div>
+          <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+          <span className="absolute inset-x-0 bottom-0 p-4"><span className="block text-xs font-bold uppercase tracking-wider opacity-80">{etiqueta}</span><span className="block text-lg font-extrabold leading-tight">{titulo2}</span></span>
+        </button>
+      );
+      return (
+        <section className={cn("mx-auto px-4 pt-4 sm:px-6", width)}>
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div className="relative isolate flex min-h-[260px] items-end overflow-hidden bg-[hsl(220_14%_16%)] text-white sm:min-h-[380px] lg:col-span-2" style={{ borderRadius: "var(--sf-radius)" }}>
+              <div className="absolute inset-0 -z-10"><SmartImage src={image} width={1400} loading="eager" /></div>
+              <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
+              <div className="max-w-md p-6 sm:p-10">
+                <div className="mb-3 opacity-90">{statusChip}</div>
+                <h1 className="text-3xl font-black leading-tight sm:text-5xl" style={headingStyle}>{title}</h1>
+                {sub && <p className="mt-2 text-base text-white/85 sm:text-lg">{sub}</p>}
+                {buttons(false)}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+              {tile(primero?.imagen_url, "Destacados", "Lo más elegido", () => go("catalogo"))}
+              {tile(segundo?.imagen_url, nOfertas > 0 ? `${nOfertas} en oferta` : "Novedades", nOfertas > 0 ? "Ver ofertas" : "Ver todo", () => { if (!preview && nOfertas > 0) navigate(offersPath(store.slug)); else go("catalogo"); })}
+            </div>
           </div>
         </section>
       );
@@ -588,6 +657,22 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
               {b.texto && <p className="mt-3 text-center opacity-75">{b.texto}</p>}
             </div>
           </section>
+        );
+      }
+      case "cinta": {
+        if (!b.items.length) return null;
+        const estiloCinta: CSSProperties = b.estilo === "oscuro" ? { background: "#0A0A0B", color: "#FFFFFF" } : b.estilo === "claro" ? { borderBlock: "1px solid color-mix(in srgb, currentColor 16%, transparent)" } : accent;
+        const copia = Array.from({ length: Math.max(2, Math.ceil(8 / b.items.length)) }, () => b.items).flat();
+        return (
+          <div className="overflow-hidden py-3" style={estiloCinta} role="marquee" aria-label="Anuncios">
+            <div className="flex w-max animate-marquee motion-reduce:animate-none">
+              {[0, 1].map((n) => (
+                <div key={n} className="flex shrink-0 items-center" aria-hidden={n === 1}>
+                  {copia.map((texto, i) => <span key={`${n}-${i}`} className="flex items-center whitespace-nowrap px-6 text-xs font-bold uppercase tracking-[0.25em] sm:px-8">{texto}<span className="ml-6 opacity-50 sm:ml-8" aria-hidden>✦</span></span>)}
+                </div>
+              ))}
+            </div>
+          </div>
         );
       }
       case "separador":
