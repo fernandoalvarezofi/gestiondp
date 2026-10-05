@@ -13,6 +13,7 @@ import { Bloque, BloqueBanner, videoEmbed, BloqueImagenTexto, BloquePortada, Ico
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
 import { NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
+import { StoreFooter } from "@/components/storefront/StoreFooter";
 import { MiniCart } from "@/components/storefront/MiniCart";
 import { SellerCard } from "@/components/storefront/SellerCard";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -633,13 +634,20 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
         })}
       </main>
 
-      <footer className="mt-4 border-t bg-card text-card-foreground">
-        <div className={cn("mx-auto flex flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:px-6", width)}>
-          <p className="font-semibold text-foreground">{store.nombre}</p>
-          <p className="inline-flex items-center gap-1.5"><StoreIcon className="h-4 w-4" />Tienda online creada en Woref</p>
-          {!preview && <Link to={`/app/tienda/${store.slug}`} className="font-semibold hover:text-foreground">Ver en la app de Woref</Link>}
-        </div>
-      </footer>
+      <StoreFooter
+        store={store}
+        preview={preview}
+        widthClass={width}
+        enlaces={[...navLinks.map((l) => ({ label: l.label, onClick: () => go(l.id) })), ...(bloques.some((b) => b.tipo === "politicas") ? [{ label: "Envíos y cambios", onClick: () => go("politicas") }] : [])]}
+        redes={social.map((x) => ({ href: x.href, label: x.label, icon: <x.icon className="h-4 w-4" /> }))}
+      />
+
+      {!preview && theme.whatsapp && (
+        <a href={whatsappLink(theme.whatsapp, store.nombre)} target="_blank" rel="noopener noreferrer" aria-label="Escribinos por WhatsApp"
+          className={cn("fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-pop transition-transform hover:scale-105", itemCount > 0 ? "bottom-24 md:bottom-6" : "bottom-6")}>
+          <MessageCircle className="h-7 w-7" />
+        </a>
+      )}
 
       {!preview && itemCount > 0 && (
         <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={

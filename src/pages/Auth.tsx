@@ -138,7 +138,7 @@ export default function Auth() {
                 backgroundPosition: "center",
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-br from-[hsl(220_14%_14%)]/95 via-[hsl(220_14%_16%)]/88 to-black/70" />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(220 14% 14% / 0.92), hsl(220 14% 16% / 0.82) 55%, rgb(0 0 0 / 0.7))" }} />
           </>
         )}
 
