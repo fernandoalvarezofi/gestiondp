@@ -17,6 +17,7 @@ import { DeliveryProof } from "@/components/delivery/DeliveryProof";
 import { OrderClaims } from "@/components/delivery/OrderClaims";
 import { MapView } from "@/components/maps/LazyMaps";
 import { OrderAdjustments } from "@/components/delivery/OrderAdjustments";
+import { ReturnRequest } from "@/components/delivery/ReturnRequest";
 import { EtaBreakdown, OrderHistory } from "@/components/delivery/OrderEvents";
 import { useOrderEta } from "@/hooks/useOrderEta";
 import { useRoute } from "@/lib/route";
@@ -211,6 +212,8 @@ export default function OrderDetail() {
           <div className="flex justify-between pt-2 font-display text-lg font-extrabold"><dt>Total</dt><dd>{money(order.total)}</dd></div>
         </dl>
       </section>
+
+      <ReturnRequest order={order} />
 
       <section className="mt-4 grid gap-3 rounded-3xl border bg-card p-4 text-sm sm:grid-cols-2 sm:p-5">
         <div className="flex gap-2"><MapPin className="h-5 w-5 shrink-0 text-primary" /><div><p className="font-bold">{retiro ? "Retiro" : "Entrega en"}</p><p className="text-muted-foreground">{order.direccion_entrega}</p></div></div>

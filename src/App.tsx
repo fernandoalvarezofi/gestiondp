@@ -42,6 +42,7 @@ const MerchantSettings = lazy(() => import("./pages/delivery/merchant/MerchantSe
 const MerchantStorefront = lazy(() => import("./pages/delivery/merchant/MerchantStorefront"));
 const MerchantNewStore = lazy(() => import("./pages/delivery/merchant/MerchantNewStore"));
 const MerchantQuestions = lazy(() => import("./pages/delivery/merchant/MerchantQuestions"));
+const MerchantReturns = lazy(() => import("./pages/delivery/merchant/MerchantReturns"));
 const Storefront = lazy(() => import("./pages/Storefront"));
 const StorefrontPreviewFrame = lazy(() => import("./pages/StorefrontPreviewFrame"));
 const StorefrontProduct = lazy(() => import("./pages/StorefrontProduct"));
@@ -141,6 +142,7 @@ const App = () => (
                         <Route path="tienda" element={<MerchantStorefront />} />
                         <Route path="nuevo" element={<MerchantNewStore />} />
                         <Route path="preguntas" element={<MerchantQuestions />} />
+                        <Route path="devoluciones" element={<MerchantReturns />} />
                         <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />
                         <Route path="configuracion/:seccion" element={<MerchantSettings />} />

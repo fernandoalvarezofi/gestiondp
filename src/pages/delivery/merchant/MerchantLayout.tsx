@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, Building2, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, MessageCircleQuestion, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
+import { BarChart3, Building2, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, MessageCircleQuestion, PackageOpen, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -23,7 +23,7 @@ const ACTIVE_KEY = "woref-sucursal";
 const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
 
 /** Qué permiso hace falta para entrar a cada sección del panel. */
-const sectionPermission: Record<string, Permission> = { menu: "catalogo", sucursales: "equipo", nuevo: "equipo", preguntas: "opiniones", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", tienda: "ajustes", configuracion: "ajustes" };
+const sectionPermission: Record<string, Permission> = { menu: "catalogo", devoluciones: "pedidos", sucursales: "equipo", nuevo: "equipo", preguntas: "opiniones", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", tienda: "ajustes", configuracion: "ajustes" };
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
@@ -216,6 +216,7 @@ export default function MerchantLayout() {
         { label: "Operación", items: [
           { to: "/app/comercio", label: "Inicio", icon: LayoutDashboard, end: true },
           { to: "/app/comercio/pedidos", label: "Pedidos", icon: ClipboardList, badge: pendingCount },
+          { to: "/app/comercio/devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen },
           ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", short: "Menú", icon: UtensilsCrossed }] : []),
         ] },
         { label: "Tienda online", items: [
