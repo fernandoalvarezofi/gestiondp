@@ -173,7 +173,9 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
   };
 
   const exportCsv = () => {
-    const csv = toCsv(["Sección", "Nombre", "Descripción", "Precio", "Stock", "Disponible"], products.map((product) => [product.categoria, product.nombre, product.descripcion ?? "", product.precio, product.stock ?? "", product.disponible ? "si" : "no"]));
+    const csv = toCsv(["Sección", "Nombre", "Descripción", "Precio", "Stock", "Disponible", "Variante", "SKU"], products.flatMap((product) => (product.usa_variantes && product.variantes?.length
+      ? [...product.variantes].sort((x, y) => x.orden - y.orden).map((v) => [product.categoria, product.nombre, product.descripcion ?? "", v.precio ?? product.precio, v.stock ?? "", product.disponible && v.disponible ? "si" : "no", v.nombre, v.sku ?? ""])
+      : [[product.categoria, product.nombre, product.descripcion ?? "", product.precio, product.stock ?? "", product.disponible ? "si" : "no", "", ""]])));
     downloadCsv("menu-woref.csv", csv);
   };
 

@@ -70,7 +70,7 @@ function SubstituteDialog({ order, item, onClose, onDone }: { order: DeliveryOrd
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    db.from("delivery_productos").select("*, grupos:delivery_producto_grupos(minimo)").eq("comercio_id", order.comercio_id).eq("disponible", true).order("nombre").then(({ data }: { data: (DeliveryProduct & { grupos?: { minimo: number }[] })[] | null }) => {
+    db.from("delivery_productos").select("*, grupos:delivery_producto_grupos(minimo)").eq("comercio_id", order.comercio_id).eq("disponible", true).eq("usa_variantes", false).order("nombre").then(({ data }: { data: (DeliveryProduct & { grupos?: { minimo: number }[] })[] | null }) => {
       setProducts((data || []).filter((product) => !(product.grupos || []).some((group) => group.minimo > 0) && (product.stock == null || product.stock >= item.cantidad)));
     });
   }, [order.comercio_id, item.cantidad]);
