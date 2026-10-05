@@ -1,6 +1,7 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { Loader2, Mail, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { BusinessTeam } from "@/components/merchant/BusinessTeam";
 import { EmptyState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -96,6 +97,8 @@ export default function MerchantTeam() {
         </ul>
         {members?.length === 0 && <p className="py-2 text-sm text-muted-foreground">Todavía no sumaste a nadie. Podés invitar a un encargado o a quien prepara los pedidos.</p>}
       </section>
+
+      <BusinessTeam storeId={store.id} />
     </div>
   );
 }

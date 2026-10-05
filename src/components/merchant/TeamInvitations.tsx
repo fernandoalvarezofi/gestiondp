@@ -3,6 +3,8 @@ import { Check, Loader2, Store, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { db, errorMessage } from "@/lib/delivery";
+import { fetchMisInvitaciones, Invitacion, responderInvitacion } from "@/services/business";
+import { ROL_NEGOCIO } from "@/components/merchant/BusinessTeam";
 import { roleLabel, roleSummary, TeamRole } from "@/pages/delivery/merchant/context";
 
 type Invitation = { id: string; rol: Exclude<TeamRole, "dueno">; comercio: string };
@@ -11,10 +13,12 @@ type Invitation = { id: string; rol: Exclude<TeamRole, "dueno">; comercio: strin
 export function TeamInvitations({ onAccepted, className }: { onAccepted?: () => void; className?: string }) {
   const [items, setItems] = useState<Invitation[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [negocios, setNegocios] = useState<Invitacion[]>([]);
 
   const load = useCallback(async () => {
     const { data } = await db.rpc("delivery_equipo_invitaciones");
     setItems(Array.isArray(data) ? data : []);
+    setNegocios(await fetchMisInvitaciones());
   }, []);
   useEffect(() => { load(); }, [load]);
 
@@ -28,7 +32,17 @@ export function TeamInvitations({ onAccepted, className }: { onAccepted?: () => 
     if (accept) onAccepted?.();
   };
 
-  if (items.length === 0) return null;
+  const responderNegocio = async (item: Invitacion, accept: boolean) => {
+    setBusy(item.business_id);
+    const { error } = await responderInvitacion(item.business_id, accept);
+    setBusy(null);
+    if (error) { toast.error(errorMessage(error)); load(); return; }
+    toast.success(accept ? `Ahora sos parte del negocio ${item.negocio}` : "Invitación rechazada");
+    await load();
+    if (accept) onAccepted?.();
+  };
+
+  if (items.length === 0 && negocios.length === 0) return null;
   return (
     <section className={className}>
       <h2 className="font-extrabold">Invitaciones a equipos</h2>
@@ -42,6 +56,17 @@ export function TeamInvitations({ onAccepted, className }: { onAccepted?: () => 
             </div>
             <Button size="sm" className="rounded-full" disabled={busy === item.id} onClick={() => answer(item, true)}>{busy === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Aceptar</Button>
             <Button size="sm" variant="outline" className="rounded-full" disabled={busy === item.id} onClick={() => answer(item, false)}><X className="h-4 w-4" />Rechazar</Button>
+          </li>
+        ))}
+        {negocios.map((item) => (
+          <li key={item.business_id} className="flex flex-wrap items-center gap-3 rounded-2xl border bg-card p-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary"><Store className="h-5 w-5" /></span>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold">{item.negocio} <span className="text-xs font-semibold text-muted-foreground">(todo el negocio)</span></p>
+              <p className="text-xs text-muted-foreground">Te invitaron como <span className="font-bold">{ROL_NEGOCIO[item.rol].nombre}</span>. {ROL_NEGOCIO[item.rol].detalle}</p>
+            </div>
+            <Button size="sm" className="rounded-full" disabled={busy === item.business_id} onClick={() => responderNegocio(item, true)}>{busy === item.business_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Aceptar</Button>
+            <Button size="sm" variant="outline" className="rounded-full" disabled={busy === item.business_id} onClick={() => responderNegocio(item, false)}><X className="h-4 w-4" />Rechazar</Button>
           </li>
         ))}
       </ul>
