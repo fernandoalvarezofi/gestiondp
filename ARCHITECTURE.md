@@ -146,7 +146,7 @@ delivery_comercios ─┬─< delivery_productos ─┬─< producto_grupos ─<
 delivery_libro (titular_tipo + titular_id + cuenta + tipo + monto)   ← sin FK a un único dueño
 ```
 
-**Actualización 2026-10-05 (Fase 1, paso 1):** ya existen `core_businesses` y `core_business_members` (un negocio por dueño, con su vínculo `owner`), `delivery_comercios.business_id` y `parent_store_id` (la sucursal queda enlazada a su origen). Los permisos todavía se deciden con el modelo anterior (`propietario_id` + `delivery_comercio_equipo`); el nuevo modelo se irá habilitando por pasos. Antes: la "sucursal" es otra fila de `delivery_comercios` (la copia `delivery_crear_sucursal`) y no existía `business`.
+**Actualización 2026-10-05 (Fase 1, paso 1):** ya existen `core_businesses` y `core_business_members` (un negocio por dueño, con su vínculo `owner`), `delivery_comercios.business_id` y `parent_store_id` (la sucursal queda enlazada a su origen). **Actualización (Fase 1 completa):** los permisos se deciden con tres vías que conviven y están probadas: dueño (`propietario_id`), roles del negocio (`core_business_members`, valen en todas las tiendas) y equipo por tienda (`delivery_comercio_equipo`, acceso acotado a un local; se mantiene a propósito). Además hay selector de negocio, vista agregada y pantalla de equipo. Antes: la "sucursal" es otra fila de `delivery_comercios` (la copia `delivery_crear_sucursal`) y no existía `business`.
 
 ## H. RLS
 
