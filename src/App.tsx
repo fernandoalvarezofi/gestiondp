@@ -26,6 +26,9 @@ const Orders = lazy(() => import("./pages/delivery/Orders"));
 const OrderDetail = lazy(() => import("./pages/delivery/OrderDetail"));
 const Favorites = lazy(() => import("./pages/delivery/Favorites"));
 const MyAppointments = lazy(() => import("./pages/delivery/MyAppointments"));
+const Notifications = lazy(() => import("./pages/delivery/Notifications"));
+const Messages = lazy(() => import("./pages/delivery/Messages"));
+const MerchantMessages = lazy(() => import("./pages/delivery/merchant/MerchantMessages"));
 const ServiceLocals = lazy(() => import("./pages/delivery/ServiceLocals"));
 const Booking = lazy(() => import("./pages/Booking"));
 const Promotions = lazy(() => import("./pages/delivery/Promotions"));
@@ -132,6 +135,8 @@ const App = () => (
                       <Route path="remis/:id" element={<RemisDetail />} />
                       <Route path="favoritos" element={<Favorites />} />
                       <Route path="turnos" element={<MyAppointments />} />
+                      <Route path="notificaciones" element={<Notifications />} />
+                      <Route path="mensajes" element={<Messages />} />
                       <Route path="turnos/locales" element={<ServiceLocals />} />
                       <Route path="promociones" element={<Promotions />} />
                       <Route path="perfil" element={<Profile />} />
@@ -150,6 +155,7 @@ const App = () => (
                         <Route path="nuevo" element={<MerchantNewStore />} />
                         <Route path="preguntas" element={<MerchantQuestions />} />
                         <Route path="devoluciones" element={<MerchantReturns />} />
+                        <Route path="mensajes" element={<MerchantMessages />} />
                         <Route path="turnos" element={<MerchantBookings />} />
                         <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />

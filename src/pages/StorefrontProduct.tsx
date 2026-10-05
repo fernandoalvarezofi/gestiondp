@@ -10,6 +10,7 @@ import { ProductCard, ProductDialog } from "@/components/delivery/ProductCard";
 import { deliveryFeeLabel, StoreLogo } from "@/components/delivery/StoreCard";
 import { ProductGallery } from "@/components/storefront/ProductGallery";
 import { ProductQuestions } from "@/components/storefront/ProductQuestions";
+import { AskSeller } from "@/components/messages/AskSeller";
 import { ProductReviews } from "@/components/market/ProductReviews";
 import { Stars } from "@/components/market/Stars";
 import { promedioTexto } from "@/services/reviews";
@@ -309,6 +310,7 @@ export default function StorefrontProduct() {
           <aside className="space-y-4 lg:self-start">
             {vendedor && <SellerCard store={store} vendedor={vendedor} />}
             <Button asChild variant="outline" className="w-full rounded-full font-bold"><Link to={`/t/${store.slug}`}>Ver todos los productos del vendedor</Link></Button>
+            <AskSeller storeId={store.id} storeName={store.nombre} productId={product.id} productName={product.nombre} />
           </aside>
         </div>
 

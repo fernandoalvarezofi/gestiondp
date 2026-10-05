@@ -1,12 +1,13 @@
 import { Suspense, useEffect, useState } from "react";
 import { Navigate, NavLink, Outlet, To, useLocation, useNavigate } from "react-router-dom";
-import { Bike, BookUser, CarTaxiFront, ChevronDown, Heart, LayoutGrid, Package, Home, Loader2, LogOut, MapPin, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
+import { Bike, BookUser, CarTaxiFront, ChevronDown, Heart, LayoutGrid, Package, Home, Loader2, LogOut, MapPin, MessageCircle, Receipt, Search, ShieldCheck, ShoppingBag, Store, Trophy, UserCircle } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { MfaChallenge } from "@/components/account/MfaChallenge";
 import { BackBar } from "@/components/delivery/Common";
 import { isRootPath } from "@/lib/navigation";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
+import { NotificationBell } from "@/components/delivery/NotificationBell";
 import { AppFooter } from "@/components/delivery/AppFooter";
 import { AddressDialog, toCartAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
 import { Button } from "@/components/ui/button";
@@ -87,6 +88,7 @@ export function AppLayout() {
               {location.pathname.startsWith("/app/comercio") ? "Panel del comercio" : location.pathname.startsWith("/app/repartidor") ? "Panel de repartidor" : "Administración"}
             </span>
             <div className="ml-auto flex items-center gap-1">
+              <NotificationBell />
               <Button asChild variant="ghost" size="sm" className="rounded-full font-bold"><NavLink to="/app"><Home className="h-4 w-4" /><span className="hidden sm:inline">Ir a Woref</span></NavLink></Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -149,6 +151,7 @@ export function AppLayout() {
               </DropdownMenuContent>
             </DropdownMenu>
             <Button asChild variant="ghost" className="rounded-full font-bold"><NavLink to="/app/pedidos"><Receipt className="h-4 w-4" />Pedidos</NavLink></Button>
+            <NotificationBell />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="rounded-full font-bold"><UserCircle className="h-5 w-5" /><span className="max-w-[120px] truncate">{roles.nombre.split(" ")[0] || "Mi cuenta"}</span><ChevronDown className="h-4 w-4" /></Button>
@@ -157,6 +160,7 @@ export function AppLayout() {
                 <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => navigate("/app/perfil")}><UserCircle className="h-4 w-4" />Perfil y direcciones</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/app/club")}><Trophy className="h-4 w-4" />Woref Club</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/app/mensajes")}><MessageCircle className="h-4 w-4" />Mensajes</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/app/favoritos")}><Heart className="h-4 w-4" />Favoritos</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/app/promociones")}><ShoppingBag className="h-4 w-4" />Cupones y promociones</DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -174,7 +178,8 @@ export function AppLayout() {
             </Button>
           </nav>
 
-          <NavLink to="/app/carrito" aria-label="Carrito" className={cn("relative ml-auto flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary md:hidden", isHome && "max-md:bg-white/20 max-md:text-white")}>
+          {!guest && <NotificationBell className={cn("ml-auto md:hidden", isHome && "max-md:text-white max-md:hover:bg-white/10")} />}
+          <NavLink to="/app/carrito" aria-label="Carrito" className={cn(guest && "ml-auto", "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary md:hidden", isHome && "max-md:bg-white/20 max-md:text-white")}>
             <ShoppingBag className="h-5 w-5" />
             {itemCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 animate-pop-in items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{itemCount}</span>}
           </NavLink>

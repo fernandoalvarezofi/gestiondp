@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, Building2, CalendarCheck, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, MessageCircleQuestion, PackageOpen, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
+import { BarChart3, Building2, CalendarCheck, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, MessageCircle, MessageCircleQuestion, PackageOpen, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -217,6 +217,7 @@ export default function MerchantLayout() {
           { to: "/app/comercio", label: "Inicio", icon: LayoutDashboard, end: true },
           { to: "/app/comercio/pedidos", label: "Pedidos", icon: ClipboardList, badge: pendingCount },
           { to: "/app/comercio/devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen },
+          { to: "/app/comercio/mensajes", label: "Mensajes", icon: MessageCircle },
           { to: "/app/comercio/turnos", label: "Turnos y servicios", short: "Turnos", icon: CalendarCheck },
           ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", short: "Menú", icon: UtensilsCrossed }] : []),
         ] },

@@ -162,6 +162,12 @@
 - `conversations` (usuario ↔ vendedor) **separado** de la mensajería logística (persona → paquete → persona).
 **Tamaño:** M.
 
+**Estado Fase 10:**
+- ✅ **Bandeja de notificaciones** (`notificaciones`, solo lectura por RLS; se crean únicamente con `notificar()` del servidor, con clave anti-duplicado, enlaces solo internos y push opcional por categoría). Avisos de dominio con disparadores a prueba de fallas (si el aviso falla, la operación sigue): turnos (confirmado, nuevo, cancelado), devoluciones, opiniones, pagos y pedidos (el push de pedidos sigue siendo `enviar-push`; acá solo quedan en la bandeja). Recordatorios de turno 24 h y 2 h antes por `pg_cron`, limpieza a 90 días. Edge Function `push-notificacion` (secreto compartido, lee el aviso por id). Pantalla `/app/notificaciones` con preferencias por categoría y campanita en el encabezado (cliente y paneles).
+- ✅ **Conversaciones comprador ↔ vendedor** (`conversaciones`, `conv_mensajes`; separadas del chat logístico del pedido): solo por funciones del servidor, mensajes inmutables, tope de 20 por minuto y 1.000 caracteres, acceso solo de las partes (el local = quienes tienen permiso de pedidos), aviso agrupado a la otra parte. Pantallas: **Mensajes** del cliente, **Mensajes** del panel del comercio y "Escribir al vendedor" en la página de producto.
+- Pruebas: `supabase/tests/017_notificaciones.sql`, `018_conversaciones.sql`, `src/services/notifications.test.ts`, `conversations.test.ts`.
+- ⏳ Email como canal (necesita SMTP del dueño) y WhatsApp (desacoplado, futuro). Aviso por consulta de producto sin responder (SLA de respuesta) queda para la Fase 12.
+
 ## FASE 11 — ANALYTICS
 
 - Métricas por dominio (ventas, clientes, marketplace, logística, conductores, tiendas); continúa el canal firmado hacia la base del dueño con **solo agregados**.

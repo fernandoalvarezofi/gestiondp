@@ -35,7 +35,7 @@ export function pageTitle(pathname: string): string {
   const path = normalize(pathname);
   const exact: Record<string, string> = {
     "/app/carrito": "Mi pedido", "/app/club": "Woref Club", "/app/promociones": "Cupones y promociones", "/app/ayuda": "Ayuda",
-    "/app/enviar": "Enviar un paquete", "/app/remis": "Pedir un remís", "/app/directorio": "Comercios de Lincoln", "/app/favoritos": "Favoritos", "/app/buscar": "Buscar", "/app/pedidos": "Mis pedidos",
+    "/app/enviar": "Enviar un paquete", "/app/remis": "Pedir un remís", "/app/directorio": "Comercios de Lincoln", "/app/favoritos": "Favoritos", "/app/buscar": "Buscar", "/app/pedidos": "Mis pedidos", "/app/notificaciones": "Notificaciones", "/app/mensajes": "Mensajes", "/app/turnos": "Mis turnos",
   };
   if (exact[path]) return exact[path];
   if (/^\/app\/ayuda\/[^/]+$/.test(path)) return "Consulta";
