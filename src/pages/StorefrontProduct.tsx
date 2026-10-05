@@ -10,6 +10,10 @@ import { ProductCard, ProductDialog } from "@/components/delivery/ProductCard";
 import { deliveryFeeLabel, StoreLogo } from "@/components/delivery/StoreCard";
 import { ProductGallery } from "@/components/storefront/ProductGallery";
 import { ProductQuestions } from "@/components/storefront/ProductQuestions";
+import { ProductReviews } from "@/components/market/ProductReviews";
+import { Stars } from "@/components/market/Stars";
+import { promedioTexto } from "@/services/reviews";
+import { useProductFavorites } from "@/hooks/useProductFavorites";
 import { SellerCard } from "@/components/storefront/SellerCard";
 import { Button } from "@/components/ui/button";
 import { CartStore, useCart } from "@/contexts/CartContext";
@@ -22,8 +26,6 @@ import { normalizeTheme, storefrontUrl } from "@/lib/storefront";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { cn } from "@/lib/utils";
 
-const FAV_KEY = "woref-fav-productos";
-const readFavs = (): string[] => { try { const raw = window.localStorage.getItem(FAV_KEY); const list = raw ? JSON.parse(raw) : []; return Array.isArray(list) ? list.filter((item) => typeof item === "string") : []; } catch { return []; } };
 
 /** Ficha de producto de una tienda online (/t/:slug/p/:id), con el diseño de esa tienda: fotos, precio, envío, vendedor, preguntas y más productos. */
 export default function StorefrontProduct() {
@@ -41,7 +43,7 @@ export default function StorefrontProduct() {
   const [quantity, setQuantity] = useState(1);
   const [varianteId, setVarianteId] = useState<string | null>(null);
   const [options, setOptions] = useState(false);
-  const [favs, setFavs] = useState<string[]>(readFavs);
+  const favoritos = useProductFavorites();
 
   useEffect(() => {
     db.rpc("delivery_pagos_online_activos").then(({ data }: { data: boolean | null }) => setPagoOnline(Boolean(data)), () => undefined);
@@ -147,7 +149,7 @@ export default function StorefrontProduct() {
   const fotos = fotosDe(product);
   const lista = insignias(product, masVendidos);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
-  const faved = favs.includes(product.id);
+  const faved = favoritos.isFavorite(product.id);
   // Políticas: las que cargó el comercio en su tienda o, si no cargó ninguna, un resumen con los datos reales del local.
   const bloquePoliticas = theme.bloques.find((b) => b.tipo === "politicas" && b.items.length > 0);
   const politicasItems = bloquePoliticas && bloquePoliticas.tipo === "politicas"
@@ -164,11 +166,9 @@ export default function StorefrontProduct() {
     else if (!goToCart) toast.success("Agregado al carrito");
     if (goToCart) navigate("/app/carrito");
   };
-  const toggleFav = () => {
-    const next = faved ? favs.filter((item) => item !== product.id) : [...favs, product.id];
-    setFavs(next);
-    try { window.localStorage.setItem(FAV_KEY, JSON.stringify(next.slice(-200))); } catch { /* sin almacenamiento */ }
-    toast(faved ? "Quitado de tus favoritos" : "Guardado en tus favoritos");
+  const toggleFav = async () => {
+    const ahora = await favoritos.toggle(product.id);
+    toast(ahora ? (favoritos.enCuenta ? "Guardado en tus favoritos" : "Guardado en este dispositivo. Ingresá para verlo en todos") : "Quitado de tus favoritos");
   };
   const share = async () => {
     const url = window.location.href;
@@ -215,6 +215,9 @@ export default function StorefrontProduct() {
             </div>
 
             <h1 className="mt-3 text-2xl font-extrabold leading-tight sm:text-3xl" style={headingStyle}>{product.nombre}</h1>
+            {!!product.rating_count && product.rating_avg != null && (
+              <a href="#opiniones" className="mt-2 flex items-center gap-2 text-sm hover:underline"><span className="font-bold">{promedioTexto(product.rating_avg)}</span><Stars value={Number(product.rating_avg)} size={16} /><span className="text-muted-foreground">({product.rating_count} {product.rating_count === 1 ? "opinión" : "opiniones"})</span></a>
+            )}
 
             <div className="mt-4">
               {off && <p className="text-base text-muted-foreground line-through">{money(product.precio_anterior ?? 0)}</p>}
@@ -300,6 +303,7 @@ export default function StorefrontProduct() {
               <h2 className="mb-4 text-xl font-extrabold sm:text-2xl">{politicasItems.titulo}</h2>
               <Politicas items={politicasItems.items} />
             </section>
+            <ProductReviews productId={product.id} />
             <ProductQuestions productId={product.id} disabled={!store.aprobado} />
           </div>
           <aside className="space-y-4 lg:self-start">

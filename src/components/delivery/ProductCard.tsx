@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import type { Insignia } from "@/lib/marketplace";
 import { SmartImage } from "./SmartImage";
 import { Check, Minus, Plus } from "lucide-react";
+import { Stars } from "@/components/market/Stars";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -95,6 +96,7 @@ export function ProductCard({ product, store, disabled, variant = "row", badges,
           </div>
           <h3 className="mt-3 line-clamp-2 text-sm font-semibold leading-snug">{href ? <Link to={href} onClick={(event) => event.stopPropagation()} className="hover:underline">{product.nombre}</Link> : product.nombre}</h3>
           <div className="mt-1 text-sm">{price}</div>
+          {!!product.rating_count && product.rating_avg != null && <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground"><Stars value={Number(product.rating_avg)} size={12} /><span>({product.rating_count})</span></p>}
           {off && <p className="mt-0.5 text-xs font-semibold text-muted-foreground">Ahorrás {money(Number(product.precio_anterior) - Number(product.precio))}</p>}
           {ultimas && <p className="mt-0.5 text-xs font-bold text-destructive">¡Últimas {ultimas} unidades!</p>}
         </article>

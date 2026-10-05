@@ -18,6 +18,7 @@ import { OrderClaims } from "@/components/delivery/OrderClaims";
 import { MapView } from "@/components/maps/LazyMaps";
 import { OrderAdjustments } from "@/components/delivery/OrderAdjustments";
 import { ReturnRequest } from "@/components/delivery/ReturnRequest";
+import { RateProducts } from "@/components/market/RateProducts";
 import { EtaBreakdown, OrderHistory } from "@/components/delivery/OrderEvents";
 import { useOrderEta } from "@/hooks/useOrderEta";
 import { useRoute } from "@/lib/route";
@@ -213,6 +214,7 @@ export default function OrderDetail() {
         </dl>
       </section>
 
+      {order.estado === "entregado" && <RateProducts orderId={order.id} />}
       <ReturnRequest order={order} />
 
       <section className="mt-4 grid gap-3 rounded-3xl border bg-card p-4 text-sm sm:grid-cols-2 sm:p-5">

@@ -173,6 +173,9 @@ export type DeliveryProduct = {
   atributos?: Record<string, string> | null;
   en_market?: boolean;
   en_tienda?: boolean;
+  /** Promedio y cantidad de opiniones (solo compradores). */
+  rating_avg?: number | null;
+  rating_count?: number;
 };
 
 /** Variante de un producto (talle, color…): stock, SKU y precio propios; sin precio usa el del producto. */

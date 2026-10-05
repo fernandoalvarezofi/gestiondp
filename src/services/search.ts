@@ -1,9 +1,9 @@
 import { db } from "@/lib/delivery";
 
-export type OrdenBusqueda = "relevancia" | "precio_asc" | "precio_desc" | "nuevos" | "cercania";
+export type OrdenBusqueda = "relevancia" | "precio_asc" | "precio_desc" | "nuevos" | "rating" | "cercania";
 export const ORDENES: { id: OrdenBusqueda; label: string }[] = [
   { id: "relevancia", label: "Más relevantes" }, { id: "precio_asc", label: "Menor precio" }, { id: "precio_desc", label: "Mayor precio" },
-  { id: "nuevos", label: "Más nuevos" }, { id: "cercania", label: "Más cerca" },
+  { id: "nuevos", label: "Más nuevos" }, { id: "rating", label: "Mejor calificados" }, { id: "cercania", label: "Más cerca" },
 ];
 
 export type FiltrosBusqueda = { q: string; categoria: string | null; marca: string | null; min: number | null; max: number | null; conStock: boolean; ofertas: boolean; orden: OrdenBusqueda };

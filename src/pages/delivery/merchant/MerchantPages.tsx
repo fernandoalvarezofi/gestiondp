@@ -3,6 +3,8 @@ import { CouponManager } from "@/components/merchant/CouponManager";
 import { MerchantMenu } from "@/components/merchant/MerchantMenu";
 import { MerchantOrders } from "@/components/merchant/MerchantOrders";
 import { MerchantReviews } from "@/components/merchant/MerchantReviews";
+import { MerchantProductReviews } from "@/components/merchant/MerchantProductReviews";
+import { useState } from "react";
 import { MerchantStats } from "@/components/merchant/MerchantStats";
 import { useMerchant } from "./context";
 
@@ -27,8 +29,18 @@ export function MerchantCampaignsPage() {
 }
 
 export function MerchantReviewsPage() {
-  const { reviews, loadReviews } = useMerchant();
-  return <MerchantReviews reviews={reviews} onChange={loadReviews} />;
+  const { reviews, loadReviews, store } = useMerchant();
+  const [tab, setTab] = useState<"local" | "productos">("local");
+  return (
+    <div className="space-y-4">
+      <div role="tablist" aria-label="Tipo de opinión" className="flex gap-2">
+        {([["local", "Del local"], ["productos", "De productos"]] as const).map(([id, label]) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={`h-9 rounded-full border px-4 text-sm font-bold ${tab === id ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted"}`}>{label}</button>
+        ))}
+      </div>
+      {tab === "local" ? <MerchantReviews reviews={reviews} onChange={loadReviews} /> : <MerchantProductReviews storeId={store.id} />}
+    </div>
+  );
 }
 
 export function MerchantStatsPage() {

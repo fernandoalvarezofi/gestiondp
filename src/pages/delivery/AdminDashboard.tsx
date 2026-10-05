@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Users, Wallet, Undo2, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Flag, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, ScrollText, Settings, ShieldAlert, Store, Tags, Users, Wallet, Undo2, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -27,6 +27,8 @@ import { AnnouncementsManager } from "@/components/admin/AnnouncementsManager";
 import { IncentivesManager } from "@/components/admin/IncentivesManager";
 import { RemisManager } from "@/components/admin/RemisManager";
 import { WithdrawalsManager } from "@/components/admin/WithdrawalsManager";
+import { ReportedReviews } from "@/components/admin/ReportedReviews";
+import { CategoriesManager } from "@/components/admin/CategoriesManager";
 import { DirectorioManager } from "@/components/admin/DirectorioManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
 import { changeOrderStatus } from "@/components/merchant/MerchantOrders";
@@ -56,6 +58,8 @@ export default function AdminDashboard() {
   const [editing, setEditing] = useState<DeliveryStore | null>(null);
   const [reviewing, setReviewing] = useState<DeliveryStore | null>(null);
   const [openClaims, setOpenClaims] = useState(0);
+  const [reportedReviews, setReportedReviews] = useState(0);
+  useEffect(() => { db.rpc("delivery_admin_resenas_reportadas").then(({ data }: { data: unknown[] | null }) => setReportedReviews(data?.length ?? 0), () => undefined); }, []);
   const [pendingIdentities, setPendingIdentities] = useState(0);
 
   const loadStores = useCallback(async () => {
@@ -177,6 +181,8 @@ export default function AdminDashboard() {
           { to: "/app/admin/envios", label: "Mensajería", icon: Package },
           { to: "/app/admin/soporte", label: "Soporte", icon: LifeBuoy, badge: openClaims },
           { to: "/app/admin/arrepentimientos", label: "Arrepentimientos", icon: Undo2 },
+          { to: "/app/admin/opiniones", label: "Opiniones reportadas", icon: Flag, badge: reportedReviews },
+          { to: "/app/admin/categorias", label: "Categorías del Market", icon: Tags },
         ] },
         { label: "Red", items: [
           { to: "/app/admin/comercios", label: "Comercios", icon: Store, badge: pendingStores },
@@ -296,6 +302,8 @@ export default function AdminDashboard() {
         <TabsContent value="envios" className="mt-0"><EnviosManager /></TabsContent>
         <TabsContent value="clientes" className="mt-0"><CustomersManager /></TabsContent>
         <TabsContent value="arrepentimientos" className="mt-0"><WithdrawalsManager /></TabsContent>
+        <TabsContent value="opiniones" className="mt-0"><ReportedReviews onChange={setReportedReviews} /></TabsContent>
+        <TabsContent value="categorias" className="mt-0"><CategoriesManager /></TabsContent>
         <TabsContent value="soporte" className="mt-0"><SupportCenter onChange={setOpenClaims} /></TabsContent>
 
         <TabsContent value="comercios" className="mt-0">
