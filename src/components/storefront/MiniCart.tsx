@@ -19,10 +19,9 @@ const detalle = (item: CartItem) => item.opciones.map((o) => o.nombre).join(" ·
 
 /** Carrito lateral de la tienda: ver y ajustar el pedido sin salir de la página, con barra de progreso hacia el envío gratis. */
 export function MiniCart({ storeId, envioGratisDesde, pedidoMinimo, trigger, style, scope }: { storeId: string; envioGratisDesde?: number | null; pedidoMinimo?: number | null; trigger: ReactNode; style?: React.CSSProperties; /** Variables de color de la tienda: el panel se dibuja fuera de ella y las necesita. */ scope?: React.CSSProperties }) {
-  const { store, items, subtotal, updateQuantity } = useCart();
-  const delComercio = store?.id === storeId;
-  const lineas = delComercio ? items : [];
-  const total = delComercio ? subtotal : 0;
+  const { groupOf, groups, updateQuantity } = useCart();
+  const { items: lineas, subtotal: total } = groupOf(storeId);
+  const store = groups.find((g) => g.store.id === storeId)?.store ?? null;
   const unidades = lineas.reduce((n, i) => n + i.cantidad, 0);
   const envio = progresoEnvio(total, envioGratisDesde);
   const minimo = Number(pedidoMinimo) > 0 ? Math.max(0, Number(pedidoMinimo) - total) : 0;

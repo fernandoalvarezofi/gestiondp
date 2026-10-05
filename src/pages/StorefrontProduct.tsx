@@ -161,9 +161,9 @@ export default function StorefrontProduct() {
   const related = [...others.filter((other) => other.categoria === product.categoria), ...others.filter((other) => other.categoria !== product.categoria)].slice(0, 8);
 
   const add = (goToCart: boolean) => {
-    const sameStore = addItem(product, cartStore, quantity, undefined, [], variante ? { id: variante.id, nombre: variante.nombre, precio: variante.precio } : undefined);
-    if (!sameStore) toast.info(`Vaciamos tu carrito anterior para pedir en ${store.nombre}`);
-    else if (!goToCart) toast.success("Agregado al carrito");
+    const agregado = addItem(product, cartStore, quantity, undefined, [], variante ? { id: variante.id, nombre: variante.nombre, precio: variante.precio } : undefined);
+    if (!agregado) { toast.error("Tu carrito ya tiene 5 comercios. Terminá o quitá uno para sumar otro."); return; }
+    if (!goToCart) toast.success("Agregado al carrito");
     if (goToCart) navigate("/app/carrito");
   };
   const toggleFav = async () => {

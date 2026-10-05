@@ -6,15 +6,15 @@ import { cn } from "@/lib/utils";
 
 /** Resumen del pedido a la derecha del menú (solo en pantallas anchas): se ve qué se lleva y cuánto falta para el mínimo. */
 export function StoreCartPanel({ storeId, storeName, minimum, className }: { storeId: string; storeName: string; minimum: number; className?: string }) {
-  const { store, items, subtotal, updateQuantity } = useCart();
-  const mine = store?.id === storeId ? items : [];
-  const other = store && store.id !== storeId && items.length > 0 ? store : null;
+  const { groupOf, groups, updateQuantity } = useCart();
+  const { items: mine, subtotal } = groupOf(storeId);
+  const others = groups.filter((g) => g.store.id !== storeId);
   const missing = Math.max(minimum - subtotal, 0);
 
   return (
     <aside aria-label="Tu pedido" className={cn("rounded-3xl border bg-card p-4 shadow-soft", className)}>
       <h2 className="flex items-center gap-2 text-lg font-black"><ShoppingBag className="h-5 w-5 text-primary" />Tu pedido</h2>
-      {other && <p className="mt-2 rounded-xl bg-warning/15 p-2.5 text-xs font-semibold">Tenés productos de <Link to={`/app/tienda/${other.slug}`} className="font-extrabold underline">{other.nombre}</Link>. Si agregás algo de {storeName}, se reemplazan.</p>}
+      {others.length > 0 && <p className="mt-2 rounded-xl bg-muted p-2.5 text-xs font-semibold">También tenés productos de {others.map((g, i) => <span key={g.store.id}>{i > 0 && ", "}<Link to={`/app/tienda/${g.store.slug}`} className="font-extrabold underline">{g.store.nombre}</Link></span>)}. Cada comercio se pide por separado: {storeName} no los reemplaza.</p>}
       {mine.length === 0 ? (
         <p className="mt-3 rounded-2xl border border-dashed p-4 text-center text-sm text-muted-foreground">Todavía no agregaste nada. Tocá el <span className="font-bold text-primary">+</span> de un producto para empezar.</p>
       ) : (

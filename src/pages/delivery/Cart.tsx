@@ -47,7 +47,7 @@ function cashOptions(total: number) {
 }
 
 export default function Cart() {
-  const { store, items, subtotal, updateQuantity, clearCart, address, setAddress, addItem } = useCart();
+  const { store, items, subtotal, updateQuantity, clearCart, address, setAddress, addItem, groups, setActiveStore } = useCart();
   const { addresses, reload } = useSavedAddresses();
   const navigate = useNavigate();
   const [notes, setNotes] = useState("");
@@ -117,6 +117,11 @@ export default function Cart() {
   }, [user]);
 
   // Datos actuales del comercio (ubicación, radio, costo por km, retiro y programados) para estimar igual que el servidor.
+  // Al cambiar de comercio se empieza de cero con lo que depende del comercio (cupón, horario, billete).
+  useEffect(() => {
+    setCoupon(null); setCouponInput(""); setScheduled(false); setSlot(null); setSlotDayKey(null); setCashWith(null); setCustomCash(""); setStoreInfo(null); setSlots([]); setCatalog([]);
+  }, [store?.id]);
+
   useEffect(() => {
     if (!store?.id) return;
     db.from("delivery_comercios").select(COMERCIO_COLS).eq("id", store.id).maybeSingle().then(({ data }: { data: DeliveryStore | null }) => setStoreInfo(data));
@@ -257,6 +262,8 @@ export default function Cart() {
     // Dato informativo: si el cliente llegó desde la tienda online del comercio, el pedido se marca como tal.
     if (vinoDeTienda(store.id)) db.rpc("delivery_marcar_canal", { p_pedido: orderId, p_canal: "tienda" }).then(() => undefined, () => undefined);
     clearCart();
+    const quedan = groups.filter((g) => g.store.id !== store.id);
+    if (quedan.length) toast.info(`Todavía te queda en el carrito el pedido de ${quedan.map((g) => g.store.nombre).join(", ")}`);
     if (!online) {
       setSubmitting(false);
       toast.success(needsSlot ? "¡Pedido programado! El comercio ya lo recibió." : "¡Pedido confirmado! El comercio ya lo recibió.");
@@ -287,6 +294,24 @@ export default function Cart() {
     <div className="mx-auto max-w-6xl px-4 pb-32 pt-5 sm:px-6 lg:pb-16">
       <PageHeader eyebrow="Tu pedido" title={store.nombre} subtitle={<Link to={`/app/tienda/${store.slug}`} className="font-bold text-primary">Agregar más productos</Link>} />
 
+      {groups.length > 1 && (
+        <section className="mt-4 rounded-3xl border bg-card p-4 sm:p-5" aria-label="Comercios en tu carrito">
+          <h2 className="text-base font-extrabold">Tenés productos de {groups.length} comercios</h2>
+          <p className="text-sm text-muted-foreground">Cada comercio se confirma y se paga por separado. Elegí con cuál seguir ahora.</p>
+          <div role="tablist" aria-label="Comercio" className="scrollbar-none mt-3 flex gap-2 overflow-x-auto">
+            {groups.map((g) => {
+              const activo = g.store.id === store.id;
+              return (
+                <button key={g.store.id} type="button" role="tab" aria-selected={activo} onClick={() => setActiveStore(g.store.id)} className={cn("shrink-0 rounded-2xl border px-4 py-2 text-left text-sm transition-colors", activo ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>
+                  <span className="block font-extrabold">{g.store.nombre}</span>
+                  <span className={cn("block text-xs", activo ? "text-background/70" : "text-muted-foreground")}>{g.items.reduce((n, i) => n + i.cantidad, 0)} {g.items.reduce((n, i) => n + i.cantidad, 0) === 1 ? "producto" : "productos"} · {money(g.items.reduce((t, i) => t + i.precio * i.cantidad, 0))}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
           {canPickup && (
@@ -300,7 +325,7 @@ export default function Cart() {
           )}
 
           <section className="rounded-3xl border bg-card p-4 sm:p-5">
-            <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold">Productos</h2><button type="button" className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-destructive" onClick={clearCart}><Trash2 className="h-4 w-4" />Vaciar</button></div>
+            <div className="flex items-center justify-between"><h2 className="text-lg font-extrabold">Productos</h2><button type="button" className="flex items-center gap-1 text-sm font-semibold text-muted-foreground hover:text-destructive" onClick={clearCart}><Trash2 className="h-4 w-4" />{groups.length > 1 ? "Quitar este comercio" : "Vaciar"}</button></div>
             <ul className="mt-3 divide-y">
               {items.map((item) => (
                 <li key={item.lineId} className="flex items-center gap-3 py-3">

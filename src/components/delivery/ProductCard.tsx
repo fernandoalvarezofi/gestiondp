@@ -39,8 +39,7 @@ export function ProductCard({ product, store, disabled, variant = "row", badges,
   const quickAdd = () => {
     // Si hay que elegir algo (tamaño, punto…), se abre el detalle en vez de agregar directo.
     if (needsChoice) { setOpen(true); return; }
-    const sameStore = addItem(product, store);
-    if (!sameStore) toast.info(`Vaciamos tu carrito anterior para pedir en ${store.nombre}`);
+    if (!addItem(product, store)) toast.error("Tu carrito ya tiene 5 comercios. Terminá o quitá uno para sumar otro.");
     else toast.success("Agregado al carrito");
   };
 
@@ -166,8 +165,9 @@ export function ProductDialog({ product, groups, store, onClose }: { product: De
       return;
     }
     if (variantes.length && !variante) { toast.error("Elegí una opción"); return; }
-    const sameStore = addItem(product, store, quantity, notes.trim() || undefined, chosen, variante ? { id: variante.id, nombre: variante.nombre, precio: variante.precio } : undefined);
-    toast.success(sameStore ? `${quantity} × ${product.nombre} agregado` : `Empezaste un carrito nuevo en ${store.nombre}`);
+    const agregado = addItem(product, store, quantity, notes.trim() || undefined, chosen, variante ? { id: variante.id, nombre: variante.nombre, precio: variante.precio } : undefined);
+    if (!agregado) { toast.error("Tu carrito ya tiene 5 comercios. Terminá o quitá uno para sumar otro."); return; }
+    toast.success(`${quantity} × ${product.nombre} agregado`);
     onClose();
   };
 

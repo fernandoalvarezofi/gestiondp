@@ -25,7 +25,7 @@ const bottomNav = [
 
 export function AppLayout() {
   const { session, loading, signOut, mfaNeeded } = useAuth();
-  const { itemCount, subtotal, store, address, setAddress } = useCart();
+  const { itemCount, totalGeneral: subtotal, groups, address, setAddress } = useCart();
   const { addresses, loading: addressesLoading } = useSavedAddresses();
   const [gateOpen, setGateOpen] = useState(false);
   const [gateAsked, setGateAsked] = useState(false);
@@ -193,7 +193,7 @@ export function AppLayout() {
         <div className="fixed inset-x-0 bottom-[72px] z-40 px-4 md:hidden">
           <NavLink to="/app/carrito" className="flex h-14 items-center justify-between gap-3 rounded-2xl bg-primary px-4 text-primary-foreground shadow-pop">
             <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-white px-2 text-sm font-black text-primary">{itemCount}</span>
-            <span className="min-w-0 flex-1 truncate text-center text-[15px] font-extrabold">Ver mi pedido{store ? ` · ${store.nombre}` : ""}</span>
+            <span className="min-w-0 flex-1 truncate text-center text-[15px] font-extrabold">Ver mi pedido{groups.length > 1 ? ` · ${groups.length} comercios` : groups[0] ? ` · ${groups[0].store.nombre}` : ""}</span>
             <span className="font-black">{money(subtotal)}</span>
           </NavLink>
         </div>

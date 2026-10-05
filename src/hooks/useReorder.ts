@@ -22,7 +22,8 @@ export function useReorder() {
       return [{ product, cantidad: item.cantidad, notas: item.notas || undefined, opciones }];
     });
     if (!lines.length) return toast.error("Los productos de este pedido ya no están disponibles");
-    replaceCart({ id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url }, lines);
+    const ok = replaceCart({ id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url }, lines);
+    if (!ok) return toast.error("Tu carrito ya tiene 5 comercios. Terminá o quitá uno para sumar otro.");
     toast.success(skippedOptions ? "Agregamos tu pedido al carrito. Algunas opciones cambiaron: revisalas." : "Agregamos los productos a tu carrito");
     return true;
   };
