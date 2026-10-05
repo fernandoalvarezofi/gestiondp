@@ -6,6 +6,7 @@ import { ImageUpload } from "@/components/delivery/ImageUpload";
 import { MenuImportDialog } from "@/components/merchant/MenuImportDialog";
 import { OptionGroupsEditor } from "@/components/merchant/OptionGroupsEditor";
 import { VariantsEditor } from "@/components/merchant/VariantsEditor";
+import { StockHistoryButton } from "@/components/merchant/StockHistory";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -330,7 +331,7 @@ function ProductEditor({ storeId, draft, categories, products, onClose, onSaved,
           <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="p-nombre">Nombre</Label><Input id="p-nombre" ref={nameInput} required maxLength={80} value={values.nombre} onChange={(event) => set("nombre", event.target.value)} /></div>
           <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="p-desc">Descripción</Label><Textarea id="p-desc" maxLength={300} value={values.descripcion} onChange={(event) => set("descripcion", event.target.value)} className="min-h-[64px]" /></div>
           <div className="space-y-1.5"><Label htmlFor="p-cat">Sección del menú</Label><Input id="p-cat" list="menu-sections" maxLength={40} value={values.categoria} onChange={(event) => set("categoria", event.target.value)} /><datalist id="menu-sections">{categories.map((item) => <option key={item} value={item} />)}</datalist></div>
-          <div className="space-y-1.5"><Label htmlFor="p-stock">Stock (vacío = ilimitado)</Label><Input id="p-stock" type="number" min={0} value={values.stock} onChange={(event) => set("stock", event.target.value)} /></div>
+          <div className="space-y-1.5"><Label htmlFor="p-stock">Stock (vacío = ilimitado)</Label><Input id="p-stock" type="number" min={0} value={values.stock} onChange={(event) => set("stock", event.target.value)} /> {values.id && <div className="pt-1"><StockHistoryButton storeId={storeId} productId={values.id} /></div>}</div>
           <div className="space-y-1.5"><Label htmlFor="p-precio">Precio ($)</Label><Input id="p-precio" type="number" min={1} required value={values.precio} onChange={(event) => set("precio", event.target.value)} /></div>
           <div className="space-y-1.5"><Label htmlFor="p-antes">Precio anterior (para mostrar oferta)</Label><Input id="p-antes" type="number" min={0} value={values.precio_anterior} onChange={(event) => set("precio_anterior", event.target.value)} /></div>
           <div className="space-y-1.5 sm:col-span-2">

@@ -59,6 +59,9 @@
 - Inventario con movimientos (`stock_movements`): hoy el stock se modifica directo en pedidos/cancelaciones; pasar a registrar movimientos (auditable) manteniendo `stock`.
 - Checkout: separar **Order** (qué se compra) de **Fulfillment** (cómo llega: retiro, delivery, envío) y de **Payment**. Hoy `delivery_pedidos` tiene 52 columnas con todo mezclado → se introducen entidades hijas **sin** quitar columnas (vistas/compatibilidad).
 - Devoluciones (`returns`) y reembolsos conectados a Payments.
+**Estado Fase 2:**
+- ✅ Paso 1 — inventario con movimientos (`inventario_movimientos`, inmodificable; disparadores sobre stock de producto y variante; motivo = venta/cancelación/impago/vencido/ajuste de pedido/ajuste manual; lectura por `delivery_inventario_movimientos`; botón *Historial de stock* en el editor de producto). Prueba: `supabase/tests/008_inventario.sql`.
+
 **Tamaño:** L. **Riesgo:** `delivery_crear_pedido` es el corazón del sistema → se toca solo con tests de integración que cubran stock, cupón, saldo, variantes, retiro y programados.
 
 ## FASE 3 — WOREF STORE
@@ -95,7 +98,7 @@
 - ✅ Paso 2 — `pagos_libro` (libro aparte, solo altas: cobro, reintegro, contracargo; `delivery_libro` y liquidaciones intactos) + conciliación en Administración → Pagos. Pruebas: `supabase/tests/006_pagos_libro.sql`.
 - ✅ Paso 3 — reintegro desde la app (`mp-reintegrar`: administrador, idempotente, asienta en `pagos_libro`) y reintegro manual conectado al pago. Prueba: `supabase/tests/007_reintegro_manual.sql`.
 - ✅ Paso 4a — interfaz `ProveedorPagos` (`supabase/functions/_shared/pagos/`: `proveedor.ts`, adaptador `mercadopago.ts`, `firma.ts`); webhook y reintegro ya la usan. Sumar otro proveedor = implementar la interfaz.
-- ⏳ Paso 4b — billetera (`wallet`/`wallet_transactions` sobre libro con asientos): se difiere hasta tener un uso concreto (pagos a comercios/repartidores); hoy sería funcionalidad sin uso.
+- ✅ Paso 4b — billetera: **ya existía para clientes** sobre `delivery_libro` (cuenta `billetera`: cargas del administrador, reintegros por cancelación; `delivery_saldo_cliente`, `delivery_billetera_cliente`, y el carrito la descuenta). Billetera para repartidores: `delivery_billetera_repartidor`. Nada que construir; los pagos a comercios/repartidores se tratan en la Fase 11/liquidaciones.
 
 ## FASE 6 — LOGISTICS
 
