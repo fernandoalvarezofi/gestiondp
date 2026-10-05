@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { fetchMyProfile } from "@/services/profile";
 import { useNavigate } from "react-router-dom";
 import { Banknote, Loader2, MapPin, Package, PackageCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -46,7 +47,7 @@ export default function Envio() {
   useEffect(() => { if (roles.nombre && !oName) setOName(roles.nombre); }, [roles.nombre]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!user) return;
-    db.rpc("delivery_mi_perfil").then(({ data }: { data: { telefono: string | null } | null }) => { if (data?.telefono) setOPhone((current) => current || data.telefono!); });
+    fetchMyProfile().then((data) => { if (data?.telefono) setOPhone((current) => current || data.telefono!); });
   }, [user]);
 
   useEffect(() => {

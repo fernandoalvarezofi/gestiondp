@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { fetchMyProfile } from "@/services/profile";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarClock, Car, Loader2, MapPin, Moon, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -39,7 +40,7 @@ export default function Remis() {
 
   useEffect(() => {
     if (!user) return;
-    db.rpc("delivery_mi_perfil").then(({ data }: { data: { telefono: string | null } | null }) => { if (data?.telefono) setPhone((current) => current || data.telefono!); });
+    fetchMyProfile().then((data) => { if (data?.telefono) setPhone((current) => current || data.telefono!); });
   }, [user]);
   const loadRecent = useCallback(async () => {
     if (!user) return;

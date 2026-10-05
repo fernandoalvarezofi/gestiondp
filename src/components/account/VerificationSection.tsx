@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { fetchMyProfile } from "@/services/profile";
 import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 import { IdentityVerification } from "@/components/verification/IdentityVerification";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,7 +19,7 @@ export function VerificationSection() {
   useEffect(() => {
     if (!user) return;
     (async () => {
-      const [{ data }, identity] = await Promise.all([db.rpc("delivery_mi_perfil"), loadIdentity(user.id)]);
+      const [data, identity] = await Promise.all([fetchMyProfile(), loadIdentity(user.id)]);
       setPhone(data?.telefono ?? null);
       setState(identity?.estado ?? null);
     })();

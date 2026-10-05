@@ -1,4 +1,5 @@
 import { vinoDeTienda } from "@/lib/canal";
+import { fetchMyProfile } from "@/services/profile";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Banknote, Bike, CalendarClock, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Store as StoreIcon, Tag, Trash2, Wallet, X, Zap } from "lucide-react";
@@ -110,7 +111,7 @@ export default function Cart() {
 
   useEffect(() => {
     if (!user) return;
-    db.rpc("delivery_mi_perfil").then(({ data }: { data: { telefono: string | null } | null }) => {
+    fetchMyProfile().then((data) => {
       if (data?.telefono) setPhone((current) => current || data.telefono || "");
     });
   }, [user]);

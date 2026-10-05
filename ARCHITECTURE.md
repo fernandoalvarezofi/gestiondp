@@ -206,13 +206,13 @@ Una sola app: **"Woref Repartidor"** (`app.woref.repartidor`, `webDir: dist`, pl
 
 ## S. Deuda técnica
 
-1. **`src/integrations/supabase/types.ts` (4 435 líneas) es de otra aplicación** (comunidades, foros, propiedades, `marketplace_*`, etc.; solo 5 tablas `delivery_*`). Por eso existe `db = supabase as any`: la capa de datos está **sin tipos**.
+1. ~~`types.ts` era de otra aplicación~~ **Resuelto 2026-10-05**: regenerado desde la base real (64 tablas). Sigue pendiente reemplazar `db = supabase as any` por el cliente tipado, módulo por módulo (la capa `src/services/` ya existe, con `profile.ts` como primer servicio).
 2. ~~`supabase/migrations/` mezclaba dos historias~~ **Resuelto 2026-10-05**: las 52 migraciones del proyecto original (nunca aplicadas aquí) se archivaron en `supabase/legacy/` (con README de advertencia); una de ellas era en realidad la base de delivery y volvió a `migrations/` como `20261001210911_delivery_base.sql`. Las 3 migraciones dudosas (`delivery_billetera_cliente`, `delivery_comision_12`, `delivery_libro_contable`) **están aplicadas** (sus objetos existen). **Faltante conocido:** el archivo de la migración aplicada `base_perfiles_y_roles` no existe en el repo (ver `supabase/migrations/README.md`).
 3. Las versiones/timestamps de migraciones del repo no coinciden con las aplicadas (se aplicaron con la herramienta de Supabase): no hay trazabilidad 1:1.
 4. Sin **capa de servicios** en el front: 113 archivos tocan la base directamente.
 5. Validaciones duplicadas cliente/servidor (tienda) y lógica de estados de envío/viaje con strings sueltos.
 6. Componentes muy grandes (StorefrontView, Cart, MerchantOrders, StoreOnboarding).
-7. `README.md` es el de Lovable (placeholder); no hay documentación técnica.
+7. ~~`README.md` era el de Lovable~~ **Resuelto 2026-10-05**: reescrito.
 8. Sin pruebas de integración/RLS/E2E: 25 archivos de test unitario (≈114 tests, solo lógica de `lib/` y algunos componentes). `@playwright/test` está instalado pero sin suite.
 9. `app_role` incluye `manager` sin uso; datos demo (`demo_comercios_lincoln`) conviven con producción.
 10. Dependencia de `@lovable.dev/cloud-auth-js`; `previewAuthStorage.ts` generado por la plataforma original.

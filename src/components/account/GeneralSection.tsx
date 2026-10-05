@@ -1,4 +1,5 @@
 import { FormEvent, useEffect, useState } from "react";
+import { fetchMyProfile } from "@/services/profile";
 import { Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
@@ -26,7 +27,7 @@ export function GeneralSection({ onSaved }: { onSaved: () => void }) {
 
   useEffect(() => {
     if (!user) return;
-    db.rpc("delivery_mi_perfil").then(({ data }: { data: { nombre: string; telefono: string | null; avatar_url: string | null } | null }) => {
+    fetchMyProfile().then((data) => {
       setName(data?.nombre ?? ""); setPhone(data?.telefono ?? ""); setAvatar(data?.avatar_url ?? "");
       setSaved({ name: data?.nombre ?? "", phone: data?.telefono ?? "" });
       setLoaded(true);
