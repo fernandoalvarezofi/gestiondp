@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { db, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
-import { Viaje, viajeActivo, viajeEstadoLabel, viajePasos } from "@/lib/remis";
+import { Viaje, viajeActivo, viajeEstadoLabel, viajePasos, categoriaLabel } from "@/lib/remis";
 import { cn } from "@/lib/utils";
 
-type Driver = { nombre: string | null; patente: string | null; telefono: string | null; viajes: number; calificacion: number | null };
+type Driver = { nombre: string | null; patente: string | null; telefono: string | null; viajes: number; calificacion: number | null; marca?: string | null; modelo?: string | null; color?: string | null; anio?: number | null; categoria?: string | null };
 
 /** Seguimiento del viaje: estado en vivo, mapa con el conductor, código para subir, cancelación y calificación. */
 export default function RemisDetail() {
@@ -95,7 +95,8 @@ export default function RemisDetail() {
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><Car className="h-6 w-6" /></span>
           <div className="min-w-0 flex-1">
             <p className="truncate font-extrabold">{driver.nombre || "Tu conductor"}</p>
-            <p className="text-sm text-muted-foreground">{driver.patente ? `Patente ${driver.patente}` : "Auto habilitado"} · {driver.viajes} viajes{driver.calificacion ? ` · ★ ${driver.calificacion}` : ""}</p>
+            {(driver.marca || driver.modelo) && <p className="text-sm font-semibold">{[driver.marca, driver.modelo, driver.color].filter(Boolean).join(" · ")}{driver.anio ? ` (${driver.anio})` : ""}</p>}
+            <p className="text-sm text-muted-foreground">{driver.patente ? `Patente ${driver.patente}` : "Auto habilitado"} · {driver.viajes} viajes{driver.calificacion ? ` · ★ ${driver.calificacion}` : ""}{driver.categoria ? ` · ${categoriaLabel(driver.categoria)}` : ""}</p>
           </div>
           {driver.telefono && <Button asChild variant="outline" size="icon" className="rounded-full" aria-label="Llamar al conductor"><a href={`tel:${driver.telefono.replace(/[^\d+]/g, "")}`}><Phone className="h-4 w-4" /></a></Button>}
         </section>

@@ -141,6 +141,10 @@
 - `delivery_viajes` se mantiene y se mapea a `rides`/`jobs`.
 **Tamaño:** M–L.
 
+**Estado Fase 8:**
+- ✅ Ya existía y se verificó: estados validados en el servidor (`delivery_viaje_avanzar`), código de abordaje, tarifa por zona y recargo nocturno, reservas de 30 min a 7 días, comisión, calificación, habilitación del conductor con documentos. Equivalencia con el esquema general: buscando=SEARCHING, asignado=DRIVER_ASSIGNED, en_origen=DRIVER_ARRIVED, a_bordo=IN_PROGRESS, completado=COMPLETED, cancelado=CANCELLED. Sin tarifa dinámica (a propósito).
+- ✅ Paso 1 — **categorías de vehículo** (estándar 4 pax, confort 4, familiar 6) con multiplicador de tarifa configurable (`remis_mult_confort`, `remis_mult_familiar`), capacidad validada en el servidor, conductores habilitados por categoría (solo administración; el disparador de protección impide que se las asignen solos), y los viajes disponibles/tomar respetan la categoría; **datos del vehículo** (marca, modelo, color, año) que ve el pasajero con la patente; **privacidad**: el teléfono del conductor se ve solo con el viaje en curso (antes quedaba visible para siempre) y los datos 24 h después. Pantallas: elegir categoría con precios, detalle del viaje, formulario del auto del conductor, categorías por conductor en administración. Pruebas: `supabase/tests/015_movilidad.sql`, `src/lib/remisCategorias.test.ts` + recorrido en navegador.
+
 ## FASE 9 — SERVICES
 
 - `services`, `professionals`, `availability`, `appointments`, `reservations`, órdenes de servicio.

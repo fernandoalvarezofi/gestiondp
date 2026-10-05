@@ -1,20 +1,30 @@
 /** Remises: viajes en auto de un punto a otro, con precio cerrado antes de pedir y conductor habilitado de Woref. */
+/** Categorías de vehículo: capacidad y tarifa propias (el multiplicador lo fija administración). */
+export type CategoriaViaje = "estandar" | "confort" | "familiar";
+export const CATEGORIAS: { id: CategoriaViaje; label: string; capacidad: number; detalle: string }[] = [
+  { id: "estandar", label: "Estándar", capacidad: 4, detalle: "Auto común, hasta 4 pasajeros" },
+  { id: "confort", label: "Confort", capacidad: 4, detalle: "Auto más nuevo y espacioso, hasta 4" },
+  { id: "familiar", label: "Familiar", capacidad: 6, detalle: "Auto grande o van, hasta 6" },
+];
+export const categoriaLabel = (id: string) => CATEGORIAS.find((c) => c.id === id)?.label ?? id;
+export const capacidadDe = (id: CategoriaViaje) => CATEGORIAS.find((c) => c.id === id)?.capacidad ?? 4;
+
 export type ViajeEstado = "buscando" | "asignado" | "en_origen" | "a_bordo" | "completado" | "cancelado";
 
 export type Viaje = {
   id: string; cliente_id: string; estado: ViajeEstado;
   origen_direccion: string; origen_lat: number; origen_lng: number; destino_direccion: string; destino_lat: number; destino_lng: number;
-  pasajeros: number; notas?: string | null; telefono: string; programado_para?: string | null; metodo_pago: "efectivo";
+  pasajeros: number; categoria?: CategoriaViaje; notas?: string | null; telefono: string; programado_para?: string | null; metodo_pago: "efectivo";
   distancia_km: number; minutos_estimados: number; tarifa: number; propina: number; total: number; comision_pct: number; ganancia_conductor: number;
   conductor_id?: string | null; asignado_at?: string | null; llego_at?: string | null; abordo_at?: string | null; completado_at?: string | null; cancelado_at?: string | null;
   motivo_cancelacion?: string | null; calificacion?: number | null; created_at: string;
 };
 
 export type ViajeOferta = {
-  id: string; origen_zona: string; destino_zona: string; pasajeros: number; distancia_km: number; dist_recogida_km: number | null; ganancia: number; programado_para: string | null; created_at: string;
+  id: string; origen_zona: string; destino_zona: string; pasajeros: number; distancia_km: number; dist_recogida_km: number | null; ganancia: number; programado_para: string | null; created_at: string; categoria?: CategoriaViaje;
 };
 
-export type ViajeQuote = { ok: true; km: number; minutos: number; costo: number; nocturno: boolean; ganancia: number } | { ok: false; km?: number; motivo: string };
+export type ViajeQuote = { ok: true; km: number; minutos: number; costo: number; nocturno: boolean; ganancia: number; categoria?: CategoriaViaje; capacidad?: number } | { ok: false; km?: number; motivo: string };
 
 export const viajeActivo = (estado: ViajeEstado) => ["buscando", "asignado", "en_origen", "a_bordo"].includes(estado);
 

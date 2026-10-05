@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { db, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
-import { Viaje, viajeActivo, viajeEstadoLabel } from "@/lib/remis";
+import { CATEGORIAS, categoriaLabel, Viaje, viajeActivo, viajeEstadoLabel } from "@/lib/remis";
 import { cn } from "@/lib/utils";
 
-type Driver = { perfil_id: string; patente: string | null; telefono: string | null; remis_estado: "solicitado" | "aprobado" | "rechazado"; remis_motivo: string | null; acepta_remis: boolean; perfil: { nombre: string | null } | null };
+type Driver = { remis_categorias: string[] | null; perfil_id: string; patente: string | null; telefono: string | null; remis_estado: "solicitado" | "aprobado" | "rechazado"; remis_motivo: string | null; acepta_remis: boolean; perfil: { nombre: string | null } | null };
 const stateLabel = { solicitado: "Por revisar", aprobado: "Habilitado", rechazado: "Rechazado" } as const;
 
 /** Remises: alta de conductores (con su licencia y cédula) y seguimiento de los viajes. */
@@ -23,9 +23,21 @@ export function RemisManager() {
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const setCategories = async (driver: Driver, categoria: string, on: boolean) => {
+    const actuales = driver.remis_categorias ?? ["estandar"];
+    const next = on ? [...new Set([...actuales, categoria])] : actuales.filter((c) => c !== categoria);
+    if (next.length === 0) return toast.error("Tiene que quedar al menos una categoría");
+    setSaving(true);
+    const { error } = await db.rpc("delivery_admin_remis_categorias", { p_perfil: driver.perfil_id, p_categorias: next });
+    setSaving(false);
+    if (error) return toast.error(errorMessage(error));
+    toast.success("Categorías actualizadas");
+    load();
+  };
+
   const load = useCallback(async () => {
     const [{ data: list }, { data: viajes }] = await Promise.all([
-      db.from("delivery_repartidores").select("perfil_id, patente, telefono, remis_estado, remis_motivo, acepta_remis, perfil:perfiles(nombre)").not("remis_estado", "is", null),
+      db.from("delivery_repartidores").select("perfil_id, remis_categorias, patente, telefono, remis_estado, remis_motivo, acepta_remis, perfil:perfiles(nombre)").not("remis_estado", "is", null),
       db.from("delivery_viajes").select("*").order("created_at", { ascending: false }).limit(100),
     ]);
     setDrivers((list || []) as unknown as Driver[]);
@@ -70,6 +82,14 @@ export function RemisManager() {
                 <p className="font-bold">{driver.perfil?.nombre || "Conductor"}</p>
                 <p className="text-xs text-muted-foreground">Patente {driver.patente || "—"} · {driver.telefono || "sin teléfono"}{driver.acepta_remis ? " · recibiendo viajes" : ""}</p>
                 {driver.remis_estado === "rechazado" && <p className="text-xs text-destructive">{driver.remis_motivo}</p>}
+                {driver.remis_estado === "aprobado" && (
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5" role="group" aria-label="Categorías habilitadas">
+                    {CATEGORIAS.map((c) => {
+                      const on = (driver.remis_categorias ?? ["estandar"]).includes(c.id);
+                      return <button key={c.id} type="button" aria-pressed={on} disabled={saving} onClick={() => setCategories(driver, c.id, !on)} className={cn("rounded-full border px-2.5 py-0.5 text-xs font-bold", on ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted")}>{c.label}</button>;
+                    })}
+                  </div>
+                )}
               </div>
               <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", driver.remis_estado === "aprobado" ? "bg-success/10 text-success" : driver.remis_estado === "solicitado" ? "bg-warning/20" : "bg-destructive/10 text-destructive")}>{stateLabel[driver.remis_estado]}</span>
               <Button size="sm" variant="outline" className="rounded-full" onClick={() => setDocsOf(driver)}>Documentos</Button>
@@ -86,7 +106,7 @@ export function RemisManager() {
             <li key={trip.id} className="flex flex-wrap items-center gap-3 p-3">
               <div className="min-w-0 flex-1">
                 <p className="truncate font-bold">{trip.origen_direccion} → {trip.destino_direccion}</p>
-                <p className="text-xs text-muted-foreground">{shortId(trip.id)} · {formatDateTime(trip.created_at)} · {Number(trip.distancia_km).toFixed(1)} km · {trip.pasajeros} pas.{trip.calificacion ? ` · ★ ${trip.calificacion}` : ""}</p>
+                <p className="text-xs text-muted-foreground">{shortId(trip.id)} · {formatDateTime(trip.created_at)} · {Number(trip.distancia_km).toFixed(1)} km · {trip.pasajeros} pas.{trip.categoria && trip.categoria !== "estandar" ? ` · ${categoriaLabel(trip.categoria)}` : ""}{trip.calificacion ? ` · ★ ${trip.calificacion}` : ""}</p>
               </div>
               <span className="font-extrabold tabular-nums">{money(trip.total)}</span>
               <span className={cn("rounded-full px-2.5 py-1 text-xs font-bold", trip.estado === "completado" ? "bg-success/10 text-success" : trip.estado === "cancelado" ? "bg-destructive/10 text-destructive" : "bg-warning/20")}>{viajeEstadoLabel[trip.estado]}</span>

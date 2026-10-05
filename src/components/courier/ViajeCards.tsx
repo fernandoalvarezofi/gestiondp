@@ -1,4 +1,5 @@
 import { FormEvent, useState } from "react";
+import { categoriaLabel } from "@/lib/remis";
 import { Banknote, Car, KeyRound, Loader2, MapPin, Navigation, Phone, Users } from "lucide-react";
 import { toast } from "sonner";
 import { MapView } from "@/components/maps/LazyMaps";
@@ -36,6 +37,7 @@ export function ViajeOfferCard({ offer, onChange }: { offer: ViajeOferta; onChan
           <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">{formatKm(Number(offer.distancia_km))} de viaje</span>
           {offer.dist_recogida_km != null && <span className="rounded-full bg-muted px-3 py-1 text-xs font-bold">{formatKm(Number(offer.dist_recogida_km))} hasta el pasajero</span>}
           <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-bold"><Users className="h-3 w-3" />{offer.pasajeros}</span>
+          {offer.categoria && offer.categoria !== "estandar" && <span className="rounded-full bg-sky-200 px-3 py-1 text-xs font-bold text-sky-900">{categoriaLabel(offer.categoria)}</span>}
           {offer.programado_para && <span className="rounded-full bg-warning/20 px-3 py-1 text-xs font-bold">Reservado: {formatDateTime(offer.programado_para)}</span>}
         </div>
         <p className="flex items-center gap-2 rounded-xl bg-warning/15 p-3 font-semibold"><Banknote className="h-4 w-4 shrink-0" />Cobrás el viaje en efectivo al llegar a destino</p>

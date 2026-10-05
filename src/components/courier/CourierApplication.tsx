@@ -14,6 +14,7 @@ export type Courier = {
   perfil_id: string; vehiculo: string; telefono?: string | null; disponible: boolean; activo: boolean;
   dni?: string | null; patente?: string | null; verificado: boolean; motivo_rechazo?: string | null;
   remis_estado?: "solicitado" | "aprobado" | "rechazado" | null; remis_motivo?: string | null; acepta_remis?: boolean;
+  vehiculo_marca?: string | null; vehiculo_modelo?: string | null; vehiculo_color?: string | null; vehiculo_anio?: number | null; remis_categorias?: string[] | null;
   control_estado?: "requerido" | "en_revision" | null; control_motivo?: string | null; control_desafio?: string | null;
 };
 

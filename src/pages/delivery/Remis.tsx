@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import type { AddressSuggestion } from "@/lib/geo";
-import { minScheduleValue, Viaje, viajeActivo, viajeEstadoLabel, ViajeQuote, validSchedule } from "@/lib/remis";
+import { capacidadDe, CATEGORIAS, CategoriaViaje, minScheduleValue, Viaje, viajeActivo, viajeEstadoLabel, ViajeQuote, validSchedule } from "@/lib/remis";
 import { fetchRoute } from "@/lib/route";
 import { cn } from "@/lib/utils";
 
@@ -33,7 +33,9 @@ export default function Remis() {
   const [tip, setTip] = useState(0);
   const [later, setLater] = useState(false);
   const [when, setWhen] = useState("");
-  const [quote, setQuote] = useState<ViajeQuote | null>(null);
+  const [categoria, setCategoria] = useState<CategoriaViaje>("estandar");
+  const [quotes, setQuotes] = useState<Partial<Record<CategoriaViaje, ViajeQuote>> | null>(null);
+  const quote = quotes?.[categoria] ?? null;
   const [quoting, setQuoting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [recent, setRecent] = useState<Viaje[]>([]);
@@ -51,15 +53,19 @@ export default function Remis() {
 
   const scheduled = later && validSchedule(when) ? new Date(when).toISOString() : null;
   useEffect(() => {
-    if (!origin || !dest) { setQuote(null); return; }
+    if (!origin || !dest) { setQuotes(null); return; }
     let active = true;
     setQuoting(true);
     const timer = window.setTimeout(async () => {
       await fetchRoute({ lat: origin.lat, lng: origin.lng }, { lat: dest.lat, lng: dest.lng }, { persist: true });
-      const { data, error } = await db.rpc("delivery_cotizar_viaje", { p_olat: origin.lat, p_olng: origin.lng, p_dlat: dest.lat, p_dlng: dest.lng, p_programado: scheduled });
+      // Se cotizan las tres categorías juntas para mostrar el precio de cada una.
+      const resultados = await Promise.all(CATEGORIAS.map(async (c) => {
+        const { data, error } = await db.rpc("delivery_cotizar_viaje", { p_olat: origin.lat, p_olng: origin.lng, p_dlat: dest.lat, p_dlng: dest.lng, p_programado: scheduled, p_categoria: c.id });
+        return [c.id, (error ? { ok: false, motivo: errorMessage(error) } : data) as ViajeQuote] as const;
+      }));
       if (!active) return;
       setQuoting(false);
-      setQuote(error ? { ok: false, motivo: errorMessage(error) } : data);
+      setQuotes(Object.fromEntries(resultados));
     }, 250);
     return () => { active = false; window.clearTimeout(timer); };
   }, [origin, dest, scheduled]);
@@ -81,7 +87,7 @@ export default function Remis() {
     setSaving(true);
     const { data, error } = await db.rpc("delivery_crear_viaje", {
       p_origen: origin.label, p_olat: origin.lat, p_olng: origin.lng, p_destino: dest.label, p_dlat: dest.lat, p_dlng: dest.lng,
-      p_pasajeros: passengers, p_notas: notes.trim() || null, p_telefono: phone.trim(), p_programado: scheduled, p_propina: tip,
+      p_pasajeros: passengers, p_notas: notes.trim() || null, p_telefono: phone.trim(), p_programado: scheduled, p_propina: tip, p_categoria: categoria,
     });
     setSaving(false);
     if (error) return toast.error(errorMessage(error));
@@ -104,12 +110,27 @@ export default function Remis() {
           {markers.length > 0 && <MapView markers={markers} className="h-52 sm:h-60" />}
         </section>
 
+        <section className="space-y-3 rounded-3xl border bg-card p-4 sm:p-5" aria-label="Categoría del vehículo">
+          <h2 className="flex items-center gap-2 font-extrabold"><Car className="h-5 w-5 text-primary" />Tipo de vehículo</h2>
+          <div role="radiogroup" aria-label="Categoría" className="grid gap-2 sm:grid-cols-3">
+            {CATEGORIAS.map((c) => {
+              const q = quotes?.[c.id];
+              return (
+                <button key={c.id} type="button" role="radio" aria-checked={categoria === c.id} onClick={() => { setCategoria(c.id); setPassengers((p) => Math.min(p, c.capacidad)); }} className={cn("rounded-2xl border p-3 text-left transition-colors", categoria === c.id ? "border-primary bg-primary/5" : "hover:bg-muted")}>
+                  <span className="flex items-center justify-between font-extrabold">{c.label}<span className="font-display">{q?.ok ? money(q.costo) : quoting ? "…" : ""}</span></span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">{c.detalle}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
         <section className="space-y-4 rounded-3xl border bg-card p-4 sm:p-5">
           <h2 className="flex items-center gap-2 font-extrabold"><Users className="h-5 w-5 text-primary" />Detalles del viaje</h2>
           <div>
             <p className="text-sm font-bold">Pasajeros</p>
             <div role="radiogroup" aria-label="Cantidad de pasajeros" className="mt-2 flex flex-wrap gap-2">
-              {[1, 2, 3, 4, 5, 6].map((value) => <button key={value} type="button" role="radio" aria-checked={passengers === value} onClick={() => setPassengers(value)} className={cn("h-10 w-10 rounded-full border text-sm font-bold", passengers === value ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted")}>{value}</button>)}
+              {[1, 2, 3, 4, 5, 6].filter((value) => value <= capacidadDe(categoria)).map((value) => <button key={value} type="button" role="radio" aria-checked={passengers === value} onClick={() => setPassengers(value)} className={cn("h-10 w-10 rounded-full border text-sm font-bold", passengers === value ? "border-primary bg-primary text-primary-foreground" : "hover:bg-muted")}>{value}</button>)}
             </div>
           </div>
           <div className="space-y-1.5"><Label htmlFor="r-phone">Tu teléfono</Label><Input id="r-phone" type="tel" inputMode="tel" value={phone} maxLength={25} onChange={(event) => setPhone(event.target.value)} autoComplete="tel" /></div>
