@@ -90,6 +90,10 @@
 - Comisiones, liquidaciones y payouts existentes se reapuntan al servicio; reembolsos y contracargos como flujo propio.
 **Tamaño:** L. **Riesgo:** alto (dinero) → el esquema actual de liquidaciones se mantiene en paralelo hasta conciliar.
 
+**Estado (2026-10-05):**
+- ✅ Paso 1 — `pagos` + `pagos_eventos` (historial inmutable), `pago_aplicar_notificacion` (máquina de estados, monto, idempotencia, orden de avisos), `mp-webhook` v2 con firma `x-signature`, pantalla de cobros y clave del webhook en Administración → Pagos. Pruebas: `supabase/tests/005_pagos.sql`, `src/test/mpFirma.test.ts`. No toca libro ni liquidaciones.
+- ⏳ Paso 2 — asientos del libro para cobros/reintegros (revisar antes `delivery_libro_pedido`: hoy es devengado al entregar). Paso 3 — flujo de reintegros y contracargos desde la app. Paso 4 — interfaz `PaymentProvider` y wallet.
+
 ## FASE 6 — LOGISTICS
 
 - `shipments`, `packages`, `pickups`, `providers` de logística.
