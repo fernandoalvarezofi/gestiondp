@@ -5,6 +5,7 @@ import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BusinessMetrics } from "@/components/admin/BusinessMetrics";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminDb, ErrorApp, EstadoSesion, EventoAuditoria, ResumenAdmin } from "@/lib/adminClient";
 import { cn } from "@/lib/utils";
@@ -216,12 +217,14 @@ function MfaDesafio({ onListo }: { onListo: () => void }) {
 function Tablero() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-6">
-      <Tabs defaultValue="resumen">
-        <TabsList className="mb-5 grid h-auto w-full max-w-md grid-cols-3 rounded-2xl p-1">
+      <Tabs defaultValue="negocio">
+        <TabsList className="mb-5 grid h-auto w-full max-w-xl grid-cols-4 rounded-2xl p-1">
+          <TabsTrigger value="negocio" className="rounded-xl py-2 font-bold">Negocio</TabsTrigger>
           <TabsTrigger value="resumen" className="rounded-xl py-2 font-bold">Resumen</TabsTrigger>
           <TabsTrigger value="auditoria" className="rounded-xl py-2 font-bold">Auditoría</TabsTrigger>
           <TabsTrigger value="errores" className="rounded-xl py-2 font-bold">Errores</TabsTrigger>
         </TabsList>
+        <TabsContent value="negocio"><BusinessMetrics /></TabsContent>
         <TabsContent value="resumen"><Resumen /></TabsContent>
         <TabsContent value="auditoria"><Auditoria /></TabsContent>
         <TabsContent value="errores"><Errores /></TabsContent>

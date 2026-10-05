@@ -48,13 +48,23 @@ Deno.serve(async (req) => {
   const esperada = await firma(clave, `${ts}.${body}`);
   if (!iguales(esperada, sig.toLowerCase())) return json(401, { error: "firma inválida" });
 
-  let datos: { auditoria?: unknown; errores?: unknown };
+  let datos: { auditoria?: unknown; errores?: unknown; metricas?: unknown };
   try { datos = JSON.parse(body); } catch { return json(400, { error: "json inválido" }); }
   const auditoria = Array.isArray(datos.auditoria) ? datos.auditoria : [];
   const errores = Array.isArray(datos.errores) ? datos.errores : [];
-  if (auditoria.length > MAX_ITEMS || errores.length > MAX_ITEMS) return json(413, { error: "demasiados eventos" });
+  const metricas = Array.isArray(datos.metricas) ? datos.metricas : [];
+  if (auditoria.length > MAX_ITEMS || errores.length > MAX_ITEMS || metricas.length > 600) return json(413, { error: "demasiados eventos" });
+
+  // Métricas agregadas (idempotentes: se pisan por día y clave).
+  let guardadas = 0;
+  if (metricas.length > 0) {
+    const { data: n, error: errorMetricas } = await admin.rpc("ingest_metricas", { p_metricas: metricas });
+    if (errorMetricas) return json(400, { error: "no se pudieron guardar las métricas", detalle: errorMetricas.message.slice(0, 120) });
+    guardadas = Number(n) || 0;
+  }
+  if (auditoria.length === 0 && errores.length === 0) return json(200, { ok: true, auditoria: 0, errores: 0, metricas: guardadas });
 
   const { data, error } = await admin.rpc("ingest_lote", { p_auditoria: auditoria, p_errores: errores });
   if (error) return json(400, { error: "no se pudo guardar", detalle: error.message.slice(0, 120) });
-  return json(200, { ok: true, ...(data as Record<string, number>) });
+  return json(200, { ok: true, ...(data as Record<string, number>), metricas: guardadas });
 });
