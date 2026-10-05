@@ -46,3 +46,19 @@ describe("cuenta regresiva", () => {
     expect(tiempoRestante(1000, 5000)).toMatchObject({ dias: 0, horas: 0, min: 0, seg: 0, terminada: true });
   });
 });
+
+import { progresoEnvio } from "@/components/storefront/MiniCart";
+
+describe("progreso hacia el envío gratis", () => {
+  it("calcula lo que falta y el porcentaje", () => {
+    expect(progresoEnvio(3000, 10000)).toEqual({ falta: 7000, pct: 30 });
+  });
+  it("llega al 100% y no pasa", () => {
+    expect(progresoEnvio(12000, 10000)).toEqual({ falta: 0, pct: 100 });
+  });
+  it("sin promo de envío gratis no hay barra", () => {
+    expect(progresoEnvio(3000, null)).toBeNull();
+    expect(progresoEnvio(3000, 0)).toBeNull();
+    expect(progresoEnvio(3000, undefined)).toBeNull();
+  });
+});

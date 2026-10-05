@@ -1,5 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Politicas } from "@/components/storefront/MarketingBlocks";
+import { MiniCart } from "@/components/storefront/MiniCart";
 import { marcarOrigenTienda } from "@/lib/canal";
 import { Bike, ChevronRight, Clock3, Heart, Loader2, Minus, Plus, Share2, ShoppingBag, Store as StoreIcon, Wallet } from "lucide-react";
 import { toast } from "sonner";
@@ -98,6 +100,17 @@ export default function StorefrontProduct() {
     return () => { document.title = previousTitle; if (previousDescription !== null) meta?.setAttribute("content", previousDescription); script.remove(); };
   }, [store, product]);
 
+  // Barra de compra fija en el celular: aparece cuando el botón principal sale de la pantalla.
+  const ctaRef = useRef<HTMLDivElement>(null);
+  const [ctaVisible, setCtaVisible] = useState(true);
+  useEffect(() => {
+    const el = ctaRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(([entry]) => setCtaVisible(entry.isIntersecting), { threshold: 0 });
+    io.observe(el);
+    return () => io.disconnect();
+  });
+
   if (state === "loading") return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   if (state === "missing" || !store || !product) {
     return (
@@ -125,6 +138,14 @@ export default function StorefrontProduct() {
   const lista = insignias(product, masVendidos);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
   const faved = favs.includes(product.id);
+  // Políticas: las que cargó el comercio en su tienda o, si no cargó ninguna, un resumen con los datos reales del local.
+  const bloquePoliticas = theme.bloques.find((b) => b.tipo === "politicas" && b.items.length > 0);
+  const politicasItems = bloquePoliticas && bloquePoliticas.tipo === "politicas"
+    ? { titulo: bloquePoliticas.titulo || "Envíos, cambios y garantía", items: bloquePoliticas.items }
+    : { titulo: "Envíos y pagos", items: [
+      { t: "Envíos", x: `${fee === "Envío gratis" ? "Envío gratis" : fee} a tu dirección. Llega en ${store.tiempo_min}-${store.tiempo_max} minutos${store.acepta_retiro ? ". También podés retirarlo en el local." : "."}` },
+      { t: "Medios de pago", x: `${pagoOnline ? "Mercado Pago (tarjeta, débito, dinero en cuenta), " : ""}efectivo o transferencia.` },
+    ] };
   const related = [...others.filter((other) => other.categoria === product.categoria), ...others.filter((other) => other.categoria !== product.categoria)].slice(0, 8);
 
   const add = (goToCart: boolean) => {
@@ -158,7 +179,7 @@ export default function StorefrontProduct() {
             <StoreLogo store={store} className={cn("h-10 w-10 shrink-0 text-sm", d.radio === "cuadrado" && "!rounded-none")} />
             <span className="truncate text-lg font-extrabold" style={headingStyle}>{store.nombre}</span>
           </Link>
-          <Link to="/app/carrito" className="ml-auto inline-flex shrink-0 items-center gap-2 px-4 py-2 text-sm font-bold" style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />Mi pedido</Link>
+          <div className="ml-auto"><MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={<button type="button" className="inline-flex shrink-0 items-center gap-2 px-4 py-2 text-sm font-bold" style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />Mi pedido</button>} /></div>
         </div>
       </header>
 
@@ -215,7 +236,7 @@ export default function StorefrontProduct() {
             )}
 
             {!outOfStock && !unavailable && (
-              <div className="mt-5 space-y-3">
+              <div ref={ctaRef} className="mt-5 space-y-3">
                 {hasOptions ? (
                   <button type="button" onClick={() => setOptions(true)} className="h-13 w-full py-3.5 text-base font-bold" style={cta()}>{conVariantes ? "Elegir opción y agregar" : "Elegir opciones y agregar"}</button>
                 ) : (
@@ -247,6 +268,10 @@ export default function StorefrontProduct() {
                 {!!product.etiquetas?.length && <p className="mt-4 flex flex-wrap gap-2">{product.etiquetas.map((tag) => <span key={tag} className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">{tagLabels[tag] ?? tag}</span>)}</p>}
               </section>
             )}
+            <section>
+              <h2 className="mb-4 text-xl font-extrabold sm:text-2xl">{politicasItems.titulo}</h2>
+              <Politicas items={politicasItems.items} />
+            </section>
             <ProductQuestions productId={product.id} disabled={!store.aprobado} />
           </div>
           <aside className="space-y-4 lg:self-start">
@@ -265,6 +290,14 @@ export default function StorefrontProduct() {
         )}
       </main>
 
+      {!outOfStock && !unavailable && !ctaVisible && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 px-4 py-3 backdrop-blur md:hidden" role="region" aria-label="Comprar este producto">
+          <div className="mx-auto flex max-w-md items-center gap-3">
+            <div className="min-w-0"><p className="truncate text-xs text-muted-foreground">{product.nombre}</p><p className="font-black tabular-nums">{conVariantes && <span className="mr-1 text-xs font-bold text-muted-foreground">Desde</span>}{money(precioDesde(product))}</p></div>
+            <button type="button" onClick={() => (hasOptions ? setOptions(true) : add(true))} className="ml-auto shrink-0 px-6 py-3 text-base font-bold" style={cta()}>{hasOptions ? "Elegir opción" : "Comprar ahora"}</button>
+          </div>
+        </div>
+      )}
       {options && <ProductDialog product={product} groups={groups} store={cartStore} onClose={() => setOptions(false)} />}
     </div>
   );

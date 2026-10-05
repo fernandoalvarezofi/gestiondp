@@ -13,6 +13,7 @@ import { Bloque, BloqueBanner, videoEmbed, BloqueImagenTexto, BloquePortada, Ico
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
 import { NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
+import { MiniCart } from "@/components/storefront/MiniCart";
 import { SellerCard } from "@/components/storefront/SellerCard";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -584,7 +585,7 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
   const cartClass = "inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-bold";
   const cart = preview
     ? <span className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</span>
-    : <Link to="/app/carrito" className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</Link>;
+    : <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={<button type="button" className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</button>} />;
 
   const anuncio = theme.anuncio && <p className="px-4 py-2 text-center text-sm font-semibold" style={accent}>{theme.anuncio}</p>;
   const header = (
@@ -641,10 +642,12 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
       </footer>
 
       {!preview && itemCount > 0 && (
-        <Link to="/app/carrito" className="fixed inset-x-4 bottom-4 z-40 mx-auto flex max-w-md items-center justify-between px-5 py-3.5 font-bold shadow-pop md:hidden" style={{ ...accent, ...radiusButton }}>
-          <span className="inline-flex items-center gap-2"><ShoppingBag className="h-5 w-5" />Ver mi pedido ({itemCount})</span>
-          <span>{money(subtotal)}</span>
-        </Link>
+        <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={
+          <button type="button" className="fixed inset-x-4 bottom-4 z-40 mx-auto flex w-[calc(100%-2rem)] max-w-md items-center justify-between px-5 py-3.5 font-bold shadow-pop md:hidden" style={{ ...accent, ...radiusButton }}>
+            <span className="inline-flex items-center gap-2"><ShoppingBag className="h-5 w-5" />Ver mi pedido ({itemCount})</span>
+            <span>{money(subtotal)}</span>
+          </button>
+        } />
       )}
     </div>
   );
