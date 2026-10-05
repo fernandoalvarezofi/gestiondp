@@ -9,9 +9,10 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
 import { DeliveryProduct, DeliverySection, DeliveryStore, isOpenNow, money, nextOpening, orderSections, scheduleSummary } from "@/lib/delivery";
 import { storeReach } from "@/lib/geo";
-import { Bloque, BloqueBanner, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { Bloque, BloqueBanner, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
+import { NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
 import { SellerCard } from "@/components/storefront/SellerCard";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -503,6 +504,59 @@ export function StorefrontView({ store, tema, products, sections: sectionConfig,
             </div>
           </section>
         );
+      case "oferta":
+        return (
+          <OfertaSeccion hasta={b.hasta} radius="var(--sf-radius)">
+            {(reloj) => (
+              <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+                <div className="relative isolate overflow-hidden px-6 py-10 text-center text-white sm:px-12 sm:py-14" style={{ borderRadius: "var(--sf-radius)", ...accent }}>
+                  <div className="absolute inset-0 -z-10 bg-gradient-to-br from-black/0 via-black/10 to-black/35" />
+                  {b.titulo && <h2 className="mx-auto max-w-2xl text-3xl font-black leading-tight sm:text-5xl" style={headingStyle}>{b.titulo}</h2>}
+                  {b.texto && <p className="mx-auto mt-3 max-w-xl text-base opacity-90 sm:text-lg">{b.texto}</p>}
+                  {reloj && <div className="mt-6 flex justify-center">{reloj}</div>}
+                  {b.boton && <div className="mt-7"><Boton tone="light" onClick={() => follow(b.enlace_tipo, b.enlace_url)}>{b.boton}<ArrowRight className="h-4 w-4" /></Boton></div>}
+                </div>
+              </section>
+            )}
+          </OfertaSeccion>
+        );
+      case "newsletter":
+        return (
+          <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+            <div className="px-6 py-10 text-center sm:px-12 sm:py-14" style={{ borderRadius: "var(--sf-radius)", background: "color-mix(in srgb, var(--sf-accent) 9%, transparent)" }}>
+              <h2 className="text-2xl font-extrabold sm:text-3xl" style={headingStyle}>{b.titulo || "Enterate primero de las novedades"}</h2>
+              {b.texto && <p className="mx-auto mb-6 mt-2 max-w-xl text-base opacity-75 sm:text-lg">{b.texto}</p>}
+              <div className={b.texto ? "" : "mt-6"}>
+                <NewsletterForm comercioId={store.id} boton={b.boton || "Suscribirme"} preview={preview} buttonStyle={d.boton === "relleno" ? { ...accent, ...radiusButton } : { border: "2px solid var(--sf-accent)", color: "var(--sf-accent)", ...radiusButton }} inputStyle={radiusButton} />
+              </div>
+            </div>
+          </section>
+        );
+      case "politicas":
+        if (!b.items.length) return null;
+        return (
+          <section id="politicas" className={cn("mx-auto scroll-mt-24 px-4 sm:px-6", width, space)}>
+            <div className="mx-auto max-w-3xl">
+              <Titulo>{b.titulo || "Envíos, cambios y garantía"}</Titulo>
+              <Politicas items={b.items} />
+            </div>
+          </section>
+        );
+      case "video": {
+        const embed = videoEmbed(b.url);
+        if (!embed) return null;
+        return (
+          <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+            <div className="mx-auto max-w-4xl">
+              {b.titulo && <Titulo>{b.titulo}</Titulo>}
+              <div className="aspect-video overflow-hidden bg-black" style={{ borderRadius: "var(--sf-radius)" }}>
+                {preview ? <div className="flex h-full items-center justify-center text-white/70">Video</div> : <iframe src={embed} title={b.titulo || "Video"} className="h-full w-full" loading="lazy" allow="accelerometer; encrypted-media; picture-in-picture; fullscreen" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />}
+              </div>
+              {b.texto && <p className="mt-3 text-center opacity-75">{b.texto}</p>}
+            </div>
+          </section>
+        );
+      }
       case "separador":
         return <div className={cn("mx-auto px-4 sm:px-6", width)}><div className={cn(ALTO_SEP[b.alto], "flex items-center")}>{b.linea && <hr className="w-full border-current opacity-15" />}</div></div>;
       default:

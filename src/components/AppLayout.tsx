@@ -19,7 +19,7 @@ const bottomNav = [
   { to: "/app", label: "Inicio", icon: Home, end: true },
   { to: "/app/buscar", label: "Buscar", icon: Search },
   { to: "/app/pedidos", label: "Pedidos", icon: Receipt },
-  { to: "/app/favoritos", label: "Favoritos", icon: Heart },
+  { to: "/app/servicios", label: "Servicios", icon: LayoutGrid },
   { to: "/app/perfil", label: "Cuenta", icon: UserCircle },
 ];
 
@@ -140,6 +140,8 @@ export function AppLayout() {
                 <Button variant="ghost" className="rounded-full font-bold"><LayoutGrid className="h-4 w-4" />Servicios<ChevronDown className="h-4 w-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">
+                <DropdownMenuItem onClick={() => navigate("/app/servicios")}><LayoutGrid className="h-4 w-4" />Todos los servicios</DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={() => navigate("/app/enviar")}><Package className="h-4 w-4" />Enviar un paquete</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/app/remis")}><CarTaxiFront className="h-4 w-4" />Pedir un remis</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/app/directorio")}><BookUser className="h-4 w-4" />Directorio de la ciudad</DropdownMenuItem>

@@ -158,6 +158,54 @@ export function BlockSettings({ bloque, categorias, onChange }: { bloque: Bloque
       return <div className="space-y-4"><Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} /><p className="text-xs text-muted-foreground">Muestra las opiniones con comentario que dejan tus clientes. Aparece cuando hay al menos una.</p></div>;
     case "contacto":
       return <div className="space-y-4"><Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} /><p className="text-xs text-muted-foreground">Usa la dirección, los horarios y las redes que cargaste en tu comercio y en Datos y redes.</p></div>;
+    case "newsletter":
+      return (
+        <div className="space-y-4">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Texto label="Texto" value={bloque.texto} max={200} multiline onChange={(texto) => onChange({ texto })} />
+          <Texto label="Texto del botón" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
+          <p className="text-xs text-muted-foreground">Los emails que dejen tus clientes se guardan en “Suscriptores” (pestaña Compartir), donde los podés descargar.</p>
+        </div>
+      );
+    case "politicas":
+      return (
+        <div className="space-y-3">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          {bloque.items.map((item, index) => (
+            <div key={index} className="space-y-2 rounded-xl border p-3">
+              <div className="flex items-center gap-2">
+                <Input aria-label={`Título de la política ${index + 1}`} value={item.t} maxLength={40} placeholder="Ej.: Envíos" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, t: event.target.value } : row)) })} />
+                <Button type="button" variant="ghost" size="icon" aria-label={`Quitar política ${index + 1}`} onClick={() => onChange({ items: bloque.items.filter((_, i) => i !== index) })}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+              <textarea aria-label={`Texto de la política ${index + 1}`} value={item.x} maxLength={600} rows={3} placeholder="Explicá cómo funciona" className="w-full rounded-md border bg-background px-3 py-2 text-sm" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, x: event.target.value } : row)) })} />
+            </div>
+          ))}
+          {bloque.items.length < 4 && <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => onChange({ items: [...bloque.items, { t: "", x: "" }] })}><Plus className="h-4 w-4" />Agregar política</Button>}
+          <p className="text-xs text-muted-foreground">Estas políticas también se muestran en la ficha de cada producto.</p>
+        </div>
+      );
+    case "oferta":
+      return (
+        <div className="space-y-4">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Texto label="Texto" value={bloque.texto} max={200} multiline onChange={(texto) => onChange({ texto })} />
+          <Campo label="La oferta termina el" hint="Se muestra un reloj hasta esa fecha y la oferta desaparece sola al terminar.">
+            <Input type="datetime-local" aria-label="Fecha y hora de fin" value={(bloque.hasta ?? "").slice(0, 16)} onChange={(event) => onChange({ hasta: event.target.value || undefined })} />
+          </Campo>
+          <Texto label="Texto del botón" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
+          <Enlace tipo={bloque.enlace_tipo} url={bloque.enlace_url} onChange={onChange} />
+        </div>
+      );
+    case "video":
+      return (
+        <div className="space-y-4">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Campo label="Enlace del video" hint="Pegá un enlace de YouTube (youtube.com/watch?v=… o youtu.be/…) o de Vimeo.">
+            <Input aria-label="Enlace del video" value={bloque.url ?? ""} maxLength={200} placeholder="https://www.youtube.com/watch?v=…" onChange={(event) => onChange({ url: event.target.value })} />
+          </Campo>
+          <Texto label="Texto debajo" value={bloque.texto} max={200} onChange={(texto) => onChange({ texto })} />
+        </div>
+      );
     case "separador":
       return (
         <div className="space-y-4">

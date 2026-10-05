@@ -6,6 +6,7 @@ import { DesignPanel, serializarTema } from "@/components/storefront/builder/Des
 import { Campo, Interruptor, Texto } from "@/components/storefront/builder/fields";
 import { PreviewPane } from "@/components/storefront/builder/PreviewPane";
 import { QrPoster } from "@/components/storefront/QrPoster";
+import { SubscribersPanel } from "@/components/storefront/SubscribersPanel";
 import { StorefrontStats } from "@/components/storefront/StorefrontStats";
 import { TemplateGrid } from "@/components/storefront/TemplatePicker";
 import { Button } from "@/components/ui/button";
@@ -255,6 +256,7 @@ export default function MerchantStorefront() {
               <p className="mb-4 mt-1 text-sm text-muted-foreground">Llevá a tus clientes del local a tu tienda online.</p>
               <QrPoster store={store} url={url} color={draft.color} title={draft.titulo || store.nombre} />
             </section>
+            <SubscribersPanel storeId={store.id} storeSlug={store.slug} />
           </TabsContent>
         </Tabs>
 

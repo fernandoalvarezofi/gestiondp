@@ -71,8 +71,13 @@ export type BloqueFaq = Base & { tipo: "faq"; titulo?: string; items: FaqItem[] 
 export type BloqueOpiniones = Base & { tipo: "opiniones"; titulo?: string };
 export type BloqueContacto = Base & { tipo: "contacto"; titulo?: string };
 export type BloqueSeparador = Base & { tipo: "separador"; alto: "chico" | "medio" | "grande"; linea: boolean };
+export type BloqueNewsletter = Base & { tipo: "newsletter"; titulo?: string; texto?: string; boton?: string };
+export type PoliticaItem = { t: string; x: string };
+export type BloquePoliticas = Base & { tipo: "politicas"; titulo?: string; items: PoliticaItem[] };
+export type BloqueOferta = Base & { tipo: "oferta"; titulo?: string; texto?: string; boton?: string; hasta?: string; enlace_tipo: EnlaceTipo; enlace_url?: string };
+export type BloqueVideo = Base & { tipo: "video"; titulo?: string; texto?: string; url?: string };
 
-export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueContacto | BloqueSeparador;
+export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador;
 export type BloqueTipo = Bloque["tipo"];
 
 export const MAX_BLOQUES = 24;
@@ -90,6 +95,10 @@ export const TIPOS_BLOQUE: { tipo: BloqueTipo; nombre: string; detalle: string; 
   { tipo: "faq", nombre: "Preguntas frecuentes", detalle: "Respondé lo que siempre te preguntan" },
   { tipo: "opiniones", nombre: "Opiniones de clientes", detalle: "Lo que dicen de vos", unico: true },
   { tipo: "contacto", nombre: "Contacto y horarios", detalle: "Dirección, horarios y redes", unico: true },
+  { tipo: "oferta", nombre: "Oferta con cuenta regresiva", detalle: "Un mensaje con reloj hasta que termina la promo" },
+  { tipo: "newsletter", nombre: "Suscripción por email", detalle: "Juntá los emails de tus clientes y avisales de novedades" },
+  { tipo: "politicas", nombre: "Envíos, cambios y garantía", detalle: "Tus políticas en desplegables, también en cada producto" },
+  { tipo: "video", nombre: "Video", detalle: "Un video de YouTube o Vimeo" },
   { tipo: "separador", nombre: "Espacio", detalle: "Un respiro entre bloques, con línea opcional" },
 ];
 
@@ -169,6 +178,35 @@ const clampInt = (value: unknown, min: number, max: number, fallback: number) =>
 };
 const idOf = (value: unknown, index: number) => (typeof value === "string" && /^[a-z0-9-]{1,16}$/.test(value) ? value : `b${index}${Math.random().toString(36).slice(2, 6)}`);
 
+/** Fecha ISO (con o sin zona) o undefined. */
+export function fechaIso(value: unknown): string | undefined {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:\d{2})?$/.test(value) && !Number.isNaN(Date.parse(value)) ? value.slice(0, 30) : undefined;
+}
+
+/** Fin del domingo próximo, hora local, como fecha sugerida de una oferta. */
+export function finDeSemana(desde = new Date()): string {
+  const d = new Date(desde);
+  d.setDate(d.getDate() + ((7 - d.getDay()) % 7 || 7));
+  d.setHours(23, 59, 0, 0);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T23:59`;
+}
+
+const VIDEO_RE = /^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|vimeo\.com\/)[A-Za-z0-9_-]{5,20}([&?][A-Za-z0-9_=&-]*)?$/i;
+/** Solo YouTube o Vimeo por https. */
+export function videoUrl(value: unknown): string | undefined {
+  return typeof value === "string" && value.length <= 200 && VIDEO_RE.test(value) ? value : undefined;
+}
+
+/** Dirección para incrustar (iframe) a partir de un enlace de YouTube o Vimeo. */
+export function videoEmbed(url: string | undefined): string | null {
+  const ok = videoUrl(url);
+  if (!ok) return null;
+  const yt = ok.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{5,20})/i);
+  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}`;
+  const vi = ok.match(/vimeo\.com\/([A-Za-z0-9_-]{5,20})/i);
+  return vi ? `https://player.vimeo.com/video/${vi[1]}` : null;
+}
+
 export const nuevoId = () => `b${Math.random().toString(36).slice(2, 9)}`;
 
 const ALTOS = ["chico", "medio", "grande"] as const;
@@ -195,6 +233,10 @@ export function bloqueNuevo(tipo: BloqueTipo, plantilla: Plantilla = "boutique")
     case "opiniones": return { ...base, tipo, titulo: "Lo que dicen nuestros clientes" };
     case "contacto": return { ...base, tipo, titulo: "Contacto y horarios" };
     case "separador": return { ...base, tipo, alto: "medio", linea: true };
+    case "newsletter": return { ...base, tipo, titulo: "Enterate primero de las novedades", texto: "Dejanos tu email y te avisamos de nuevos productos y ofertas.", boton: "Quiero enterarme" };
+    case "politicas": return { ...base, tipo, titulo: "Envíos, cambios y garantía", items: [{ t: "Envíos", x: "Entregamos en la zona cercana al local. El costo y el tiempo se calculan con tu dirección." }, { t: "Cambios y devoluciones", x: "Podés cambiar tu compra dentro de los 10 días con el comprobante." }, { t: "Medios de pago", x: "Efectivo, transferencia o tarjeta." }] };
+    case "oferta": return { ...base, tipo, titulo: "Oferta por tiempo limitado", texto: "Aprovechá antes de que termine.", boton: "Ver productos", hasta: finDeSemana(), enlace_tipo: "catalogo" };
+    case "video": return { ...base, tipo, titulo: "Conocenos" };
   }
 }
 
@@ -240,6 +282,17 @@ export function normalizeBloque(raw: unknown, index: number): Bloque | null {
     case "opiniones": return { ...base, tipo: "opiniones", titulo: opt(s.titulo, 80) };
     case "contacto": return { ...base, tipo: "contacto", titulo: opt(s.titulo, 80) };
     case "separador": return { ...base, tipo: "separador", alto: pick(s.alto, ALTOS, "medio"), linea: s.linea !== false };
+    case "newsletter": return { ...base, tipo: "newsletter", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24) };
+    case "politicas": {
+      const items = (Array.isArray(s.items) ? s.items : []).slice(0, 4).map((item): PoliticaItem | null => {
+        const entry = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+        const t = text(entry.t, 40), x = text(entry.x, 600);
+        return t && x ? { t, x } : null;
+      }).filter((item): item is PoliticaItem => item !== null);
+      return { ...base, tipo: "politicas", titulo: opt(s.titulo, 80), items };
+    }
+    case "oferta": return { ...base, tipo: "oferta", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), hasta: fechaIso(s.hasta), ...enlace };
+    case "video": return { ...base, tipo: "video", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), url: videoUrl(s.url) };
     default: return null;
   }
 }

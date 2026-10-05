@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 const PANELS = ["/app/comercio", "/app/repartidor", "/app/admin"];
 
 /** Pantallas "raíz": las de la barra de abajo y los inicios de cada panel. Ahí no hay a dónde volver. */
-const ROOTS = new Set(["/app", "/app/buscar", "/app/pedidos", "/app/favoritos", "/app/perfil", ...PANELS]);
+const ROOTS = new Set(["/app", "/app/buscar", "/app/pedidos", "/app/favoritos", "/app/servicios", "/app/perfil", ...PANELS]);
 
 const normalize = (pathname: string) => (pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname);
 
