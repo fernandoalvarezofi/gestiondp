@@ -17,3 +17,19 @@ describe("sucursales por negocio", () => {
     expect(agruparSucursales([])).toEqual([]);
   });
 });
+
+import { PERMISOS_POR_ROL } from "./business";
+
+describe("permisos por rol del negocio", () => {
+  it("el dueño y el administrador pueden todo; los demás, menos", () => {
+    expect(PERMISOS_POR_ROL.owner).toEqual(PERMISOS_POR_ROL.admin);
+    expect(PERMISOS_POR_ROL.owner).toContain("finanzas");
+    expect(PERMISOS_POR_ROL.manager).not.toContain("finanzas");
+    expect(PERMISOS_POR_ROL.manager).not.toContain("equipo");
+    expect(PERMISOS_POR_ROL.operator).toEqual(["pedidos"]);
+    expect(PERMISOS_POR_ROL.seller).toEqual(["pedidos", "catalogo"]);
+  });
+  it("todo rol incluye al menos recibir pedidos", () => {
+    for (const permisos of Object.values(PERMISOS_POR_ROL)) expect(permisos).toContain("pedidos");
+  });
+});

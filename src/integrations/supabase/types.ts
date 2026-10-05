@@ -3158,6 +3158,24 @@ export type Database = {
         Args: { k: string; max_len: number; v: Json }
         Returns: string
       }
+      core_agregar_integrante: {
+        Args: { p_business: string; p_email: string; p_rol: string }
+        Returns: undefined
+      }
+      core_cambiar_rol: {
+        Args: { p_business: string; p_rol: string; p_user: string }
+        Returns: undefined
+      }
+      core_listar_integrantes: { Args: { p_business: string }; Returns: Json }
+      core_mis_invitaciones: { Args: never; Returns: Json }
+      core_quitar_integrante: {
+        Args: { p_business: string; p_user: string }
+        Returns: undefined
+      }
+      core_responder_invitacion: {
+        Args: { p_acepta: boolean; p_business: string }
+        Returns: undefined
+      }
       core_rol_en_negocio: { Args: { p_business: string }; Returns: string }
       delivery_abierto_ahora: {
         Args: { p_horarios: Json; p_momento?: string }
