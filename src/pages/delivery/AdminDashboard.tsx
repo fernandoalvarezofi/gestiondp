@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Flag, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Package, Pencil, Radio, Receipt, Route, ScrollText, Settings, ShieldAlert, Store, Tags, Users, Wallet, Undo2, X } from "lucide-react";
+import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Flag, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Network, Package, Pencil, Radio, Receipt, Route, ScrollText, Settings, ShieldAlert, Store, Tags, Users, Wallet, Undo2, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
@@ -29,6 +29,7 @@ import { RemisManager } from "@/components/admin/RemisManager";
 import { WithdrawalsManager } from "@/components/admin/WithdrawalsManager";
 import { ReportedReviews } from "@/components/admin/ReportedReviews";
 import { JobsBoard } from "@/components/admin/JobsBoard";
+import { ProvidersNetwork } from "@/components/admin/ProvidersNetwork";
 import { CategoriesManager } from "@/components/admin/CategoriesManager";
 import { DirectorioManager } from "@/components/admin/DirectorioManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
@@ -189,6 +190,7 @@ export default function AdminDashboard() {
         { label: "Red", items: [
           { to: "/app/admin/comercios", label: "Comercios", icon: Store, badge: pendingStores },
           { to: "/app/admin/repartidores", label: "Repartidores", icon: Bike },
+          { to: "/app/admin/red", label: "Red de proveedores", icon: Network },
           { to: "/app/admin/identidades", label: "Verificar identidad", icon: Fingerprint, badge: pendingIdentities },
           { to: "/app/admin/incentivos", label: "Metas y turnos", icon: Target },
           { to: "/app/admin/remises", label: "Remises", icon: Car },
@@ -305,6 +307,7 @@ export default function AdminDashboard() {
         <TabsContent value="clientes" className="mt-0"><CustomersManager /></TabsContent>
         <TabsContent value="arrepentimientos" className="mt-0"><WithdrawalsManager /></TabsContent>
         <TabsContent value="trabajos" className="mt-0"><JobsBoard /></TabsContent>
+        <TabsContent value="red" className="mt-0"><ProvidersNetwork /></TabsContent>
         <TabsContent value="opiniones" className="mt-0"><ReportedReviews onChange={setReportedReviews} /></TabsContent>
         <TabsContent value="categorias" className="mt-0"><CategoriesManager /></TabsContent>
         <TabsContent value="soporte" className="mt-0"><SupportCenter onChange={setOpenClaims} /></TabsContent>

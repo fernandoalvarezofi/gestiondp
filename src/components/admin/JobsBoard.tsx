@@ -2,7 +2,9 @@ import { useCallback, useEffect, useState } from "react";
 import { AlertTriangle, Loader2, MapPin, Route } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
+import { asignarTrabajo, Candidato, explicarPuntaje, fetchCandidatos } from "@/services/dispatch";
 import { cn } from "@/lib/utils";
 import { estaAtrasado, ESTADO_TRABAJO, ESTADOS_ORDEN, EstadoTrabajo, fetchSeguimiento, fetchTablero, Seguimiento, TableroTrabajos, TIPO_TRABAJO, TipoTrabajo, TrabajoFila } from "@/services/jobs";
 
@@ -56,12 +58,12 @@ export function JobsBoard() {
             ))}
           </ul>
         )}
-      {detalle && <DetalleTrabajo trabajo={detalle} onClose={() => setDetalle(null)} />}
+      {detalle && <DetalleTrabajo trabajo={detalle} onClose={() => setDetalle(null)} onAsignado={() => { setDetalle(null); load(); }} />}
     </div>
   );
 }
 
-function DetalleTrabajo({ trabajo, onClose }: { trabajo: TrabajoFila; onClose: () => void }) {
+function DetalleTrabajo({ trabajo, onClose, onAsignado }: { trabajo: TrabajoFila; onClose: () => void; onAsignado: () => void }) {
   const [seg, setSeg] = useState<Seguimiento | null>(null);
   useEffect(() => { fetchSeguimiento(trabajo.origen_tipo, trabajo.origen_id).then(setSeg, (error) => { toast.error(errorMessage(error)); onClose(); }); }, [trabajo.origen_tipo, trabajo.origen_id]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
@@ -81,9 +83,46 @@ function DetalleTrabajo({ trabajo, onClose }: { trabajo: TrabajoFila; onClose: (
               ))}
               {seg.eventos.length === 0 && <li className="text-muted-foreground">Todavía no hay movimientos registrados (es un trabajo anterior a este tablero).</li>}
             </ol>
+            {trabajo.estado === "pendiente" && <Candidatos trabajo={trabajo} onAsignado={onAsignado} />}
           </div>
         )}
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** Quién podría llevarlo, ordenado por el mismo puntaje que usa el reparto automático (menor = mejor), con el porqué de cada uno. */
+function Candidatos({ trabajo, onAsignado }: { trabajo: TrabajoFila; onAsignado: () => void }) {
+  const [lista, setLista] = useState<Candidato[] | null>(null);
+  const [confirmar, setConfirmar] = useState<Candidato | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { fetchCandidatos(trabajo.origen_tipo, trabajo.origen_id).then(setLista, () => setLista([])); }, [trabajo.origen_tipo, trabajo.origen_id]);
+
+  const asignar = async (c: Candidato) => {
+    setBusy(true);
+    try { await asignarTrabajo(trabajo.origen_tipo, trabajo.origen_id, c.proveedor_id); toast.success(`Asignado a ${c.nombre}`); onAsignado(); } catch (error) { toast.error(errorMessage(error)); setConfirmar(null); } finally { setBusy(false); }
+  };
+
+  if (!lista) return <div className="flex justify-center py-3"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>;
+  return (
+    <section aria-label="Candidatos sugeridos" className="border-t pt-4">
+      <h3 className="font-extrabold">Quién podría llevarlo</h3>
+      {lista.length === 0 ? <p className="mt-2 rounded-xl bg-muted p-3 text-muted-foreground">No hay repartidores o conductores activos para este trabajo.</p> : (
+        <ul className="mt-2 divide-y rounded-2xl border">
+          {lista.map((c) => (
+            <li key={c.proveedor_id} className={cn("flex flex-wrap items-center gap-3 p-3", !c.elegible && "opacity-60")}>
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold">{c.nombre} <span className="font-normal text-muted-foreground">· {c.vehiculo ?? "—"}</span></span>
+                <span className="block text-xs text-muted-foreground">{c.elegible ? (c.componentes ? explicarPuntaje(c.componentes) : `${c.distancia_km != null ? `${c.distancia_km} km del retiro` : "sin ubicación reciente"}`) : c.motivo_no}{c.elegible && c.ocupado && " · ya está en reparto"}</span>
+              </span>
+              {c.elegible && <span className="text-xs font-bold tabular-nums text-muted-foreground" title="Menor puntaje = mejor candidato">{c.puntaje >= 9999 ? "—" : c.puntaje.toFixed(2)}</span>}
+              {c.elegible && !c.ocupado && (confirmar?.proveedor_id === c.proveedor_id
+                ? <span className="flex gap-1"><Button size="sm" className="rounded-full" disabled={busy} onClick={() => asignar(c)}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Confirmar</Button><Button size="sm" variant="ghost" className="rounded-full" disabled={busy} onClick={() => setConfirmar(null)}>Cancelar</Button></span>
+                : <Button size="sm" variant="outline" className="rounded-full" onClick={() => setConfirmar(c)}>Asignar</Button>)}
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

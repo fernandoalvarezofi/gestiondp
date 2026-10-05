@@ -129,6 +129,11 @@
 - **Dispatch Engine** en backend: candidatos → filtros (disponibilidad, zona, capacidad) → distancia/ETA/costo → score → oferta → aceptación/rechazo → asignación. Reglas configurables; **sin lógica en React**. Se extrae lo que hoy está repartido en `delivery_despacho_avanzado` y las funciones de ofertas.
 **Tamaño:** L.
 
+**Estado Fase 7:**
+- ✅ El despacho de pedidos **ya estaba en el backend** (puntaje por distancia, carga, rechazos y velocidad; ofertas por turnos; agrupación; capacidad) y sus reglas son configurables en Administración → Configuración (`velocidad_base_kmh`, `segundos_oferta`, `batch_*`, `capacidad_mochila_items`…). El concepto JOB quedó en la Fase 6 (`trabajos`).
+- ✅ Paso 1 — se hizo **transparente y común**: `despacho_motivo_no_elegible` (una regla de elegibilidad), `despacho_componentes_pedido` (desglose del puntaje; una prueba vigila que coincida con `delivery_puntaje_despacho`), `despacho_candidatos` (ranking con el porqué para pedido, envío o viaje), `delivery_admin_asignar_trabajo` (asignación manual unificada y auditada), `delivery_admin_red_proveedores` (indicadores de la red: completados, cancelados, tiempo promedio, aceptación, ganancia). Pantallas: *Quién podría llevarlo* con **Asignar** dentro del trabajo, y **Red de proveedores**. Pruebas: `supabase/tests/014_despacho_red.sql`, `src/services/dispatch.test.ts` + recorrido en navegador.
+- ⏳ Ofertas automáticas por turnos para mensajería y viajes (hoy el proveedor los toma de una lista): requiere cambiar la app del repartidor; se hace cuando el volumen lo justifique. Proveedores externos (transportistas) junto con la Fase 6 pendiente.
+
 ## FASE 8 — MOBILITY
 
 - `rides` con estados `REQUESTED → SEARCHING → DRIVER_ASSIGNED → DRIVER_ARRIVING → PASSENGER_ONBOARD → IN_PROGRESS → COMPLETED/CANCELLED`, validados en backend.
