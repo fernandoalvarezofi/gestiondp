@@ -4,6 +4,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { applyAppearance, readAppearance } from "@/lib/appearance";
 import { initMonitoring } from "@/lib/monitor";
 import { isNativeApp } from "@/lib/native";
+import "@fontsource-variable/figtree";
 import "./index.css";
 
 // PWA: never register service worker inside Lovable preview iframes

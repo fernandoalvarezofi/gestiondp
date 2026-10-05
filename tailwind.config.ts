@@ -15,9 +15,9 @@ export default {
     extend: {
       fontFamily: {
         // Pila del sistema: cero descargas de fuentes (carga inmediata) y lectura nítida en catálogos largos.
-        sans: ["Inter", "Helvetica Neue", "Helvetica", "Arial", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
-        display: ["Inter", "Helvetica Neue", "Helvetica", "Arial", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
-        brand: ["Inter", "Helvetica Neue", "Helvetica", "Arial", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        sans: ["Figtree Variable", "Helvetica Neue", "Helvetica", "Arial", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        display: ["Figtree Variable", "Helvetica Neue", "Helvetica", "Arial", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        brand: ["Figtree Variable", "Helvetica Neue", "Helvetica", "Arial", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
       },
       backgroundImage: {
         "gradient-ember": "var(--gradient-ember)",

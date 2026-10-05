@@ -5,6 +5,7 @@ import { EmptyState } from "@/components/delivery/Common";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
 import { MenuImportDialog } from "@/components/merchant/MenuImportDialog";
 import { OptionGroupsEditor } from "@/components/merchant/OptionGroupsEditor";
+import { VariantsEditor } from "@/components/merchant/VariantsEditor";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -357,6 +358,13 @@ function ProductEditor({ storeId, draft, categories, products, onClose, onSaved,
           </div>
           <Button type="submit" className="rounded-full sm:col-span-2" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{values.id ? "Guardar" : "Crear producto"}</Button>
         </form>
+        <div className="border-t pt-4">
+          <h3 className="font-extrabold">Variantes</h3>
+          <p className="mt-0.5 text-sm text-muted-foreground">Talle, color o sabor, cada una con su stock, SKU y precio.</p>
+          {values.id
+            ? <VariantsEditor productId={values.id} onChange={onOptionsChanged} />
+            : <p className="mt-3 rounded-xl bg-muted p-3 text-sm text-muted-foreground">Creá el producto primero y después agregale variantes acá mismo.</p>}
+        </div>
         <div className="border-t pt-4">
           <h3 className="font-extrabold">Opciones del producto</h3>
           <p className="mt-0.5 text-sm text-muted-foreground">Tamaños, punto de la carne, sabores, extras con precio…</p>

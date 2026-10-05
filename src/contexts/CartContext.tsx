@@ -20,7 +20,10 @@ export type CartStore = {
 };
 
 /** Una línea del carrito: el mismo producto con distintas opciones son líneas distintas. `precio` ya incluye los extras. */
-export type CartItem = CartProduct & { lineId: string; cantidad: number; notas?: string; opciones: ChosenOption[]; precioBase: number };
+export type CartItem = CartProduct & { lineId: string; cantidad: number; notas?: string; opciones: ChosenOption[]; precioBase: number; varianteId?: string };
+
+/** Variante elegida de un producto: pisa el precio base y se manda al servidor para validar y descontar su stock. */
+export type ChosenVariant = { id: string; nombre: string; precio: number | null };
 
 export type DeliveryAddress = { id?: string | null; alias?: string; direccion: string; lat?: number | null; lng?: number | null }
 
@@ -32,7 +35,7 @@ type CartContextValue = {
   address: DeliveryAddress | null;
   setAddress: (address: DeliveryAddress | null) => void;
   /** Agrega productos. Devuelve false si el carrito tenía productos de otro comercio y se reemplazó. */
-  addItem: (product: CartProduct, store: CartStore, quantity?: number, notas?: string, opciones?: ChosenOption[]) => boolean;
+  addItem: (product: CartProduct, store: CartStore, quantity?: number, notas?: string, opciones?: ChosenOption[], variante?: ChosenVariant) => boolean;
   /** Reemplaza todo el carrito de una vez (usado por "Repetir pedido"). */
   replaceCart: (store: CartStore, lines: { product: CartProduct; cantidad: number; notas?: string; opciones?: ChosenOption[] }[]) => void;
   updateQuantity: (lineId: string, quantity: number) => void;
@@ -47,7 +50,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = "woref-delivery-cart";
 const ADDRESS_KEY = "woref-delivery-address";
 
-const lineKey = (productId: string, opciones: ChosenOption[]) => [productId, ...opciones.map((option) => option.id).sort()].join("|");
+const lineKey = (productId: string, opciones: ChosenOption[], varianteId?: string) => [productId, varianteId || "", ...opciones.map((option) => option.id).sort()].join("|");
 
 function readStorage<T>(key: string): T | null {
   try {
@@ -96,17 +99,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems([]);
   }, []);
 
-  const addItem = useCallback((product: CartProduct, nextStore: CartStore, quantity = 1, notas?: string, opciones: ChosenOption[] = []) => {
+  const addItem = useCallback((product: CartProduct, nextStore: CartStore, quantity = 1, notas?: string, opciones: ChosenOption[] = [], variante?: ChosenVariant) => {
     const sameStore = !store || store.id === nextStore.id;
-    const lineId = lineKey(product.id, opciones);
-    const unit = Number(product.precio) + opciones.reduce((total, option) => total + Number(option.precio), 0);
+    const lineId = lineKey(product.id, opciones, variante?.id);
+    const basePrice = variante?.precio != null ? Number(variante.precio) : Number(product.precio);
+    const unit = basePrice + opciones.reduce((total, option) => total + Number(option.precio), 0);
     setStore(nextStore);
     setItems((current) => {
       const base = sameStore ? current : [];
       const existing = base.find((item) => item.lineId === lineId);
       if (!existing) {
         // Solo los campos necesarios: el producto puede traer grupos de opciones y otros datos pesados.
-        const line: CartItem = { id: product.id, comercio_id: product.comercio_id, nombre: product.nombre, imagen_url: product.imagen_url, lineId, cantidad: quantity, notas, opciones, precioBase: Number(product.precio), precio: unit };
+        const line: CartItem = { id: product.id, comercio_id: product.comercio_id, nombre: variante ? `${product.nombre} · ${variante.nombre}` : product.nombre, imagen_url: product.imagen_url, lineId, cantidad: quantity, notas, opciones, precioBase: basePrice, precio: unit, varianteId: variante?.id };
         return [...base, line];
       }
       return base.map((item) => (item.lineId === lineId ? { ...item, cantidad: Math.min(item.cantidad + quantity, 50), notas: notas ?? item.notas } : item));

@@ -236,7 +236,7 @@ export default function Cart() {
     const online = payment === "mercadopago";
     const params = {
       p_comercio: store.id,
-      p_items: items.map((item) => ({ producto_id: item.id, cantidad: item.cantidad, notas: item.notas || null, opciones: item.opciones.map((option) => option.id) })),
+      p_items: items.map((item) => ({ producto_id: item.id, variante_id: item.varianteId || null, cantidad: item.cantidad, notas: item.notas || null, opciones: item.opciones.map((option) => option.id) })),
       p_direccion: pickup ? "" : address?.direccion ?? "",
       p_direccion_id: pickup ? null : address?.id || null,
       p_propina: summary.tip,

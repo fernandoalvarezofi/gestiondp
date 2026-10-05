@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { CartStore, useCart } from "@/contexts/CartContext";
-import { ChosenOption, DeliveryProduct, img, money, ProductGroup, sortGroups, tagLabels } from "@/lib/delivery";
+import { ChosenOption, DeliveryProduct, img, money, precioDesde, ProductGroup, ProductVariant, sortGroups, tagLabels, variantesDisponibles } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 function discount(product: DeliveryProduct) {
@@ -28,11 +28,12 @@ export function ProductCard({ product, store, disabled, variant = "row", badges,
   const [open, setOpen] = useState(false);
   const quantity = quantityOf(product.id);
   const off = discount(product);
-  const outOfStock = !product.disponible || product.stock === 0;
+  const conVariantes = Boolean(product.usa_variantes);
+  const outOfStock = !product.disponible || product.stock === 0 || (conVariantes && variantesDisponibles(product).length === 0);
   const unavailable = disabled || outOfStock;
   const groups = useMemo(() => sortGroups(product.grupos), [product.grupos]);
-  const hasOptions = groups.some((group) => group.opciones.some((option) => option.disponible));
-  const needsChoice = groups.some((group) => group.minimo > 0);
+  const hasOptions = conVariantes || groups.some((group) => group.opciones.some((option) => option.disponible));
+  const needsChoice = conVariantes || groups.some((group) => group.minimo > 0);
 
   const quickAdd = () => {
     // Si hay que elegir algo (tamaño, punto…), se abre el detalle en vez de agregar directo.
@@ -56,7 +57,7 @@ export function ProductCard({ product, store, disabled, variant = "row", badges,
 
   const price = (
     <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-      <span className="font-black">{needsChoice ? "Desde " : ""}{money(product.precio)}</span>
+      <span className="font-black">{needsChoice ? "Desde " : ""}{money(precioDesde(product))}</span>
       {off && <span className="text-xs font-semibold text-muted-foreground line-through">{money(product.precio_anterior)}</span>}
       {off && <span className="rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-black text-primary-foreground">-{off}%</span>}
     </div>
@@ -116,12 +117,16 @@ export function ProductDialog({ product, groups, store, onClose }: { product: De
     // Preselecciona la primera opción de los grupos obligatorios de una sola elección (ej. tamaño).
     Object.fromEntries(groups.filter((group) => group.minimo === 1 && group.maximo === 1).map((group) => [group.id, group.opciones.filter((option) => option.disponible).slice(0, 1).map((option) => option.id)])),
   );
-  const maxQuantity = Math.min(product.stock ?? 50, 50);
+  const variantes = useMemo(() => (product.usa_variantes ? [...(product.variantes || [])].sort((a, b) => a.orden - b.orden) : []), [product.usa_variantes, product.variantes]);
+  const [varianteId, setVarianteId] = useState<string | null>(() => variantesDisponibles(product)[0]?.id ?? null);
+  const variante: ProductVariant | null = variantes.find((v) => v.id === varianteId) ?? null;
+  const maxQuantity = Math.min(variante ? (variante.stock ?? 50) : (product.stock ?? 50), 50);
+  const basePrice = variante?.precio != null ? Number(variante.precio) : Number(product.precio);
 
   const chosen: ChosenOption[] = groups.flatMap((group) => group.opciones
     .filter((option) => (selected[group.id] || []).includes(option.id))
     .map((option) => ({ id: option.id, grupo: group.nombre, nombre: option.nombre, precio: Number(option.precio_extra) })));
-  const unit = Number(product.precio) + chosen.reduce((total, option) => total + option.precio, 0);
+  const unit = basePrice + chosen.reduce((total, option) => total + option.precio, 0);
   const missing = groups.find((group) => (selected[group.id] || []).length < group.minimo);
 
   const toggle = (group: ProductGroup, optionId: string) => {
@@ -140,7 +145,8 @@ export function ProductDialog({ product, groups, store, onClose }: { product: De
       document.getElementById(`grupo-${missing.id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
-    const sameStore = addItem(product, store, quantity, notes.trim() || undefined, chosen);
+    if (variantes.length && !variante) { toast.error("Elegí una opción"); return; }
+    const sameStore = addItem(product, store, quantity, notes.trim() || undefined, chosen, variante ? { id: variante.id, nombre: variante.nombre, precio: variante.precio } : undefined);
     toast.success(sameStore ? `${quantity} × ${product.nombre} agregado` : `Empezaste un carrito nuevo en ${store.nombre}`);
     onClose();
   };
@@ -154,9 +160,27 @@ export function ProductDialog({ product, groups, store, onClose }: { product: De
             <DialogTitle className="text-2xl font-extrabold">{product.nombre}</DialogTitle>
             {product.descripcion && <DialogDescription className="mt-2">{product.descripcion}</DialogDescription>}
             <div className="mt-3 flex items-center gap-2">
-              <span className="font-display text-xl font-extrabold">{money(product.precio)}</span>
+              <span className="font-display text-xl font-extrabold">{money(basePrice)}</span>
               {product.precio_anterior && product.precio_anterior > product.precio && <span className="text-sm text-muted-foreground line-through">{money(product.precio_anterior)}</span>}
             </div>
+
+            {variantes.length > 0 && (
+              <fieldset className="mt-6">
+                <legend className="font-extrabold">Elegí una opción</legend>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {variantes.map((v) => {
+                    const agotada = !v.disponible || v.stock === 0;
+                    const active = v.id === varianteId;
+                    return (
+                      <button key={v.id} type="button" disabled={agotada} aria-pressed={active} onClick={() => { setVarianteId(v.id); setQuantity(1); }} className={cn("rounded-xl border-2 px-3.5 py-2 text-sm font-bold transition-colors", active ? "border-foreground bg-foreground text-background" : "hover:border-foreground/60", agotada && "cursor-not-allowed opacity-45 line-through")}>
+                        {v.nombre}
+                      </button>
+                    );
+                  })}
+                </div>
+                {variante?.stock != null && variante.stock <= 5 && variante.stock > 0 && <p className="mt-2 text-xs font-bold text-destructive">¡Últimas {variante.stock} unidades!</p>}
+              </fieldset>
+            )}
 
             {groups.map((group) => {
               const picked = selected[group.id] || [];

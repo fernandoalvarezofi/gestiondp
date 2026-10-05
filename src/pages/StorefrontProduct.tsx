@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { CartStore, useCart } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
-import { db, DeliveryProduct, DeliveryStore, isOpenNow, money, nextOpening, productSelect, sortGroups, tagLabels } from "@/lib/delivery";
+import { db, DeliveryProduct, DeliveryStore, isOpenNow, money, nextOpening, precioDesde, productSelect, sortGroups, tagLabels, variantesDisponibles } from "@/lib/delivery";
 import { formatKm, storeReach } from "@/lib/geo";
 import { descuentoPct, fotosDe, insignias, type VendedorResumen } from "@/lib/marketplace";
 import { normalizeTheme, storefrontUrl } from "@/lib/storefront";
@@ -108,9 +108,10 @@ export default function StorefrontProduct() {
   const reach = storeReach(store, point, undefined, tariff);
   const unavailable = !open || !reach.inZone;
   const fee = deliveryFeeLabel(store, reach.fee);
-  const outOfStock = !product.disponible || product.stock === 0;
+  const conVariantes = Boolean(product.usa_variantes);
+  const outOfStock = !product.disponible || product.stock === 0 || (conVariantes && variantesDisponibles(product).length === 0);
   const groups = sortGroups(product.grupos);
-  const hasOptions = groups.some((group) => group.opciones.some((option) => option.disponible));
+  const hasOptions = conVariantes || groups.some((group) => group.opciones.some((option) => option.disponible));
   const maxQty = Math.min(product.stock ?? 50, 50);
   const off = descuentoPct(product);
   const fotos = fotosDe(product);
@@ -179,7 +180,7 @@ export default function StorefrontProduct() {
 
             <div className="mt-4">
               {off && <p className="text-base text-muted-foreground line-through">{money(product.precio_anterior ?? 0)}</p>}
-              <p className="flex flex-wrap items-baseline gap-3"><span className="text-4xl font-black tabular-nums">{money(product.precio)}</span>{off && <span className="text-lg font-extrabold text-success">{off}% OFF</span>}</p>
+              <p className="flex flex-wrap items-baseline gap-3"><span className="text-4xl font-black tabular-nums">{conVariantes && <span className="mr-2 text-lg font-bold text-muted-foreground">Desde</span>}{money(precioDesde(product))}</span>{off && <span className="text-lg font-extrabold text-success">{off}% OFF</span>}</p>
             </div>
 
             <ul className="mt-5 space-y-2.5 rounded-2xl border bg-card p-4 text-sm text-card-foreground">
@@ -195,7 +196,7 @@ export default function StorefrontProduct() {
 
             <p className="mt-4 text-sm font-semibold">
               {outOfStock ? <span className="text-destructive">Sin stock por el momento</span>
-                : product.stock != null && product.stock <= 5 ? <span className="text-destructive">¡Últimas {product.stock} unidades disponibles!</span>
+                : !conVariantes && product.stock != null && product.stock <= 5 ? <span className="text-destructive">¡Últimas {product.stock} unidades disponibles!</span>
                 : <span className="text-success">Stock disponible</span>}
             </p>
 
@@ -208,7 +209,7 @@ export default function StorefrontProduct() {
             {!outOfStock && !unavailable && (
               <div className="mt-5 space-y-3">
                 {hasOptions ? (
-                  <button type="button" onClick={() => setOptions(true)} className="h-13 w-full py-3.5 text-base font-bold" style={cta()}>Elegir opciones y agregar</button>
+                  <button type="button" onClick={() => setOptions(true)} className="h-13 w-full py-3.5 text-base font-bold" style={cta()}>{conVariantes ? "Elegir opción y agregar" : "Elegir opciones y agregar"}</button>
                 ) : (
                   <>
                     <div className="flex items-center gap-3">

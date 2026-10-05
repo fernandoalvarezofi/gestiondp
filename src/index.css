@@ -97,7 +97,7 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    font-feature-settings: "cv11", "ss03";
+    font-feature-settings: "ss01";
   }
 
   /* Cifras de ancho fijo: los precios se alinean y se leen mejor en listas largas. */

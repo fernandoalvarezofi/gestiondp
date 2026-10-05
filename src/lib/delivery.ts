@@ -162,7 +162,24 @@ export type DeliveryProduct = {
   orden?: number;
   etiquetas?: string[];
   grupos?: ProductGroup[];
+  usa_variantes?: boolean;
+  variantes?: ProductVariant[];
 };
+
+/** Variante de un producto (talle, color…): stock, SKU y precio propios; sin precio usa el del producto. */
+export type ProductVariant = { id: string; producto_id: string; nombre: string; sku: string | null; precio: number | null; stock: number | null; disponible: boolean; orden: number };
+
+/** Variantes que se pueden comprar ahora, en el orden elegido. */
+export function variantesDisponibles(product: Pick<DeliveryProduct, "variantes">): ProductVariant[] {
+  return [...(product.variantes || [])].sort((a, b) => a.orden - b.orden).filter((v) => v.disponible && v.stock !== 0);
+}
+
+/** Precio más bajo entre las variantes (o el del producto si ninguna lo pisa). */
+export function precioDesde(product: Pick<DeliveryProduct, "precio" | "variantes" | "usa_variantes">): number {
+  if (!product.usa_variantes) return Number(product.precio);
+  const precios = (product.variantes || []).filter((v) => v.disponible && v.stock !== 0).map((v) => Number(v.precio ?? product.precio));
+  return precios.length ? Math.min(...precios) : Number(product.precio);
+}
 
 export type DeliverySection = { id: string; comercio_id: string; nombre: string; orden: number; visible: boolean };
 export const tagLabels: Record<string, string> = {
@@ -185,7 +202,7 @@ export type ProductGroup = { id: string; producto_id: string; nombre: string; mi
 /** Opción elegida, tal como se guarda en el carrito y en el pedido. */
 export type ChosenOption = { id: string; grupo: string; nombre: string; precio: number };
 
-export const productSelect = "*, grupos:delivery_producto_grupos(*, opciones:delivery_producto_opciones(*))";
+export const productSelect = "*, grupos:delivery_producto_grupos(*, opciones:delivery_producto_opciones(*)), variantes:delivery_producto_variantes(*)";
 
 /** Ordena grupos y opciones (Supabase no ordena las relaciones anidadas). */
 export function sortGroups(groups: ProductGroup[] | null | undefined): ProductGroup[] {
