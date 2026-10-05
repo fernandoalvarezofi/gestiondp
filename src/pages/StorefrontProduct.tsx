@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { Bike, ChevronRight, Clock3, Heart, Loader2, Minus, Plus, Share2, ShoppingBag, Store as StoreIcon } from "lucide-react";
+import { Bike, ChevronRight, Clock3, Heart, Loader2, Minus, Plus, Share2, ShoppingBag, Store as StoreIcon, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { AddressDialog } from "@/components/delivery/AddressDialog";
 import { ProductCard, ProductDialog } from "@/components/delivery/ProductCard";
@@ -29,6 +29,7 @@ export default function StorefrontProduct() {
   const { addItem } = useCart();
   const point = useAddressPoint();
   const tariff = useTariff(point);
+  const [pagoOnline, setPagoOnline] = useState(false);
   const [store, setStore] = useState<DeliveryStore | null>(null);
   const [product, setProduct] = useState<DeliveryProduct | null>(null);
   const [others, setOthers] = useState<DeliveryProduct[]>([]);
@@ -37,6 +38,10 @@ export default function StorefrontProduct() {
   const [quantity, setQuantity] = useState(1);
   const [options, setOptions] = useState(false);
   const [favs, setFavs] = useState<string[]>(readFavs);
+
+  useEffect(() => {
+    db.rpc("delivery_pagos_online_activos").then(({ data }: { data: boolean | null }) => setPagoOnline(Boolean(data)), () => undefined);
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -191,6 +196,7 @@ export default function StorefrontProduct() {
                 </span>
               </li>
               <li className="flex items-center gap-2.5"><Clock3 className="h-4 w-4 shrink-0 text-muted-foreground" />Llega en {store.tiempo_min}-{store.tiempo_max} minutos</li>
+              <li className="flex items-center gap-2.5"><Wallet className="h-4 w-4 shrink-0 text-muted-foreground" /><span><span className="font-bold">Medios de pago:</span> {pagoOnline ? "Mercado Pago (tarjeta, débito, dinero en cuenta), " : ""}efectivo o transferencia</span></li>
               {store.acepta_retiro && <li className="flex items-center gap-2.5"><StoreIcon className="h-4 w-4 shrink-0 text-muted-foreground" />También podés retirarlo en el local</li>}
             </ul>
 

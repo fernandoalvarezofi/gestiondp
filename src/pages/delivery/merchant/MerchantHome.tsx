@@ -35,8 +35,13 @@ export default function MerchantHome() {
   const doneCount = steps.filter((step) => step.done).length;
   const progress = Math.round((doneCount / steps.length) * 100);
 
-  const soldOut = products.filter((product) => !product.disponible || product.stock === 0);
-  const lowStock = products.filter((product) => product.disponible && product.stock !== null && product.stock !== undefined && product.stock > 0 && product.stock <= 3);
+  // Con variantes, el producto se agota cuando se agotan todas sus variantes activas.
+  const sinVariantes = (product: typeof products[number]) => Boolean(product.usa_variantes) && (product.variantes || []).every((v) => !v.disponible || v.stock === 0);
+  const soldOut = products.filter((product) => !product.disponible || product.stock === 0 || sinVariantes(product));
+  const lowStock = [
+    ...products.filter((product) => product.disponible && !product.usa_variantes && product.stock !== null && product.stock !== undefined && product.stock > 0 && product.stock <= 3).map((product) => ({ id: product.id, label: product.nombre, stock: product.stock as number })),
+    ...products.filter((product) => product.disponible && product.usa_variantes).flatMap((product) => (product.variantes || []).filter((v) => v.disponible && v.stock !== null && v.stock > 0 && v.stock <= 3).map((v) => ({ id: v.id, label: `${product.nombre} · ${v.nombre}`, stock: v.stock as number }))),
+  ];
 
   return (
     <div className="space-y-6">
@@ -101,7 +106,7 @@ export default function MerchantHome() {
                   </ul>
                 </div>
               )}
-              {lowStock.length > 0 && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm"><span className="font-bold">Poco stock:</span> {lowStock.slice(0, 4).map((product) => `${product.nombre} (${product.stock})`).join(", ")}</p>}
+              {lowStock.length > 0 && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm"><span className="font-bold">Poco stock:</span> {lowStock.slice(0, 4).map((item) => `${item.label} (${item.stock})`).join(", ")}</p>}
               <Link to="/app/comercio/menu" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-primary">Ir al menú y stock<ArrowRight className="h-4 w-4" /></Link>
             </>
           )}
