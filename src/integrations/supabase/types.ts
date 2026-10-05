@@ -4033,6 +4033,7 @@ export type Database = {
         Args: { p_resena: string; p_respuesta: string }
         Returns: undefined
       }
+      delivery_resumen_negocios: { Args: never; Returns: Json }
       delivery_resumen_sucursales: { Args: never; Returns: Json }
       delivery_rol_en_chat: {
         Args: { p_canal: string; p_pedido: string }

@@ -187,10 +187,16 @@ export default function MerchantLayout() {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-64">
             <DropdownMenuLabel>Mis comercios y sucursales</DropdownMenuLabel>
-            {branches.map((branch) => (
-              <DropdownMenuItem key={branch.id} onClick={() => { if (branch.id !== store.id) switchStore(branch.id); }}>
-                <Building2 className="h-4 w-4" /><span className="min-w-0 flex-1 truncate">{branch.nombre}</span>{branch.id === store.id && <span className="text-xs font-extrabold text-primary">Acá</span>}
-              </DropdownMenuItem>
+            {branches.map((branch, index) => (
+              <div key={branch.id}>
+                {/* Con más de un negocio, el selector agrupa las tiendas bajo el nombre de cada uno. */}
+                {new Set(branches.map((b) => b.negocio_id ?? "")).size > 1 && branch.negocio_id !== branches[index - 1]?.negocio_id && (
+                  <p className="px-2 pb-1 pt-2 text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">{branch.negocio || "Otros locales"}</p>
+                )}
+                <DropdownMenuItem onClick={() => { if (branch.id !== store.id) switchStore(branch.id); }}>
+                  <Building2 className="h-4 w-4" /><span className="min-w-0 flex-1 truncate">{branch.nombre}</span>{branch.id === store.id && <span className="text-xs font-extrabold text-primary">Acá</span>}
+                </DropdownMenuItem>
+              </div>
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link to="/app/comercio/sucursales">Ver todas las sucursales</Link></DropdownMenuItem>

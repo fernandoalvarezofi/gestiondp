@@ -13,12 +13,13 @@ import type { AddressSuggestion } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 import { useMerchant } from "./context";
 
-type Summary = { id: string; nombre: string; direccion: string; aprobado: boolean; esta_abierto: boolean; rating: number; resenas: number; pedidos: number; ventas: number; ticket: number; pendientes: number };
+type NegocioResumen = { id: string; nombre: string; rol: string; tiendas: Summary[] };
+type Summary = { parent_store_id?: string | null; id: string; nombre: string; direccion: string; aprobado: boolean; esta_abierto: boolean; rating: number; resenas: number; pedidos: number; ventas: number; ticket: number; pendientes: number };
 
 /** Sucursales: todos los locales de la cuenta, con su resumen de los últimos 30 días, y alta de sucursales nuevas. */
 export default function MerchantBranches() {
   const { store, switchStore, reloadBranches } = useMerchant();
-  const [rows, setRows] = useState<Summary[] | null>(null);
+  const [negocios, setNegocios] = useState<NegocioResumen[] | null>(null);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -27,12 +28,12 @@ export default function MerchantBranches() {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const { data } = await db.rpc("delivery_resumen_sucursales");
-    setRows((data || []) as Summary[]);
+    const { data } = await db.rpc("delivery_resumen_negocios");
+    setNegocios((data || []) as NegocioResumen[]);
   }, []);
   useEffect(() => { load(); }, [load]);
 
-  const totals = (rows || []).reduce((acc, row) => ({ pedidos: acc.pedidos + Number(row.pedidos), ventas: acc.ventas + Number(row.ventas) }), { pedidos: 0, ventas: 0 });
+  const totalesDe = (tiendas: Summary[]) => tiendas.reduce((acc, row) => ({ pedidos: acc.pedidos + Number(row.pedidos), ventas: acc.ventas + Number(row.ventas) }), { pedidos: 0, ventas: 0 });
 
   const create = async (event: FormEvent) => {
     event.preventDefault();
@@ -49,7 +50,7 @@ export default function MerchantBranches() {
     switchStore(String(data));
   };
 
-  if (!rows) return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
+  if (!negocios) return <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -65,36 +66,44 @@ export default function MerchantBranches() {
         <div className="rounded-2xl border bg-card p-4 text-sm"><p className="font-extrabold">Agregar sucursal</p><p className="mt-1 text-muted-foreground">Otro local del mismo negocio: copia los datos y el menú de «{store.nombre}» para que lo ajustes.</p></div>
       </div>
 
-      {rows.length > 1 && (
-        <div className="grid grid-cols-2 gap-3 rounded-3xl bg-brand-deep p-5 text-white">
-          <div><p className="text-sm font-semibold text-white/70">Ventas de las {rows.length} sucursales (30 días)</p><p className="font-display text-3xl font-black">{money(totals.ventas)}</p></div>
-          <div><p className="text-sm font-semibold text-white/70">Pedidos entregados</p><p className="font-display text-3xl font-black">{totals.pedidos}</p></div>
-        </div>
-      )}
-
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {rows.map((row) => (
-          <li key={row.id} className={cn("flex min-w-0 flex-col rounded-3xl border bg-card p-4", row.id === store.id && "border-primary ring-1 ring-primary/30")}>
-            <div className="flex items-start gap-3">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Building2 className="h-5 w-5" /></span>
-              <div className="min-w-0 flex-1"><p className="truncate font-extrabold">{row.nombre}</p><p className="flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3 w-3 shrink-0" />{row.direccion}</p></div>
-              {row.id === store.id && <span className="shrink-0 rounded-full bg-primary px-2.5 py-0.5 text-xs font-extrabold text-primary-foreground">Estás acá</span>}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
-              {row.aprobado ? <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-success"><CheckCircle2 className="h-3 w-3" />Aprobada</span> : <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-2.5 py-1"><Clock3 className="h-3 w-3" />En revisión</span>}
-              <span className={cn("rounded-full px-2.5 py-1", row.esta_abierto ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}>{row.esta_abierto ? "Recibiendo pedidos" : "Cerrada"}</span>
-              {Number(row.pendientes) > 0 && <span className="rounded-full bg-primary px-2.5 py-1 text-primary-foreground">{row.pendientes} pedidos nuevos</span>}
-            </div>
-            <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
-              <div className="rounded-2xl bg-muted/60 p-2"><dt className="text-[11px] text-muted-foreground">Pedidos</dt><dd className="font-extrabold">{row.pedidos}</dd></div>
-              <div className="rounded-2xl bg-muted/60 p-2"><dt className="text-[11px] text-muted-foreground">Ventas</dt><dd className="font-extrabold">{money(row.ventas)}</dd></div>
-              <div className="rounded-2xl bg-muted/60 p-2"><dt className="text-[11px] text-muted-foreground">Ticket</dt><dd className="font-extrabold">{money(row.ticket)}</dd></div>
-            </dl>
-            <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><Star className="h-3 w-3 text-warning" />{Number(row.rating) ? `${Number(row.rating).toFixed(1)} · ${row.resenas} opiniones` : "Sin opiniones todavía"}</p>
-            <div className="mt-auto pt-3">{row.id !== store.id && <Button variant="outline" className="w-full rounded-full" onClick={() => switchStore(row.id)}>Abrir el panel de esta sucursal</Button>}</div>
-          </li>
-        ))}
-      </ul>
+      {negocios.length === 0 && <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">Todavía no tenés locales como dueño o administrador. Creá tu primer comercio para empezar.</p>}
+      {negocios.map((negocio) => {
+        const totals = totalesDe(negocio.tiendas);
+        return (
+          <section key={negocio.id} className="space-y-3" aria-label={negocio.nombre}>
+            {negocios.length > 1 && <h2 className="flex items-center gap-2 text-lg font-extrabold"><Building2 className="h-5 w-5" />{negocio.nombre}<span className="text-xs font-semibold text-muted-foreground">{negocio.rol === "admin" ? "Administrás este negocio" : "Tu negocio"}</span></h2>}
+            {negocio.tiendas.length > 1 && (
+              <div className="grid grid-cols-2 gap-3 rounded-3xl bg-brand-deep p-5 text-white">
+                <div><p className="text-sm font-semibold text-white/70">Ventas de {negocios.length > 1 ? negocio.nombre : `las ${negocio.tiendas.length} sucursales`} (30 días)</p><p className="font-display text-3xl font-black">{money(totals.ventas)}</p></div>
+                <div><p className="text-sm font-semibold text-white/70">Pedidos entregados</p><p className="font-display text-3xl font-black">{totals.pedidos}</p></div>
+              </div>
+            )}
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {negocio.tiendas.map((row) => (
+              <li key={row.id} className={cn("flex min-w-0 flex-col rounded-3xl border bg-card p-4", row.id === store.id && "border-primary ring-1 ring-primary/30")}>
+                <div className="flex items-start gap-3">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Building2 className="h-5 w-5" /></span>
+                  <div className="min-w-0 flex-1"><p className="truncate font-extrabold">{row.nombre}</p><p className="flex items-center gap-1 truncate text-xs text-muted-foreground"><MapPin className="h-3 w-3 shrink-0" />{row.direccion}</p></div>
+                  {row.id === store.id && <span className="shrink-0 rounded-full bg-primary px-2.5 py-0.5 text-xs font-extrabold text-primary-foreground">Estás acá</span>}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2 text-xs font-bold">
+                  {row.aprobado ? <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-success"><CheckCircle2 className="h-3 w-3" />Aprobada</span> : <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-2.5 py-1"><Clock3 className="h-3 w-3" />En revisión</span>}
+                  <span className={cn("rounded-full px-2.5 py-1", row.esta_abierto ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}>{row.esta_abierto ? "Recibiendo pedidos" : "Cerrada"}</span>
+                  {Number(row.pendientes) > 0 && <span className="rounded-full bg-primary px-2.5 py-1 text-primary-foreground">{row.pendientes} pedidos nuevos</span>}
+                </div>
+                <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
+                  <div className="rounded-2xl bg-muted/60 p-2"><dt className="text-[11px] text-muted-foreground">Pedidos</dt><dd className="font-extrabold">{row.pedidos}</dd></div>
+                  <div className="rounded-2xl bg-muted/60 p-2"><dt className="text-[11px] text-muted-foreground">Ventas</dt><dd className="font-extrabold">{money(row.ventas)}</dd></div>
+                  <div className="rounded-2xl bg-muted/60 p-2"><dt className="text-[11px] text-muted-foreground">Ticket</dt><dd className="font-extrabold">{money(row.ticket)}</dd></div>
+                </dl>
+                <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><Star className="h-3 w-3 text-warning" />{Number(row.rating) ? `${Number(row.rating).toFixed(1)} · ${row.resenas} opiniones` : "Sin opiniones todavía"}</p>
+                <div className="mt-auto pt-3">{row.id !== store.id && <Button variant="outline" className="w-full rounded-full" onClick={() => switchStore(row.id)}>Abrir el panel de esta sucursal</Button>}</div>
+              </li>
+              ))}
+            </ul>
+          </section>
+        );
+      })}
 
       <Dialog open={open} onOpenChange={(next) => !saving && setOpen(next)}>
         <DialogContent className="max-h-[92vh] max-w-lg overflow-y-auto">
