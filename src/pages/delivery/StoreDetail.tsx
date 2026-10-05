@@ -46,7 +46,7 @@ export default function StoreDetail() {
       if (!found) { setNotFound(true); return; }
       setStore(found);
       const [{ data: catalog }, { data: opinions }, { data: storeCoupons }, { data: configured }] = await Promise.all([
-        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).order("orden").order("nombre"),
+        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("en_market", true).order("orden").order("nombre"),
         db.from("delivery_resenas").select("id,puntaje,comentario,respuesta,created_at,cliente:perfiles(nombre)").eq("comercio_id", found.id).order("created_at", { ascending: false }).limit(30),
         db.from("delivery_cupones").select("*").eq("comercio_id", found.id).eq("activo", true),
         db.from("delivery_secciones").select("*").eq("comercio_id", found.id),

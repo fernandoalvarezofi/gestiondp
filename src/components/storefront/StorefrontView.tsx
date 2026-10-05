@@ -57,7 +57,9 @@ const ALTO_SEP = { chico: "h-4", medio: "h-10", grande: "h-20" } as const;
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 /** Tienda online de un comercio: arma la página con los bloques y el diseño elegidos. Es la misma pantalla para el sitio público y la vista previa del editor. */
-export function StorefrontView({ store, tema, products, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista }: Props) {
+export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista }: Props) {
+  // Solo se muestra en la tienda lo que el comercio publicó en este canal.
+  const products = useMemo(() => allProducts.filter((product) => product.en_tienda !== false), [allProducts]);
   const theme = useMemo(() => tema ?? normalizeTheme(store.tienda_tema), [tema, store.tienda_tema]);
   const d = theme.diseno;
   const { itemCount, subtotal } = useCart();

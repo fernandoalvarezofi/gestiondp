@@ -24,7 +24,7 @@ export default function Search() {
       const like = `%${query.replace(/[%_,()]/g, " ")}%`;
       const [storeResult, productResult] = await Promise.all([
         db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).or(`nombre.ilike.${like},descripcion.ilike.${like},rubro.ilike.${like}`).limit(24),
-        db.from("delivery_productos").select("*, comercio:delivery_comercios!inner(nombre,slug,esta_abierto,activo)").eq("disponible", true).eq("comercio.activo", true).or(`nombre.ilike.${like},descripcion.ilike.${like},categoria.ilike.${like}`).limit(30),
+        db.from("delivery_productos").select("*, comercio:delivery_comercios!inner(nombre,slug,esta_abierto,activo)").eq("disponible", true).eq("en_market", true).eq("comercio.activo", true).or(`nombre.ilike.${like},descripcion.ilike.${like},categoria.ilike.${like}`).limit(30),
       ]);
       setStores(storeResult.data || []);
       setProducts(productResult.data || []);

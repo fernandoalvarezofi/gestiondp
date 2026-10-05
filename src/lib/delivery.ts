@@ -167,6 +167,12 @@ export type DeliveryProduct = {
   grupos?: ProductGroup[];
   usa_variantes?: boolean;
   variantes?: ProductVariant[];
+  /** Marketplace: categoría, marca, características y dónde se muestra (por defecto, en ambos). */
+  categoria_id?: string | null;
+  marca?: string | null;
+  atributos?: Record<string, string> | null;
+  en_market?: boolean;
+  en_tienda?: boolean;
 };
 
 /** Variante de un producto (talle, color…): stock, SKU y precio propios; sin precio usa el del producto. */

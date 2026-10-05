@@ -57,8 +57,8 @@ export default function StorefrontProduct() {
       if (!alive) return;
       if (!found) { setState("missing"); return; }
       const [{ data: item }, { data: catalog }, { data: resumen }] = await Promise.all([
-        db.from("delivery_productos").select(productSelect).eq("id", id).eq("comercio_id", found.id).maybeSingle(),
-        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("disponible", true).order("orden").order("nombre").limit(200),
+        db.from("delivery_productos").select(productSelect).eq("id", id).eq("comercio_id", found.id).eq("en_tienda", true).maybeSingle(),
+        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("disponible", true).eq("en_tienda", true).order("orden").order("nombre").limit(200),
         db.rpc("delivery_vendedor_resumen", { p_slug: found.slug }),
       ]);
       if (!alive) return;

@@ -7,6 +7,8 @@ import { MenuImportDialog } from "@/components/merchant/MenuImportDialog";
 import { OptionGroupsEditor } from "@/components/merchant/OptionGroupsEditor";
 import { VariantsEditor } from "@/components/merchant/VariantsEditor";
 import { StockHistoryButton } from "@/components/merchant/StockHistory";
+import { MarketFields } from "@/components/merchant/MarketFields";
+import { AtributoFila, atributosAFilas, filasAAtributos } from "@/services/categories";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,8 +19,8 @@ import { downloadCsv, toCsv } from "@/lib/csv";
 import { db, DeliveryProduct, DeliverySection, errorMessage, img, money, orderSections, tagLabels } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
-type Draft = { id?: string; nombre: string; descripcion: string; categoria: string; precio: string; precio_anterior: string; stock: string; imagen_url: string; imagenes: string[]; destacado: boolean; disponible: boolean; etiquetas: string[] };
-const emptyDraft: Draft = { nombre: "", descripcion: "", categoria: "", precio: "", precio_anterior: "", stock: "", imagen_url: "", imagenes: [], destacado: false, disponible: true, etiquetas: [] };
+type Draft = { id?: string; nombre: string; descripcion: string; categoria: string; precio: string; precio_anterior: string; stock: string; imagen_url: string; imagenes: string[]; destacado: boolean; disponible: boolean; etiquetas: string[]; categoria_id: string; marca: string; atributos: AtributoFila[]; en_market: boolean; en_tienda: boolean };
+const emptyDraft: Draft = { nombre: "", descripcion: "", categoria: "", precio: "", precio_anterior: "", stock: "", imagen_url: "", imagenes: [], destacado: false, disponible: true, etiquetas: [], categoria_id: "", marca: "", atributos: [], en_market: true, en_tienda: true };
 type Filter = "todos" | "agotados" | "sin_foto";
 
 const toDraft = (product: DeliveryProduct): Draft => ({
@@ -34,6 +36,11 @@ const toDraft = (product: DeliveryProduct): Draft => ({
   destacado: Boolean(product.destacado),
   disponible: product.disponible,
   etiquetas: product.etiquetas || [],
+  categoria_id: product.categoria_id || "",
+  marca: product.marca || "",
+  atributos: atributosAFilas(product.atributos),
+  en_market: product.en_market !== false,
+  en_tienda: product.en_tienda !== false,
 });
 
 const soldOut = (product: DeliveryProduct) => !product.disponible || product.stock === 0;
@@ -303,6 +310,11 @@ function ProductEditor({ storeId, draft, categories, products, onClose, onSaved,
       destacado: values.destacado,
       disponible: values.disponible,
       etiquetas: values.etiquetas,
+      categoria_id: values.categoria_id || null,
+      marca: values.marca.trim() || null,
+      atributos: filasAAtributos(values.atributos),
+      en_market: values.en_market,
+      en_tienda: values.en_tienda,
     };
     setSaving(true);
     if (values.id) {
@@ -340,6 +352,7 @@ function ProductEditor({ storeId, draft, categories, products, onClose, onSaved,
               {Object.entries(tagLabels).map(([tag, label]) => <button key={tag} type="button" aria-pressed={values.etiquetas.includes(tag)} onClick={() => toggleTag(tag)} className={cn("rounded-full border px-3 py-1 text-xs font-bold", values.etiquetas.includes(tag) ? "border-primary bg-primary/10 text-primary" : "bg-card hover:bg-muted")}>{label}</button>)}
             </div>
           </div>
+          <MarketFields values={values} onChange={(next) => setValues((current) => ({ ...current, ...next }))} />
           <ImageUpload label="Foto principal" folder="productos" shape="square" value={values.imagen_url} onChange={(url) => set("imagen_url", url)} className="sm:col-span-2" />
           <div className="space-y-2 sm:col-span-2">
             <p className="text-sm font-semibold">Más fotos <span className="font-normal text-muted-foreground">(opcional, hasta 5: se ven en la galería de la ficha del producto)</span></p>
