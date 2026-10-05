@@ -61,6 +61,7 @@
 - Devoluciones (`returns`) y reembolsos conectados a Payments.
 **Estado Fase 2:**
 - ✅ Paso 1 — inventario con movimientos (`inventario_movimientos`, inmodificable; disparadores sobre stock de producto y variante; motivo = venta/cancelación/impago/vencido/ajuste de pedido/ajuste manual; lectura por `delivery_inventario_movimientos`; botón *Historial de stock* en el editor de producto). Prueba: `supabase/tests/008_inventario.sql`.
+- ✅ Paso 2 — devoluciones y reintegros (`devoluciones`, funciones `devolucion_solicitar/responder/reintegrar/cancelar`; plazo 7 días configurable con `devolucion_dias`; al reintegrar se revierten ventas, comisión e IVA con asientos nuevos en `delivery_libro`; destino billetera o medio original para pedido online completo → flujo `a_reintegrar` de Mercado Pago; repone stock con asiento de inventario). Pantallas: cliente (detalle del pedido) y comercio (`/app/comercio/devoluciones`). Pruebas: `supabase/tests/009_devoluciones.sql` + recorrido real en navegador.
 
 **Tamaño:** L. **Riesgo:** `delivery_crear_pedido` es el corazón del sistema → se toca solo con tests de integración que cubran stock, cupón, saldo, variantes, retiro y programados.
 
