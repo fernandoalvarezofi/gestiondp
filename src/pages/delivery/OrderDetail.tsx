@@ -142,10 +142,10 @@ export default function OrderDetail() {
       <OrderAdjustments orderId={order.id} onChange={load} />
 
       {order.estado !== "cancelado" && (
-        <section className="mt-6 rounded-3xl border border-t-4 border-t-brand-orange bg-card p-4 sm:p-6">
+        <section className="mt-6 rounded-3xl border border-t-4 border-t-brand-yellow bg-card p-4 sm:p-6">
           {active && order.entrega_estimada && (
             <div className="mb-5 flex items-center gap-3">
-              <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(220_14%_16%)] text-brand-orange">{order.programado_para ? <CalendarClock className="h-6 w-6" /> : retiro ? <Store className="h-6 w-6" /> : <Bike className="h-6 w-6 animate-ride" />}</span>
+              <span className="flex h-12 w-12 items-center justify-center rounded-2xl brand-tile">{order.programado_para ? <CalendarClock className="h-6 w-6" /> : retiro ? <Store className="h-6 w-6" /> : <Bike className="h-6 w-6 animate-ride" />}</span>
               <div>
                 <p className="text-sm text-muted-foreground">{order.programado_para ? (retiro ? "Retiro programado" : "Entrega programada") : retiro ? "Listo aproximadamente" : eta && order.estado === "en_camino" ? "Tu repartidor llega en" : "Llegada estimada"}</p>
                 <p className="font-display text-2xl font-extrabold">{order.programado_para ? formatSlot(order.programado_para) : eta && order.estado === "en_camino" ? `~${eta.min} min` : serverEta?.hora ? formatTime(serverEta.hora) : formatTime(order.entrega_estimada)}</p>

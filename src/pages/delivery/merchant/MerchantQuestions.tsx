@@ -66,8 +66,8 @@ export default function MerchantQuestions() {
 
       <div className="flex gap-2 overflow-x-auto" role="tablist" aria-label="Preguntas">
         {tabs.map(([id, label]) => (
-          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cn("flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-1.5 text-sm font-bold transition-colors", tab === id ? "border-brand-orange bg-brand-orange/10" : "border-transparent bg-muted/60 hover:bg-muted")}>
-            {label}<span className={cn("rounded-full px-1.5 text-xs", id === "pendientes" && groups.pendientes.length ? "bg-brand-orange text-white" : "bg-background text-muted-foreground")}>{groups[id].length}</span>
+          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cn("flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-1.5 text-sm font-bold transition-colors", tab === id ? "border-brand-yellow bg-brand-yellow/10" : "border-transparent bg-muted/60 hover:bg-muted")}>
+            {label}<span className={cn("rounded-full px-1.5 text-xs", id === "pendientes" && groups.pendientes.length ? "bg-brand-yellow text-brand-yellow-foreground" : "bg-background text-muted-foreground")}>{groups[id].length}</span>
           </button>
         ))}
       </div>

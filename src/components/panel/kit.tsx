@@ -96,7 +96,7 @@ export function Sparkline({ values, className }: { values: number[]; className?:
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={className} aria-hidden>
       <polyline points={points.join(" ")} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={100} cy={Number(points[points.length - 1].split(",")[1])} r="3.2" className="fill-brand-orange" vectorEffect="non-scaling-stroke" />
+      <circle cx={100} cy={Number(points[points.length - 1].split(",")[1])} r="3.2" className="fill-brand-yellow" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
@@ -111,7 +111,7 @@ export function BarSeries({ data, label, format, height = 168 }: { data: { key: 
       <div className="flex items-end gap-[3px]" style={{ height }}>
         {data.map((d) => (
           <div key={d.key} className="group relative flex h-full min-w-0 flex-1 items-end justify-center" title={`${d.label}${format ? ` · ${format(d.value)}` : ` · ${d.value}`}${d.hint ? ` · ${d.hint}` : ""}`}>
-            <div className={cn("w-full max-w-[44px] rounded-t-[3px] transition-colors", d.value === 0 ? "bg-muted" : d.key === top.key ? "bg-brand-orange" : "bg-foreground/15 group-hover:bg-foreground/35")} style={{ height: `${Math.max(d.value ? 4 : 1.5, (d.value / max) * 100)}%` }} />
+            <div className={cn("w-full max-w-[44px] rounded-t-[3px] transition-colors", d.value === 0 ? "bg-muted" : d.key === top.key ? "bg-brand-yellow" : "bg-foreground/15 group-hover:bg-foreground/35")} style={{ height: `${Math.max(d.value ? 4 : 1.5, (d.value / max) * 100)}%` }} />
           </div>
         ))}
       </div>
@@ -128,7 +128,7 @@ const tones = {
   success: "bg-success/10 text-success",
   warning: "bg-warning/15 text-warning-foreground dark:text-warning",
   danger: "bg-destructive/10 text-destructive",
-  brand: "bg-brand-orange/10 text-brand-orange",
+  brand: "bg-brand-yellow/25 text-brand-yellow-foreground",
 } as const;
 export type Tone = keyof typeof tones;
 

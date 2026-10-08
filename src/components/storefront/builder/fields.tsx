@@ -36,7 +36,7 @@ export function Opciones<T extends string | number | boolean>({ label, value, op
       <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label={label}>
         {options.map((option) => (
           <button key={String(option.id)} type="button" role="radio" aria-checked={value === option.id} onClick={() => onChange(option.id)}
-            className={cn("rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors", value === option.id ? "border-brand-orange bg-brand-orange/10" : "border-transparent bg-muted/60 hover:bg-muted")}>{option.label}</button>
+            className={cn("rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition-colors", value === option.id ? "border-brand-yellow bg-brand-yellow/10" : "border-transparent bg-muted/60 hover:bg-muted")}>{option.label}</button>
         ))}
       </div>
       {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
@@ -57,7 +57,7 @@ export function Numero({ label, value, min, max, onChange }: { label: string; va
   return (
     <div className="space-y-1.5">
       <Label className="flex justify-between text-sm font-semibold"><span>{label}</span><span className="font-normal text-muted-foreground">{value}</span></Label>
-      <input type="range" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} className="w-full accent-[hsl(var(--brand-orange))]" aria-label={label} />
+      <input type="range" min={min} max={max} value={value} onChange={(event) => onChange(Number(event.target.value))} className="w-full accent-[hsl(var(--brand-yellow))]" aria-label={label} />
     </div>
   );
 }

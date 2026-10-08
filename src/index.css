@@ -10,14 +10,15 @@
     --card-foreground: 250 20% 11%;
     --popover: 0 0% 100%;
     --popover-foreground: 250 20% 11%;
-    --primary: 220 14% 18%;
+    /* Verde Woref #2B9778 (color principal) */
+    --primary: 163 56% 38%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 95%;
-    --secondary-foreground: 220 14% 18%;
+    --secondary: 160 33% 95%;
+    --secondary-foreground: 163 56% 22%;
     --muted: 240 7% 94%;
     --muted-foreground: 245 6% 42%;
-    --accent: 220 14% 94%;
-    --accent-foreground: 220 14% 18%;
+    --accent: 160 33% 94%;
+    --accent-foreground: 163 56% 22%;
     --destructive: 354 78% 50%;
     --destructive-foreground: 0 0% 100%;
     --success: 152 60% 36%;
@@ -25,22 +26,24 @@
     --warning: 40 96% 50%;
     --warning-foreground: 30 60% 15%;
     --info: 214 84% 52%;
-    --brand-deep: 220 22% 11%;
-    --brand-cream: 220 14% 96%;
-    --brand-orange: 10 89% 53%;
+    --brand-deep: 164 52% 13%;
+    --brand-cream: 158 30% 96%;
+    /* Amarillo Woref #F0B900 (acentos). Sobre amarillo siempre va texto oscuro: el blanco no se lee. */
+    --brand-yellow: 46 100% 47%;
+    --brand-yellow-foreground: 40 60% 10%;
     --border: 240 8% 90%;
     --input: 240 8% 86%;
-    --ring: 220 14% 18%;
+    --ring: 163 56% 38%;
     --radius: 1rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 12%;
-    --sidebar-primary: 220 14% 18%;
+    --sidebar-primary: 163 56% 38%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 220 14% 12%;
+    --sidebar-accent: 160 33% 94%;
+    --sidebar-accent-foreground: 163 56% 20%;
     --sidebar-border: 220 13% 90%;
-    --sidebar-ring: 220 14% 18%;
+    --sidebar-ring: 163 56% 38%;
 
     --shadow-soft: 0 1px 2px hsl(220 20% 12% / 0.05), 0 6px 20px -10px hsl(220 20% 12% / 0.12);
     --shadow-pop: 0 2px 6px hsl(220 20% 12% / 0.06), 0 20px 44px -16px hsl(220 20% 12% / 0.28);
@@ -53,8 +56,8 @@
     --card-foreground: 0 0% 95%;
     --popover: 220 16% 12%;
     --popover-foreground: 0 0% 95%;
-    --primary: 220 12% 92%;
-    --primary-foreground: 220 16% 10%;
+    --primary: 163 52% 44%;
+    --primary-foreground: 0 0% 100%;
     --secondary: 220 14% 20%;
     --secondary-foreground: 220 12% 90%;
     --muted: 220 14% 17%;
@@ -68,21 +71,22 @@
     --warning: 40 96% 56%;
     --warning-foreground: 30 60% 12%;
     --info: 214 84% 62%;
-    --brand-deep: 220 16% 22%;
-    --brand-cream: 220 14% 14%;
-    --brand-orange: 10 90% 58%;
+    --brand-deep: 164 40% 18%;
+    --brand-cream: 164 20% 13%;
+    --brand-yellow: 46 100% 50%;
+    --brand-yellow-foreground: 40 60% 10%;
     --border: 220 13% 20%;
     --input: 220 13% 24%;
-    --ring: 220 12% 80%;
+    --ring: 163 52% 50%;
 
     --sidebar-background: 220 16% 12%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 220 12% 92%;
-    --sidebar-primary-foreground: 220 16% 10%;
+    --sidebar-primary: 163 52% 44%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 20%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 220 13% 20%;
-    --sidebar-ring: 220 12% 80%;
+    --sidebar-ring: 163 52% 50%;
 
     --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.4), 0 6px 20px -10px hsl(0 0% 0% / 0.5);
     --shadow-pop: 0 2px 6px hsl(0 0% 0% / 0.4), 0 18px 40px -14px hsl(0 0% 0% / 0.6);
@@ -119,6 +123,8 @@
   .scrollbar-none::-webkit-scrollbar { display: none; }
   .bg-hero-overlay { background: linear-gradient(180deg, hsl(0 0% 0% / 0.05) 20%, hsl(0 0% 0% / 0.72) 100%); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+  /* Cuadro de ícono de marca: verde con ícono blanco (el amarillo sobre verde no tiene contraste suficiente). */
+  .brand-tile { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 }
 
 @media (prefers-reduced-motion: reduce) {

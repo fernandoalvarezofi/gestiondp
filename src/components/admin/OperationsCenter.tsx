@@ -164,7 +164,7 @@ export function OperationsCenter() {
             <OpsMap points={points} focus={focus} onSelect={select} className="h-[420px] lg:h-[560px]" />
           </Suspense>
           <div className="absolute left-3 top-3 z-[500] flex flex-wrap gap-1.5 rounded-2xl bg-card/95 p-2 text-[11px] font-bold shadow-soft">
-            {([["#16a34a", "Libre"], ["#2563eb", "Ocupado"], ["#f2402a", "Pedido"], ["#dc2626", "Urgente"], ["#14332b", "Local"], ["#d97706", "Envío"]] as const).map(([color, label]) => <span key={label} className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{label}</span>)}
+            {([["#16a34a", "Libre"], ["#2563eb", "Ocupado"], ["#7c3aed", "Pedido"], ["#dc2626", "Urgente"], ["#14332b", "Local"], ["#d97706", "Envío"]] as const).map(([color, label]) => <span key={label} className="flex items-center gap-1"><span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />{label}</span>)}
           </div>
           <Button size="sm" variant="secondary" className="absolute bottom-3 left-3 z-[500] rounded-full shadow-soft" onClick={() => setFocus(null)}><Crosshair className="h-4 w-4" />Ver todo</Button>
         </div>

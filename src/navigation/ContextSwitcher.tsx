@@ -55,7 +55,7 @@ export function ContextSwitcherCard({ className }: { className?: string }) {
         {available.map((ctx) => (
           <li key={ctx.id}>
             <Link to={ctx.base} aria-current={ctx.id === current ? "page" : undefined} className={cn("flex items-center gap-3 rounded-2xl border p-3 transition-colors hover:bg-muted", ctx.id === current && "border-primary/40 bg-primary/5")}>
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(220_14%_16%)] text-brand-orange"><ctx.icon className="h-5 w-5" /></span>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl brand-tile"><ctx.icon className="h-5 w-5" /></span>
               <span className="min-w-0 flex-1"><span className="block font-bold">{ctx.label}</span><span className="block truncate text-xs text-muted-foreground">{ctx.id === current ? "Estás acá" : ctx.description}</span></span>
               {ctx.id === current ? <Check className="h-4 w-4 text-primary" /> : <ChevronRight className="h-4 w-4 text-muted-foreground" />}
             </Link>

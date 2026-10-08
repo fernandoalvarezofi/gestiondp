@@ -109,7 +109,7 @@ export function ProductCard({ product, store, disabled, variant = "row", badges,
           <h3 className="mt-0.5 line-clamp-2 text-[13px] font-bold leading-snug">{product.nombre}</h3>
         </article>
       ) : (
-        <article className={cn("group flex cursor-pointer gap-3 rounded-2xl border bg-card p-4 transition-colors hover:border-brand-orange", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
+        <article className={cn("group flex cursor-pointer gap-3 rounded-2xl border bg-card p-4 transition-colors hover:border-brand-yellow", outOfStock && "opacity-60")} onClick={() => !unavailable && setOpen(true)}>
           <div className="min-w-0 flex-1">
             <h3 className="text-[15px] font-extrabold leading-snug">{product.nombre}</h3>
             {product.descripcion && <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-muted-foreground">{product.descripcion}</p>}

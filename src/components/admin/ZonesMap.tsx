@@ -37,8 +37,8 @@ export default function ZonesMap({ zones, selectedId, draft, drawing, onSelect, 
             <Tooltip sticky>{zone.nombre}{zone.cerrada ? " · cerrada" : zone.multiplicador > 1 ? ` · x${zone.multiplicador}` : ""}</Tooltip>
           </Polygon>
         ))}
-        {draft.length > 0 && <Polyline positions={[...draft, draft[0]]} pathOptions={{ color: "#f2402a", weight: 3, dashArray: "4" }} />}
-        {draft.map((point, index) => <CircleMarker key={`${point[0]}-${point[1]}-${index}`} center={point} radius={5} pathOptions={{ color: "#fff", fillColor: "#f2402a", fillOpacity: 1, weight: 2 }} />)}
+        {draft.length > 0 && <Polyline positions={[...draft, draft[0]]} pathOptions={{ color: "#F0B900", weight: 3, dashArray: "4" }} />}
+        {draft.map((point, index) => <CircleMarker key={`${point[0]}-${point[1]}-${index}`} center={point} radius={5} pathOptions={{ color: "#fff", fillColor: "#F0B900", fillOpacity: 1, weight: 2 }} />)}
         <Clicks drawing={drawing} onAdd={onAdd} />
         <Focus zone={zones.find((zone) => zone.id === selectedId)} />
       </MapContainer>

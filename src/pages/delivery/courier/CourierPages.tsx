@@ -144,7 +144,7 @@ export function CourierProfilePage() {
 
       {courier.vehiculo === "auto" && (
         <Link to="/app/conductor" className="flex items-center gap-3 rounded-3xl border bg-card p-4 transition-colors hover:bg-muted sm:p-5">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(220_14%_16%)] text-brand-orange"><CarTaxiFront className="h-5 w-5" /></span>
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl brand-tile"><CarTaxiFront className="h-5 w-5" /></span>
           <span className="min-w-0 flex-1"><span className="block font-extrabold">{courier.remis_estado === "aprobado" ? "Panel de conductor" : "¿Querés llevar pasajeros?"}</span><span className="block text-sm text-muted-foreground">{courier.remis_estado === "aprobado" ? "Tus viajes de remís, ganancias e historial" : "Con tu auto podés sumarte como conductor de remís"}</span></span>
           <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
         </Link>

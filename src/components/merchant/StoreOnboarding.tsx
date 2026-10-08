@@ -200,7 +200,7 @@ export function StoreOnboarding({ userId, onDone, onCancel }: { userId: string; 
           {onCancel && <button type="button" onClick={onCancel} disabled={creating} className="rounded-full px-3 py-1 text-sm font-semibold text-white/70 hover:bg-white/10 hover:text-white">Cancelar</button>}
         </div>
         <h1 className="mt-1 text-2xl font-extrabold sm:text-3xl">{current === "revisar" ? "Revisá y creá tu comercio" : "Sumá tu comercio a Woref"}</h1>
-        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1}><div className="h-full rounded-full bg-brand-orange transition-all duration-300" style={{ width: `${progress}%` }} /></div>
+        <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15" role="progressbar" aria-valuemin={1} aria-valuemax={STEPS.length} aria-valuenow={step + 1}><div className="h-full rounded-full bg-brand-yellow transition-all duration-300" style={{ width: `${progress}%` }} /></div>
         <ol className="scrollbar-none mt-3 flex gap-1 overflow-x-auto text-xs font-semibold">
           {STEPS.map((item, index) => (
             <li key={item.id}>
@@ -219,8 +219,8 @@ export function StoreOnboarding({ userId, onDone, onCancel }: { userId: string; 
             <div className="grid gap-3 sm:grid-cols-2" role="radiogroup" aria-label="Tipo de negocio">
               {CATEGORIAS.map(({ id, icon: Icon, detalle }) => (
                 <button key={id} type="button" role="radio" aria-checked={values.categoria === id} onClick={() => { set("categoria", id); if (!RUBROS[id].includes(values.rubro || "")) set("rubro", ""); }}
-                  className={cn("flex items-start gap-3 rounded-2xl border-2 p-4 text-left transition-colors", values.categoria === id ? "border-brand-orange bg-brand-orange/5" : "border-transparent bg-muted/50 hover:bg-muted")}>
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[hsl(220_14%_16%)] text-brand-orange"><Icon className="h-5 w-5" /></span>
+                  className={cn("flex items-start gap-3 rounded-2xl border-2 p-4 text-left transition-colors", values.categoria === id ? "border-brand-yellow bg-brand-yellow/5" : "border-transparent bg-muted/50 hover:bg-muted")}>
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl brand-tile"><Icon className="h-5 w-5" /></span>
                   <span><span className="block font-extrabold">{categoriaLabel[id]}</span><span className="block text-sm text-muted-foreground">{detalle}</span></span>
                 </button>
               ))}
@@ -228,7 +228,7 @@ export function StoreOnboarding({ userId, onDone, onCancel }: { userId: string; 
             <div className={field}>
               <Label>Rubro</Label>
               <div className="flex flex-wrap gap-2">
-                {RUBROS[values.categoria].map((item) => <button key={item} type="button" aria-pressed={values.rubro === item} onClick={() => set("rubro", item)} className={cn("rounded-full border px-3 py-1.5 text-sm font-semibold", values.rubro === item ? "border-brand-orange bg-brand-orange/10" : "hover:bg-muted")}>{item}</button>)}
+                {RUBROS[values.categoria].map((item) => <button key={item} type="button" aria-pressed={values.rubro === item} onClick={() => set("rubro", item)} className={cn("rounded-full border px-3 py-1.5 text-sm font-semibold", values.rubro === item ? "border-brand-yellow bg-brand-yellow/10" : "hover:bg-muted")}>{item}</button>)}
               </div>
               <Input maxLength={40} value={values.rubro || ""} onChange={(event) => set("rubro", event.target.value)} placeholder="O escribí el tuyo" className="mt-2 max-w-xs" aria-label="Rubro" />
             </div>
@@ -358,7 +358,7 @@ export function StoreOnboarding({ userId, onDone, onCancel }: { userId: string; 
                   </div>
                 ))}
               </dl>
-              <div className="rounded-2xl border border-l-4 border-l-brand-orange bg-muted/40 p-4 text-sm">
+              <div className="rounded-2xl border border-l-4 border-l-brand-yellow bg-muted/40 p-4 text-sm">
                 <p className="font-extrabold">Qué pasa después de crear</p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
                   <li>Revisamos tu comercio antes de mostrarlo a los clientes (suele ser rápido).</li>

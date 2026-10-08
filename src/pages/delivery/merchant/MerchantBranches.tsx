@@ -62,7 +62,7 @@ export default function MerchantBranches() {
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-2xl border border-l-4 border-l-brand-orange bg-card p-4 text-sm"><p className="font-extrabold">Crear otro comercio</p><p className="mt-1 text-muted-foreground">Un negocio distinto: con su propio rubro, ubicación, horarios, productos y <strong>tienda online a tu modo</strong>. Te guiamos paso a paso.</p></div>
+        <div className="rounded-2xl border border-l-4 border-l-brand-yellow bg-card p-4 text-sm"><p className="font-extrabold">Crear otro comercio</p><p className="mt-1 text-muted-foreground">Un negocio distinto: con su propio rubro, ubicación, horarios, productos y <strong>tienda online a tu modo</strong>. Te guiamos paso a paso.</p></div>
         <div className="rounded-2xl border bg-card p-4 text-sm"><p className="font-extrabold">Agregar sucursal</p><p className="mt-1 text-muted-foreground">Otro local del mismo negocio: copia los datos y el menú de «{store.nombre}» para que lo ajustes.</p></div>
       </div>
 

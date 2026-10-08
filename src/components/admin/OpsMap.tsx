@@ -10,7 +10,7 @@ export type OpsPoint = { key: string; lat: number; lng: number; kind: "courier-f
 const palette: Record<OpsPoint["kind"], { color: string; glyph: string }> = {
   "courier-free": { color: "#16a34a", glyph: "M" },
   "courier-busy": { color: "#2563eb", glyph: "M" },
-  "order-ok": { color: "#f2402a", glyph: "P" },
+  "order-ok": { color: "#7c3aed", glyph: "P" },
   "order-warn": { color: "#f59e0b", glyph: "P" },
   "order-late": { color: "#dc2626", glyph: "!" },
   store: { color: "#14332b", glyph: "L" },

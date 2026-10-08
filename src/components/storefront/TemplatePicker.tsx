@@ -29,10 +29,10 @@ export function TemplateGrid({ value, color, onChange }: { value: Plantilla; col
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="radiogroup" aria-label="Plantilla">
       {PLANTILLAS.map((item) => (
         <button key={item.id} type="button" role="radio" aria-checked={value === item.id} onClick={() => onChange(item.id)}
-          className={cn("rounded-2xl border-2 p-2.5 text-left transition-colors", value === item.id ? "border-brand-orange bg-brand-orange/5" : "border-transparent bg-muted/40 hover:bg-muted")}>
+          className={cn("rounded-2xl border-2 p-2.5 text-left transition-colors", value === item.id ? "border-brand-yellow bg-brand-yellow/5" : "border-transparent bg-muted/40 hover:bg-muted")}>
           <Wireframe id={item.id} color={color} />
           <span className="mt-2 block text-sm font-bold">{item.nombre}</span>
-          <span className="block text-[11px] font-semibold text-brand-orange">{item.ideal}</span>
+          <span className="block text-[11px] font-semibold text-primary">{item.ideal}</span>
           <span className="mt-0.5 block text-[11px] leading-tight text-muted-foreground">{item.detalle}</span>
         </button>
       ))}
@@ -46,7 +46,7 @@ export function ColorSwatches({ value, onChange }: { value: string; onChange: (c
     <div className="flex flex-wrap items-center gap-2">
       {COLORES.map((color) => (
         <button key={color} type="button" aria-label={`Color ${color}`} aria-pressed={value === color} onClick={() => onChange(color)}
-          className={cn("flex h-9 w-9 items-center justify-center rounded-full border-2 border-white shadow ring-2 transition", value === color ? "ring-brand-orange" : "ring-transparent hover:ring-border")} style={{ background: color }}>
+          className={cn("flex h-9 w-9 items-center justify-center rounded-full border-2 border-white shadow ring-2 transition", value === color ? "ring-brand-yellow" : "ring-transparent hover:ring-border")} style={{ background: color }}>
           {value === color && <Check className="h-4 w-4 text-white mix-blend-difference" />}
         </button>
       ))}

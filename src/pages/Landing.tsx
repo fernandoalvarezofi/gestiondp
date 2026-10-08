@@ -50,12 +50,12 @@ export default function Landing() {
           </nav>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Button asChild variant="ghost" size="sm" className="rounded-full font-bold text-white hover:bg-white/15 hover:text-white sm:h-10 sm:px-4"><Link to="/auth">Ingresar</Link></Button>
-            <Button asChild size="sm" className="rounded-full bg-white font-bold text-[hsl(220_14%_16%)] hover:bg-white/90 sm:h-10 sm:px-5"><Link to="/auth?registro=1">Crear cuenta</Link></Button>
+            <Button asChild size="sm" className="rounded-full bg-white font-bold text-primary hover:bg-white/90 sm:h-10 sm:px-5"><Link to="/auth?registro=1">Crear cuenta</Link></Button>
           </div>
         </div>
       </header>
 
-      <section className="relative overflow-hidden border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] text-white">
+      <section className="relative overflow-hidden border-b-4 border-brand-yellow bg-primary text-white">
         <div aria-hidden className="pointer-events-none absolute -right-32 -top-32 h-[520px] w-[520px] rounded-full bg-white/10 blur-2xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-40 left-1/4 h-[420px] w-[420px] rounded-full bg-black/10 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-24 pt-24 sm:px-6 sm:pb-28 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-8 lg:pb-32 lg:pt-32">
@@ -64,9 +64,9 @@ export default function Landing() {
             <h1 className="mt-5 text-[2.5rem] font-extrabold leading-[1.04] sm:text-6xl lg:text-[3.6rem] xl:text-6xl">Pedí lo que quieras.<span className="block">Te lo llevamos ya.</span></h1>
             <p className="mt-5 max-w-xl text-base text-white/85 sm:text-lg">Comida, supermercado, farmacia y tiendas de tu ciudad. Seguí tu pedido en tiempo real y pagá como prefieras.</p>
             <Link to="/auth?registro=1" className="mt-8 flex max-w-xl items-center gap-2 rounded-full bg-white p-1.5 pl-4 text-foreground shadow-pop sm:gap-3 sm:p-2 sm:pl-5">
-              <MapPin className="h-5 w-5 shrink-0 text-[hsl(220_14%_16%)]" />
+              <MapPin className="h-5 w-5 shrink-0 text-primary" />
               <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground sm:text-base">¿Dónde querés recibir tu pedido?</span>
-              <span className="flex shrink-0 items-center gap-1 rounded-full bg-[hsl(220_14%_16%)] px-4 py-3 font-bold text-white sm:px-6">Pedir<ArrowRight className="h-4 w-4" /></span>
+              <span className="flex shrink-0 items-center gap-1 rounded-full bg-primary px-4 py-3 font-bold text-white sm:px-6">Pedir<ArrowRight className="h-4 w-4" /></span>
             </Link>
             <p className="mt-4 flex items-center gap-2 text-sm font-semibold text-white/90"><Ticket className="h-4 w-4 shrink-0" />30% OFF en tu primer pedido con BIENVENIDA</p>
           </div>
@@ -87,10 +87,10 @@ export default function Landing() {
       </section>
 
       <section className="relative z-10 mx-auto -mt-10 max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-px overflow-hidden rounded-3xl border-2 border-brand-orange bg-border shadow-pop sm:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded-3xl border-2 border-brand-yellow bg-border shadow-pop sm:grid-cols-3">
           {trust.map(({ icon: Icon, title, text }) => (
             <div key={title} className="flex items-start gap-3 bg-card p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[hsl(220_14%_16%)] text-brand-orange"><Icon className="h-5 w-5" /></span>
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl brand-tile"><Icon className="h-5 w-5" /></span>
               <div><p className="font-extrabold">{title}</p><p className="text-sm text-muted-foreground">{text}</p></div>
             </div>
           ))}
@@ -102,7 +102,7 @@ export default function Landing() {
         <p className="mt-2 text-muted-foreground">Elegí qué querés pedir y te mostramos lo que hay cerca.</p>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {verticals.slice(0, 8).map(({ id, label, image }) => (
-            <Link key={id} to="/auth?registro=1" className="group relative aspect-[4/3] overflow-hidden rounded-3xl border-2 border-transparent bg-muted transition-colors hover:border-brand-orange">
+            <Link key={id} to="/auth?registro=1" className="group relative aspect-[4/3] overflow-hidden rounded-3xl border-2 border-transparent bg-muted transition-colors hover:border-brand-yellow">
               <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
               <span className="absolute inset-x-0 bottom-0 p-4 text-lg font-extrabold text-white">{label}</span>
@@ -121,7 +121,7 @@ export default function Landing() {
             <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {stores.data.slice(0, 8).map((store, index) => (
                 <li key={store.id} className={index >= 4 ? "hidden sm:block" : undefined}>
-                  <Link to={`/app/tienda/${store.slug}`} className="group block overflow-hidden rounded-3xl border-2 bg-card shadow-soft transition-all hover:border-brand-orange hover:shadow-pop">
+                  <Link to={`/app/tienda/${store.slug}`} className="group block overflow-hidden rounded-3xl border-2 bg-card shadow-soft transition-all hover:border-brand-yellow hover:shadow-pop">
                     <div className="relative aspect-[16/9] overflow-hidden bg-muted">
                       <SmartImage src={store.imagen_url} width={480} className="transition-transform duration-500 group-hover:scale-105" />
                       <StoreLogo store={store} className="absolute bottom-2 left-3 h-12 w-12 border-2 border-white text-sm" />
@@ -148,9 +148,9 @@ export default function Landing() {
           <h2 className="text-2xl font-extrabold sm:text-4xl">Así de fácil</h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {steps.map(({ icon: Icon, title, text }, index) => (
-              <div key={title} className="relative rounded-3xl border-t-4 border-brand-orange bg-card p-6 shadow-soft">
-                <span className="absolute right-5 top-4 font-display text-5xl font-black text-brand-orange/20">{index + 1}</span>
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(220_14%_16%)] text-white"><Icon className="h-6 w-6" /></span>
+              <div key={title} className="relative rounded-3xl border-t-4 border-brand-yellow bg-card p-6 shadow-soft">
+                <span className="absolute right-5 top-4 font-display text-5xl font-black text-brand-yellow/20">{index + 1}</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white"><Icon className="h-6 w-6" /></span>
                 <h3 className="mt-4 text-xl font-extrabold">{title}</h3>
                 <p className="mt-1 text-muted-foreground">{text}</p>
               </div>
@@ -160,7 +160,7 @@ export default function Landing() {
       </section>
 
       <section className="mx-auto grid max-w-7xl gap-4 px-4 py-14 sm:px-6 md:grid-cols-2 lg:px-8 lg:py-20">
-        <div id="negocios" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-2 border-brand-orange bg-brand-deep p-8 text-white lg:p-10">
+        <div id="negocios" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-2 border-brand-yellow bg-brand-deep p-8 text-white lg:p-10">
           <img src={photo("1555396273-367ea4eb4db5", 900)} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25" />
           <div className="relative">
             <Store className="h-9 w-9" />
@@ -173,7 +173,7 @@ export default function Landing() {
             <Button asChild className="mt-6 rounded-full bg-white font-bold text-foreground hover:bg-white/90"><Link to="/auth?registro=1">Sumar mi comercio</Link></Button>
           </div>
         </div>
-        <div id="repartir" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] p-8 text-white lg:p-10">
+        <div id="repartir" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-b-4 border-brand-yellow bg-primary p-8 text-white lg:p-10">
           <Bike className="absolute -bottom-10 -right-6 h-56 w-56 opacity-10" />
           <div className="relative">
             <Bike className="h-9 w-9" />
@@ -183,12 +183,12 @@ export default function Landing() {
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Cobrás por viaje, con billetera</li>
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Bonos y turnos con cupo</li>
             </ul>
-            <Button asChild className="mt-6 rounded-full bg-brand-orange font-bold text-white hover:bg-brand-orange/90"><Link to="/auth?registro=1">Quiero repartir</Link></Button>
+            <Button asChild className="mt-6 rounded-full bg-brand-yellow font-bold text-brand-yellow-foreground hover:bg-brand-yellow/90"><Link to="/auth?registro=1">Quiero repartir</Link></Button>
           </div>
         </div>
       </section>
 
-      <footer className="border-t-4 border-brand-orange bg-card">
+      <footer className="border-t-4 border-brand-yellow bg-card">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
           <div className="space-y-3">
             <DeliveryBrand />

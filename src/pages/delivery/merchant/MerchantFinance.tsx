@@ -60,8 +60,8 @@ export default function MerchantFinance() {
           </div>
           <div className="mt-8">
             <p className="mb-2 text-[12.5px] font-semibold text-white/65">De cada $100 que vendés</p>
-            <div className="flex h-2.5 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-white" style={{ width: `${ventasN ? Math.max(0, Math.min(100, (Number(pending.neto) / ventasN) * 100)) : 0}%` }} /><div className="h-full bg-brand-orange" style={{ width: `${ventasN ? Math.max(0, Math.min(100, (Number(pending.comision) / ventasN) * 100)) : 0}%` }} /></div>
-            <p className="mt-2 flex justify-between text-[12.5px] text-white/70"><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white" />Para vos {ventasN ? Math.round((Number(pending.neto) / ventasN) * 100) : 0}%</span><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-brand-orange" />Comisión {data.comision_pct}%</span></p>
+            <div className="flex h-2.5 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-white" style={{ width: `${ventasN ? Math.max(0, Math.min(100, (Number(pending.neto) / ventasN) * 100)) : 0}%` }} /><div className="h-full bg-brand-yellow" style={{ width: `${ventasN ? Math.max(0, Math.min(100, (Number(pending.comision) / ventasN) * 100)) : 0}%` }} /></div>
+            <p className="mt-2 flex justify-between text-[12.5px] text-white/70"><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white" />Para vos {ventasN ? Math.round((Number(pending.neto) / ventasN) * 100) : 0}%</span><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-brand-yellow" />Comisión {data.comision_pct}%</span></p>
           </div>
           <p className="mt-6 max-w-md text-xs leading-relaxed text-white/55">Administración cierra el período y te lo paga o cobra. Hasta entonces, este número puede cambiar con cada pedido.</p>
         </section>

@@ -278,7 +278,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
       return (
         <section className={cn("mx-auto px-4 pt-4 sm:px-6", width)}>
           <div className="grid gap-3 lg:grid-cols-3">
-            <div className="relative isolate flex min-h-[260px] items-end overflow-hidden bg-[hsl(220_14%_16%)] text-white sm:min-h-[380px] lg:col-span-2" style={{ borderRadius: "var(--sf-radius)" }}>
+            <div className="relative isolate flex min-h-[260px] items-end overflow-hidden bg-primary text-white sm:min-h-[380px] lg:col-span-2" style={{ borderRadius: "var(--sf-radius)" }}>
               <div className="absolute inset-0 -z-10"><SmartImage src={image} width={1400} loading="eager" /></div>
               <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/75 via-black/35 to-transparent" />
               <div className="max-w-md p-6 sm:p-10">
@@ -300,7 +300,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     const center = b.alineacion === "centro";
     return (
       <>
-        <section className="relative isolate overflow-hidden bg-[hsl(220_14%_16%)] text-white">
+        <section className="relative isolate overflow-hidden bg-primary text-white">
           <div className="absolute inset-0 -z-10"><SmartImage src={image} width={1600} loading="eager" /></div>
           <div className="absolute inset-0 -z-10" style={{ background: `linear-gradient(${center ? "to top" : "to right"}, rgba(0,0,0,${Math.min(0.95, b.oscurecer / 100 + 0.2)}), rgba(0,0,0,${b.oscurecer / 100 * 0.6}) 60%, rgba(0,0,0,${b.oscurecer / 100 * 0.25}))` }} />
           <div className={cn("mx-auto flex flex-col justify-end px-4 pb-12 pt-24 sm:px-6 sm:pb-16", width, ALTO_PORTADA[b.alto], center && "items-center text-center")}>
@@ -324,7 +324,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   // ---- bloques con imagen
   const renderBanner = (b: BloqueBanner) => (
     <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
-      <div className={cn("relative isolate flex items-center overflow-hidden bg-[hsl(220_14%_16%)] text-white", ALTO_BANNER[b.alto])} style={{ borderRadius: "var(--sf-radius)", ...(b.imagen_url ? {} : accent) }}>
+      <div className={cn("relative isolate flex items-center overflow-hidden bg-primary text-white", ALTO_BANNER[b.alto])} style={{ borderRadius: "var(--sf-radius)", ...(b.imagen_url ? {} : accent) }}>
         {b.imagen_url && <><div className="absolute inset-0 -z-10"><SmartImage src={b.imagen_url} width={1400} /></div><div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/70 via-black/40 to-transparent" /></>}
         <div className="max-w-xl p-6 sm:p-10">
           {b.titulo && <h2 className="text-2xl font-black leading-tight sm:text-4xl" style={headingStyle}>{b.titulo}</h2>}
@@ -794,8 +794,8 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
               {content}
               {onSelectBlock && (
                 <button type="button" aria-label={`Editar ${nombreDe(bloque.tipo)}`} onClick={() => onSelectBlock(bloque.id)}
-                  className={cn("group absolute inset-0 z-20 cursor-pointer outline-none transition-colors", selected ? "bg-brand-orange/5 ring-4 ring-inset ring-brand-orange" : "hover:bg-brand-orange/5 hover:ring-2 hover:ring-inset hover:ring-brand-orange/70")}>
-                  <span className={cn("absolute left-3 top-3 rounded-md bg-brand-orange px-2 py-1 text-xs font-bold text-white shadow", selected ? "opacity-100" : "opacity-0 transition-opacity group-hover:opacity-100")}>{nombreDe(bloque.tipo)}</span>
+                  className={cn("group absolute inset-0 z-20 cursor-pointer outline-none transition-colors", selected ? "bg-brand-yellow/5 ring-4 ring-inset ring-brand-yellow" : "hover:bg-brand-yellow/5 hover:ring-2 hover:ring-inset hover:ring-brand-yellow/70")}>
+                  <span className={cn("absolute left-3 top-3 rounded-md bg-brand-yellow px-2 py-1 text-xs font-bold text-brand-yellow-foreground shadow", selected ? "opacity-100" : "opacity-0 transition-opacity group-hover:opacity-100")}>{nombreDe(bloque.tipo)}</span>
                 </button>
               )}
             </div>

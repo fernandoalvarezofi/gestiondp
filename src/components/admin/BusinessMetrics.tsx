@@ -80,7 +80,7 @@ export function BusinessMetrics() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tarjetas.map((t) => (
-          <div key={t.titulo} className="rounded-3xl border border-l-4 border-l-brand-orange bg-card p-5">
+          <div key={t.titulo} className="rounded-3xl border border-l-4 border-l-brand-yellow bg-card p-5">
             <p className="text-sm font-semibold text-muted-foreground">{t.titulo}</p>
             <p className="mt-1 font-display text-3xl font-black tabular-nums">{t.valor}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t.nota}</p>
@@ -102,7 +102,7 @@ export function BusinessMetrics() {
         <div className="mt-4 flex h-40 items-end gap-1.5" role="img" aria-label="Ventas por día">
           {porDia.map((d) => (
             <div key={d.dia} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${diaCorto(d.dia)}: ${ars(d.ventas)} · ${d.pedidos} pedidos`}>
-              <div className="w-full rounded-t-md bg-brand-orange/80" style={{ height: `${Math.max(2, (d.ventas / maxVentas) * 100)}%` }} />
+              <div className="w-full rounded-t-md bg-brand-yellow/80" style={{ height: `${Math.max(2, (d.ventas / maxVentas) * 100)}%` }} />
               {rango === 7 && <span className="text-[10px] font-semibold text-muted-foreground">{diaCorto(d.dia)}</span>}
             </div>
           ))}

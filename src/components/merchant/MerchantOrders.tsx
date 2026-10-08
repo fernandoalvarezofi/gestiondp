@@ -149,7 +149,7 @@ function Board({ orders, store, now, onChange }: { orders: DeliveryOrder[]; stor
           const count = orders.filter((order) => order.estado === column.estado).length;
           return (
             <button key={column.estado} type="button" role="tab" aria-selected={active === column.estado} onClick={() => setPicked(column.estado)} className={cn("flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition-colors", active === column.estado ? "border-foreground bg-foreground text-background" : "bg-card")}>
-              {column.title}<span className={cn("rounded-full px-1.5 text-[11px] tabular-nums", active === column.estado ? "bg-background/20" : column.estado === "pendiente" && count ? "bg-brand-orange text-white" : "bg-muted")}>{count}</span>
+              {column.title}<span className={cn("rounded-full px-1.5 text-[11px] tabular-nums", active === column.estado ? "bg-background/20" : column.estado === "pendiente" && count ? "bg-brand-yellow text-brand-yellow-foreground" : "bg-muted")}>{count}</span>
             </button>
           );
         })}
@@ -160,11 +160,11 @@ function Board({ orders, store, now, onChange }: { orders: DeliveryOrder[]; stor
           const list = sorted(column.estado);
           const hot = column.estado === "pendiente" && list.length > 0;
           return (
-            <section key={column.estado} className={cn("min-w-0 rounded-2xl p-2", hot ? "bg-brand-orange/[0.07] ring-1 ring-brand-orange/30" : "bg-muted/50", active !== column.estado && "max-md:hidden")}>
+            <section key={column.estado} className={cn("min-w-0 rounded-2xl p-2", hot ? "bg-brand-yellow/[0.07] ring-1 ring-brand-yellow/30" : "bg-muted/50", active !== column.estado && "max-md:hidden")}>
               <header className="flex items-center gap-2 px-2 pb-2 pt-1">
-                {hot && <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-orange opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-brand-orange" /></span>}
+                {hot && <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-yellow opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-brand-yellow" /></span>}
                 <h3 className="whitespace-nowrap text-[14px] font-extrabold">{column.title}</h3>
-                <span className={cn("rounded-full px-2 text-[11.5px] font-bold tabular-nums leading-5", hot ? "bg-brand-orange text-white" : "bg-card text-muted-foreground")}>{list.length}</span>
+                <span className={cn("rounded-full px-2 text-[11.5px] font-bold tabular-nums leading-5", hot ? "bg-brand-yellow text-brand-yellow-foreground" : "bg-card text-muted-foreground")}>{list.length}</span>
                 <span className="ml-auto hidden truncate text-[12px] text-muted-foreground 2xl:block">{column.hint}</span>
               </header>
               <div className="space-y-2.5">
@@ -227,7 +227,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
   const ghostBtn = "h-8 flex-1 rounded-full px-1.5 text-[12.5px] font-bold text-muted-foreground hover:text-foreground";
 
   return (
-    <article className={cn("rounded-xl border bg-card p-3.5", order.estado === "pendiente" && "border-brand-orange/50", late && "border-destructive/50")}>
+    <article className={cn("rounded-xl border bg-card p-3.5", order.estado === "pendiente" && "border-brand-yellow/50", late && "border-destructive/50")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-[15px] font-extrabold leading-tight">{shortId(order.id)} <span className="font-semibold text-muted-foreground">· {order.cliente?.nombre || "Cliente"}</span></p>

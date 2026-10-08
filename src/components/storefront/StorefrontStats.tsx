@@ -34,7 +34,7 @@ export function StorefrontStats({ storeId }: { storeId: string }) {
     <div>
       <div className="grid grid-cols-3 gap-3">
         {[["Hoy", today], ["7 días", week], ["30 días", month]].map(([label, value]) => (
-          <div key={label as string} className="rounded-2xl border border-l-4 border-l-brand-orange bg-card p-3">
+          <div key={label as string} className="rounded-2xl border border-l-4 border-l-brand-yellow bg-card p-3">
             <p className="text-xs font-semibold text-muted-foreground">{label}</p>
             <p className="font-display text-2xl font-extrabold tabular-nums">{(value as number).toLocaleString("es-AR")}</p>
           </div>
@@ -46,7 +46,7 @@ export function StorefrontStats({ storeId }: { storeId: string }) {
         <svg viewBox={`0 0 ${days.length * 10} 60`} className="mt-4 h-24 w-full" role="img" aria-label="Visitas por día en los últimos 30 días" preserveAspectRatio="none">
           {days.map((day, index) => {
             const height = Math.max(1.5, (day.visitas / max) * 56);
-            return <rect key={day.dia} x={index * 10 + 1} y={58 - height} width={8} height={height} rx={1.5} className={index === days.length - 1 ? "fill-brand-orange" : "fill-foreground/70"}><title>{`${dayLabel(day.dia)}: ${day.visitas} ${day.visitas === 1 ? "visita" : "visitas"}`}</title></rect>;
+            return <rect key={day.dia} x={index * 10 + 1} y={58 - height} width={8} height={height} rx={1.5} className={index === days.length - 1 ? "fill-brand-yellow" : "fill-foreground/70"}><title>{`${dayLabel(day.dia)}: ${day.visitas} ${day.visitas === 1 ? "visita" : "visitas"}`}</title></rect>;
           })}
         </svg>
       )}

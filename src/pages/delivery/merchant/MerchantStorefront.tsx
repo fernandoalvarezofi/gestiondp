@@ -206,7 +206,7 @@ export default function MerchantStorefront() {
                 const obligatorio = bloque.tipo === "catalogo";
                 return (
                   <li key={bloque.id} id={`editar-${bloque.id}`} draggable onDragStart={() => setDragId(bloque.id)} onDragEnd={() => { setDragId(null); setDropOn(null); }} onDragOver={(event) => { event.preventDefault(); setDropOn(bloque.id); }} onDrop={(event) => soltar(event, bloque.id)}
-                    className={cn("rounded-2xl border bg-card transition-shadow", open && "border-brand-orange shadow-soft", dropOn === bloque.id && dragId !== bloque.id && "ring-2 ring-brand-orange", dragId === bloque.id && "opacity-50", !bloque.visible && "opacity-70")}>
+                    className={cn("rounded-2xl border bg-card transition-shadow", open && "border-brand-yellow shadow-soft", dropOn === bloque.id && dragId !== bloque.id && "ring-2 ring-brand-yellow", dragId === bloque.id && "opacity-50", !bloque.visible && "opacity-70")}>
                     <div className="flex items-center gap-1 p-2">
                       <span className="cursor-grab px-1 text-muted-foreground" aria-hidden><GripVertical className="h-4 w-4" /></span>
                       <button type="button" onClick={() => setOpenId(open ? null : bloque.id)} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-muted/50">
@@ -304,7 +304,7 @@ export default function MerchantStorefront() {
             {TIPOS_BLOQUE.map((item) => {
               const bloqueado = yaEsta(item.tipo);
               return (
-                <button key={item.tipo} type="button" disabled={bloqueado} onClick={() => agregar(item.tipo)} className="rounded-2xl border p-3 text-left transition-colors hover:border-brand-orange hover:bg-brand-orange/5 disabled:cursor-not-allowed disabled:opacity-50">
+                <button key={item.tipo} type="button" disabled={bloqueado} onClick={() => agregar(item.tipo)} className="rounded-2xl border p-3 text-left transition-colors hover:border-brand-yellow hover:bg-brand-yellow/5 disabled:cursor-not-allowed disabled:opacity-50">
                   <span className="block font-bold">{item.nombre}</span>
                   <span className="block text-xs text-muted-foreground">{bloqueado ? "Ya está en tu página" : item.detalle}</span>
                 </button>

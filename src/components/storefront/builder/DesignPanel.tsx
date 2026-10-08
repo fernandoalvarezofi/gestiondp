@@ -31,7 +31,7 @@ export function DesignPanel({ tema, onChange }: { tema: TemaNormalizado; onChang
           {FONDOS.map((fondo) => {
             const on = d.fondo === fondo.id;
             return (
-              <button key={fondo.nombre} type="button" aria-pressed={on} onClick={() => onChange({ fondo: fondo.id })} className={cn("flex items-center gap-2 rounded-full border-2 py-1 pl-1 pr-3 text-sm font-semibold transition-colors", on ? "border-brand-orange bg-brand-orange/10" : "border-transparent bg-muted/60 hover:bg-muted")}>
+              <button key={fondo.nombre} type="button" aria-pressed={on} onClick={() => onChange({ fondo: fondo.id })} className={cn("flex items-center gap-2 rounded-full border-2 py-1 pl-1 pr-3 text-sm font-semibold transition-colors", on ? "border-brand-yellow bg-brand-yellow/10" : "border-transparent bg-muted/60 hover:bg-muted")}>
                 <span className="flex h-7 w-7 items-center justify-center rounded-full border" style={{ background: fondo.color }}>{on && <Check className="h-3.5 w-3.5" style={{ color: fondo.color === "#FFFFFF" || fondo.color === "#FAF7F2" || fondo.color === "#F1F5F9" || fondo.color === "#FDF2F8" ? "#111" : "#fff" }} />}</span>
                 {fondo.nombre}
               </button>
@@ -48,7 +48,7 @@ export function DesignPanel({ tema, onChange }: { tema: TemaNormalizado; onChang
         <h3 className="mb-2 font-extrabold">Letra de los títulos</h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {(Object.keys(FUENTES) as Fuente[]).map((fuente) => (
-            <button key={fuente} type="button" aria-pressed={d.fuente_titulos === fuente} onClick={() => onChange({ fuente_titulos: fuente })} className={cn("rounded-2xl border-2 p-3 text-left transition-colors", d.fuente_titulos === fuente ? "border-brand-orange bg-brand-orange/5" : "border-transparent bg-muted/50 hover:bg-muted")}>
+            <button key={fuente} type="button" aria-pressed={d.fuente_titulos === fuente} onClick={() => onChange({ fuente_titulos: fuente })} className={cn("rounded-2xl border-2 p-3 text-left transition-colors", d.fuente_titulos === fuente ? "border-brand-yellow bg-brand-yellow/5" : "border-transparent bg-muted/50 hover:bg-muted")}>
               <span className="block text-2xl font-bold leading-none" style={{ fontFamily: FUENTES[fuente].css }}>{FUENTES[fuente].ejemplo}</span>
               <span className="mt-1 block text-xs font-semibold text-muted-foreground">{FUENTES[fuente].nombre}</span>
             </button>
@@ -63,7 +63,7 @@ export function DesignPanel({ tema, onChange }: { tema: TemaNormalizado; onChang
           <p className="text-sm font-semibold">Esquinas</p>
           <div className="grid grid-cols-4 gap-2">
             {(Object.keys(RADIOS) as Radio[]).map((radio) => (
-              <button key={radio} type="button" aria-pressed={d.radio === radio} onClick={() => onChange({ radio })} className={cn("rounded-xl border-2 p-2 text-center transition-colors", d.radio === radio ? "border-brand-orange bg-brand-orange/5" : "border-transparent bg-muted/50 hover:bg-muted")}>
+              <button key={radio} type="button" aria-pressed={d.radio === radio} onClick={() => onChange({ radio })} className={cn("rounded-xl border-2 p-2 text-center transition-colors", d.radio === radio ? "border-brand-yellow bg-brand-yellow/5" : "border-transparent bg-muted/50 hover:bg-muted")}>
                 <span className="mx-auto block h-9 w-12 border-2 border-foreground/60 bg-background" style={{ borderRadius: RADIOS[radio].css }} />
                 <span className="mt-1 block text-[11px] font-semibold text-muted-foreground">{RADIOS[radio].nombre}</span>
               </button>

@@ -87,7 +87,7 @@ export default {
         info: "hsl(var(--info))",
         "brand-deep": "hsl(var(--brand-deep))",
         "brand-cream": "hsl(var(--brand-cream))",
-        "brand-orange": "hsl(var(--brand-orange))",
+        "brand-yellow": { DEFAULT: "hsl(var(--brand-yellow))", foreground: "hsl(var(--brand-yellow-foreground))" },
         "surface-mint": {
           DEFAULT: "hsl(var(--surface-mint))",
           strong: "hsl(var(--surface-mint-strong))",

@@ -49,7 +49,7 @@ export function PreviewPane({ data, selected, onSelect, className }: { data: Pre
         <p className="text-sm font-bold text-muted-foreground">Vista previa en vivo <span className="font-normal">· tocá un bloque para editarlo</span></p>
         <div className="flex rounded-full border bg-card p-0.5" role="group" aria-label="Tamaño de pantalla">
           {([["escritorio", Monitor, "Computadora"], ["celular", Smartphone, "Celular"]] as const).map(([id, Icon, label]) => (
-            <button key={id} type="button" aria-pressed={device === id} aria-label={label} onClick={() => setDevice(id)} className={cn("flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors", device === id ? "bg-[hsl(220_14%_16%)] text-white" : "text-muted-foreground hover:text-foreground")}><Icon className="h-4 w-4" />{label}</button>
+            <button key={id} type="button" aria-pressed={device === id} aria-label={label} onClick={() => setDevice(id)} className={cn("flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors", device === id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}><Icon className="h-4 w-4" />{label}</button>
           ))}
         </div>
       </div>

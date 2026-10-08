@@ -126,7 +126,7 @@ export default function StoreDetail() {
         <button type="button" aria-label="Compartir" onClick={share} className="flex h-10 w-10 items-center justify-center rounded-full border bg-card hover:bg-muted"><Share2 className="h-[18px] w-[18px]" /></button>
         <FavoriteButton storeId={store.id} className="h-10 w-10 border" />
       </div>
-      <div className="relative h-48 w-full overflow-hidden border-b-4 border-brand-orange bg-muted sm:hidden">
+      <div className="relative h-48 w-full overflow-hidden border-b-4 border-brand-yellow bg-muted sm:hidden">
         <SmartImage src={store.imagen_url} width={1400} loading="eager" className={cn(!open && "grayscale")} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/10" />
         <div className="absolute inset-x-3 top-3 flex items-center gap-2">
@@ -138,7 +138,7 @@ export default function StoreDetail() {
       </div>
 
       {/* Ficha del local */}
-      <div className="relative -mt-6 rounded-t-3xl bg-card px-4 pb-2 pt-1 sm:mt-2 sm:rounded-3xl sm:border sm:border-t-4 sm:border-t-brand-orange sm:px-6 sm:pb-5 sm:pt-5">
+      <div className="relative -mt-6 rounded-t-3xl bg-card px-4 pb-2 pt-1 sm:mt-2 sm:rounded-3xl sm:border sm:border-t-4 sm:border-t-brand-yellow sm:px-6 sm:pb-5 sm:pt-5">
        <div className="sm:grid sm:grid-cols-[120px_1fr] sm:items-start sm:gap-x-6">
         <div className="flex items-end gap-3">
           <StoreLogo store={store} className="-mt-10 h-20 w-20 border-4 border-card text-2xl shadow-pop sm:mt-0 sm:h-[120px] sm:w-[120px] sm:rounded-2xl sm:border sm:text-4xl sm:shadow-none" />

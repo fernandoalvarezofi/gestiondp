@@ -21,7 +21,7 @@ function DriverOnboarding({ children }: { children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-2xl space-y-4 px-4 py-8">
       <header className="flex items-center gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[hsl(220_14%_16%)] text-brand-orange"><CarTaxiFront className="h-6 w-6" /></span>
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-tile"><CarTaxiFront className="h-6 w-6" /></span>
         <div><p className="text-xs font-bold uppercase tracking-wide text-primary">Conductor</p><h1 className="text-2xl font-extrabold">Manejá con Woref</h1></div>
       </header>
       <p className="text-muted-foreground">Llevá pasajeros con tu auto y cobrá en efectivo. Primero verificamos tu identidad y después revisamos tu licencia y la cédula del vehículo.</p>

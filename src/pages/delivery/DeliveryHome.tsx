@@ -14,7 +14,7 @@ import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe
 import { cn } from "@/lib/utils";
 
 const banners = [
-  { title: "30% OFF en tu primer pedido", text: "Con el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=760&q=62&auto=format&fit=crop", tone: "from-[#272B33] via-[#272B33]/85", to: "/app/promociones", cta: "Ver cupones" },
+  { title: "30% OFF en tu primer pedido", text: "Con el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=760&q=62&auto=format&fit=crop", tone: "from-[#1F6F58] via-[#1F6F58]/85", to: "/app/promociones", cta: "Ver cupones" },
   { title: "Tu súper en minutos", text: "Frescos, almacén y bebidas", image: "https://images.unsplash.com/photo-1542838132-92c53300491e?w=760&q=62&auto=format&fit=crop", tone: "from-emerald-700 via-emerald-700/80", to: "/app/categoria/super", cta: "Hacer el súper" },
   { title: "Sumá puntos con cada pedido", text: "Woref Club: canjealos por descuentos y envíos gratis", image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=760&q=62&auto=format&fit=crop", tone: "from-brand-deep via-brand-deep/80", to: "/app/club", cta: "Ver mi Club" },
   { title: "Invitá a un amigo", text: "Los dos ganan descuento en su primer pedido", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=760&q=62&auto=format&fit=crop", tone: "from-violet-800 via-violet-800/80", to: "/app/club", cta: "Invitar" },
@@ -28,7 +28,7 @@ function Section({ title, subtitle, to, children }: { title: string; subtitle?: 
     <section className="mt-8">
       <div className="mb-3 flex items-end justify-between gap-4 px-4 sm:px-0">
         <div className="min-w-0">
-          <h2 className="flex items-center gap-2 truncate text-lg font-black sm:text-xl"><span aria-hidden className="h-5 w-1.5 shrink-0 rounded-full bg-brand-orange" />{title}</h2>
+          <h2 className="flex items-center gap-2 truncate text-lg font-black sm:text-xl"><span aria-hidden className="h-5 w-1.5 shrink-0 rounded-full bg-brand-yellow" />{title}</h2>
           {subtitle && <p className="pl-3.5 text-[13px] font-semibold text-muted-foreground">{subtitle}</p>}
         </div>
         {to && <Link to={to} className="flex shrink-0 items-center text-sm font-extrabold text-primary">Ver todos<ChevronRight className="h-4 w-4" /></Link>}
@@ -51,7 +51,7 @@ const Rail = ({ children }: { children: React.ReactNode }) => {
   }, []);
   useEffect(() => { update(); }, [update, children]);
   const move = (direction: 1 | -1) => ref.current?.scrollBy({ left: direction * ref.current.clientWidth * 0.8, behavior: "smooth" });
-  const arrow = "absolute top-[28%] z-10 hidden h-10 w-10 items-center justify-center rounded-full border bg-card shadow-soft transition hover:border-brand-orange md:flex";
+  const arrow = "absolute top-[28%] z-10 hidden h-10 w-10 items-center justify-center rounded-full border bg-card shadow-soft transition hover:border-brand-yellow md:flex";
   return (
     <div className="group/rail relative">
       <div ref={ref} onScroll={update} className="scrollbar-none flex snap-x scroll-px-4 gap-3 overflow-x-auto px-4 pb-1 sm:scroll-px-0 sm:px-0">{children}</div>
@@ -153,11 +153,11 @@ export default function DeliveryHome() {
     <div className="pb-16">
       {/* Portada de marca: el buscador vive adentro, como en las apps de delivery */}
       <div className="mx-auto max-w-6xl sm:px-6 md:hidden lg:px-8">
-        <section className="border-b-4 border-brand-orange bg-[hsl(220_14%_16%)] px-4 pb-14 pt-1 text-white max-md:rounded-b-[32px] md:rounded-3xl md:px-10 md:pb-16 md:pt-10">
+        <section className="border-b-4 border-brand-yellow bg-primary px-4 pb-14 pt-1 text-white max-md:rounded-b-[32px] md:rounded-3xl md:px-10 md:pb-16 md:pt-10">
           <h1 className="text-[26px] font-extrabold leading-[1.1] tracking-tight md:text-5xl">¿Qué querés<br className="md:hidden" /> pedir hoy?</h1>
           <p className="mt-1 hidden text-lg font-semibold text-white/80 md:block">Comida, súper, farmacia y más, cerca tuyo.</p>
           <Link to="/app/buscar" className="mt-4 flex h-12 items-center gap-3 rounded-full bg-card px-4 text-[15px] font-semibold text-muted-foreground shadow-pop transition-transform active:scale-[0.99] md:mt-6 md:h-14 md:max-w-xl md:text-base">
-            <Search className="h-5 w-5 text-brand-orange" />Buscar locales, platos y productos
+            <Search className="h-5 w-5 text-primary" />Buscar locales, platos y productos
           </Link>
         </section>
       </div>
@@ -166,16 +166,16 @@ export default function DeliveryHome() {
         <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-9 md:gap-3 md:bg-transparent md:p-0 md:shadow-none" aria-label="Categorías">
           {tiles.map(({ id, label, image }, index) => (
             <Link key={id} to={`/app/categoria/${id}`} className={cn("group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4", index >= 6 && "max-md:hidden")}>
-              <span className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-transparent bg-muted shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-active:scale-95 md:h-[72px] md:w-[72px] md:border-white"><SmartImage src={image} width={200} /></span>
+              <span className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-transparent bg-muted shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px] md:border-white"><SmartImage src={image} width={200} /></span>
               <span className="text-[12px] font-bold leading-tight md:text-sm">{label}</span>
             </Link>
           ))}
           <Link to="/app/enviar" className="group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent bg-[hsl(220_14%_16%)] text-brand-orange transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-active:scale-95 md:h-[72px] md:w-[72px]"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent brand-tile transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px]"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Envíos</span>
           </Link>
           <Link to="/app/remis" className="group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent bg-[hsl(220_14%_16%)] text-brand-orange transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-orange group-active:scale-95 md:h-[72px] md:w-[72px]"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent brand-tile transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px]"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Remís</span>
           </Link>
         </section>
@@ -201,7 +201,7 @@ export default function DeliveryHome() {
           <Rail>
             {cuisines.map(({ rubro, image }) => (
               <Link key={rubro} to={`/app/buscar?q=${encodeURIComponent(rubro)}`} className="group flex w-[84px] shrink-0 snap-start flex-col items-center gap-2 text-center">
-                <span className="relative h-[84px] w-[84px] overflow-hidden rounded-full bg-muted ring-2 ring-transparent transition-all duration-300 group-hover:ring-brand-orange group-active:scale-95">
+                <span className="relative h-[84px] w-[84px] overflow-hidden rounded-full bg-muted ring-2 ring-transparent transition-all duration-300 group-hover:ring-brand-yellow group-active:scale-95">
                   <img src={img(image, 240)} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
                   <span className="absolute inset-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06)]" />
                 </span>
@@ -239,7 +239,7 @@ export default function DeliveryHome() {
 
       <section className="mt-10">
         <div className="px-4 sm:px-0">
-          <h2 className="flex items-center gap-2 text-lg font-black sm:text-xl"><span aria-hidden className="h-5 w-1.5 shrink-0 rounded-full bg-brand-orange" />Todos los locales</h2>
+          <h2 className="flex items-center gap-2 text-lg font-black sm:text-xl"><span aria-hidden className="h-5 w-1.5 shrink-0 rounded-full bg-brand-yellow" />Todos los locales</h2>
           <p className="text-[13px] font-semibold text-muted-foreground">{list.length} {list.length === 1 ? "resultado" : "resultados"}</p>
         </div>
         <div className="scrollbar-none mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:px-0">

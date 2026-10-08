@@ -69,7 +69,7 @@ export function StoreCard({ store, variant = "grid" }: { store: DeliveryStore; v
   const showFree = free && open && !/env[ií]o gratis/i.test(store.promo_texto || "");
   return (
     <Link to={`/app/tienda/${store.slug}`} className={cn("group block min-w-0", variant === "row" && "w-[272px] shrink-0 snap-start sm:w-[300px]")}>
-      <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-orange">
+      <div className="relative aspect-[16/9] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-yellow">
         <SmartImage src={store.imagen_url} width={640} className={cn("transition-transform duration-500 group-hover:scale-[1.04]", (!open || !reach.inZone) && "grayscale")} />
         <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           {store.promo_texto && <span className="rounded-md bg-[#FFE14D] px-2 py-0.5 text-xs font-extrabold text-black shadow-sm">{store.promo_texto}</span>}
@@ -99,7 +99,7 @@ export function StoreTile({ store }: { store: DeliveryStore }) {
   const available = open && reach.inZone;
   return (
     <Link to={`/app/tienda/${store.slug}`} className="group block w-[136px] shrink-0 snap-start sm:w-[156px]">
-      <div className="relative aspect-[5/4] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-orange">
+      <div className="relative aspect-[5/4] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors duration-200 group-hover:border-brand-yellow">
         <SmartImage src={store.imagen_url} width={320} className={cn("transition-transform duration-500 group-hover:scale-[1.05]", !available && "grayscale")} />
         {store.promo_texto && <span className="absolute left-0 top-2 max-w-[90%] truncate rounded-r-md bg-[#FFE14D] px-2 py-0.5 text-[11px] font-extrabold text-black">{store.promo_texto}</span>}
         <span className="absolute inset-0 flex items-center justify-center"><StoreLogo store={store} className="h-12 w-12 rounded-xl border-2 border-white text-sm shadow-pop" /></span>

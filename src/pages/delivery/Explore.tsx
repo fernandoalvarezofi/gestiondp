@@ -26,7 +26,7 @@ const descubrir: Acceso[] = [
 function AccesoCard({ to, titulo, texto, icon: Icon }: Acceso) {
   return (
     <Link to={to} className="group flex h-full items-center gap-3.5 rounded-2xl border bg-card p-3.5 transition-colors hover:border-foreground/40 hover:bg-muted/50">
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[hsl(220_14%_16%)] text-brand-orange transition-transform group-hover:scale-105"><Icon className="h-6 w-6" /></span>
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl brand-tile transition-transform group-hover:scale-105"><Icon className="h-6 w-6" /></span>
       <span className="min-w-0 flex-1"><span className="block font-extrabold leading-tight">{titulo}</span><span className="mt-0.5 block text-sm leading-snug text-muted-foreground">{texto}</span></span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
     </Link>
@@ -36,7 +36,7 @@ function AccesoCard({ to, titulo, texto, icon: Icon }: Acceso) {
 function Grupo({ id, titulo, subtitulo, children }: { id: string; titulo: string; subtitulo: string; children: React.ReactNode }) {
   return (
     <section aria-labelledby={id}>
-      <h2 id={id} className="flex items-center gap-2 text-lg font-extrabold"><span className="h-5 w-1 rounded-full bg-brand-orange" />{titulo}</h2>
+      <h2 id={id} className="flex items-center gap-2 text-lg font-extrabold"><span className="h-5 w-1 rounded-full bg-brand-yellow" />{titulo}</h2>
       <p className="mt-0.5 text-sm text-muted-foreground">{subtitulo}</p>
       <div className="mt-3">{children}</div>
     </section>

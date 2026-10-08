@@ -81,8 +81,8 @@ export default function MerchantHome() {
       />
 
       {pendingCount > 0 && (
-        <Link to="/app/comercio/pedidos" className="group flex items-center gap-3 rounded-2xl border border-brand-orange/30 bg-brand-orange/[0.06] px-4 py-3 transition-colors hover:bg-brand-orange/10">
-          <span className="relative flex h-2.5 w-2.5 shrink-0"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-orange opacity-60" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-brand-orange" /></span>
+        <Link to="/app/comercio/pedidos" className="group flex items-center gap-3 rounded-2xl border border-brand-yellow/30 bg-brand-yellow/[0.06] px-4 py-3 transition-colors hover:bg-brand-yellow/10">
+          <span className="relative flex h-2.5 w-2.5 shrink-0"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-yellow opacity-60" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-brand-yellow" /></span>
           <p className="min-w-0 flex-1 text-sm"><span className="font-extrabold">{pendingCount === 1 ? "1 pedido nuevo esperando" : `${pendingCount} pedidos nuevos esperando`}</span>{oldestPending && <span className="text-muted-foreground"> · el más antiguo es de {ago(oldestPending.created_at)}</span>}</p>
           <span className="flex items-center gap-1 text-sm font-bold">Responder<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
         </Link>

@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => ({
         name: "Woref — Delivery",
         short_name: "Woref",
         description: "Comida, supermercado, farmacia y tiendas con envío en minutos.",
-        theme_color: "#272b33",
+        theme_color: "#2b9778",
         background_color: "#ffffff",
         display: "standalone",
         orientation: "portrait",
