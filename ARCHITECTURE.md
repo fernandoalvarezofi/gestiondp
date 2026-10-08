@@ -82,6 +82,8 @@ src/
 
 ## C. Mapa del frontend
 
+> **Actualizado (2026-10-08):** la navegación ahora está separada por contextos (Cliente, Comercio, Repartidor, Conductor, Administración), con guardas por ruta y menús centralizados. Ver [docs/NAVEGACION.md](docs/NAVEGACION.md).
+
 | Zona | Ruta base | Qué es |
 |---|---|---|
 | Público | `/`, `/auth`, `/terminos`, `/privacidad`, `/arrepentimiento` | Landing, acceso, legales |

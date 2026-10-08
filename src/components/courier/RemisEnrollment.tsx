@@ -49,7 +49,7 @@ export function RemisEnrollment({ courier, onChanged }: { courier: Courier; onCh
       {courier.remis_estado === "aprobado" ? (
         <>
         <label className="mt-3 flex items-center justify-between gap-3 rounded-2xl border p-3">
-          <span><span className="block font-bold">Recibir viajes de remís</span><span className="block text-xs text-muted-foreground">Cuando estés conectado, además de pedidos y envíos te llegan viajes de pasajeros. Cobrás en efectivo.</span></span>
+          <span><span className="block font-bold">Recibir viajes de remís</span><span className="block text-xs text-muted-foreground">Con esto activo, al conectarte en el panel de Conductor te llegan viajes de pasajeros. Cobrás en efectivo.</span></span>
           <Switch checked={Boolean(courier.acepta_remis)} onCheckedChange={toggle} aria-label="Recibir viajes de remís" />
         </label>
         <p className="mt-2 text-xs text-muted-foreground">Categorías que podés llevar: <span className="font-bold text-foreground">{(courier.remis_categorias ?? ["estandar"]).map(categoriaLabel).join(", ")}</span>. Las habilita administración.</p>

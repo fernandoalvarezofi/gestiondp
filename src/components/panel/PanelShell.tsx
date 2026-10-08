@@ -1,8 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { ArrowLeft, ChevronsUpDown, ExternalLink, Home, LogOut, type LucideIcon } from "lucide-react";
+import { ArrowLeft, ChevronsUpDown, ExternalLink, Home, LogOut, UserCircle, type LucideIcon } from "lucide-react";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { NotificationBell } from "@/components/delivery/NotificationBell";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset,
@@ -12,6 +13,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { isRootPath, useGoBack } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { ContextMenuItems } from "@/navigation/ContextSwitcher";
+import { contextById, contextFromPath, rememberContext } from "@/navigation/contexts";
 
 export type PanelNavItem = { to: string; label: string; /** Nombre corto para la barra de abajo del celular. */ short?: string; icon: LucideIcon; end?: boolean; badge?: number | string; hidden?: boolean };
 export type PanelNavGroup = { label?: string; items: PanelNavItem[] };
@@ -72,6 +75,9 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
   const { signOut } = useAuth();
   const roles = useDeliveryRoles();
   const goBack = useGoBack();
+  // Contexto de trabajo actual; se recuerda para que la app instalada abra directo en él.
+  const context = contextById(contextFromPath(location.pathname));
+  useEffect(() => { rememberContext(context.id); }, [context.id]);
   const items = groups.flatMap((group) => group.items).filter((item) => !item.hidden);
   // La sección activa es la que mejor coincide con la ruta (la más específica).
   const tabItems = (tabs ? tabs.map((to) => items.find((item) => item.to === to)).filter((item): item is PanelNavItem => Boolean(item)) : items).slice(0, 5);
@@ -82,7 +88,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
       <Sidebar collapsible="icon" className="border-r">
         <SidebarHeader className="gap-3 p-3">
           <Link to="/app" aria-label="Volver a Woref" className="flex items-center group-data-[collapsible=icon]:hidden"><DeliveryBrand /></Link>
-          <p className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground group-data-[collapsible=icon]:hidden">{panel}</p>
+          <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground group-data-[collapsible=icon]:hidden"><context.icon className="h-3.5 w-3.5 text-brand-orange" aria-hidden />{panel}</p>
           {identity}
         </SidebarHeader>
         <SidebarContent>
@@ -91,8 +97,8 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
         <SidebarFooter className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Ir a Woref" className="h-10 font-semibold">
-                <Link to="/app"><Home className="h-[18px] w-[18px]" /><span>Ir a Woref</span></Link>
+              <SidebarMenuButton asChild tooltip="Comprar como cliente" className="h-10 font-semibold">
+                <Link to="/app"><Home className="h-[18px] w-[18px]" /><span>Comprar como cliente</span></Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -104,13 +110,10 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
                     <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" align="start" className="w-56">
-                  <DropdownMenuLabel>Cambiar de panel</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => navigate("/app/comercio")}>{roles.storeId ? "Panel de mi comercio" : "Sumar mi comercio"}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/app/repartidor")}>{roles.isCourier ? "Panel de repartidor" : "Quiero ser repartidor"}</DropdownMenuItem>
-                  {roles.isAdmin && <DropdownMenuItem onClick={() => navigate("/app/admin")}>Administración</DropdownMenuItem>}
+                <DropdownMenuContent side="top" align="start" className="w-64">
+                  <ContextMenuItems />
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/app/perfil")}>Mi cuenta y direcciones</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/app/perfil")}><UserCircle className="h-4 w-4" />Mi cuenta y direcciones</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -130,6 +133,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
             {quickLink && <Link to={quickLink.to} className="hidden items-center gap-1 text-xs font-bold text-primary sm:inline-flex">{quickLink.label}<ExternalLink className="h-3 w-3" /></Link>}
           </div>
           {actions}
+          <NotificationBell />
         </header>
         <div className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 lg:px-8">{children}</div>
 

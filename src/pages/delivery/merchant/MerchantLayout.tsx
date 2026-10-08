@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
-import { BarChart3, Building2, CalendarCheck, ChevronsUpDown, ClipboardList, Landmark, LayoutDashboard, Loader2, Megaphone, MessageCircle, MessageCircleQuestion, PackageOpen, Plus, Send, Globe, Settings, Star, Store, Users, UtensilsCrossed } from "lucide-react";
+import { Building2, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -17,13 +17,12 @@ import { TeamInvitations } from "@/components/merchant/TeamInvitations";
 import { EmptyState } from "@/components/delivery/Common";
 import { StoreOnboarding } from "@/components/merchant/StoreOnboarding";
 import type { StoreFormValues } from "@/components/merchant/StoreSettingsForm";
+import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { merchantNav, merchantSectionPermission, merchantTabs } from "@/navigation/menus";
 import { roleLabel, type Branch, type MerchantContext, type Permission, type StoreAccess } from "./context";
 
 const ACTIVE_KEY = "woref-sucursal";
 const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
-
-/** Qué permiso hace falta para entrar a cada sección del panel. */
-const sectionPermission: Record<string, Permission> = { menu: "catalogo", devoluciones: "pedidos", turnos: "pedidos", sucursales: "equipo", nuevo: "equipo", preguntas: "opiniones", promociones: "promociones", campanas: "promociones", opiniones: "opiniones", estadisticas: "estadisticas", finanzas: "finanzas", equipo: "equipo", tienda: "ajustes", configuracion: "ajustes" };
 
 const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
@@ -150,6 +149,11 @@ export default function MerchantLayout() {
     await loadStore();
   };
 
+  // Si cambió el acceso (creó su comercio, aceptó una invitación), el selector de contexto se entera.
+  const roles = useDeliveryRoles();
+  const hasStore = Boolean(store);
+  useEffect(() => { if (!loading && hasStore !== Boolean(roles.storeId)) roles.refresh(); }, [loading, hasStore]); // eslint-disable-line react-hooks/exhaustive-deps
+
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
 
   if (!store || !access) {
@@ -165,16 +169,15 @@ export default function MerchantLayout() {
   const open = isOpenNow(store);
   const can = (permission: Permission) => access.permisos.includes(permission);
   const section = location.pathname.split("/")[3] ?? "";
-  const needed = sectionPermission[section];
+  const needed = merchantSectionPermission(section);
   const blocked = needed ? !can(needed) : false;
-  const tabs = [["/app/comercio", true], ["/app/comercio/pedidos", true], ["/app/comercio/menu", can("catalogo")], ["/app/comercio/estadisticas", can("estadisticas")], ["/app/comercio/configuracion", can("ajustes")]] as const;
   const context: MerchantContext = { store, access, orders, products, coupons, reviews, pendingCount, preguntasPendientes, loadPreguntas, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings, branches, switchStore, reloadBranches };
 
   return (
     <PanelShell
-      panel="Panel del comercio"
+      panel="Mi comercio"
       bottomTabs
-      tabs={tabs.filter(([, allowed]) => allowed).map(([to]) => to)}
+      tabs={merchantTabs(can)}
       quickLink={{ to: `/app/tienda/${store.slug}`, label: "Ver como cliente" }}
       identity={branches.length > 1 ? (
         <DropdownMenu>
@@ -212,29 +215,7 @@ export default function MerchantLayout() {
           </div>
         </div>
       )}
-      groups={[
-        { label: "Operación", items: [
-          { to: "/app/comercio", label: "Inicio", icon: LayoutDashboard, end: true },
-          { to: "/app/comercio/pedidos", label: "Pedidos", icon: ClipboardList, badge: pendingCount },
-          { to: "/app/comercio/devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen },
-          { to: "/app/comercio/mensajes", label: "Mensajes", icon: MessageCircle },
-          { to: "/app/comercio/turnos", label: "Turnos y servicios", short: "Turnos", icon: CalendarCheck },
-          ...(can("catalogo") ? [{ to: "/app/comercio/menu", label: "Menú y stock", short: "Menú", icon: UtensilsCrossed }] : []),
-        ] },
-        { label: "Tienda online", items: [
-          ...(can("ajustes") ? [{ to: "/app/comercio/tienda", label: "Diseño de mi tienda", short: "Tienda", icon: Globe }] : []),
-          ...(can("opiniones") ? [{ to: "/app/comercio/preguntas", label: "Preguntas", icon: MessageCircleQuestion, badge: preguntasPendientes }, { to: "/app/comercio/opiniones", label: "Opiniones", icon: Star }] : []),
-        ] },
-        { label: "Crecimiento", items: [
-          ...(can("promociones") ? [{ to: "/app/comercio/promociones", label: "Promociones", icon: Megaphone }, { to: "/app/comercio/campanas", label: "Campañas", icon: Send }] : []),
-          ...(can("estadisticas") ? [{ to: "/app/comercio/estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3 }] : []),
-        ] },
-        { label: "Mi local", items: [
-          ...(can("finanzas") ? [{ to: "/app/comercio/finanzas", label: "Finanzas", icon: Landmark }] : []),
-          ...(can("equipo") ? [{ to: "/app/comercio/equipo", label: "Equipo", icon: Users }, { to: "/app/comercio/sucursales", label: "Mis comercios", short: "Comercios", icon: Building2 }] : []),
-          ...(can("ajustes") ? [{ to: "/app/comercio/configuracion", label: "Configuración", short: "Ajustes", icon: Settings }] : []),
-        ] },
-      ].filter((group) => group.items.length > 0)}
+      groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes })}
       actions={<StoreStatusControl store={store} onChange={loadStore} />}
     >
       {store.aprobado === false && !store.motivo_rechazo && <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>}

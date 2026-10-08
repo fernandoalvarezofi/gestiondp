@@ -1,10 +1,13 @@
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-const PANELS = ["/app/comercio", "/app/repartidor", "/app/admin"];
+import { APP_CONTEXTS } from "@/navigation/contexts";
 
-/** Pantallas "raíz": las de la barra de abajo y los inicios de cada panel. Ahí no hay a dónde volver. */
-const ROOTS = new Set(["/app", "/app/buscar", "/app/pedidos", "/app/favoritos", "/app/servicios", "/app/perfil", ...PANELS]);
+/** Inicio de cada panel de trabajo (comercio, repartidor, conductor, administración). */
+const PANELS = APP_CONTEXTS.filter((ctx) => ctx.id !== "cliente").map((ctx) => ctx.base);
+
+/** Pantallas "raíz": las de la barra de abajo del cliente y los inicios de cada panel. Ahí no hay a dónde volver. */
+const ROOTS = new Set(["/app", "/app/explorar", "/app/pedidos", "/app/mensajes", "/app/perfil", ...PANELS]);
 
 const normalize = (pathname: string) => (pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname);
 
@@ -19,7 +22,9 @@ export function parentPath(pathname: string): string {
   if (/^\/app\/remis\/[^/]+$/.test(path)) return "/app/remis";
   if (/^\/app\/ayuda\/[^/]+$/.test(path)) return "/app/ayuda";
   if (path === "/app/ayuda") return "/app/perfil/ayuda";
-  if (["/app/club", "/app/promociones", "/app/enviar", "/app/remis", "/app/directorio"].includes(path)) return "/app";
+  // Lo que se abre desde Explorar vuelve a Explorar.
+  if (["/app/buscar", "/app/promociones", "/app/enviar", "/app/remis", "/app/directorio", "/app/turnos/locales", "/app/favoritos"].includes(path)) return "/app/explorar";
+  if (path === "/app/club") return "/app";
   if (/^\/app\/perfil\/[^/]+$/.test(path)) return "/app/perfil";
   const panel = PANELS.find((root) => path.startsWith(`${root}/`));
   if (panel) {
@@ -36,6 +41,7 @@ export function pageTitle(pathname: string): string {
   const exact: Record<string, string> = {
     "/app/carrito": "Mi pedido", "/app/club": "Woref Club", "/app/promociones": "Cupones y promociones", "/app/ayuda": "Ayuda",
     "/app/enviar": "Enviar un paquete", "/app/remis": "Pedir un remís", "/app/directorio": "Comercios de Lincoln", "/app/favoritos": "Favoritos", "/app/buscar": "Buscar", "/app/pedidos": "Mis pedidos", "/app/notificaciones": "Notificaciones", "/app/mensajes": "Mensajes", "/app/turnos": "Mis turnos",
+    "/app/explorar": "Explorar", "/app/turnos/locales": "Reservar un turno",
   };
   if (exact[path]) return exact[path];
   if (/^\/app\/ayuda\/[^/]+$/.test(path)) return "Consulta";

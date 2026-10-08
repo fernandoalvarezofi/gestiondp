@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router-dom";
-import { Bell, ChevronRight, Fingerprint, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, PiggyBank, Trophy, UserCircle, Wallet } from "lucide-react";
+import { Bell, CalendarCheck, ChevronRight, MessageCircle, Fingerprint, Heart, HelpCircle, LockKeyhole, MapPin, Receipt, ShieldCheck, Ticket, PiggyBank, Trophy, UserCircle, Wallet } from "lucide-react";
 import { AddressesSection } from "@/components/account/AddressesSection";
 import { GeneralSection } from "@/components/account/GeneralSection";
 import { HelpSection } from "@/components/account/HelpSection";
@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { db, img } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { ContextSwitcherCard } from "@/navigation/ContextSwitcher";
 
 const SECTIONS = [
   { id: "general", label: "Datos personales", hint: "Foto, nombre, teléfono y email", icon: UserCircle },
@@ -25,7 +26,7 @@ const SECTIONS = [
   { id: "pedidos", label: "Pedidos y pagos", hint: "Pago, propina y cómo recibir", icon: Wallet },
   { id: "notificaciones", label: "Notificaciones y apariencia", hint: "Avisos, tema y accesibilidad", icon: Bell },
   { id: "privacidad", label: "Privacidad y datos", hint: "Descargar o eliminar tu cuenta", icon: ShieldCheck },
-  { id: "ayuda", label: "Ayuda y paneles", hint: "Preguntas, comercio, repartidor", icon: HelpCircle },
+  { id: "ayuda", label: "Ayuda", hint: "Preguntas frecuentes, soporte y legales", icon: HelpCircle },
 ] as const;
 
 const shortcuts = [
@@ -33,6 +34,8 @@ const shortcuts = [
   { to: "/app/pedidos", label: "Mis pedidos", icon: Receipt },
   { to: "/app/favoritos", label: "Favoritos", icon: Heart },
   { to: "/app/promociones", label: "Cupones", icon: Ticket },
+  { to: "/app/mensajes", label: "Mensajes", icon: MessageCircle },
+  { to: "/app/turnos", label: "Mis turnos", icon: CalendarCheck },
 ];
 
 /** Mi cuenta: menú de secciones; en el celular se ve como lista y cada sección abre su pantalla. */
@@ -71,10 +74,11 @@ export default function Profile() {
       </header>
 
       <TeamInvitations className={cn("mt-5", current && "max-lg:hidden")} onAccepted={refreshProfile} />
+      <ContextSwitcherCard className={cn("mt-5", current && "max-lg:hidden")} />
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[280px_1fr]">
         <nav className={cn("space-y-3", current && "max-lg:hidden")} aria-label="Secciones de mi cuenta">
-          <ul className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:hidden">
+          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-6 lg:hidden">
             {shortcuts.map(({ to, label, icon: Icon }) => (
               <li key={to}><Link to={to} className="flex flex-col items-center gap-1 rounded-2xl border bg-card p-3 text-center text-xs font-bold hover:bg-muted"><Icon className="h-5 w-5 text-primary" />{label}</Link></li>
             ))}

@@ -1,10 +1,10 @@
 import { FormEvent, useState } from "react";
-import { Bike, Loader2, Package, PowerOff, ShieldCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Bike, CarTaxiFront, ChevronRight, Loader2, Package, PowerOff, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ActiveBatch } from "@/components/courier/ActiveBatch";
 import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
-import { ActiveViaje, ViajeOfferCard } from "@/components/courier/ViajeCards";
-import { RemisEnrollment } from "@/components/courier/RemisEnrollment";
+import type { Courier } from "@/components/courier/CourierApplication";
 import { CourierIncentives } from "@/components/courier/Incentives";
 import { PayoutForm } from "@/components/account/PayoutForm";
 import { CourierWallet } from "@/components/courier/CourierWallet";
@@ -17,18 +17,19 @@ import { Input } from "@/components/ui/input";
 import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { useCourier } from "./CourierLayout";
 
+/** Trabajos del repartidor: el pedido o envío en curso, o las ofertas disponibles. */
 export function CourierOrdersPage() {
-  const { current, currents, currentEnvio, currentViaje, viajeOffers, connected, offers, envioOffers, position, sharingStatus, refreshAll } = useCourier();
+  const { current, currents, currentEnvio, currentViaje, connected, offers, envioOffers, position, sharingStatus, refreshAll } = useCourier();
   if (current) return <ActiveBatch orders={currents} offers={offers} position={position} sharing={sharingStatus} onChange={refreshAll} />;
   if (currentEnvio) return <ActiveEnvio envio={currentEnvio} position={position} sharing={sharingStatus} onChange={refreshAll} />;
-  if (currentViaje) return <ActiveViaje viaje={currentViaje} position={position} sharing={sharingStatus} onChange={refreshAll} />;
+  // Un viaje de remís en curso se maneja desde el contexto Conductor; mientras tanto no se toman entregas.
+  if (currentViaje) return <EmptyState icon={<CarTaxiFront className="h-7 w-7" />} title="Tenés un viaje de remís en curso" text="Terminalo desde el panel de conductor. Mientras tanto no te llegan entregas." action={<Button asChild className="rounded-full"><Link to="/app/conductor">Ir al viaje</Link></Button>} />;
   if (!connected) return <EmptyState icon={<PowerOff className="h-7 w-7" />} title="Estás desconectado" text="Tocá “Conectarme” arriba para recibir ofertas de pedidos y envíos." />;
-  if (!offers.length && !envioOffers.length && !viajeOffers.length) return <EmptyState icon={<Bike className="h-7 w-7" />} title="Buscando pedidos para vos" text="Quedate conectado: apenas haya un pedido o un envío de paquete cerca, te suena el aviso." />;
+  if (!offers.length && !envioOffers.length) return <EmptyState icon={<Bike className="h-7 w-7" />} title="Buscando pedidos para vos" text="Quedate conectado: apenas haya un pedido o un envío de paquete cerca, te suena el aviso." />;
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       {offers.map((offer) => <OfferCard key={offer.pedido_id} offer={offer} onChange={refreshAll} />)}
       {envioOffers.map((offer) => <EnvioOfferCard key={offer.id} offer={offer} onChange={refreshAll} />)}
-      {viajeOffers.map((offer) => <ViajeOfferCard key={offer.id} offer={offer} onChange={refreshAll} />)}
     </div>
   );
 }
@@ -69,8 +70,8 @@ const faqs = [
   { q: "¿Por qué tengo que estar cerca para marcar mi llegada?", a: "Para que comercios y clientes confíen en los avisos. Si el GPS falla, avisá por el chat del pedido." },
 ];
 
-export function CourierProfilePage() {
-  const { courier, reloadCourier } = useCourier();
+/** Secciones de la cuenta de trabajo que comparten repartidor y conductor (es la misma verificación y la misma billetera). */
+export function WorkerAccountSections({ courier, onChanged }: { courier: Courier; onChanged: () => void }) {
   const [phone, setPhone] = useState(courier.telefono ?? "");
   const [saving, setSaving] = useState(false);
 
@@ -82,27 +83,15 @@ export function CourierProfilePage() {
     setSaving(false);
     if (error) { toast.error(errorMessage(error)); return; }
     toast.success("Teléfono actualizado");
-    reloadCourier();
+    onChanged();
   };
 
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <section className="rounded-3xl border bg-card p-4 sm:p-5">
-        <h2 className="flex items-center gap-2 font-extrabold"><ShieldCheck className="h-5 w-5 text-success" />Cuenta verificada</h2>
-        <dl className="mt-3 space-y-2 text-sm">
-          <div className="flex justify-between"><dt className="text-muted-foreground">Vehículo</dt><dd className="font-bold capitalize">{courier.vehiculo.replace("_", " ")}</dd></div>
-          <div className="flex justify-between"><dt className="text-muted-foreground">DNI</dt><dd className="font-bold">{courier.dni ? `••••${courier.dni.slice(-3)}` : "—"}</dd></div>
-          {courier.patente && <div className="flex justify-between"><dt className="text-muted-foreground">Patente</dt><dd className="font-bold">{courier.patente}</dd></div>}
-        </dl>
-        <p className="mt-3 text-xs text-muted-foreground">Para cambiar vehículo, DNI o patente, escribile a soporte: se vuelve a verificar tu identidad.</p>
-      </section>
-
+    <>
       <section className="rounded-3xl border bg-card p-4 sm:p-5">
         <h2 className="mb-3 font-extrabold">Verificación de identidad</h2>
-        <IdentityVerification entidad="repartidor" onChanged={reloadCourier} />
+        <IdentityVerification entidad="repartidor" onChanged={onChanged} />
       </section>
-
-      <RemisEnrollment courier={courier} onChanged={reloadCourier} />
 
       <section className="rounded-3xl border bg-card p-4 sm:p-5">
         <h2 className="font-extrabold">Cobros</h2>
@@ -117,18 +106,52 @@ export function CourierProfilePage() {
           <Button type="submit" variant="outline" className="rounded-full" disabled={saving || phone.trim() === (courier.telefono ?? "")}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}Guardar</Button>
         </form>
       </section>
+    </>
+  );
+}
 
+/** Preguntas frecuentes de un contexto de trabajo. */
+export function WorkerFaq({ title, items }: { title: string; items: { q: string; a: string }[] }) {
+  return (
+    <section className="rounded-3xl border bg-card p-4 sm:p-5">
+      <h2 className="font-extrabold">{title}</h2>
+      <Accordion type="single" collapsible className="mt-1">
+        {items.map((item) => (
+          <AccordionItem key={item.q} value={item.q}>
+            <AccordionTrigger className="text-left font-bold">{item.q}</AccordionTrigger>
+            <AccordionContent className="text-muted-foreground">{item.a}</AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </section>
+  );
+}
+
+export function CourierProfilePage() {
+  const { courier, reloadCourier } = useCourier();
+
+  return (
+    <div className="mx-auto max-w-2xl space-y-4">
       <section className="rounded-3xl border bg-card p-4 sm:p-5">
-        <h2 className="font-extrabold">Ayuda para repartidores</h2>
-        <Accordion type="single" collapsible className="mt-1">
-          {faqs.map((item) => (
-            <AccordionItem key={item.q} value={item.q}>
-              <AccordionTrigger className="text-left font-bold">{item.q}</AccordionTrigger>
-              <AccordionContent className="text-muted-foreground">{item.a}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <h2 className="flex items-center gap-2 font-extrabold"><ShieldCheck className="h-5 w-5 text-success" />Cuenta verificada</h2>
+        <dl className="mt-3 space-y-2 text-sm">
+          <div className="flex justify-between"><dt className="text-muted-foreground">Vehículo</dt><dd className="font-bold capitalize">{courier.vehiculo.replace("_", " ")}</dd></div>
+          <div className="flex justify-between"><dt className="text-muted-foreground">DNI</dt><dd className="font-bold">{courier.dni ? `••••${courier.dni.slice(-3)}` : "—"}</dd></div>
+          {courier.patente && <div className="flex justify-between"><dt className="text-muted-foreground">Patente</dt><dd className="font-bold">{courier.patente}</dd></div>}
+        </dl>
+        <p className="mt-3 text-xs text-muted-foreground">Para cambiar vehículo, DNI o patente, escribile a soporte: se vuelve a verificar tu identidad.</p>
       </section>
+
+      {courier.vehiculo === "auto" && (
+        <Link to="/app/conductor" className="flex items-center gap-3 rounded-3xl border bg-card p-4 transition-colors hover:bg-muted sm:p-5">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[hsl(220_14%_16%)] text-brand-orange"><CarTaxiFront className="h-5 w-5" /></span>
+          <span className="min-w-0 flex-1"><span className="block font-extrabold">{courier.remis_estado === "aprobado" ? "Panel de conductor" : "¿Querés llevar pasajeros?"}</span><span className="block text-sm text-muted-foreground">{courier.remis_estado === "aprobado" ? "Tus viajes de remís, ganancias e historial" : "Con tu auto podés sumarte como conductor de remís"}</span></span>
+          <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground" />
+        </Link>
+      )}
+
+      <WorkerAccountSections courier={courier} onChanged={reloadCourier} />
+      <WorkerFaq title="Ayuda para repartidores" items={faqs} />
     </div>
   );
 }

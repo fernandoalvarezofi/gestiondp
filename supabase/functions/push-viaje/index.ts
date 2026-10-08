@@ -36,14 +36,14 @@ Deno.serve(async (req) => {
       const { data: busy } = await supabase.rpc("delivery_repartidor_ocupado", { p_repartidor: driver.perfil_id });
       if (!busy) free.push(driver.perfil_id as string);
     }
-    if (free.length) sends.push({ userIds: free, message: { title: "Nuevo viaje de remís 🚗", body: `${money(Number(viaje.ganancia_conductor))} de ganancia · ${Number(viaje.distancia_km).toFixed(1)} km. El primero que lo acepta se lo queda.`, url: "/app/repartidor", tag: `viaje-${viaje.id}` } });
+    if (free.length) sends.push({ userIds: free, message: { title: "Nuevo viaje de remís 🚗", body: `${money(Number(viaje.ganancia_conductor))} de ganancia · ${Number(viaje.distancia_km).toFixed(1)} km. El primero que lo acepta se lo queda.`, url: "/app/conductor", tag: `viaje-${viaje.id}` } });
   }
 
   if (evento === "viaje_estado") {
     const copy = viajeCliente[viaje.estado as string];
     if (copy) sends.push({ userIds: [viaje.cliente_id as string], message: { ...copy, body: viaje.estado === "cancelado" && viaje.motivo_cancelacion ? (viaje.motivo_cancelacion as string) : copy.body, url: `/app/remis/${viaje.id}`, tag: `viaje-${viaje.id}` } });
     if (viaje.estado === "cancelado" && (estadoAnterior === "asignado" || estadoAnterior === "en_origen") && viaje.conductor_id) {
-      sends.push({ userIds: [viaje.conductor_id as string], message: { title: "Viaje cancelado", body: "El pasajero canceló el viaje.", url: "/app/repartidor", tag: `viaje-${viaje.id}` } });
+      sends.push({ userIds: [viaje.conductor_id as string], message: { title: "Viaje cancelado", body: "El pasajero canceló el viaje.", url: "/app/conductor", tag: `viaje-${viaje.id}` } });
     }
   }
 

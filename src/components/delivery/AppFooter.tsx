@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Bike, Headset, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
+import { Bike, CarTaxiFront, Headset, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 
 const promises = [
@@ -28,6 +28,7 @@ export function AppFooter() {
             <Link to="/app/ayuda" className="hover:text-foreground">Centro de ayuda</Link>
             <Link to="/app/comercio" className="hover:text-foreground">Sumá tu comercio</Link>
             <Link to="/app/repartidor" className="flex items-center gap-1 hover:text-foreground"><Bike className="h-4 w-4" />Repartí con Woref</Link>
+            <Link to="/app/conductor" className="flex items-center gap-1 hover:text-foreground"><CarTaxiFront className="h-4 w-4" />Manejá con Woref</Link>
             <Link to="/terminos" className="hover:text-foreground">Términos</Link>
             <Link to="/privacidad" className="hover:text-foreground">Privacidad</Link>
             <Link to="/arrepentimiento" className="hover:text-foreground">Botón de arrepentimiento</Link>

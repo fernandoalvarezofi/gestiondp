@@ -14,8 +14,10 @@ type Driver = { remis_categorias: string[] | null; perfil_id: string; patente: s
 const stateLabel = { solicitado: "Por revisar", aprobado: "Habilitado", rechazado: "Rechazado" } as const;
 
 /** Remises: alta de conductores (con su licencia y cédula) y seguimiento de los viajes. */
-export function RemisManager() {
-  const [tab, setTab] = useState<"conductores" | "viajes">("conductores");
+/** Conductores de remís y viajes. Con `view`, muestra solo esa parte (administración tiene una sección para cada una). */
+export function RemisManager({ view }: { view?: "conductores" | "viajes" } = {}) {
+  const [ownTab, setTab] = useState<"conductores" | "viajes">("conductores");
+  const tab = view ?? ownTab;
   const [drivers, setDrivers] = useState<Driver[] | null>(null);
   const [trips, setTrips] = useState<Viaje[] | null>(null);
   const [docsOf, setDocsOf] = useState<Driver | null>(null);
@@ -67,14 +69,16 @@ export function RemisManager() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2" role="tablist">
-        {([["conductores", `Conductores (${drivers.length})`], ["viajes", `Viajes (${trips.length})`]] as const).map(([id, label]) => (
-          <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", tab === id ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{label}</button>
-        ))}
-      </div>
+      {!view && (
+        <div className="flex gap-2" role="tablist">
+          {([["conductores", `Conductores (${drivers.length})`], ["viajes", `Viajes (${trips.length})`]] as const).map(([id, label]) => (
+            <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", tab === id ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{label}</button>
+          ))}
+        </div>
+      )}
       <p className="text-sm text-muted-foreground">Las tarifas, el recargo nocturno, la comisión y el radio se editan en Configuración → ajustes de remís.</p>
 
-      {tab === "conductores" && (sorted.length === 0 ? <EmptyState icon={<Car className="h-7 w-7" />} title="Todavía nadie pidió ser conductor de remís" text="Los repartidores con auto lo piden desde su perfil, con licencia y cédula." /> : (
+      {tab === "conductores" && (sorted.length === 0 ? <EmptyState icon={<Car className="h-7 w-7" />} title="Todavía nadie pidió ser conductor de remís" text="Las personas con auto lo piden desde el panel de Conductor, con licencia y cédula." /> : (
         <ul className="divide-y overflow-hidden rounded-3xl border bg-card">
           {sorted.map((driver) => (
             <li key={driver.perfil_id} className="flex flex-wrap items-center gap-3 p-3">

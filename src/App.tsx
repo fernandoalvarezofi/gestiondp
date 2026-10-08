@@ -11,7 +11,10 @@ import { Loader2 } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { CartProvider } from "@/contexts/CartContext";
 import { FavoritesProvider } from "@/contexts/FavoritesContext";
-import { AppLayout } from "@/components/AppLayout";
+import { RolesProvider } from "@/contexts/RolesContext";
+import { ClientLayout } from "@/components/layouts/ClientLayout";
+import { RequireRole, SessionGate } from "@/navigation/guards";
+import { lastContext } from "@/navigation/contexts";
 import DeliveryHome from "./pages/delivery/DeliveryHome";
 
 const Auth = lazy(() => import("./pages/Auth"));
@@ -40,7 +43,7 @@ const Envio = lazy(() => import("./pages/delivery/Envio"));
 const EnvioDetail = lazy(() => import("./pages/delivery/EnvioDetail"));
 const Remis = lazy(() => import("./pages/delivery/Remis"));
 const Directorio = lazy(() => import("./pages/delivery/Directorio"));
-const Services = lazy(() => import("./pages/delivery/Services"));
+const Explore = lazy(() => import("./pages/delivery/Explore"));
 const RemisDetail = lazy(() => import("./pages/delivery/RemisDetail"));
 const MerchantLayout = lazy(() => import("./pages/delivery/merchant/MerchantLayout"));
 const MerchantHome = lazy(() => import("./pages/delivery/merchant/MerchantHome"));
@@ -73,7 +76,15 @@ const CourierPages = {
   History: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierHistoryPage }))),
   Profile: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierProfilePage }))),
 };
-const AdminDashboard = lazy(() => import("./pages/delivery/AdminDashboard"));
+const DriverLayout = lazy(() => import("./pages/delivery/driver/DriverLayout"));
+const DriverPages = {
+  Trips: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverTripsPage }))),
+  Earnings: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverEarningsPage }))),
+  History: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverHistoryPage }))),
+  Profile: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverProfilePage }))),
+};
+const AdminLayout = lazy(() => import("./pages/delivery/admin/AdminLayout"));
+const AdminSection = lazy(() => import("./pages/delivery/admin/AdminSections"));
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const Legal = lazy(() => import("./pages/Legal"));
 
@@ -82,6 +93,9 @@ const queryClient = new QueryClient();
 const PageLoader = () => (
   <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
 );
+
+/** La app instalada abre en el último panel de trabajo usado (por defecto, el de repartidor). */
+const nativeHome = () => { const last = lastContext(); return last && last !== "cliente" ? `/app/${last}` : "/app/repartidor"; };
 
 /** Las URLs viejas de /lin y /lin/local/:slug siguen funcionando. */
 function LegacyStoreRedirect() {
@@ -96,13 +110,14 @@ const App = () => (
         <Toaster />
         <Sonner position="top-center" richColors />
         <AuthProvider>
+          <RolesProvider>
           <CartProvider>
             <FavoritesProvider>
               <BrowserRouter>
                 <NativeShell />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
-                    <Route path="/" element={isNativeApp() ? <Navigate to="/app/repartidor" replace /> : <Landing />} />
+                    <Route path="/" element={isNativeApp() ? <Navigate to={nativeHome()} replace /> : <Landing />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/consola" element={<Console />} />
                     <Route path="/t/:slug" element={<Storefront />} />
@@ -116,31 +131,38 @@ const App = () => (
                     <Route path="/terminos" element={<Legal doc="terminos" />} />
                     <Route path="/arrepentimiento" element={<Arrepentimiento />} />
                     <Route path="/privacidad" element={<Legal doc="privacidad" />} />
-                    <Route path="/app" element={<AppLayout />}>
-                      <Route index element={<DeliveryHome />} />
-                      <Route path="buscar" element={<Search />} />
-                      <Route path="categoria/:id" element={<Category />} />
-                      <Route path="tienda/:slug" element={<StoreDetail />} />
-                      <Route path="carrito" element={<Cart />} />
-                      <Route path="pedidos" element={<Orders />} />
-                      <Route path="pedidos/:id" element={<OrderDetail />} />
-                      <Route path="club" element={<Club />} />
-                      <Route path="ayuda" element={<Help />} />
-                      <Route path="ayuda/:id" element={<HelpTicket />} />
-                      <Route path="enviar" element={<Envio />} />
-                      <Route path="envios/:id" element={<EnvioDetail />} />
-                      <Route path="remis" element={<Remis />} />
-                      <Route path="directorio" element={<Directorio />} />
-                      <Route path="servicios" element={<Services />} />
-                      <Route path="remis/:id" element={<RemisDetail />} />
-                      <Route path="favoritos" element={<Favorites />} />
-                      <Route path="turnos" element={<MyAppointments />} />
-                      <Route path="notificaciones" element={<Notifications />} />
-                      <Route path="mensajes" element={<Messages />} />
-                      <Route path="turnos/locales" element={<ServiceLocals />} />
-                      <Route path="promociones" element={<Promotions />} />
-                      <Route path="perfil" element={<Profile />} />
-                      <Route path="perfil/:seccion" element={<Profile />} />
+                    {/* /app: sesión y segundo factor; cada contexto cuelga con su propio layout. */}
+                    <Route path="/app" element={<SessionGate />}>
+                      {/* Contexto Cliente */}
+                      <Route element={<ClientLayout />}>
+                        <Route index element={<DeliveryHome />} />
+                        <Route path="explorar" element={<Explore />} />
+                        <Route path="servicios" element={<Navigate to="/app/explorar" replace />} />
+                        <Route path="buscar" element={<Search />} />
+                        <Route path="categoria/:id" element={<Category />} />
+                        <Route path="tienda/:slug" element={<StoreDetail />} />
+                        <Route path="carrito" element={<Cart />} />
+                        <Route path="pedidos" element={<Orders />} />
+                        <Route path="pedidos/:id" element={<OrderDetail />} />
+                        <Route path="club" element={<Club />} />
+                        <Route path="ayuda" element={<Help />} />
+                        <Route path="ayuda/:id" element={<HelpTicket />} />
+                        <Route path="enviar" element={<Envio />} />
+                        <Route path="envios/:id" element={<EnvioDetail />} />
+                        <Route path="remis" element={<Remis />} />
+                        <Route path="remis/:id" element={<RemisDetail />} />
+                        <Route path="directorio" element={<Directorio />} />
+                        <Route path="favoritos" element={<Favorites />} />
+                        <Route path="turnos" element={<MyAppointments />} />
+                        <Route path="turnos/locales" element={<ServiceLocals />} />
+                        <Route path="notificaciones" element={<Notifications />} />
+                        <Route path="mensajes" element={<Messages />} />
+                        <Route path="promociones" element={<Promotions />} />
+                        <Route path="perfil" element={<Profile />} />
+                        <Route path="perfil/:seccion" element={<Profile />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Route>
+                      {/* Contexto Comercio: el acceso a cada sección lo decide el rol del equipo (y el servidor). */}
                       <Route path="comercio" element={<MerchantLayout />}>
                         <Route index element={<MerchantHome />} />
                         <Route path="pedidos" element={<MerchantPages.Orders />} />
@@ -160,16 +182,30 @@ const App = () => (
                         <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />
                         <Route path="configuracion/:seccion" element={<MerchantSettings />} />
+                        <Route path="*" element={<Navigate to="/app/comercio" replace />} />
                       </Route>
+                      {/* Contexto Repartidor: entregas de pedidos y envíos. */}
                       <Route path="repartidor" element={<CourierLayout />}>
                         <Route index element={<CourierPages.Orders />} />
                         <Route path="ganancias" element={<CourierPages.Earnings />} />
                         <Route path="incentivos" element={<CourierPages.Incentives />} />
                         <Route path="historial" element={<CourierPages.History />} />
                         <Route path="perfil" element={<CourierPages.Profile />} />
+                        <Route path="*" element={<Navigate to="/app/repartidor" replace />} />
                       </Route>
-                      <Route path="admin" element={<AdminDashboard />} />
-                      <Route path="admin/:seccion" element={<AdminDashboard />} />
+                      {/* Contexto Conductor: viajes de remís. */}
+                      <Route path="conductor" element={<DriverLayout />}>
+                        <Route index element={<DriverPages.Trips />} />
+                        <Route path="ganancias" element={<DriverPages.Earnings />} />
+                        <Route path="historial" element={<DriverPages.History />} />
+                        <Route path="perfil" element={<DriverPages.Profile />} />
+                        <Route path="*" element={<Navigate to="/app/conductor" replace />} />
+                      </Route>
+                      {/* Contexto Administración: solo administradores. */}
+                      <Route path="admin" element={<RequireRole context="admin"><AdminLayout /></RequireRole>}>
+                        <Route index element={<AdminSection />} />
+                        <Route path=":seccion" element={<AdminSection />} />
+                      </Route>
                     </Route>
                     <Route path="/lin/local/:slug" element={<LegacyStoreRedirect />} />
                     <Route path="/lin/*" element={<Navigate to="/app" replace />} />
@@ -179,6 +215,7 @@ const App = () => (
               </BrowserRouter>
             </FavoritesProvider>
           </CartProvider>
+          </RolesProvider>
         </AuthProvider>
       </TooltipProvider>
     </ThemeProvider>
