@@ -27,17 +27,17 @@ export function PushPrompt({ title, text, className }: { title: string; text: st
   };
 
   return (
-    <div className={cn("flex items-start gap-3 rounded-2xl border border-info/30 bg-info/5 p-4", className)}>
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-info/10 text-info"><BellRing className="h-5 w-5" /></span>
+    <div className={cn("flex items-center gap-3 rounded-2xl border bg-card py-3 pl-3.5 pr-3", className)}>
+      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-foreground"><BellRing className="h-[18px] w-[18px]" /></span>
       <div className="min-w-0 flex-1">
-        <p className="font-bold">{title}</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm font-bold leading-tight">{title}</p>
+        <p className="text-[12.5px] leading-snug text-muted-foreground">
           {state === "denied" ? "Bloqueaste las notificaciones de este sitio. Habilitalas desde el candado de la barra de direcciones." :
             state === "ios-install" ? "En iPhone primero agregá Woref a la pantalla de inicio (Compartir → Agregar a inicio) y abrila desde ahí." : text}
         </p>
-        {state === "off" && <Button size="sm" className="mt-2 rounded-full" onClick={activate}>Activar avisos</Button>}
       </div>
-      <button type="button" aria-label="Cerrar" onClick={dismiss} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
+      {state === "off" && <Button size="sm" className="shrink-0 rounded-full" onClick={activate}>Activar avisos</Button>}
+      <button type="button" aria-label="Cerrar" onClick={dismiss} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>
     </div>
   );
 }

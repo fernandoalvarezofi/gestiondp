@@ -116,7 +116,7 @@ export function ChatButton({ pedidoId, canal, label, title, subtitle, className,
 
   return (
     <>
-      <Button type="button" variant={variant} size="sm" className={cn("relative rounded-full", className)} onClick={() => setOpen(true)}>
+      <Button type="button" variant={variant} size="sm" className={cn("relative rounded-full", className)} aria-label={label || "Abrir el chat"} title={label || "Chat"} onClick={() => setOpen(true)}>
         <MessageCircle className="h-4 w-4" />{label}
         {unread > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-black text-primary-foreground ring-2 ring-card">{unread}</span>}
       </Button>

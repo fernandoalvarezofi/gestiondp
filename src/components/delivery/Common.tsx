@@ -65,10 +65,10 @@ export function PageHeader({ eyebrow, title, subtitle, actions }: { eyebrow?: st
 
 export function StatCard({ label, value, hint, icon }: { label: string; value: ReactNode; hint?: ReactNode; icon?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-l-4 border-l-brand-orange bg-card p-4">
-      <div className="flex items-center justify-between gap-2 text-sm font-semibold text-muted-foreground">{label}{icon}</div>
-      <p className="mt-2 font-display text-2xl font-extrabold tabular-nums">{value}</p>
-      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+    <div className="rounded-2xl border bg-card p-4">
+      <div className="flex items-center justify-between gap-2 text-[12.5px] font-semibold text-muted-foreground">{label}<span className="text-muted-foreground/70 [&_svg]:h-4 [&_svg]:w-4">{icon}</span></div>
+      <p className="mt-1.5 font-display text-[26px] font-extrabold leading-none tracking-tight tabular-nums">{value}</p>
+      {hint && <p className="mt-2 text-[12.5px] text-muted-foreground">{hint}</p>}
     </div>
   );
 }

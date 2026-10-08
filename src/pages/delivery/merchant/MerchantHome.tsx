@@ -1,31 +1,45 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ArrowRight, BellRing, CheckCircle2, Circle, ClipboardList, Receipt, Star, TrendingUp, Wallet } from "lucide-react";
-import { StatCard } from "@/components/delivery/Common";
-import { img, money, shortId } from "@/lib/delivery";
-import { cn } from "@/lib/utils";
+import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, HelpCircle, MessageSquareReply, PackageX, Plus, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Delta, ListRow, Metric, MetricStrip, PageIntro, ProgressRing, RowList, Section, SectionLink, StatusPill, type Tone } from "@/components/panel/kit";
+import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { estadoCorto, img, money, shortId } from "@/lib/delivery";
 import { Permission, useMerchant } from "./context";
 
-/** Pantalla de inicio del comercio: qué pasa hoy, qué falta completar y qué necesita atención. */
+const TZ = "America/Argentina/Buenos_Aires";
+const dayKey = (value: string | number | Date) => new Date(value).toLocaleDateString("en-CA", { timeZone: TZ });
+const hourNow = () => Number(new Date().toLocaleTimeString("en-GB", { timeZone: TZ, hour: "2-digit", hour12: false }));
+const greeting = () => { const h = hourNow(); return h < 6 ? "Buenas noches" : h < 13 ? "Buen día" : h < 20 ? "Buenas tardes" : "Buenas noches"; };
+const minutesAgo = (value: string) => Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 60000));
+const ago = (value: string) => { const m = minutesAgo(value); return m < 1 ? "recién" : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.floor(m / 60)} h` : `hace ${Math.floor(m / 1440)} d`; };
+const ESTADO_TONE: Record<string, Tone> = { pendiente: "warning", confirmado: "info", preparando: "info", listo: "success", en_camino: "brand" };
+
+/** Inicio del comercio: cómo va el día, qué pedidos están en juego y qué necesita atención, en ese orden. */
 export default function MerchantHome() {
-  const { store, orders, products, reviews, pendingCount, access } = useMerchant();
+  const { store, orders, products, reviews, pendingCount, preguntasPendientes, access } = useMerchant();
+  const roles = useDeliveryRoles();
   const can = (permission: Permission) => access.permisos.includes(permission);
 
-  const today = useMemo(() => {
-    const day = new Date().toDateString();
-    const list = orders.filter((order) => order.estado !== "cancelado" && new Date(order.created_at).toDateString() === day);
-    const sales = list.reduce((total, order) => total + Number(order.subtotal), 0);
-    return { count: list.length, sales, ticket: list.length ? sales / list.length : 0 };
+  const sales = useMemo(() => {
+    const valid = orders.filter((order) => order.estado !== "cancelado");
+    const byDay = new Map<string, { total: number; count: number }>();
+    for (const order of valid) { const key = dayKey(order.created_at); const cur = byDay.get(key) ?? { total: 0, count: 0 }; cur.total += Number(order.subtotal); cur.count += 1; byDay.set(key, cur); }
+    const last7 = Array.from({ length: 7 }, (_, i) => byDay.get(dayKey(Date.now() - (6 - i) * 86400000))?.total ?? 0);
+    const today = byDay.get(dayKey(Date.now())) ?? { total: 0, count: 0 };
+    // Ayer hasta esta misma hora: comparar el día entero contra uno a medias engaña.
+    const sameTime = valid.filter((order) => dayKey(order.created_at) === dayKey(Date.now() - 86400000) && new Date(order.created_at).getTime() <= Date.now() - 86400000);
+    const yesterday = { total: sameTime.reduce((t, order) => t + Number(order.subtotal), 0), count: sameTime.length };
+    return { today, yesterday, last7 };
   }, [orders]);
 
-  const oldestPending = useMemo(() => orders.filter((order) => order.estado === "pendiente").sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0], [orders]);
-  const inProgress = orders.filter((order) => ["confirmado", "preparando", "listo", "en_camino"].includes(order.estado)).length;
+  const live = useMemo(() => orders.filter((order) => ["pendiente", "confirmado", "preparando", "listo", "en_camino"].includes(order.estado)).sort((a, b) => (a.estado === "pendiente" ? -1 : 0) - (b.estado === "pendiente" ? -1 : 0) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), [orders]);
+  const oldestPending = live.find((order) => order.estado === "pendiente");
 
-  // Lista de pasos para tener el local listo para vender (como el onboarding de los portales de socios).
   const steps = useMemo(() => [
     { label: "Subí el logo de tu local", done: Boolean(store.logo_url), to: "/app/comercio/configuracion/general" },
     { label: "Subí una foto de portada", done: Boolean(store.imagen_url), to: "/app/comercio/configuracion/general" },
-    { label: "Contá qué vendés (descripción)", done: Boolean(store.descripcion?.trim()), to: "/app/comercio/configuracion/general" },
+    { label: "Contá qué vendés en la descripción", done: Boolean(store.descripcion?.trim()), to: "/app/comercio/configuracion/general" },
     { label: "Cargá el teléfono del local", done: Boolean(store.telefono?.trim()), to: "/app/comercio/configuracion/general" },
     { label: "Marcá tu local en el mapa", done: store.latitud != null && store.longitud != null, to: "/app/comercio/configuracion/entrega" },
     { label: "Cargá al menos 5 productos", done: products.length >= 5, to: "/app/comercio/menu" },
@@ -34,99 +48,116 @@ export default function MerchantHome() {
   ], [store, products]);
   const doneCount = steps.filter((step) => step.done).length;
   const progress = Math.round((doneCount / steps.length) * 100);
+  const nextSteps = steps.filter((step) => !step.done);
 
   // Con variantes, el producto se agota cuando se agotan todas sus variantes activas.
   const sinVariantes = (product: typeof products[number]) => Boolean(product.usa_variantes) && (product.variantes || []).every((v) => !v.disponible || v.stock === 0);
   const soldOut = products.filter((product) => !product.disponible || product.stock === 0 || sinVariantes(product));
   const lowStock = [
-    ...products.filter((product) => product.disponible && !product.usa_variantes && product.stock !== null && product.stock !== undefined && product.stock > 0 && product.stock <= 3).map((product) => ({ id: product.id, label: product.nombre, stock: product.stock as number })),
-    ...products.filter((product) => product.disponible && product.usa_variantes).flatMap((product) => (product.variantes || []).filter((v) => v.disponible && v.stock !== null && v.stock > 0 && v.stock <= 3).map((v) => ({ id: v.id, label: `${product.nombre} · ${v.nombre}`, stock: v.stock as number }))),
+    ...products.filter((product) => product.disponible && !product.usa_variantes && product.stock !== null && product.stock !== undefined && product.stock > 0 && product.stock <= 3).map((product) => ({ id: product.id, label: product.nombre })),
+    ...products.filter((product) => product.disponible && product.usa_variantes).flatMap((product) => (product.variantes || []).filter((v) => v.disponible && v.stock !== null && v.stock > 0 && v.stock <= 3).map((v) => ({ id: v.id, label: `${product.nombre} · ${v.nombre}` }))),
   ];
+  const sinResponder = reviews.filter((review) => !review.respuesta).length;
+
+  const attention = [
+    can("catalogo") && soldOut.length > 0 && { key: "agotados", icon: <PackageX className="h-4 w-4" />, tone: "danger" as Tone, title: `${soldOut.length} ${soldOut.length === 1 ? "producto agotado o pausado" : "productos agotados o pausados"}`, meta: soldOut.slice(0, 2).map((p) => p.nombre).join(", ") + (soldOut.length > 2 ? "…" : ""), to: "/app/comercio/menu" },
+    can("catalogo") && lowStock.length > 0 && { key: "stock", icon: <AlertTriangle className="h-4 w-4" />, tone: "warning" as Tone, title: `${lowStock.length} con poco stock`, meta: lowStock.slice(0, 2).map((p) => p.label).join(", ") + (lowStock.length > 2 ? "…" : ""), to: "/app/comercio/menu" },
+    can("opiniones") && sinResponder > 0 && { key: "opiniones", icon: <MessageSquareReply className="h-4 w-4" />, tone: "info" as Tone, title: `${sinResponder} ${sinResponder === 1 ? "opinión" : "opiniones"} sin responder`, meta: "Responder mejora tu reputación", to: "/app/comercio/opiniones" },
+    can("opiniones") && preguntasPendientes > 0 && { key: "preguntas", icon: <HelpCircle className="h-4 w-4" />, tone: "info" as Tone, title: `${preguntasPendientes} ${preguntasPendientes === 1 ? "pregunta" : "preguntas"} de clientes`, meta: "Respondé antes de que compren en otro lado", to: "/app/comercio/preguntas" },
+  ].filter(Boolean) as { key: string; icon: React.ReactNode; tone: Tone; title: string; meta: string; to: string }[];
+
+  const first = roles.nombre.split(" ")[0];
+  const dateText = new Date().toLocaleDateString("es-AR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
 
   return (
     <div className="space-y-6">
-      {pendingCount > 0 ? (
-        <Link to="/app/comercio/pedidos" className="flex items-center gap-3 rounded-3xl bg-primary p-4 text-primary-foreground shadow-pop">
-          <span className="relative flex h-3 w-3"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" /><span className="relative inline-flex h-3 w-3 rounded-full bg-white" /></span>
-          <div className="min-w-0 flex-1">
-            <p className="font-extrabold">{pendingCount === 1 ? "Tenés 1 pedido nuevo esperando" : `Tenés ${pendingCount} pedidos nuevos esperando`}</p>
-            {oldestPending && <p className="text-sm text-primary-foreground/85">El más antiguo es {shortId(oldestPending.id)}. Respondelo cuanto antes.</p>}
-          </div>
-          <span className="flex items-center gap-1 text-sm font-bold">Ver pedidos<ArrowRight className="h-4 w-4" /></span>
+      <PageIntro
+        title={`${greeting()}${first ? `, ${first}` : ""}`}
+        description={<span className="first-letter:capitalize">{dateText} · {store.esta_abierto ? "recibiendo pedidos" : "pausado: no estás recibiendo pedidos"}</span>}
+        actions={<>
+          <Button asChild variant="outline" size="sm" className="rounded-full"><Link to={`/app/tienda/${store.slug}`}>Ver como cliente<ExternalLink className="h-3.5 w-3.5" /></Link></Button>
+          {can("catalogo") && <Button asChild size="sm" className="rounded-full"><Link to="/app/comercio/menu"><Plus className="h-4 w-4" />Nuevo producto</Link></Button>}
+        </>}
+      />
+
+      {pendingCount > 0 && (
+        <Link to="/app/comercio/pedidos" className="group flex items-center gap-3 rounded-2xl border border-brand-orange/30 bg-brand-orange/[0.06] px-4 py-3 transition-colors hover:bg-brand-orange/10">
+          <span className="relative flex h-2.5 w-2.5 shrink-0"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-orange opacity-60" /><span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-brand-orange" /></span>
+          <p className="min-w-0 flex-1 text-sm"><span className="font-extrabold">{pendingCount === 1 ? "1 pedido nuevo esperando" : `${pendingCount} pedidos nuevos esperando`}</span>{oldestPending && <span className="text-muted-foreground"> · el más antiguo es de {ago(oldestPending.created_at)}</span>}</p>
+          <span className="flex items-center gap-1 text-sm font-bold">Responder<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
         </Link>
-      ) : (
-        <div className="flex items-center gap-3 rounded-3xl border bg-card p-4">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-success/10 text-success"><BellRing className="h-5 w-5" /></span>
-          <div><p className="font-extrabold">Todo al día</p><p className="text-sm text-muted-foreground">No tenés pedidos esperando respuesta. {inProgress > 0 ? `Hay ${inProgress} en preparación o camino.` : "Cuando entre uno, te avisamos acá."}</p></div>
-        </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {can("estadisticas") && <StatCard label="Ventas de hoy" value={money(today.sales)} icon={<Wallet className="h-4 w-4" />} hint={`${today.count} ${today.count === 1 ? "pedido" : "pedidos"}`} />}
-        {can("estadisticas") && <StatCard label="Ticket promedio" value={money(today.ticket)} icon={<Receipt className="h-4 w-4" />} hint="Hoy, sin envío ni propinas" />}
-        <StatCard label="En curso" value={pendingCount + inProgress} icon={<ClipboardList className="h-4 w-4" />} hint={`${pendingCount} por responder`} />
-        <StatCard label="Calificación" value={store.total_resenas ? Number(store.rating).toFixed(1) : "—"} icon={<Star className="h-4 w-4" />} hint={`${store.total_resenas} opiniones`} />
-      </div>
+      <MetricStrip cols={5}>
+        {can("estadisticas") && <Metric featured label="Ventas de hoy" value={money(sales.today.total)} delta={<Delta current={sales.today.total} previous={sales.yesterday.total} suffix="vs. ayer a esta hora" />} hint={`${sales.today.count} ${sales.today.count === 1 ? "pedido" : "pedidos"}`} spark={sales.last7} />}
+        <Metric label="En curso" value={live.length} hint={pendingCount ? `${pendingCount} por responder` : "Nada por responder"} />
+        {can("estadisticas") && <Metric label="Ticket promedio" value={sales.today.count ? money(sales.today.total / sales.today.count) : "—"} hint="Hoy, sin envío" />}
+        <Metric label="Calificación" value={store.total_resenas ? Number(store.rating).toFixed(1) : "—"} hint={`${store.total_resenas} ${store.total_resenas === 1 ? "opinión" : "opiniones"}`} />
+      </MetricStrip>
 
-      <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        {progress < 100 && can("ajustes") && can("catalogo") && (
-          <section className="rounded-3xl border bg-card p-4 sm:p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div><h2 className="font-extrabold">Dejá tu local listo para vender</h2><p className="text-sm text-muted-foreground">Los locales completos reciben más pedidos.</p></div>
-              <span className="font-display text-2xl font-black text-primary">{progress}%</span>
-            </div>
-            <div className="mt-3 h-2 rounded-full bg-muted"><div className="h-2 rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} /></div>
-            <ul className="mt-4 space-y-1">
-              {steps.map((step) => (
-                <li key={step.label}>
-                  <Link to={step.to} className={cn("flex items-center gap-3 rounded-xl px-2 py-2 text-sm font-semibold hover:bg-muted", step.done && "text-muted-foreground")}>
-                    {step.done ? <CheckCircle2 className="h-5 w-5 shrink-0 text-success" /> : <Circle className="h-5 w-5 shrink-0 text-muted-foreground/50" />}
-                    <span className={cn("flex-1", step.done && "line-through")}>{step.label}</span>
-                    {!step.done && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-
-        {can("catalogo") && <section className="rounded-3xl border bg-card p-4 sm:p-5">
-          <h2 className="flex items-center gap-2 font-extrabold"><AlertTriangle className="h-5 w-5 text-warning" />Necesita atención</h2>
-          {soldOut.length === 0 && lowStock.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">Tu menú está en orden: no hay productos agotados ni con poco stock.</p>
+      <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <Section title="Pedidos en curso" description="Lo que está pasando ahora mismo" action={<SectionLink to="/app/comercio/pedidos">Ir a pedidos</SectionLink>}>
+          {live.length === 0 ? (
+            <div className="rounded-2xl border border-dashed bg-card px-5 py-9 text-center"><p className="font-bold">No hay pedidos en curso</p><p className="mt-0.5 text-sm text-muted-foreground">Cuando entre uno, te avisamos con sonido y acá lo vas a ver primero.</p></div>
           ) : (
-            <>
-              {soldOut.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-sm font-bold">{soldOut.length} {soldOut.length === 1 ? "producto agotado o pausado" : "productos agotados o pausados"}</p>
-                  <ul className="mt-2 space-y-2">
-                    {soldOut.slice(0, 4).map((product) => (
-                      <li key={product.id} className="flex items-center gap-3 text-sm"><img src={img(product.imagen_url, 80)} alt="" className="h-9 w-9 rounded-lg object-cover grayscale" /><span className="min-w-0 flex-1 truncate">{product.nombre}</span><span className="text-xs text-muted-foreground">{product.stock === 0 ? "Sin stock" : "Pausado"}</span></li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {lowStock.length > 0 && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm"><span className="font-bold">Poco stock:</span> {lowStock.slice(0, 4).map((item) => `${item.label} (${item.stock})`).join(", ")}</p>}
-              <Link to="/app/comercio/menu" className="mt-3 inline-flex items-center gap-1 text-sm font-bold text-primary">Ir al menú y stock<ArrowRight className="h-4 w-4" /></Link>
-            </>
+            <RowList>
+              {live.slice(0, 6).map((order) => {
+                const items = order.items ?? [];
+                const units = items.reduce((total, item) => total + item.cantidad, 0);
+                return (
+                  <ListRow key={order.id} to="/app/comercio/pedidos"
+                    lead={<StatusPill tone={ESTADO_TONE[order.estado] ?? "neutral"} dot className="w-[104px] justify-center">{estadoCorto[order.estado]}</StatusPill>}
+                    title={<>{shortId(order.id)} <span className="font-medium text-muted-foreground">· {order.cliente?.nombre?.split(" ")[0] || "Cliente"}</span></>}
+                    meta={`${units || "—"} ${units === 1 ? "producto" : "productos"} · ${order.tipo_entrega === "retiro" ? "retiro" : "envío"} · ${ago(order.created_at)}`}
+                    trailing={<span className="font-extrabold tabular-nums">{money(order.total)}</span>} />
+                );
+              })}
+            </RowList>
           )}
-        </section>}
+        </Section>
 
-        {reviews.length > 0 && can("opiniones") && (
-          <section className="rounded-3xl border bg-card p-4 sm:p-5">
-            <div className="flex items-center justify-between"><h2 className="flex items-center gap-2 font-extrabold"><TrendingUp className="h-5 w-5 text-primary" />Últimas opiniones</h2><Link to="/app/comercio/opiniones" className="text-sm font-bold text-primary">Ver todas</Link></div>
-            <ul className="mt-3 divide-y">
-              {reviews.slice(0, 3).map((review) => (
-                <li key={review.id} className="py-2.5 text-sm">
-                  <p className="flex items-center justify-between gap-2"><span className="font-bold">{review.cliente?.nombre?.split(" ")[0] || "Cliente"}</span><span className="flex items-center gap-0.5 text-warning"><Star className="h-3.5 w-3.5 fill-warning" />{review.puntaje}</span></p>
-                  {review.comentario && <p className="line-clamp-2 text-muted-foreground">{review.comentario}</p>}
-                  {!review.respuesta && <Link to="/app/comercio/opiniones" className="text-xs font-bold text-primary">Responder</Link>}
-                </li>
+        <Section title="Para revisar" description="Lo que conviene resolver hoy">
+          {attention.length === 0 ? (
+            <div className="flex items-center gap-3 rounded-2xl border bg-card px-4 py-4"><span className="flex h-9 w-9 items-center justify-center rounded-full bg-success/10 text-success"><CheckCircle2 className="h-5 w-5" /></span><div><p className="text-sm font-bold">Todo en orden</p><p className="text-[12.5px] text-muted-foreground">Sin agotados, sin poco stock y sin consultas pendientes.</p></div></div>
+          ) : (
+            <RowList>
+              {attention.map((item) => (
+                <ListRow key={item.key} to={item.to} lead={<StatusPill tone={item.tone} className="h-8 w-8 justify-center rounded-full p-0">{item.icon}</StatusPill>} title={item.title} meta={item.meta} trailing={<ArrowRight className="h-4 w-4 text-muted-foreground" />} />
               ))}
-            </ul>
-          </section>
-        )}
+            </RowList>
+          )}
+        </Section>
       </div>
+
+      {(progress < 100 && can("ajustes") && can("catalogo")) || (reviews.length > 0 && can("opiniones")) ? (
+        <div className="grid gap-6 lg:grid-cols-2">
+          {progress < 100 && can("ajustes") && can("catalogo") && (
+            <Section title="Completá tu local" description={`${doneCount} de ${steps.length} pasos hechos · los locales completos reciben más pedidos`}>
+              <div className="overflow-hidden rounded-2xl border bg-card">
+                <div className="flex items-center gap-3 border-b px-4 py-3"><ProgressRing value={progress} /><p className="text-sm text-muted-foreground">Te faltan <span className="font-bold text-foreground">{nextSteps.length}</span> {nextSteps.length === 1 ? "paso" : "pasos"} para tener todo listo.</p></div>
+                <ul className="divide-y">
+                  {nextSteps.slice(0, 4).map((step) => (
+                    <li key={step.label}><Link to={step.to} className="flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors hover:bg-muted/50"><span className="h-4 w-4 shrink-0 rounded-full border-2 border-muted-foreground/40" /><span className="flex-1">{step.label}</span><ArrowRight className="h-4 w-4 text-muted-foreground" /></Link></li>
+                  ))}
+                </ul>
+              </div>
+            </Section>
+          )}
+
+          {reviews.length > 0 && can("opiniones") && (
+            <Section title="Últimas opiniones" action={<SectionLink to="/app/comercio/opiniones">Ver todas</SectionLink>}>
+              <RowList>
+                {reviews.slice(0, 3).map((review) => (
+                  <ListRow key={review.id} to="/app/comercio/opiniones"
+                    lead={<span className="flex h-9 w-9 items-center justify-center rounded-full bg-warning/15 text-sm font-extrabold tabular-nums text-warning-foreground dark:text-warning">{review.puntaje}<Star className="ml-0.5 h-3 w-3 fill-current" /></span>}
+                    title={review.cliente?.nombre?.split(" ")[0] || "Cliente"} meta={review.comentario || "Sin comentario"}
+                    trailing={!review.respuesta ? <span className="text-xs font-bold text-primary">Responder</span> : <span className="text-xs text-muted-foreground">Respondida</span>} />
+                ))}
+              </RowList>
+            </Section>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

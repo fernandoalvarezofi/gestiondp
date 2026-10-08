@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, Loader2, Pencil, Percent, Pause, Pencil as Rename, Play, Plus, Search, Star, Trash2, Upload, UtensilsCrossed } from "lucide-react";
+import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, Loader2, MoreHorizontal, Pencil, Percent, Pause, Pencil as Rename, Play, Plus, Search, Star, Trash2, Upload, UtensilsCrossed } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
@@ -190,7 +191,7 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
   return (
     <div>
       <div className="flex flex-wrap items-center gap-2">
-        <label className="flex h-10 min-w-[200px] flex-1 items-center gap-2 rounded-full bg-muted px-4"><Search className="h-4 w-4 text-muted-foreground" /><input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar en tu menú" className="min-w-0 flex-1 bg-transparent text-sm outline-none" aria-label="Buscar en tu menú" /></label>
+        <label className="flex h-10 min-w-[200px] flex-1 items-center gap-2 rounded-full border bg-card px-4 transition-shadow focus-within:ring-2 focus-within:ring-ring/30"><Search className="h-4 w-4 text-muted-foreground" /><input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar en tu menú" className="min-w-0 flex-1 bg-transparent text-sm outline-none" aria-label="Buscar en tu menú" /></label>
         <Button variant="outline" className="rounded-full" onClick={addSection}><Plus className="h-4 w-4" />Sección</Button>
         <Button variant="outline" className="rounded-full" onClick={() => setImporting(true)}><Upload className="h-4 w-4" />Importar</Button>
         <Button variant="outline" className="rounded-full" onClick={exportCsv} disabled={products.length === 0}><Download className="h-4 w-4" />Exportar</Button>
@@ -227,22 +228,27 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
         if ((needle || filter !== "todos") && items.length === 0) return null;
         const allSelected = items.length > 0 && items.every((product) => selected.has(product.id));
         return (
-          <section key={section.name} className="mt-6">
+          <section key={section.name} className="mt-7">
             <div className="mb-2 flex flex-wrap items-center gap-1.5">
               {items.length > 0 && <input type="checkbox" checked={allSelected} onChange={() => setSelected((current) => { const next = new Set(current); items.forEach((product) => (allSelected ? next.delete(product.id) : next.add(product.id))); return next; })} aria-label={`Seleccionar toda la sección ${section.name}`} className="h-4 w-4 accent-primary" />}
-              <h3 className={cn("font-extrabold", !section.visible && "text-muted-foreground")}>{section.name}</h3>
+              <h3 className={cn("text-[15px] font-extrabold", !section.visible && "text-muted-foreground")}>{section.name}</h3>
               <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold text-muted-foreground">{products.filter((product) => product.categoria === section.name).length}</span>
               {!section.visible && <span className="rounded-full bg-warning/20 px-2 py-0.5 text-xs font-bold">Oculta para clientes</span>}
               <span className="ml-auto flex items-center">
-                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Subir ${section.name}`} disabled={busy || sectionIndex === 0} onClick={() => moveSection(section.name, -1)}><ArrowUp className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Bajar ${section.name}`} disabled={busy || sectionIndex === sections.length - 1} onClick={() => moveSection(section.name, 1)}><ArrowDown className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={section.visible ? `Ocultar ${section.name}` : `Mostrar ${section.name}`} onClick={() => toggleSection(section.name, !section.visible)}>{section.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</Button>
-                <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Renombrar ${section.name}`} onClick={() => renameSection(section.name)}><Rename className="h-4 w-4" /></Button>
-                {products.every((product) => product.categoria !== section.name) && <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Eliminar ${section.name}`} onClick={() => deleteSection(section.name)}><Trash2 className="h-4 w-4" /></Button>}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label={`Opciones de la sección ${section.name}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52">
+                    <DropdownMenuItem onClick={() => renameSection(section.name)}><Rename className="h-4 w-4" />Renombrar</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toggleSection(section.name, !section.visible)}>{section.visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}{section.visible ? "Ocultar para clientes" : "Mostrar a clientes"}</DropdownMenuItem>
+                    <DropdownMenuItem disabled={busy || sectionIndex === 0} onClick={() => moveSection(section.name, -1)}><ArrowUp className="h-4 w-4" />Subir sección</DropdownMenuItem>
+                    <DropdownMenuItem disabled={busy || sectionIndex === sections.length - 1} onClick={() => moveSection(section.name, 1)}><ArrowDown className="h-4 w-4" />Bajar sección</DropdownMenuItem>
+                    {products.every((product) => product.categoria !== section.name) && <><DropdownMenuSeparator /><DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => deleteSection(section.name)}><Trash2 className="h-4 w-4" />Eliminar sección</DropdownMenuItem></>}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </span>
             </div>
             {items.length === 0 ? <p className="rounded-2xl border border-dashed p-4 text-sm text-muted-foreground">Sección vacía. Agregá productos o movelos desde otra sección.</p> : (
-              <ul className="divide-y overflow-hidden rounded-3xl border bg-card">
+              <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
                 {items.map((product, index) => (
                   <li key={product.id} className={cn("flex flex-wrap items-center gap-3 p-3", selected.has(product.id) && "bg-primary/5")}>
                     <input type="checkbox" checked={selected.has(product.id)} onChange={() => toggleSelected(product.id)} aria-label={`Seleccionar ${product.nombre}`} className="h-4 w-4 accent-primary" />
@@ -258,13 +264,19 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
                     </div>
                     <label className="hidden items-center gap-2 text-xs font-semibold text-muted-foreground sm:flex">{product.disponible ? "Disponible" : "Pausado"}<Switch checked={product.disponible} onCheckedChange={() => toggle(product, "disponible")} /></label>
                     <Switch className="sm:hidden" checked={product.disponible} onCheckedChange={() => toggle(product, "disponible")} aria-label="Disponible" />
-                    <span className="flex items-center">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Subir ${product.nombre}`} disabled={busy || index === 0} onClick={() => moveProduct(product, -1)}><ArrowUp className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Bajar ${product.nombre}`} disabled={busy || index === items.length - 1} onClick={() => moveProduct(product, 1)}><ArrowDown className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={product.destacado ? "Quitar de destacados" : "Destacar"} onClick={() => toggle(product, "destacado")}><Star className={product.destacado ? "h-4 w-4 fill-warning text-warning" : "h-4 w-4"} /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Duplicar ${product.nombre}`} disabled={busy} onClick={() => duplicate(product)}><Copy className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Editar ${product.nombre}`} onClick={() => setDraft(toDraft(product))}><Pencil className="h-4 w-4" /></Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" aria-label={`Eliminar ${product.nombre}`} onClick={() => remove(product)}><Trash2 className="h-4 w-4" /></Button>
+                    <span className="flex items-center gap-0.5">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label={`Editar ${product.nombre}`} title="Editar" onClick={() => setDraft(toDraft(product))}><Pencil className="h-4 w-4" /></Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label={`Más acciones de ${product.nombre}`}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-52">
+                          <DropdownMenuItem onClick={() => toggle(product, "destacado")}><Star className={product.destacado ? "h-4 w-4 fill-warning text-warning" : "h-4 w-4"} />{product.destacado ? "Quitar de destacados" : "Destacar"}</DropdownMenuItem>
+                          <DropdownMenuItem disabled={busy} onClick={() => duplicate(product)}><Copy className="h-4 w-4" />Duplicar</DropdownMenuItem>
+                          <DropdownMenuItem disabled={busy || index === 0} onClick={() => moveProduct(product, -1)}><ArrowUp className="h-4 w-4" />Subir en la sección</DropdownMenuItem>
+                          <DropdownMenuItem disabled={busy || index === items.length - 1} onClick={() => moveProduct(product, 1)}><ArrowDown className="h-4 w-4" />Bajar en la sección</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive focus:text-destructive" onClick={() => remove(product)}><Trash2 className="h-4 w-4" />Eliminar</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </span>
                   </li>
                 ))}

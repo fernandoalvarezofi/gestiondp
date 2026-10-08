@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowRight, Banknote, Bike, Bug, Fingerprint, Calculator, Car, Check, Send, Store as StoreIcon2, Target, ClipboardList, Flag, Landmark, LayoutDashboard, LifeBuoy, Loader2, Map, MapPinOff, Megaphone, Network, Package, Pencil, Radio, Receipt, Route, ScrollText, Settings, ShieldAlert, Store, Tags, Users, Wallet, Undo2, X } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, StatCard } from "@/components/delivery/Common";
 import { PanelShell } from "@/components/panel/PanelShell";
+import { BarSeries, ListRow, Metric, MetricStrip, PageIntro, RowList, Section, SectionLink, StatusPill, Surface } from "@/components/panel/kit";
 import { PlatformSettings } from "@/components/admin/PlatformSettings";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { PaymentsSettings } from "@/components/admin/PaymentsSettings";
@@ -142,6 +142,13 @@ export default function AdminDashboard() {
   };
 
   const pendingStores = pending.length;
+  const queue = [
+    { label: "Tickets de soporte abiertos", value: openClaims, to: "/app/admin/soporte" },
+    { label: "Comercios por aprobar", value: pendingStores, to: "/app/admin/comercios" },
+    { label: "Identidades por verificar", value: pendingIdentities, to: "/app/admin/identidades" },
+    { label: "Reintegros por hacer", value: refundCount, to: "/app/admin/pagos" },
+    { label: "Opiniones reportadas", value: reportedReviews, to: "/app/admin/opiniones" },
+  ].sort((x, y) => Number(Boolean(y.value)) - Number(Boolean(x.value)));
   const days = Array.from({ length: 7 }, (_, index) => {
     const date = new Date();
     date.setDate(date.getDate() - (6 - index));
@@ -151,7 +158,7 @@ export default function AdminDashboard() {
   });
   const pendingBlockEl = (
     <>{pending.length > 0 && (
-        <section className="mt-6 rounded-3xl border border-warning/40 bg-warning/10 p-4 sm:p-5">
+        <section className="rounded-2xl border border-warning/40 bg-warning/10 p-4 sm:p-5">
           <h2 className="font-extrabold">Comercios esperando aprobación ({pending.length})</h2>
           <ul className="mt-3 space-y-2">
             {pending.map((store) => (
@@ -215,50 +222,38 @@ export default function AdminDashboard() {
     >
       <Tabs value={section}>
         <TabsContent value="resumen" className="mt-0 space-y-6">
+          <PageIntro title="Centro de control" description={<span className="first-letter:capitalize">{new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", weekday: "long", day: "numeric", month: "long" })} · {stats.active} {stats.active === 1 ? "pedido en curso" : "pedidos en curso"} ahora</span>}
+            actions={<Button asChild size="sm" className="rounded-full"><Link to="/app/admin/operaciones"><Radio className="h-4 w-4" />Abrir operaciones en vivo</Link></Button>} />
           <AdminMfaNotice />
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            <StatCard label="Facturado hoy" value={money(stats.gmv)} icon={<Wallet className="h-4 w-4" />} />
-            <StatCard label="Pedidos hoy" value={stats.count} icon={<Receipt className="h-4 w-4" />} />
-            <StatCard label="Pedidos en curso" value={stats.active} icon={<Receipt className="h-4 w-4" />} />
-            <StatCard label="Comercios activos" value={stats.stores} icon={<Store className="h-4 w-4" />} />
-            <StatCard label="Repartidores conectados" value={stats.online} icon={<Bike className="h-4 w-4" />} />
-          </div>
+          <MetricStrip cols={5}>
+            <Metric featured label="Facturado hoy" value={money(stats.gmv)} hint={`${stats.count} ${stats.count === 1 ? "pedido" : "pedidos"} hoy`} spark={days.map((d) => d.facturado)} />
+            <Metric label="En curso" value={stats.active} hint="Pedidos activos" />
+            <Metric label="Comercios activos" value={stats.stores} hint={pendingStores ? `${pendingStores} por aprobar` : "Todos aprobados"} />
+            <Metric label="Repartidores" value={stats.online} hint="Conectados ahora" />
+          </MetricStrip>
           {pendingBlockEl}
-          <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-            <section className="rounded-3xl border bg-card p-4 sm:p-5">
-              <h2 className="font-extrabold">Pedidos de los últimos 7 días</h2>
-              <div className="mt-4 h-60" role="img" aria-label="Pedidos por día de los últimos 7 días">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={days} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
-                    <CartesianGrid vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="dia" tickLine={false} axisLine={false} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <YAxis allowDecimals={false} tickLine={false} axisLine={false} width={32} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <Tooltip cursor={{ fill: "hsl(var(--muted))" }} content={({ active, payload, label }) => active && payload?.length ? (
-                      <div className="rounded-xl border bg-popover px-3 py-2 text-sm shadow-pop"><p className="font-bold">{label}</p><p>{payload[0].payload.pedidos} pedidos</p><p className="text-muted-foreground">{money(payload[0].payload.facturado)}</p></div>
-                    ) : null} />
-                    <Bar dataKey="pedidos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={36} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </section>
-            <section className="rounded-3xl border bg-card p-4 sm:p-5">
-              <h2 className="font-extrabold">Pendientes de revisar</h2>
-              <ul className="mt-3 space-y-2 text-sm">
-                {[
-                  { label: "Tickets de soporte abiertos", value: openClaims, to: "/app/admin/soporte" },
-                  { label: "Comercios por aprobar", value: pendingStores, to: "/app/admin/comercios" },
-                  { label: "Identidades por verificar", value: pendingIdentities, to: "/app/admin/identidades" },
-                  { label: "Reintegros por hacer", value: refundCount, to: "/app/admin/pagos" },
-                ].map((item) => (
-                  <li key={item.label}>
-                    <Link to={item.to} className="flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 hover:bg-muted">
-                      <span className="font-semibold">{item.label}</span>
-                      <span className="flex items-center gap-2"><span className={`rounded-full px-2.5 py-0.5 text-xs font-extrabold ${item.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>{item.value}</span><ArrowRight className="h-4 w-4 text-muted-foreground" /></span>
-                    </Link>
-                  </li>
+          <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+            <div className="space-y-6">
+              <Section title="Pedidos de los últimos 7 días" description="El día con más pedidos va resaltado">
+                <Surface><BarSeries data={days.map((d, i) => ({ key: String(i), value: d.pedidos, label: d.dia, hint: money(d.facturado) }))} label="Pedidos por día de los últimos 7 días" height={190} /></Surface>
+              </Section>
+              <Section title="Actividad reciente" description="Los últimos pedidos de toda la plataforma" action={<SectionLink to="/app/admin/pedidos">Ver todos</SectionLink>}>
+                <RowList>
+                  {orders.slice(0, 6).map((order) => (
+                    <ListRow key={order.id} to="/app/admin/pedidos" lead={<StatusBadge estado={order.estado} />} title={<>{shortId(order.id)} <span className="font-medium text-muted-foreground">· {order.comercio?.nombre}</span></>} meta={`${order.cliente?.nombre?.split(" ")[0] || "Cliente"} · ${formatDateTime(order.created_at)}`} trailing={<span className="font-extrabold tabular-nums">{money(order.total)}</span>} />
+                  ))}
+                  {orders.length === 0 && <p className="px-4 py-6 text-center text-sm text-muted-foreground">Todavía no hay pedidos.</p>}
+                </RowList>
+              </Section>
+            </div>
+            <Section title="Pendientes de revisar" description={queue.some((q) => q.value) ? "Ordenados por lo que más urge" : "Nada esperando tu revisión"}>
+              <RowList>
+                {queue.map((item) => (
+                  <ListRow key={item.label} to={item.to} title={<span className={item.value ? "" : "font-semibold text-muted-foreground"}>{item.label}</span>}
+                    trailing={<span className="flex items-center gap-2"><StatusPill tone={item.value ? "brand" : "neutral"} className="min-w-6 justify-center tabular-nums">{item.value}</StatusPill><ArrowRight className="h-4 w-4 text-muted-foreground" /></span>} />
                 ))}
-              </ul>
-            </section>
+              </RowList>
+            </Section>
           </div>
         </TabsContent>
 

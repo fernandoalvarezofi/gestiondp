@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { ChatButton } from "@/components/delivery/OrderChat";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
+import { StatusPill } from "@/components/panel/kit";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -101,21 +102,25 @@ export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOr
   const alarm = useOrderAlarm(pending);
 
   return (
-    <div>
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        {(["tablero", "cocina", "historial"] as const).map((item) => (
-          <button key={item} type="button" onClick={() => setView(item)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", view === item ? "border-foreground bg-foreground text-background" : "bg-card")}>{item === "tablero" ? "En curso" : item === "cocina" ? "Cocina" : "Historial"}</button>
-        ))}
-        <OrderTools />
-        <button type="button" onClick={alarm.toggleMute} className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-sm font-bold" aria-pressed={alarm.muted}>
-          {alarm.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}{alarm.muted ? "Sonido apagado" : "Sonido activo"}
-        </button>
+        <div className="inline-flex rounded-full border bg-card p-0.5" role="tablist" aria-label="Vista de pedidos">
+          {(["tablero", "cocina", "historial"] as const).map((item) => (
+            <button key={item} type="button" role="tab" aria-selected={view === item} onClick={() => setView(item)} className={cn("rounded-full px-4 py-1.5 text-[13px] font-bold transition-colors", view === item ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}>{item === "tablero" ? "En curso" : item === "cocina" ? "Cocina" : "Historial"}</button>
+          ))}
+        </div>
+        <div className="ml-auto flex items-center gap-1.5">
+          <button type="button" onClick={alarm.toggleMute} className="flex h-9 items-center gap-1.5 rounded-full border bg-card px-3 text-[13px] font-bold transition-colors hover:bg-muted" aria-pressed={alarm.muted} aria-label={alarm.muted ? "Activar el sonido" : "Silenciar el sonido"}>
+            {alarm.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}<span className="hidden sm:inline">{alarm.muted ? "Sonido apagado" : "Sonido"}</span>
+          </button>
+          <OrderTools />
+        </div>
       </div>
 
       {!alarm.ready && !alarm.muted && (
-        <button type="button" onClick={alarm.enable} className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-warning/50 bg-warning/10 px-3 py-2 text-left text-sm">
+        <button type="button" onClick={alarm.enable} className="flex w-full items-center gap-2.5 rounded-xl border border-warning/40 bg-warning/10 px-3.5 py-2.5 text-left text-[13px]">
           <BellRing className="h-4 w-4 shrink-0" />
-          <span><span className="font-extrabold">Tocá para activar el sonido</span> <span className="text-muted-foreground">· el navegador lo exige para avisarte con sonido de cada pedido nuevo.</span></span>
+          <span><span className="font-extrabold">Tocá para activar el sonido</span> <span className="text-muted-foreground">· el navegador lo pide para avisarte de cada pedido nuevo.</span></span>
         </button>
       )}
 
@@ -129,21 +134,42 @@ function Board({ orders, store, now, onChange }: { orders: DeliveryOrder[]; stor
   const visibleColumns = columns.filter((column) => column.estado !== "listo" || orders.some((order) => order.estado === "listo" || order.tipo_entrega === "retiro"));
   const today = new Date().toDateString();
   const todays = orders.filter((order) => order.estado !== "cancelado" && new Date(order.created_at).toDateString() === today);
+  const sorted = (estado: EstadoPedido) => orders.filter((order) => order.estado === estado).sort((a, b) => new Date(a.programado_para || a.created_at).getTime() - new Date(b.programado_para || b.created_at).getTime());
+  // En el celular se ve una columna a la vez: arranca en la primera que tenga pedidos (los nuevos, si hay).
+  const firstWithOrders = visibleColumns.find((column) => orders.some((order) => order.estado === column.estado))?.estado ?? visibleColumns[0].estado;
+  const [picked, setPicked] = useState<EstadoPedido | null>(null);
+  const active = picked && visibleColumns.some((column) => column.estado === picked) ? picked : firstWithOrders;
 
   return (
     <>
-      <p className="mt-4 text-sm text-muted-foreground">Hoy: <span className="font-bold text-foreground">{todays.length} {todays.length === 1 ? "pedido" : "pedidos"}</span> · <span className="font-bold text-foreground">{money(todays.reduce((total, order) => total + Number(order.subtotal), 0))}</span> en ventas</p>
-      <div className="mt-3 grid gap-4 md:grid-cols-2 lg:auto-cols-[minmax(290px,1fr)] lg:grid-flow-col lg:grid-cols-none lg:overflow-x-auto lg:pb-2">
+      <p className="text-[13px] text-muted-foreground">Hoy: <span className="font-bold text-foreground">{todays.length} {todays.length === 1 ? "pedido" : "pedidos"}</span> · <span className="font-bold text-foreground">{money(todays.reduce((total, order) => total + Number(order.subtotal), 0))}</span> en ventas</p>
+
+      <div className="scrollbar-none -mx-3 flex gap-1.5 overflow-x-auto px-3 md:hidden" role="tablist" aria-label="Estado del pedido">
         {visibleColumns.map((column) => {
-          const list = orders.filter((order) => order.estado === column.estado)
-            .sort((a, b) => new Date(a.programado_para || a.created_at).getTime() - new Date(b.programado_para || b.created_at).getTime());
+          const count = orders.filter((order) => order.estado === column.estado).length;
           return (
-            <section key={column.estado} className={cn("rounded-3xl p-3", column.estado === "pendiente" && list.length ? "bg-primary/10 ring-2 ring-primary/40" : "bg-muted/60")}>
-              <h3 className="flex items-center justify-between px-1 font-extrabold">{column.title}<span className={cn("rounded-full px-2 py-0.5 text-xs", list.length && column.estado === "pendiente" ? "bg-primary text-primary-foreground" : "bg-card")}>{list.length}</span></h3>
-              <p className="px-1 text-xs text-muted-foreground">{column.hint}</p>
-              <div className="mt-3 space-y-3">
+            <button key={column.estado} type="button" role="tab" aria-selected={active === column.estado} onClick={() => setPicked(column.estado)} className={cn("flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-[13px] font-bold transition-colors", active === column.estado ? "border-foreground bg-foreground text-background" : "bg-card")}>
+              {column.title}<span className={cn("rounded-full px-1.5 text-[11px] tabular-nums", active === column.estado ? "bg-background/20" : column.estado === "pendiente" && count ? "bg-brand-orange text-white" : "bg-muted")}>{count}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="grid items-start gap-3 md:grid-cols-2 lg:auto-cols-[minmax(300px,1fr)] lg:grid-flow-col lg:grid-cols-none lg:overflow-x-auto lg:pb-2">
+        {visibleColumns.map((column) => {
+          const list = sorted(column.estado);
+          const hot = column.estado === "pendiente" && list.length > 0;
+          return (
+            <section key={column.estado} className={cn("min-w-0 rounded-2xl p-2", hot ? "bg-brand-orange/[0.07] ring-1 ring-brand-orange/30" : "bg-muted/50", active !== column.estado && "max-md:hidden")}>
+              <header className="flex items-center gap-2 px-2 pb-2 pt-1">
+                {hot && <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand-orange opacity-60" /><span className="relative inline-flex h-2 w-2 rounded-full bg-brand-orange" /></span>}
+                <h3 className="whitespace-nowrap text-[14px] font-extrabold">{column.title}</h3>
+                <span className={cn("rounded-full px-2 text-[11.5px] font-bold tabular-nums leading-5", hot ? "bg-brand-orange text-white" : "bg-card text-muted-foreground")}>{list.length}</span>
+                <span className="ml-auto hidden truncate text-[12px] text-muted-foreground 2xl:block">{column.hint}</span>
+              </header>
+              <div className="space-y-2.5">
                 {list.map((order) => <OrderCard key={order.id} order={order} store={store} now={now} onChange={onChange} />)}
-                {list.length === 0 && <p className="px-1 py-6 text-center text-sm text-muted-foreground">Sin pedidos</p>}
+                {list.length === 0 && <p className="px-2 py-8 text-center text-[13px] text-muted-foreground">Sin pedidos por acá</p>}
               </div>
             </section>
           );
@@ -197,81 +223,83 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
   const urgent = remaining !== null && remaining < 120000;
   const promised = order.entrega_estimada ? new Date(order.entrega_estimada).getTime() : null;
   const late = promised !== null && order.estado !== "pendiente" && order.estado !== "listo" && now > promised;
+  const canDelay = (order.estado === "confirmado" || order.estado === "preparando") && !order.programado_para;
+  const ghostBtn = "h-8 flex-1 rounded-full px-1.5 text-[12.5px] font-bold text-muted-foreground hover:text-foreground";
 
   return (
-    <article className={cn("rounded-2xl border bg-card p-3 shadow-soft", order.estado === "pendiente" && "border-primary/60", late && "border-destructive/60")}>
-      <div className="flex items-start justify-between gap-2">
+    <article className={cn("rounded-xl border bg-card p-3.5", order.estado === "pendiente" && "border-brand-orange/50", late && "border-destructive/50")}>
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="font-extrabold">{shortId(order.id)} <span className="font-semibold text-muted-foreground">· {order.cliente?.nombre || "Cliente"}</span></p>
-          <p className="text-xs text-muted-foreground">Recibido {formatTime(order.visible_at || order.created_at)} · hace {minutesLabel(now - received)}</p>
+          <p className="truncate text-[15px] font-extrabold leading-tight">{shortId(order.id)} <span className="font-semibold text-muted-foreground">· {order.cliente?.nombre || "Cliente"}</span></p>
+          <p className="mt-0.5 text-[12.5px] text-muted-foreground">{formatTime(order.visible_at || order.created_at)} · hace {minutesLabel(now - received)}</p>
         </div>
-        <p className="font-display font-extrabold">{money(order.subtotal)}</p>
+        <p className="shrink-0 font-display text-[17px] font-extrabold tabular-nums leading-tight">{money(order.subtotal)}</p>
       </div>
 
       <div className="mt-2 flex flex-wrap gap-1.5">
-        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold", retiro ? "bg-violet-100 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300" : "bg-primary/10 text-primary")}>{retiro ? <Store className="h-3 w-3" /> : <Bike className="h-3 w-3" />}{retiro ? "Retira en el local" : "Envío"}</span>
-        {order.canal === "tienda" && <span className="inline-flex items-center gap-1 rounded-full bg-foreground px-2 py-0.5 text-[11px] font-extrabold text-background"><Globe className="h-3 w-3" />Tienda online</span>}
-        {order.programado_para && <span className="inline-flex items-center gap-1 rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-extrabold"><CalendarClock className="h-3 w-3" />Programado · {formatSlot(order.programado_para)}</span>}
-        {(order.demora_extra_min ?? 0) > 0 && <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-extrabold">+{order.demora_extra_min} min de demora</span>}
+        <StatusPill tone={retiro ? "info" : "neutral"}>{retiro ? <Store className="h-3 w-3" /> : <Bike className="h-3 w-3" />}{retiro ? "Retira en el local" : "Envío"}</StatusPill>
+        {order.canal === "tienda" && <StatusPill tone="neutral"><Globe className="h-3 w-3" />Tienda online</StatusPill>}
+        {order.programado_para && <StatusPill tone="warning"><CalendarClock className="h-3 w-3" />Programado · {formatSlot(order.programado_para)}</StatusPill>}
+        {(order.demora_extra_min ?? 0) > 0 && <StatusPill>+{order.demora_extra_min} min de demora</StatusPill>}
       </div>
 
       {order.estado === "pendiente" && remaining !== null && (
         <div className="mt-3" role="timer" aria-label="Tiempo para responder">
-          <div className="flex items-center justify-between text-xs font-bold"><span className={cn("flex items-center gap-1", urgent && "text-destructive")}><AlarmClock className="h-3.5 w-3.5" />Respondé en</span><span className={cn("tabular-nums", urgent && "text-destructive")}>{clock(remaining)}</span></div>
+          <div className="flex items-center justify-between text-[12.5px] font-bold"><span className={cn("flex items-center gap-1", urgent && "text-destructive")}><AlarmClock className="h-3.5 w-3.5" />Respondé en</span><span className={cn("tabular-nums", urgent && "text-destructive")}>{clock(remaining)}</span></div>
           <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted"><div className={cn("h-full rounded-full transition-all", urgent ? "bg-destructive" : remaining < total / 2 ? "bg-warning" : "bg-success")} style={{ width: `${Math.max(0, Math.min(100, (remaining / total) * 100))}%` }} /></div>
-          <p className="mt-1 text-[11px] text-muted-foreground">Si no respondés a tiempo, el pedido se cancela solo.</p>
+          <p className="mt-1 text-[11.5px] text-muted-foreground">Si no respondés a tiempo, el pedido se cancela solo.</p>
         </div>
       )}
 
-      <ul className="mt-3 space-y-0.5 text-sm">
-        {(order.items || []).map((item, index) => <li key={item.id || index}><span className="font-bold">{item.cantidad}×</span> {item.nombre}<ItemStockButton order={order} item={item} onChange={onChange} />{item.opciones && item.opciones.length > 0 && <span className="block pl-5 text-xs font-semibold text-foreground/80">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block pl-5 text-xs text-muted-foreground">“{item.notas}”</span>}</li>)}
+      <ul className="mt-3 space-y-1 rounded-lg bg-muted/50 px-3 py-2.5 text-sm">
+        {(order.items || []).map((item, index) => <li key={item.id || index}><span className="font-extrabold tabular-nums">{item.cantidad}×</span> {item.nombre}<ItemStockButton order={order} item={item} onChange={onChange} />{item.opciones && item.opciones.length > 0 && <span className="block pl-5 text-[12.5px] font-semibold text-foreground/80">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block pl-5 text-[12.5px] text-muted-foreground">“{item.notas}”</span>}</li>)}
       </ul>
       <AdjustmentsList orderId={order.id} />
-      {order.notas && <p className="mt-2 rounded-lg bg-warning/15 p-2 text-xs"><span className="font-bold">Nota: </span>{order.notas}</p>}
-      {order.metodo_pago === "efectivo" && order.efectivo_paga_con != null && <p className="mt-2 rounded-lg bg-muted p-2 text-xs"><span className="font-bold">Paga con {money(order.efectivo_paga_con)}</span> · vuelto {money(Number(order.efectivo_paga_con) - Number(order.total))}</p>}
-      <p className="mt-2 flex items-start gap-1 text-xs text-muted-foreground"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{metodoPagoLabel[order.metodo_pago]}{!retiro && ` · ${order.direccion_entrega}`}{order.distancia_km != null && !retiro && ` · ${order.distancia_km} km`}</span></p>
-      {order.telefono_contacto && <a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`} className="mt-1 inline-flex items-center gap-1 text-xs font-bold text-primary"><Phone className="h-3.5 w-3.5" />{order.telefono_contacto}</a>}
-      {!retiro && order.repartidor_id && order.estado !== "en_camino" && <CourierProximity order={order} store={store} />}
+      {order.notas && <p className="mt-2 rounded-lg bg-warning/15 px-3 py-2 text-[12.5px]"><span className="font-bold">Nota: </span>{order.notas}</p>}
+      {order.metodo_pago === "efectivo" && order.efectivo_paga_con != null && <p className="mt-2 rounded-lg bg-muted px-3 py-2 text-[12.5px]"><span className="font-bold">Paga con {money(order.efectivo_paga_con)}</span> · vuelto {money(Number(order.efectivo_paga_con) - Number(order.total))}</p>}
 
-      {promised !== null && order.estado !== "pendiente" && (
-        <p className={cn("mt-2 flex items-center gap-1 text-xs font-semibold", late ? "text-destructive" : "text-muted-foreground")}>
-          <Clock3 className="h-3.5 w-3.5" />
-          {order.estado === "listo" ? `Prometido para ${formatTime(order.entrega_estimada)}` : late ? `Atrasado ${minutesLabel(now - promised)} · prometido ${formatTime(order.entrega_estimada)}` : `Prometido ${formatTime(order.entrega_estimada)} · faltan ${minutesLabel(promised - now)}`}
-        </p>
-      )}
-
-      <div className="mt-3 flex flex-wrap gap-2">
-        <ChatButton pedidoId={order.id} canal="comercio" label="Chat" title={order.cliente?.nombre || "Cliente"} subtitle={`Pedido ${shortId(order.id)}`} />
-        <Button type="button" size="sm" variant="outline" className="rounded-full" onClick={() => printOrderTicket(order, store, readPrintSettings(), 1)}><Printer className="h-4 w-4" />Comanda</Button>
+      <div className="mt-2.5 space-y-1 text-[12.5px] text-muted-foreground">
+        <p className="flex items-start gap-1.5"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{metodoPagoLabel[order.metodo_pago]}{!retiro && ` · ${order.direccion_entrega}`}{order.distancia_km != null && !retiro && ` · ${order.distancia_km} km`}</span></p>
+        {order.telefono_contacto && <a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`} className="flex items-center gap-1.5 font-bold text-foreground hover:underline"><Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />{order.telefono_contacto}</a>}
+        {!retiro && order.repartidor_id && order.estado !== "en_camino" && <CourierProximity order={order} store={store} />}
+        {promised !== null && order.estado !== "pendiente" && (
+          <p className={cn("flex items-center gap-1.5 font-semibold", late ? "text-destructive" : "")}>
+            <Clock3 className="h-3.5 w-3.5 shrink-0" />
+            {order.estado === "listo" ? `Prometido para ${formatTime(order.entrega_estimada)}` : late ? `Atrasado ${minutesLabel(now - promised)} · prometido ${formatTime(order.entrega_estimada)}` : `Prometido ${formatTime(order.entrega_estimada)} · faltan ${minutesLabel(promised - now)}`}
+          </p>
+        )}
       </div>
 
-      <div className="mt-2 flex flex-wrap gap-2">
-        {order.estado === "pendiente" && <>
-          <Button size="sm" className="flex-1 rounded-full" disabled={busy} onClick={() => (order.programado_para ? acceptScheduled() : setAccepting(true))}><Check className="h-4 w-4" />Aceptar</Button>
-          <Button size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={() => setRejecting(true)}><X className="h-4 w-4" />Rechazar</Button>
-        </>}
-        {order.estado === "confirmado" && <>
-          <Button size="sm" className="flex-1 rounded-full" disabled={busy} onClick={() => run("preparando")}><ChefHat className="h-4 w-4" />Empezar a preparar</Button>
-          <Button size="sm" variant="ghost" className="rounded-full text-destructive" disabled={busy} onClick={() => setRejecting(true)}>Cancelar</Button>
-        </>}
-        {order.estado === "preparando" && retiro && <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={() => run("listo")}><ShoppingBag className="h-4 w-4" />Listo para retirar</Button>}
-        {order.estado === "listo" && <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={deliverPickup}><PackageCheck className="h-4 w-4" />Entregar al cliente</Button>}
-        {order.estado === "preparando" && !retiro && (order.repartidor_id
-          ? <p className="w-full rounded-xl bg-muted p-2 text-center text-xs font-semibold">El repartidor lo retira y lo marca en camino</p>
-          : <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={() => run("en_camino")}><Bike className="h-4 w-4" />Despachar con envío propio</Button>)}
-        {order.estado === "en_camino" && !retiro && (order.repartidor_id
-          ? <p className="w-full rounded-xl bg-muted p-2 text-center text-xs font-semibold">En manos del repartidor</p>
-          : <Button size="sm" className="w-full rounded-full" disabled={busy} onClick={() => run("entregado")}><PackageCheck className="h-4 w-4" />Marcar entregado</Button>)}
-      </div>
-
-      {(order.estado === "confirmado" || order.estado === "preparando") && !order.programado_para && (
-        <div className="mt-3 border-t pt-2">
-          <p className="text-[11px] font-bold uppercase text-muted-foreground">¿Te estás demorando? Avisale al cliente</p>
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {DELAY_OPTIONS.map((minutes) => <button key={minutes} type="button" disabled={busy || (order.demora_extra_min ?? 0) + minutes > 60} onClick={() => delay(minutes)} className="rounded-full border px-2.5 py-1 text-xs font-bold hover:bg-muted disabled:opacity-40">+{minutes} min</button>)}
-          </div>
+      <div className="mt-3 border-t pt-3">
+        <div className="flex items-center gap-2">
+          {order.estado === "pendiente" && <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => (order.programado_para ? acceptScheduled() : setAccepting(true))}><Check className="h-4 w-4" />Aceptar pedido</Button>}
+          {order.estado === "confirmado" && <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => run("preparando")}><ChefHat className="h-4 w-4" />Empezar a preparar</Button>}
+          {order.estado === "preparando" && retiro && <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => run("listo")}><ShoppingBag className="h-4 w-4" />Listo para retirar</Button>}
+          {order.estado === "listo" && <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={deliverPickup}><PackageCheck className="h-4 w-4" />Entregar al cliente</Button>}
+          {order.estado === "preparando" && !retiro && (order.repartidor_id
+            ? <p className="flex-1 rounded-full bg-muted px-3 py-2 text-center text-[12.5px] font-semibold">El repartidor lo retira y lo marca en camino</p>
+            : <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => run("en_camino")}><Bike className="h-4 w-4" />Despachar con envío propio</Button>)}
+          {order.estado === "en_camino" && !retiro && (order.repartidor_id
+            ? <p className="flex-1 rounded-full bg-muted px-3 py-2 text-center text-[12.5px] font-semibold">En manos del repartidor</p>
+            : <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => run("entregado")}><PackageCheck className="h-4 w-4" />Marcar entregado</Button>)}
         </div>
-      )}
+        <div className="mt-1.5 flex items-center justify-between gap-1">
+          <ChatButton pedidoId={order.id} canal="comercio" label="Chat" variant="ghost" title={order.cliente?.nombre || "Cliente"} subtitle={`Pedido ${shortId(order.id)}`} className={ghostBtn} />
+          <Button type="button" size="sm" variant="ghost" className={ghostBtn} onClick={() => printOrderTicket(order, store, readPrintSettings(), 1)}><Printer className="h-4 w-4" />Comanda</Button>
+          {canDelay && (
+            <Popover>
+              <PopoverTrigger asChild><Button type="button" size="sm" variant="ghost" className={ghostBtn}><Clock3 className="h-4 w-4" />Demora</Button></PopoverTrigger>
+              <PopoverContent align="end" className="w-60 p-3">
+                <p className="text-[12.5px] font-bold">¿Te estás demorando? Avisale al cliente</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {DELAY_OPTIONS.map((minutes) => <button key={minutes} type="button" disabled={busy || (order.demora_extra_min ?? 0) + minutes > 60} onClick={() => delay(minutes)} className="rounded-full border px-3 py-1 text-[12.5px] font-bold transition-colors hover:bg-muted disabled:opacity-40">+{minutes} min</button>)}
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
+          {(order.estado === "pendiente" || order.estado === "confirmado") && <Button type="button" size="sm" variant="ghost" className={cn(ghostBtn, "text-destructive hover:bg-destructive/10 hover:text-destructive")} disabled={busy} onClick={() => setRejecting(true)}><X className="h-4 w-4" />{order.estado === "pendiente" ? "Rechazar" : "Cancelar"}</Button>}
+        </div>
+      </div>
 
       <AcceptDialog open={accepting} onOpenChange={setAccepting} order={order} defaultMinutes={store.tiempo_preparacion_min ?? 20} onDone={onChange} />
       <RejectDialog open={rejecting} onOpenChange={setRejecting} order={order} onDone={onChange} />
@@ -360,7 +388,7 @@ function History({ orders, store }: { orders: DeliveryOrder[]; store: DeliverySt
         ))}
       </div>
       {list.length ? (
-        <div className="mt-4 overflow-x-auto rounded-3xl border bg-card">
+        <div className="mt-4 overflow-x-auto rounded-2xl border bg-card">
           <table className="w-full min-w-[680px] text-sm">
             <thead className="border-b text-left text-muted-foreground"><tr><th className="p-3">Pedido</th><th className="p-3">Fecha</th><th className="p-3">Cliente</th><th className="p-3">Productos</th><th className="p-3">Estado</th><th className="p-3 text-right">Total</th></tr></thead>
             <tbody className="divide-y">
@@ -439,7 +467,7 @@ function OrderTools() {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button type="button" className="ml-auto flex items-center gap-1.5 rounded-full border bg-card px-3 py-2 text-sm font-bold" aria-label="Impresión y avisos"><Settings2 className="h-4 w-4" />Impresión y avisos</button>
+        <button type="button" className="flex h-9 items-center gap-1.5 rounded-full border bg-card px-3 text-[13px] font-bold transition-colors hover:bg-muted" aria-label="Impresión y avisos"><Settings2 className="h-4 w-4" /><span className="hidden sm:inline">Impresión y avisos</span></button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80"><PrintAlertsPanel /></PopoverContent>
     </Popover>
