@@ -1,3 +1,4 @@
+import { AskSeller } from "@/components/messages/AskSeller";
 import { CSSProperties, ReactNode, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, BadgeCheck, Bike, SlidersHorizontal, X, Clock3, CreditCard, Globe, Headphones, Instagram, MapPin, MessageCircle, Search, ShoppingBag, Star, Store as StoreIcon, Zap } from "lucide-react";
@@ -603,7 +604,8 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
               <div className="border bg-card p-5 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
                 <p className="flex items-center gap-2 font-extrabold"><MessageCircle className="h-5 w-5" style={{ color: "var(--sf-accent)" }} />Hablemos</p>
                 <div className="mt-2 flex flex-col gap-1.5">
-                  {social.length === 0 && <span className="text-muted-foreground">Pedí directo desde la tienda.</span>}
+                  {!preview && <AskSeller storeId={store.id} storeName={store.nombre} label="Escribinos por Woref" className="inline-flex h-auto items-center justify-start gap-2 border-0 bg-transparent p-0 font-semibold text-foreground shadow-none hover:bg-transparent hover:underline" />}
+                  {social.length === 0 && preview && <span className="text-muted-foreground">Pedí directo desde la tienda.</span>}
                   {social.map(({ href, label, icon: Icon }) => <a key={label} href={preview ? undefined : href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"><Icon className="h-4 w-4" />{label}</a>)}
                 </div>
               </div>

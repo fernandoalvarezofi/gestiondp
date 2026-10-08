@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { NativeShell } from "@/components/NativeShell";
+import { CookieBanner } from "@/components/CookieBanner";
 import { isNativeApp } from "@/lib/native";
 import { Loader2 } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -116,6 +117,7 @@ const App = () => (
             <FavoritesProvider>
               <BrowserRouter>
                 <NativeShell />
+                <CookieBanner />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>
                     <Route path="/" element={isNativeApp() ? <Navigate to={nativeHome()} replace /> : <Landing />} />

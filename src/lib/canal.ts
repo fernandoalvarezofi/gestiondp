@@ -1,9 +1,12 @@
+import { consiente } from "@/lib/cookies";
 // Origen de un pedido: si el cliente llegó desde la tienda online del comercio (/t/...) en las últimas 24 h,
 // el pedido se marca como "tienda" para que el comercio vea cuánto vende por ese canal.
 const CLAVE = "woref-origen-tienda";
 const VIGENCIA_MS = 24 * 60 * 60 * 1000;
 
 export function marcarOrigenTienda(comercioId: string): void {
+  // Es medición: solo con consentimiento.
+  if (!consiente("medicion")) return;
   try { window.localStorage.setItem(CLAVE, JSON.stringify({ id: comercioId, at: Date.now() })); } catch { /* sin almacenamiento: el pedido queda como "app" */ }
 }
 

@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
-import { FileText, Headset } from "lucide-react";
+import { Cookie, FileText, Headset } from "lucide-react";
+import { abrirPreferenciasCookies } from "@/lib/cookies";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 const faqs = [
@@ -34,6 +35,7 @@ export function HelpSection() {
           <li><Link to="/terminos" className="flex items-center gap-2 font-semibold text-primary hover:underline"><FileText className="h-4 w-4" />Términos y condiciones</Link></li>
           <li><Link to="/arrepentimiento" className="flex items-center gap-2 font-semibold text-primary hover:underline"><FileText className="h-4 w-4" />Botón de arrepentimiento y baja</Link></li>
           <li><Link to="/privacidad" className="flex items-center gap-2 font-semibold text-primary hover:underline"><FileText className="h-4 w-4" />Política de privacidad</Link></li>
+          <li><button type="button" onClick={abrirPreferenciasCookies} className="flex items-center gap-2 font-semibold text-primary hover:underline"><Cookie className="h-4 w-4" />Preferencias de cookies</button></li>
         </ul>
       </section>
     </div>

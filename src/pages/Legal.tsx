@@ -1,8 +1,10 @@
+import { Button } from "@/components/ui/button";
+import { abrirPreferenciasCookies } from "@/lib/cookies";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
 
-type Section = { title: string; body: string[] };
+type Section = { title: string; body: string[]; id?: string };
 
 const UPDATED = "1 de octubre de 2026";
 
@@ -26,7 +28,14 @@ const privacidad: Section[] = [
   { title: "4. Cuánto tiempo los guardamos", body: ["Mientras tengas tu cuenta y, después, el tiempo que exijan las obligaciones legales y contables."] },
   { title: "5. Tus derechos", body: ["Podés acceder, rectificar, actualizar o pedir la eliminación de tus datos en cualquier momento, escribiéndonos desde la sección Ayuda. Muchos datos los podés editar directamente desde tu perfil.", "La Agencia de Acceso a la Información Pública, en su carácter de órgano de control de la Ley 25.326, tiene la atribución de atender las denuncias y reclamos que se interpongan con relación al incumplimiento de las normas sobre protección de datos personales."] },
   { title: "6. Seguridad", body: ["Usamos conexiones cifradas y controles de acceso para que cada persona vea solo lo que le corresponde. Ningún sistema es 100% infalible: si detectamos un problema que te afecte, te lo vamos a informar."] },
-  { title: "7. Cambios", body: ["Si cambiamos esta política de forma importante, te lo avisamos en la app."] },
+  { id: "cookies", title: "7. Cookies y almacenamiento del navegador", body: [
+    "Woref no usa cookies de publicidad ni rastreadores de terceros. Usamos el almacenamiento de tu navegador así:",
+    "Necesarias (siempre activas): mantener tu sesión y la seguridad de la cuenta, el carrito, la dirección de entrega, el pedido en curso y tu elección sobre cookies.",
+    "Preferencias (opcionales): recordar la apariencia y las opciones de accesibilidad, tus productos favoritos y el último panel que usaste.",
+    "Medición (opcional): contar de forma anónima las visitas a las tiendas y desde qué canal llegan los pedidos, para que cada comercio vea sus resultados. No guarda quién sos.",
+    "Podés cambiar tu elección cuando quieras desde \"Preferencias de cookies\", al pie de la app. Si rechazás una categoría, borramos lo que estaba guardado de ella.",
+  ] },
+  { title: "8. Cambios", body: ["Si cambiamos esta política de forma importante, te lo avisamos en la app."] },
 ];
 
 export default function Legal({ doc }: { doc: "terminos" | "privacidad" }) {
@@ -46,12 +55,13 @@ export default function Legal({ doc }: { doc: "terminos" | "privacidad" }) {
         <p className="mt-2 text-sm text-muted-foreground">Última actualización: {UPDATED}</p>
         <div className="mt-8 space-y-7">
           {sections.map((section) => (
-            <section key={section.title}>
+            <section key={section.title} id={section.id} className="scroll-mt-6">
               <h2 className="text-lg font-extrabold">{section.title}</h2>
               {section.body.map((paragraph) => <p key={paragraph.slice(0, 30)} className="mt-2 leading-relaxed text-muted-foreground">{paragraph}</p>)}
             </section>
           ))}
         </div>
+        {doc === "privacidad" && <Button variant="outline" className="mt-8 rounded-full font-bold" onClick={abrirPreferenciasCookies}>Preferencias de cookies</Button>}
         <p className="mt-10 text-sm text-muted-foreground">
           Ver también: {doc === "terminos" ? <Link to="/privacidad" className="font-semibold text-primary hover:underline">Política de privacidad</Link> : <Link to="/terminos" className="font-semibold text-primary hover:underline">Términos y condiciones</Link>}
         </p>

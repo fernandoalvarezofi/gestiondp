@@ -1,3 +1,4 @@
+import { consiente } from "@/lib/cookies";
 import { useEffect, useMemo, useState } from "react";
 import { marcarOrigenTienda } from "@/lib/canal";
 import { Link, useLocation, useParams } from "react-router-dom";
@@ -51,7 +52,8 @@ export default function Storefront() {
 
   // Cuenta una visita por sesión del navegador (anónima: solo suma un número al día, no guarda quién entra).
   useEffect(() => {
-    if (!store) return;
+    // Es medición: solo con consentimiento de cookies.
+    if (!store || !consiente("medicion")) return;
     const key = `woref-visita-${store.slug}`;
     try { if (window.sessionStorage.getItem(key)) return; window.sessionStorage.setItem(key, "1"); } catch { /* sin almacenamiento: se cuenta igual */ }
     // La llamada solo se envía al esperar su resultado; si falla, la visita simplemente no se cuenta.

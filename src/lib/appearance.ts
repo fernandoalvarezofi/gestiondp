@@ -1,3 +1,4 @@
+import { consiente } from "@/lib/cookies";
 export type TextSize = "normal" | "large" | "xlarge";
 export type Appearance = { textSize: TextSize; reduceMotion: boolean };
 
@@ -23,6 +24,8 @@ export function applyAppearance(value: Appearance) {
 }
 
 export function saveAppearance(value: Appearance) {
+  // Se recuerda solo si la persona aceptó las cookies de preferencias (si no, vale para esta visita).
+  if (!consiente("preferencias")) return;
   try { window.localStorage.setItem(KEY, JSON.stringify(value)); } catch { /* sin almacenamiento: se aplica solo en esta sesión */ }
   applyAppearance(value);
 }

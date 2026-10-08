@@ -1,3 +1,4 @@
+import { abrirPreferenciasCookies } from "@/lib/cookies";
 import { Link } from "react-router-dom";
 import { Bike, CarTaxiFront, Headset, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
@@ -32,6 +33,7 @@ export function AppFooter() {
             <Link to="/terminos" className="hover:text-foreground">Términos</Link>
             <Link to="/privacidad" className="hover:text-foreground">Privacidad</Link>
             <Link to="/arrepentimiento" className="hover:text-foreground">Botón de arrepentimiento</Link>
+            <button type="button" onClick={abrirPreferenciasCookies} className="hover:text-foreground">Preferencias de cookies</button>
           </nav>
           <p className="text-muted-foreground">© {new Date().getFullYear()} Woref</p>
         </div>

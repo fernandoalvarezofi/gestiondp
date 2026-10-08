@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { abrirPreferenciasCookies } from "@/lib/cookies";
 import { Banknote, CreditCard, Landmark, MapPin, Store as StoreIcon, Wallet } from "lucide-react";
 import { StoreLogo } from "@/components/delivery/StoreCard";
 import { DeliveryStore, db, scheduleSummary } from "@/lib/delivery";
@@ -69,6 +70,7 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass }: { st
           <p>© {new Date().getFullYear()} {store.nombre}</p>
           <p className="inline-flex items-center gap-1.5"><StoreIcon className="h-3.5 w-3.5" />Tienda online creada en Woref</p>
           {!preview && <Link to={`/app/tienda/${store.slug}`} className="font-semibold hover:text-foreground">Ver en la app de Woref</Link>}
+          {!preview && <button type="button" onClick={abrirPreferenciasCookies} className="font-semibold hover:text-foreground">Cookies</button>}
         </div>
       </div>
     </footer>

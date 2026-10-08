@@ -1,3 +1,4 @@
+import { consiente } from "@/lib/cookies";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +13,7 @@ export function leerLocales(): string[] {
   try { const raw = window.localStorage.getItem(FAV_KEY); const list = raw ? JSON.parse(raw) : []; return Array.isArray(list) ? normalizarIds(list) : []; } catch { return []; }
 }
 export function normalizarIds(list: unknown[]): string[] { return [...new Set(list.filter((x): x is string => typeof x === "string" && UUID.test(x)))].slice(-MAX_FAVORITOS); }
-const guardarLocales = (ids: string[]) => { try { window.localStorage.setItem(FAV_KEY, JSON.stringify(ids.slice(-MAX_FAVORITOS))); } catch { /* sin almacenamiento */ } };
+const guardarLocales = (ids: string[]) => { if (!consiente("preferencias")) return; try { window.localStorage.setItem(FAV_KEY, JSON.stringify(ids.slice(-MAX_FAVORITOS))); } catch { /* sin almacenamiento */ } };
 const borrarLocales = () => { try { window.localStorage.removeItem(FAV_KEY); } catch { /* sin almacenamiento */ } };
 
 /**

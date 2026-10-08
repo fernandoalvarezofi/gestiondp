@@ -1,3 +1,4 @@
+import { AskSeller } from "@/components/messages/AskSeller";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Bike, ChevronRight, Clock3, Copy, Info, MapPin, Phone, Search, Share2, ShoppingBag, Star, Store as StoreIcon, Ticket, X } from "lucide-react";
@@ -142,7 +143,10 @@ export default function StoreDetail() {
        <div className="sm:grid sm:grid-cols-[120px_1fr] sm:items-start sm:gap-x-6">
         <div className="flex items-end gap-3">
           <StoreLogo store={store} className="-mt-10 h-20 w-20 border-4 border-card text-2xl shadow-pop sm:mt-0 sm:h-[120px] sm:w-[120px] sm:rounded-2xl sm:border sm:text-4xl sm:shadow-none" />
-          <button type="button" onClick={() => setInfoOpen(true)} className="mb-1 ml-auto flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px] font-bold hover:bg-muted sm:absolute sm:right-6 sm:top-5 sm:mb-0"><Info className="h-4 w-4" />Info del local</button>
+          <div className="mb-1 ml-auto flex items-center gap-2 sm:absolute sm:right-6 sm:top-5 sm:mb-0">
+            <AskSeller storeId={store.id} storeName={store.nombre} label="Mensaje" className="flex h-auto items-center gap-1 rounded-full border bg-card px-3 py-1.5 text-[13px] font-bold text-foreground hover:bg-muted" />
+            <button type="button" onClick={() => setInfoOpen(true)} className="flex items-center gap-1 rounded-full border px-3 py-1.5 text-[13px] font-bold hover:bg-muted"><Info className="h-4 w-4" />Info del local</button>
+          </div>
         </div>
         <div className="min-w-0">
         <h1 className="mt-3 text-2xl font-black leading-tight sm:mt-0 sm:text-4xl">{store.nombre}</h1>

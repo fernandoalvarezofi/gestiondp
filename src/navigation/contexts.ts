@@ -1,3 +1,4 @@
+import { consiente } from "@/lib/cookies";
 import { Bike, CarTaxiFront, ShieldCheck, ShoppingBag, Store, type LucideIcon } from "lucide-react";
 
 /**
@@ -51,6 +52,7 @@ export function contextsFor(roles: RoleFlags) {
 const LAST_KEY = "woref-contexto";
 /** Recuerda el último panel de trabajo usado (para ofrecer volver a él desde el cliente). */
 export function rememberContext(id: AppContextId) {
+  if (!consiente("preferencias")) return;
   try { window.localStorage.setItem(LAST_KEY, id); } catch { /* sin almacenamiento: no se recuerda */ }
 }
 export function lastContext(): AppContextId | null {

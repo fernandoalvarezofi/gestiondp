@@ -10,7 +10,7 @@ import { errorMessage } from "@/lib/delivery";
 import { iniciarConsulta, MAX_MENSAJE, mensajeValido } from "@/services/messaging";
 
 /** "Escribir al vendedor": abre una consulta privada con el local (sin cuenta pide ingresar primero). */
-export function AskSeller({ storeId, storeName, productId, productName, className }: { storeId: string; storeName: string; productId?: string; productName?: string; className?: string }) {
+export function AskSeller({ storeId, storeName, productId, productName, className, label = "Escribir al vendedor" }: { storeId: string; storeName: string; productId?: string; productName?: string; className?: string; label?: string }) {
   const { session } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,7 +31,7 @@ export function AskSeller({ storeId, storeName, productId, productName, classNam
 
   return (
     <>
-      <Button type="button" variant="outline" className={className ?? "w-full rounded-full font-bold"} onClick={abrir}><MessageCircle className="h-4 w-4" />Escribir al vendedor</Button>
+      <Button type="button" variant="outline" className={className ?? "w-full rounded-full font-bold"} onClick={abrir}><MessageCircle className="h-4 w-4" />{label}</Button>
       <Dialog open={open} onOpenChange={(v) => !enviando && setOpen(v)}>
         <DialogContent className="max-w-md">
           <DialogTitle className="text-xl font-extrabold">Escribile a {storeName}</DialogTitle>
