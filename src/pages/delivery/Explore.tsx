@@ -64,7 +64,7 @@ export default function Explore() {
             {verticals.map((v) => (
               <li key={v.id}>
                 <Link to={`/app/categoria/${v.id}`} className="group flex flex-col items-center gap-2 rounded-2xl p-1 text-center">
-                  <span className="aspect-square w-full overflow-hidden rounded-2xl bg-muted"><SmartImage src={v.image} width={240} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" /></span>
+                  <span className="relative block aspect-square w-full overflow-hidden rounded-2xl bg-muted"><SmartImage src={v.image} width={240} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" /></span>
                   <span className="text-sm font-bold leading-tight">{v.label}</span>
                 </Link>
               </li>

@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowRight } from "lucide-react";
 import { z } from "zod";
 import { authErrorMessage } from "@/lib/authErrors";
@@ -41,7 +40,6 @@ export default function Auth() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [authStyle] = useState<AuthStyle>("photo");
   const [forgot, setForgot] = useState(false);
-  const { toast } = useToast();
 
   if (loading) {
     return (
@@ -87,18 +85,11 @@ export default function Auth() {
         if (error) throw error;
         // Si la confirmación por email está desactivada, la sesión llega en el acto y se entra directo.
         if (!result.session) {
-          toast({
-            title: "Revisá tu email",
-            description: "Te enviamos un link para confirmar tu cuenta. Puede tardar unos minutos o llegar a spam.",
-          });
+          notify.success("Revisá tu email", { description: "Te enviamos un link para confirmar tu cuenta. Puede tardar unos minutos o llegar a spam." });
         }
       }
     } catch (error) {
-      toast({
-        title: "No pudimos continuar",
-        description: authErrorMessage((error as Error).message || ""),
-        variant: "destructive",
-      });
+      notify.error("No pudimos continuar", { description: authErrorMessage((error as Error).message || "") });
     } finally {
       setSubmitting(false);
     }
@@ -266,7 +257,7 @@ export default function Auth() {
                 redirect_uri: window.location.origin,
               });
               if (error) {
-                toast({ title: "Error", description: String(error), variant: "destructive" });
+                notify.error("Error", { description: String(error) });
               }
             }}
           >

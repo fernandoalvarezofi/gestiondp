@@ -15,7 +15,7 @@ import { money } from "@/lib/delivery";
 import { isRootPath } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { ContextMenuItems } from "@/navigation/ContextSwitcher";
-import { CLIENT_TABS, GUEST_TABS, type ClientTab } from "@/navigation/menus";
+import { CLIENT_TABS, GUEST_TABS, type ClientTab } from "@/navigation/clientMenu";
 
 /** Atajos de Explorar en la cabecera de escritorio. */
 const exploreLinks = [
@@ -78,7 +78,7 @@ export function ClientLayout() {
   const showCartBar = itemCount > 0 && !hideNav && !immersive;
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0">
+    <div className={cn("min-h-screen bg-background md:pb-0", showCartBar ? "pb-40" : "pb-24")}>
       <header className={cn("sticky top-0 z-40 border-b border-t-[3px] border-t-brand-yellow bg-card shadow-[0_1px_0_rgba(0,0,0,0.02)]", isHome && "max-md:border-transparent max-md:bg-primary max-md:shadow-none max-md:backdrop-blur-none", immersive && "max-md:hidden")}>
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:gap-6 lg:px-8">
           <NavLink to="/app" className="hidden shrink-0 md:block" aria-label="Inicio"><DeliveryBrand /></NavLink>

@@ -1,7 +1,7 @@
 import {
-  Banknote, BarChart3, Bike, Bug, Building2, CalendarCheck, Calculator, Car, CarTaxiFront, ClipboardList, Compass, Fingerprint, Flag, Globe, History,
-  Home, Landmark, LayoutDashboard, LifeBuoy, Map, MapPinOff, Megaphone, MessageCircle, MessageCircleQuestion, Network, Package, PackageOpen,
-  Radio, Receipt, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, UtensilsCrossed, Wallet, BookUser, ShieldCheck, TrendingUp, type LucideIcon,
+  Banknote, BarChart3, Bike, Bug, Building2, CalendarCheck, Calculator, Car, CarTaxiFront, ClipboardList, Fingerprint, Flag, Globe, History,
+  Landmark, LayoutDashboard, LifeBuoy, Map, MapPinOff, Megaphone, MessageCircle, MessageCircleQuestion, Network, Package, PackageOpen,
+  Radio, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, UtensilsCrossed, Wallet, BookUser, ShieldCheck, TrendingUp, type LucideIcon,
 } from "lucide-react";
 import type { PanelNavGroup } from "@/components/panel/PanelShell";
 import type { Permission } from "@/pages/delivery/merchant/context";
@@ -11,20 +11,8 @@ import type { Permission } from "@/pages/delivery/merchant/context";
  * y cada ruta, su ícono, su grupo y su permiso se definen en un único lugar.
  */
 
-// ───────────────────────── Cliente ─────────────────────────
-
-export type ClientTab = { to: string; label: string; icon: LucideIcon; end?: boolean };
-
-/** Barra de abajo del cliente en el celular. El carrito vive arriba y en la barra flotante "Ver mi pedido". */
-export const CLIENT_TABS: ClientTab[] = [
-  { to: "/app", label: "Inicio", icon: Home, end: true },
-  { to: "/app/explorar", label: "Explorar", icon: Compass },
-  { to: "/app/pedidos", label: "Pedidos", icon: Receipt },
-  { to: "/app/mensajes", label: "Mensajes", icon: MessageCircle },
-  { to: "/app/perfil", label: "Cuenta", icon: UserCircle },
-];
-/** Sin cuenta solo se ve lo público (el resto pide ingresar). */
-export const GUEST_TABS: ClientTab[] = [CLIENT_TABS[0], CLIENT_TABS[1]];
+// Cliente: ver clientMenu.ts (se reexporta para no romper importaciones).
+export { CLIENT_TABS, GUEST_TABS, type ClientTab } from "./clientMenu";
 
 // ───────────────────────── Comercio ─────────────────────────
 
