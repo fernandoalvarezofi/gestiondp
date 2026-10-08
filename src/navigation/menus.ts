@@ -16,7 +16,7 @@ export { CLIENT_TABS, GUEST_TABS, type ClientTab } from "./clientMenu";
 
 // ───────────────────────── Comercio ─────────────────────────
 
-type MerchantSection = { path: string; label: string; short?: string; icon: LucideIcon; group: string; permission?: Permission; end?: boolean; hidden?: boolean; badge?: "pedidos" | "preguntas" };
+type MerchantSection = { path: string; label: string; short?: string; icon: LucideIcon; group: string; permission?: Permission; end?: boolean; hidden?: boolean; badge?: "pedidos" | "preguntas" | "mensajes" };
 
 const MERCHANT_GROUPS = ["Operación", "Catálogo", "Tienda online", "Marketing", "Ventas", "Mi negocio"] as const;
 
@@ -26,7 +26,7 @@ export const MERCHANT_SECTIONS: MerchantSection[] = [
   { path: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación", badge: "pedidos" },
   { path: "devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen, group: "Operación", permission: "pedidos" },
   { path: "turnos", label: "Reservas y turnos", short: "Turnos", icon: CalendarCheck, group: "Operación", permission: "pedidos" },
-  { path: "mensajes", label: "Mensajes", icon: MessageCircle, group: "Operación" },
+  { path: "mensajes", label: "Mensajes", icon: MessageCircle, group: "Operación", badge: "mensajes" },
   { path: "menu", label: "Productos y stock", short: "Catálogo", icon: UtensilsCrossed, group: "Catálogo", permission: "catalogo" },
   { path: "tienda", label: "Diseño de mi tienda", short: "Tienda", icon: Globe, group: "Tienda online", permission: "ajustes" },
   { path: "preguntas", label: "Preguntas", icon: MessageCircleQuestion, group: "Tienda online", permission: "opiniones", badge: "preguntas" },
@@ -47,7 +47,7 @@ const merchantTo = (path: string) => (path ? `/app/comercio/${path}` : "/app/com
 /** Permiso que exige una ruta del panel del comercio (primer tramo después de /app/comercio). */
 export const merchantSectionPermission = (section: string) => MERCHANT_SECTIONS.find((item) => item.path === section)?.permission;
 
-export function merchantNav(can: (permission: Permission) => boolean, badges: { pedidos: number; preguntas: number }): PanelNavGroup[] {
+export function merchantNav(can: (permission: Permission) => boolean, badges: { pedidos: number; preguntas: number; mensajes?: number }): PanelNavGroup[] {
   const allowed = MERCHANT_SECTIONS.filter((item) => !item.hidden && (!item.permission || can(item.permission)));
   return MERCHANT_GROUPS.map((label) => ({
     label,
@@ -64,9 +64,10 @@ export const merchantTabs = (can: (permission: Permission) => boolean) =>
 /** Barra de abajo del repartidor en el celular (Metas y turnos queda en el menú lateral). */
 export const COURIER_TABS = ["/app/repartidor", "/app/repartidor/mapa", "/app/repartidor/ganancias", "/app/repartidor/historial", "/app/repartidor/perfil"];
 
-export const courierNav = (offers: number | undefined): PanelNavGroup[] => [{ items: [
+export const courierNav = (offers: number | undefined, mensajes?: number): PanelNavGroup[] => [{ items: [
   { to: "/app/repartidor", label: "Trabajos", icon: ClipboardList, end: true, badge: offers },
   { to: "/app/repartidor/mapa", label: "Mapa", icon: Map },
+  { to: "/app/repartidor/mensajes", label: "Mensajes", icon: MessageCircle, badge: mensajes },
   { to: "/app/repartidor/ganancias", label: "Ganancias", icon: Wallet },
   { to: "/app/repartidor/incentivos", label: "Metas y turnos", short: "Metas", icon: Target },
   { to: "/app/repartidor/historial", label: "Historial", icon: History },
@@ -75,9 +76,10 @@ export const courierNav = (offers: number | undefined): PanelNavGroup[] => [{ it
 
 // ───────────────────────── Conductor ─────────────────────────
 
-export const driverNav = (offers: number | undefined): PanelNavGroup[] => [{ items: [
+export const driverNav = (offers: number | undefined, mensajes?: number): PanelNavGroup[] => [{ items: [
   { to: "/app/conductor", label: "Viajes", icon: CarTaxiFront, end: true, badge: offers },
   { to: "/app/conductor/mapa", label: "Mapa", icon: Map },
+  { to: "/app/conductor/mensajes", label: "Mensajes", icon: MessageCircle, badge: mensajes },
   { to: "/app/conductor/ganancias", label: "Ganancias", icon: Wallet },
   { to: "/app/conductor/historial", label: "Historial", icon: History },
   { to: "/app/conductor/perfil", label: "Mi perfil", short: "Perfil", icon: UserCircle },
@@ -85,7 +87,7 @@ export const driverNav = (offers: number | undefined): PanelNavGroup[] => [{ ite
 
 // ───────────────────────── Administración ─────────────────────────
 
-export type AdminBadge = "pedidos" | "soporte" | "comercios" | "identidades" | "pagos" | "opiniones";
+export type AdminBadge = "pedidos" | "soporte" | "comercios" | "identidades" | "pagos" | "opiniones" | "mensajes";
 export type AdminSection = { id: string; label: string; icon: LucideIcon; group: string; badge?: AdminBadge };
 
 const ADMIN_GROUPS = ["General", "Operación", "Personas", "Dinero", "Marketing y catálogo", "Soporte y confianza", "Sistema"] as const;
@@ -118,6 +120,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { id: "soporte", label: "Soporte", icon: LifeBuoy, group: "Soporte y confianza", badge: "soporte" },
   { id: "arrepentimientos", label: "Arrepentimientos", icon: Undo2, group: "Soporte y confianza" },
   { id: "opiniones", label: "Opiniones reportadas", icon: Flag, group: "Soporte y confianza", badge: "opiniones" },
+  { id: "mensajes", label: "Mensajes reportados", icon: MessageCircle, group: "Soporte y confianza", badge: "mensajes" },
   { id: "seguridad", label: "Seguridad", icon: ShieldCheck, group: "Sistema" },
   { id: "auditoria", label: "Auditoría", icon: ScrollText, group: "Sistema" },
   { id: "errores", label: "Errores de la app", icon: Bug, group: "Sistema" },

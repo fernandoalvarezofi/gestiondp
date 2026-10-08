@@ -4,6 +4,7 @@ import { RemisEnrollment } from "@/components/courier/RemisEnrollment";
 import { ActiveViaje, ViajeOfferCard } from "@/components/courier/ViajeCards";
 import { CourierWallet } from "@/components/courier/CourierWallet";
 import { WorkMap, type WorkMarker } from "@/components/courier/WorkMap";
+import { Inbox } from "@/components/messages/Inbox";
 import { EmptyState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, money } from "@/lib/delivery";
@@ -108,4 +109,9 @@ export function DriverProfilePage() {
       <WorkerFaq title="Ayuda para conductores" items={faqs} />
     </div>
   );
+}
+
+/** Mensajes del conductor: chats con los pasajeros de sus viajes. */
+export function DriverMessagesPage() {
+  return <Inbox rol="conductor" vacio={{ titulo: "Todavía no tenés mensajes", texto: "Cuando tomes un viaje, podés escribirle al pasajero desde el viaje en curso." }} />;
 }

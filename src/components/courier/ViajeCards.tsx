@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { categoriaLabel } from "@/lib/remis";
 import { Banknote, Car, KeyRound, Loader2, MapPin, Navigation, Phone, Users } from "lucide-react";
+import { ContextChatButton } from "@/components/messages/ContextChat";
 import { toast } from "sonner";
 import { MapView } from "@/components/maps/LazyMaps";
 import { Button } from "@/components/ui/button";
@@ -87,7 +88,10 @@ export function ActiveViaje({ viaje, position, sharing, onChange }: { viaje: Via
         <div className="rounded-2xl border p-3">
           <p className="flex items-center gap-2 font-bold"><Users className="h-4 w-4 text-primary" />{viaje.pasajeros} {viaje.pasajeros === 1 ? "pasajero" : "pasajeros"}</p>
           {viaje.notas && <p className="mt-1 text-sm text-muted-foreground">“{viaje.notas}”</p>}
-          <Button asChild variant="outline" size="sm" className="mt-2 rounded-full"><a href={phoneHref(viaje.telefono)}><Phone className="h-4 w-4" />Llamar al pasajero</a></Button>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <ContextChatButton contexto="viaje" id={viaje.id} canal="pasajero_conductor" label="Chat con el pasajero" title="Pasajero" subtitle="Coordiná el encuentro" />
+            <Button asChild variant="outline" size="sm" className="rounded-full"><a href={phoneHref(viaje.telefono)}><Phone className="h-4 w-4" />Llamar</a></Button>
+          </div>
         </div>
       </div>
       <div className="mt-3 flex gap-3 rounded-2xl bg-muted p-3 text-sm"><MapPin className="mt-0.5 h-4 w-4 shrink-0" /><span>{viaje.origen_direccion} → {viaje.destino_direccion}</span></div>

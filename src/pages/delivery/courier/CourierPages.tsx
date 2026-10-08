@@ -6,6 +6,7 @@ import { ActiveBatch } from "@/components/courier/ActiveBatch";
 import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
 import type { Courier } from "@/components/courier/CourierApplication";
 import { DemandStrip, WorkMap, type WorkMarker } from "@/components/courier/WorkMap";
+import { Inbox } from "@/components/messages/Inbox";
 import { CourierIncentives } from "@/components/courier/Incentives";
 import { PayoutForm } from "@/components/account/PayoutForm";
 import { CourierWallet } from "@/components/courier/CourierWallet";
@@ -179,4 +180,9 @@ export function CourierProfilePage() {
       <WorkerFaq title="Ayuda para repartidores" items={faqs} />
     </div>
   );
+}
+
+/** Mensajes del repartidor: chats de sus pedidos (con clientes y locales) y de sus envíos. */
+export function CourierMessagesPage() {
+  return <Inbox rol="repartidor" vacio={{ titulo: "Todavía no tenés mensajes", texto: "Cuando tomes un pedido o un envío, podés escribirle al cliente y al local desde el trabajo en curso." }} />;
 }

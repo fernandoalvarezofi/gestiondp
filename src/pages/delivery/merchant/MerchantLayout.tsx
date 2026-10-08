@@ -18,6 +18,7 @@ import { EmptyState } from "@/components/delivery/Common";
 import { StoreOnboarding } from "@/components/merchant/StoreOnboarding";
 import type { StoreFormValues } from "@/components/merchant/StoreSettingsForm";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { merchantNav, merchantSectionPermission, merchantTabs } from "@/navigation/menus";
 import { roleLabel, type Branch, type MerchantContext, type Permission, type StoreAccess } from "./context";
 
@@ -149,6 +150,7 @@ export default function MerchantLayout() {
     await loadStore();
   };
 
+  const unreadMessages = useUnreadMessages({ comercio: store?.id ?? null, enabled: Boolean(store && access?.permisos.includes("pedidos")) });
   // Si cambió el acceso (creó su comercio, aceptó una invitación), el selector de contexto se entera.
   const roles = useDeliveryRoles();
   const hasStore = Boolean(store);
@@ -215,7 +217,7 @@ export default function MerchantLayout() {
           </div>
         </div>
       )}
-      groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes })}
+      groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes, mensajes: unreadMessages })}
       actions={<StoreStatusControl store={store} onChange={loadStore} />}
     >
       {store.aprobado === false && !store.motivo_rechazo && <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>}

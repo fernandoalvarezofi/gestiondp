@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { ContextChatButton } from "@/components/messages/ContextChat";
 import { Car, Check, KeyRound, Loader2, MapPin, Navigation, Phone, Star, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
@@ -16,6 +17,7 @@ type Driver = { nombre: string | null; patente: string | null; telefono: string 
 /** Seguimiento del viaje: estado en vivo, mapa con el conductor, código para subir, cancelación y calificación. */
 export default function RemisDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [trip, setTrip] = useState<Viaje | null | undefined>(undefined);
   const [code, setCode] = useState<string | null>(null);
@@ -98,6 +100,7 @@ export default function RemisDetail() {
             {(driver.marca || driver.modelo) && <p className="text-sm font-semibold">{[driver.marca, driver.modelo, driver.color].filter(Boolean).join(" · ")}{driver.anio ? ` (${driver.anio})` : ""}</p>}
             <p className="text-sm text-muted-foreground">{driver.patente ? `Patente ${driver.patente}` : "Auto habilitado"} · {driver.viajes} viajes{driver.calificacion ? ` · ★ ${driver.calificacion}` : ""}{driver.categoria ? ` · ${categoriaLabel(driver.categoria)}` : ""}</p>
           </div>
+          {id && <ContextChatButton contexto="viaje" id={id} canal="pasajero_conductor" label="" title={driver.nombre || "Tu conductor"} subtitle="Coordiná el encuentro" autoOpen={searchParams.get("chat") === "1"} />}
           {driver.telefono && <Button asChild variant="outline" size="icon" className="rounded-full" aria-label="Llamar al conductor"><a href={`tel:${driver.telefono.replace(/[^\d+]/g, "")}`}><Phone className="h-4 w-4" /></a></Button>}
         </section>
       )}

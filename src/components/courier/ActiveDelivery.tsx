@@ -134,6 +134,7 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
 
       <div className="mt-3 flex flex-wrap gap-2">
         <ChatButton pedidoId={order.id} canal="repartidor" label="Chat con el cliente" title={order.cliente?.nombre || "Cliente"} subtitle={`Pedido ${shortId(order.id)}`} />
+        <ChatButton pedidoId={order.id} canal="comercio_repartidor" label="Chat con el local" title={order.comercio?.nombre || "Comercio"} subtitle={`Pedido ${shortId(order.id)}`} />
         {order.telefono_contacto && <Button asChild variant="outline" size="sm" className="rounded-full"><a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`}><Phone className="h-4 w-4" />Llamar al cliente</a></Button>}
         {order.comercio?.telefono && <Button asChild variant="outline" size="sm" className="rounded-full"><a href={`tel:${order.comercio.telefono.replace(/\s/g, "")}`}><Store className="h-4 w-4" />Llamar al comercio</a></Button>}
       </div>

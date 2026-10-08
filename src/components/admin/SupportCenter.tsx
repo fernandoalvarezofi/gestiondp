@@ -3,6 +3,7 @@ import { ArrowLeft, Clock, Gift, Loader2, Star, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { ChatButton } from "@/components/delivery/OrderChat";
+import { SupportContext } from "@/components/admin/SupportContext";
 import { TicketThread } from "@/components/support/TicketThread";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -176,10 +177,12 @@ function TicketPanel({ ticket, data, templates, userId, now, onBack, onChanged }
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               <ChatButton pedidoId={ticket.pedido_id} canal="comercio" label="Chat comercio" title="Chat cliente ↔ comercio" readOnly />
               {ticket.pedido_repartidor && <ChatButton pedidoId={ticket.pedido_id} canal="repartidor" label="Chat repartidor" title="Chat cliente ↔ repartidor" readOnly />}
+              {ticket.pedido_repartidor && <ChatButton pedidoId={ticket.pedido_id} canal="comercio_repartidor" label="Comercio ↔ repartidor" title="Chat comercio ↔ repartidor" readOnly />}
             </div>
           </div>
         ) : <p className="text-xs text-muted-foreground">Consulta general, sin pedido asociado.</p>}
       </div>
+      <SupportContext ticketId={ticket.id} />
 
       {open && (
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">

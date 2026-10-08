@@ -8,6 +8,7 @@ import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { Button } from "@/components/ui/button";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { cn } from "@/lib/utils";
 import { COURIER_TABS, courierNav } from "@/navigation/menus";
 import { useWorkerSession, type WorkerSession } from "./useWorkerSession";
@@ -20,6 +21,7 @@ export default function CourierLayout() {
   const session = useWorkerSession("entregas");
   const { courier, loading, connected, busyDelivery, offers, envioOffers, sharingStatus, toggleConnection, reloadCourier } = session;
   const roles = useDeliveryRoles();
+  const unreadMessages = useUnreadMessages({ rol: "repartidor" });
   const location = useLocation();
 
   // Si el alta cambió (por ejemplo, lo aprobaron), el selector de contexto se entera.
@@ -43,7 +45,7 @@ export default function CourierLayout() {
           <div className="min-w-0"><p className="text-sm font-extrabold leading-tight">{connected ? "Conectado" : "Desconectado"}</p><p className="text-[11px] font-bold capitalize text-muted-foreground">{courier.vehiculo.replace("_", " ")} · verificado</p></div>
         </div>
       }
-      groups={courierNav(busyDelivery ? undefined : offers.length + envioOffers.length)}
+      groups={courierNav(busyDelivery ? undefined : offers.length + envioOffers.length, unreadMessages)}
       actions={
         <Button onClick={toggleConnection} size="sm" className={cn("h-9 rounded-full px-4 font-extrabold", connected ? "bg-success text-white hover:bg-success/90" : "")} variant={connected ? "default" : "outline"} disabled={session.busyNow && connected} aria-pressed={connected}>
           {connected ? <><Power className="h-4 w-4" />Conectado</> : <><PowerOff className="h-4 w-4" />Conectarme</>}

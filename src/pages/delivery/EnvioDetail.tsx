@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
+import { ContextChatButton } from "@/components/messages/ContextChat";
 import { Check, KeyRound, Loader2, MapPin, Package, PackageCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
@@ -14,6 +15,7 @@ import { cn } from "@/lib/utils";
 /** Seguimiento de un envío: estado en tiempo real, mapa con el repartidor, código de entrega y cancelación. */
 export default function EnvioDetail() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [envio, setEnvio] = useState<Envio | null | undefined>(undefined);
   const [code, setCode] = useState<string | null>(null);
@@ -79,6 +81,10 @@ export default function EnvioDetail() {
       )}
 
       {envio.estado === "buscando" && <p className="mt-4 flex items-center gap-2 rounded-2xl bg-muted p-4 text-sm font-semibold"><Loader2 className="h-4 w-4 animate-spin" />Estamos avisando a los repartidores cercanos. Te notificamos apenas alguien lo tome.</p>}
+
+      {envio.repartidor_id && (
+        <div className="mt-4"><ContextChatButton contexto="envio" id={envio.id} canal="cliente_repartidor" label="Chat con el repartidor" title="Tu repartidor" subtitle={envio.descripcion} autoOpen={searchParams.get("chat") === "1"} /></div>
+      )}
 
       {envioActivo(envio.estado) && code && (
         <section className="mt-5 rounded-3xl border-2 border-primary bg-primary/5 p-4 text-center">

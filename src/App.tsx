@@ -71,6 +71,7 @@ const CourierLayout = lazy(() => import("./pages/delivery/courier/CourierLayout"
 const CourierPages = {
   Orders: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierOrdersPage }))),
   Map: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierMapPage }))),
+  Messages: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierMessagesPage }))),
   Earnings: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierEarningsPage }))),
   Incentives: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierIncentivesPage }))),
   History: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierHistoryPage }))),
@@ -80,6 +81,7 @@ const DriverLayout = lazy(() => import("./pages/delivery/driver/DriverLayout"));
 const DriverPages = {
   Trips: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverTripsPage }))),
   Map: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverMapPage }))),
+  Messages: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverMessagesPage }))),
   Earnings: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverEarningsPage }))),
   History: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverHistoryPage }))),
   Profile: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverProfilePage }))),
@@ -188,6 +190,7 @@ const App = () => (
                       <Route path="repartidor" element={<CourierLayout />}>
                         <Route index element={<CourierPages.Orders />} />
                         <Route path="mapa" element={<CourierPages.Map />} />
+                        <Route path="mensajes" element={<CourierPages.Messages />} />
                         <Route path="ganancias" element={<CourierPages.Earnings />} />
                         <Route path="incentivos" element={<CourierPages.Incentives />} />
                         <Route path="historial" element={<CourierPages.History />} />
@@ -198,6 +201,7 @@ const App = () => (
                       <Route path="conductor" element={<DriverLayout />}>
                         <Route index element={<DriverPages.Trips />} />
                         <Route path="mapa" element={<DriverPages.Map />} />
+                        <Route path="mensajes" element={<DriverPages.Messages />} />
                         <Route path="ganancias" element={<DriverPages.Earnings />} />
                         <Route path="historial" element={<DriverPages.History />} />
                         <Route path="perfil" element={<DriverPages.Profile />} />

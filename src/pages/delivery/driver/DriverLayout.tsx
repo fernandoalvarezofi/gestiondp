@@ -9,6 +9,7 @@ import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { Button } from "@/components/ui/button";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { cn } from "@/lib/utils";
 import { driverNav } from "@/navigation/menus";
 import { useWorkerSession, type WorkerSession } from "../courier/useWorkerSession";
@@ -35,6 +36,7 @@ export default function DriverLayout() {
   const session = useWorkerSession("viajes");
   const { courier, loading, connected, busyNow, viajeOffers, sharingStatus, toggleConnection, reloadCourier } = session;
   const roles = useDeliveryRoles();
+  const unreadMessages = useUnreadMessages({ rol: "conductor" });
   const location = useLocation();
 
   const approvedDriver = Boolean(courier?.activo && courier?.remis_estado === "aprobado");
@@ -58,7 +60,7 @@ export default function DriverLayout() {
           <div className="min-w-0"><p className="text-sm font-extrabold leading-tight">{connected ? "Conectado" : "Desconectado"}</p><p className="truncate text-[11px] font-bold text-muted-foreground">{vehicle}{courier.patente ? ` · ${courier.patente}` : ""}</p></div>
         </div>
       }
-      groups={driverNav(busyNow ? undefined : viajeOffers.length)}
+      groups={driverNav(busyNow ? undefined : viajeOffers.length, unreadMessages)}
       actions={
         <Button onClick={toggleConnection} size="sm" className={cn("h-9 rounded-full px-4 font-extrabold", connected ? "bg-success text-white hover:bg-success/90" : "")} variant={connected ? "default" : "outline"} disabled={busyNow && connected} aria-pressed={connected}>
           {connected ? <><Power className="h-4 w-4" />Conectado</> : <><PowerOff className="h-4 w-4" />Conectarme</>}

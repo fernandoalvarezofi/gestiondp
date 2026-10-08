@@ -1,5 +1,6 @@
 import { FormEvent, useState } from "react";
 import { Banknote, Check, KeyRound, Loader2, MapPin, Navigation, Package, PackageCheck, Phone } from "lucide-react";
+import { ContextChatButton } from "@/components/messages/ContextChat";
 import { toast } from "sonner";
 import { MapView } from "@/components/maps/LazyMaps";
 import { Button } from "@/components/ui/button";
@@ -94,6 +95,8 @@ export function ActiveEnvio({ envio, position, sharing, onChange }: { envio: Env
           <Button asChild variant="outline" size="sm" className="mt-2 rounded-full"><a href={phoneHref(envio.destino_telefono)}><Phone className="h-4 w-4" />Llamar a {envio.destino_contacto.split(" ")[0]}</a></Button>
         </div>
       </div>
+
+      <div className="mt-3"><ContextChatButton contexto="envio" id={envio.id} canal="cliente_repartidor" label="Chat con quien pidió el envío" title="Cliente del envío" subtitle={envio.descripcion} /></div>
 
       <div className="mt-4 rounded-2xl bg-muted p-3 text-sm"><p className="font-bold">{envio.descripcion}</p><p className="text-muted-foreground">Tamaño {tamanoLabel[envio.tamano].toLowerCase()}. No lleves dinero, joyas, armas ni medicamentos con receta; si algo no corresponde, no lo retires y avisá a soporte.</p></div>
       <p className="mt-3 flex items-start gap-2 rounded-2xl bg-warning/15 p-3 text-sm font-semibold"><Banknote className="mt-0.5 h-4 w-4 shrink-0" />Cobrá {money(envio.total)} en efectivo {envio.quien_paga === "origen" ? "al retirar el paquete" : `al entregarlo (paga ${envio.destino_contacto})`}.</p>

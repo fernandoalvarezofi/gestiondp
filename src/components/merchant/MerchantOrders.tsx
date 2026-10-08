@@ -285,6 +285,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
         </div>
         <div className="mt-1.5 flex items-center justify-between gap-1">
           <ChatButton pedidoId={order.id} canal="comercio" label="Chat" variant="ghost" title={order.cliente?.nombre || "Cliente"} subtitle={`Pedido ${shortId(order.id)}`} className={ghostBtn} />
+          {order.repartidor_id && <ChatButton pedidoId={order.id} canal="comercio_repartidor" label="Repartidor" variant="ghost" title="Repartidor del pedido" subtitle={`Pedido ${shortId(order.id)}`} className={ghostBtn} />}
           <Button type="button" size="sm" variant="ghost" className={ghostBtn} onClick={() => printOrderTicket(order, store, readPrintSettings(), 1)}><Printer className="h-4 w-4" />Comanda</Button>
           {canDelay && (
             <Popover>

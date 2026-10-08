@@ -24,6 +24,7 @@ import { PlatformSettings } from "@/components/admin/PlatformSettings";
 import { ProvidersNetwork } from "@/components/admin/ProvidersNetwork";
 import { RemisManager } from "@/components/admin/RemisManager";
 import { ReportedReviews } from "@/components/admin/ReportedReviews";
+import { ReportedMessages } from "@/components/admin/ReportedMessages";
 import { SettlementsManager } from "@/components/admin/SettlementsManager";
 import { SupportCenter } from "@/components/admin/SupportCenter";
 import { WithdrawalsManager } from "@/components/admin/WithdrawalsManager";
@@ -222,6 +223,7 @@ const SECTIONS: Record<string, () => ReactNode> = {
   directorio: () => <DirectorioManager />,
   soporte: function Soporte() { const { setOpenClaims } = useAdmin(); return <SupportCenter onChange={setOpenClaims} />; },
   arrepentimientos: () => <WithdrawalsManager />,
+  mensajes: function Mensajes() { const { setReportedMessages } = useAdmin(); return <ReportedMessages onChange={setReportedMessages} />; },
   opiniones: function Opiniones() { const { setReportedReviews } = useAdmin(); return <ReportedReviews onChange={setReportedReviews} />; },
   seguridad: () => <SecurityPanel />,
   auditoria: () => <AuditLog />,

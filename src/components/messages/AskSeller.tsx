@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import { errorMessage } from "@/lib/delivery";
-import { iniciarConversacion, MAX_MENSAJE, mensajeValido } from "@/services/conversations";
+import { iniciarConsulta, MAX_MENSAJE, mensajeValido } from "@/services/messaging";
 
 /** "Escribir al vendedor": abre una consulta privada con el local (sin cuenta pide ingresar primero). */
 export function AskSeller({ storeId, storeName, productId, productName, className }: { storeId: string; storeName: string; productId?: string; productName?: string; className?: string }) {
@@ -25,7 +25,7 @@ export function AskSeller({ storeId, storeName, productId, productName, classNam
   const enviar = async () => {
     if (!mensajeValido(texto) || enviando) return;
     setEnviando(true);
-    try { const id = await iniciarConversacion(storeId, texto, productId); setOpen(false); setTexto(""); toast.success("Mensaje enviado"); navigate(`/app/mensajes?c=${id}`); }
+    try { const id = await iniciarConsulta(storeId, texto, productId); setOpen(false); setTexto(""); toast.success("Mensaje enviado"); navigate(`/app/mensajes?h=${id}`); }
     catch (error) { toast.error(errorMessage(error)); } finally { setEnviando(false); }
   };
 

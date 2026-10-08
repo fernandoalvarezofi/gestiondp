@@ -27,6 +27,7 @@ export type AdminContext = {
   loadIdentities: () => Promise<void>;
   setOpenClaims: (count: number) => void;
   setReportedReviews: (count: number) => void;
+  setReportedMessages: (count: number) => void;
   updateStore: (store: DeliveryStore, patch: Partial<DeliveryStore>) => Promise<void>;
   setCommission: (store: DeliveryStore, raw: string) => Promise<void>;
   moderate: (store: DeliveryStore, approve: boolean) => Promise<void>;
@@ -49,6 +50,7 @@ export default function AdminLayout() {
   const [reviewing, setReviewing] = useState<DeliveryStore | null>(null);
   const [openClaims, setOpenClaims] = useState(0);
   const [reportedReviews, setReportedReviews] = useState(0);
+  const [reportedMessages, setReportedMessages] = useState(0);
   const [pendingIdentities, setPendingIdentities] = useState(0);
 
   const loadStores = useCallback(async () => {
@@ -75,6 +77,7 @@ export default function AdminLayout() {
   useEffect(() => {
     loadStores(); loadOrders(); loadCouriers(); loadCoupons(); loadIdentities();
     db.rpc("delivery_admin_resenas_reportadas").then(({ data }: { data: unknown[] | null }) => setReportedReviews(data?.length ?? 0), () => undefined);
+    db.rpc("msg_admin_reportes").then(({ data }: { data: unknown[] | null }) => setReportedMessages(data?.length ?? 0), () => undefined);
     const channel = db.channel("admin-pedidos").on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos" }, loadOrders).subscribe();
     return () => { db.removeChannel(channel); };
   }, [loadStores, loadOrders, loadCouriers, loadCoupons, loadIdentities]);
@@ -129,14 +132,14 @@ export default function AdminLayout() {
 
   const context: AdminContext = {
     stores, orders, couriers, coupons, stats, counts,
-    loadStores, loadOrders, loadCouriers, loadCoupons, loadIdentities, setOpenClaims, setReportedReviews,
+    loadStores, loadOrders, loadCouriers, loadCoupons, loadIdentities, setOpenClaims, setReportedReviews, setReportedMessages,
     updateStore, setCommission, moderate, advance, editStore: setEditing, reviewStore: setReviewing,
   };
 
   return (
     <PanelShell
       panel="Administración"
-      groups={adminNav({ pedidos: stats.active, soporte: openClaims, comercios: counts.pendingStores, identidades: pendingIdentities, pagos: counts.refunds, opiniones: reportedReviews })}
+      groups={adminNav({ pedidos: stats.active, soporte: openClaims, comercios: counts.pendingStores, identidades: pendingIdentities, pagos: counts.refunds, opiniones: reportedReviews, mensajes: reportedMessages })}
     >
       <Outlet context={context} />
 

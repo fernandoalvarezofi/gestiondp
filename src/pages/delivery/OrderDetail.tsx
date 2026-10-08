@@ -180,7 +180,7 @@ export default function OrderDetail() {
 
       {active && !awaitingPayment && (
         <div className="mt-4 flex flex-wrap gap-2">
-          <ChatButton pedidoId={order.id} canal="comercio" label={`Escribirle a ${order.comercio?.nombre ?? "el local"}`} title={order.comercio?.nombre ?? "Comercio"} subtitle="Consultas sobre tu pedido" autoOpen={searchParams.get("chat") === "comercio"} />
+          <ChatButton pedidoId={order.id} canal="comercio" label={order.comercio?.nombre ? `Escribirle a ${order.comercio.nombre}` : "Escribirle al local"} title={order.comercio?.nombre ?? "Comercio"} subtitle="Consultas sobre tu pedido" autoOpen={searchParams.get("chat") === "comercio"} />
           {order.repartidor_id && !retiro && <ChatButton pedidoId={order.id} canal="repartidor" label="Chat con el repartidor" title="Tu repartidor" subtitle="Para coordinar la entrega" autoOpen={searchParams.get("chat") === "repartidor"} />}
         </div>
       )}

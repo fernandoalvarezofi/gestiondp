@@ -16,6 +16,7 @@ import { isRootPath } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 import { ContextMenuItems } from "@/navigation/ContextSwitcher";
 import { CLIENT_TABS, GUEST_TABS, type ClientTab } from "@/navigation/clientMenu";
+import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 
 /** Atajos de Explorar en la cabecera de escritorio. */
 const exploreLinks = [
@@ -65,6 +66,7 @@ export function ClientLayout() {
   }, [loading, addressesLoading, address, addresses.length, gateAsked]);
 
   const guest = !session;
+  const unreadMessages = useUnreadMessages({ rol: "cliente", enabled: !guest });
   const loginTarget: To = { pathname: "/auth", search: `?next=${encodeURIComponent(location.pathname)}` };
   const tabs: (ClientTab | { to: To; label: string; icon: ClientTab["icon"]; end?: boolean })[] = guest ? [...GUEST_TABS, { to: loginTarget, label: "Ingresar", icon: UserCircle }] : CLIENT_TABS;
 
@@ -122,7 +124,7 @@ export function ClientLayout() {
             ) : (
               <>
                 <Button asChild variant="ghost" className="rounded-full font-bold"><NavLink to="/app/pedidos"><Receipt className="h-4 w-4" />Pedidos</NavLink></Button>
-                <Button asChild variant="ghost" size="icon" className="rounded-full" aria-label="Mensajes"><NavLink to="/app/mensajes"><MessageCircle className="h-5 w-5" /></NavLink></Button>
+                <Button asChild variant="ghost" size="icon" className="relative rounded-full" aria-label={unreadMessages ? `Mensajes, ${unreadMessages} sin leer` : "Mensajes"}><NavLink to="/app/mensajes"><MessageCircle className="h-5 w-5" />{unreadMessages > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-yellow px-1 text-[10px] font-black text-brand-yellow-foreground">{unreadMessages}</span>}</NavLink></Button>
                 <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -174,7 +176,8 @@ export function ClientLayout() {
           {tabs.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={label} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[62px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
               {({ isActive }) => (<>
-                <span className={cn("flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary/10")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} /></span>
+                <span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary/10")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} />
+                  {to === "/app/mensajes" && unreadMessages > 0 && <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-yellow px-1 text-[10px] font-black text-brand-yellow-foreground" aria-label={`${unreadMessages} sin leer`}>{unreadMessages}</span>}</span>
                 {label}
               </>)}
             </NavLink>
