@@ -5,7 +5,7 @@ import "leaflet/dist/leaflet.css";
 import { DEFAULT_CENTER, GeoPoint } from "@/lib/geo";
 import { cn } from "@/lib/utils";
 
-export type MapMarker = GeoPoint & { kind: "store" | "home" | "courier"; label?: string };
+export type MapMarker = GeoPoint & { kind: "store" | "home" | "courier" | "offer"; label?: string };
 
 const TILES = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
 const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
@@ -13,16 +13,19 @@ const ATTRIBUTION = '&copy; <a href="https://www.openstreetmap.org/copyright">Op
 const glyph = {
   store: '<path d="M3 9l1-5h16l1 5M4 9v11h16V9M4 9h16M9 20v-6h6v6" />',
   home: '<path d="M3 11l9-7 9 7M5 10v10h14V10" />',
+  offer: '<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />',
   courier: '<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-7h5l3 7M10 10l-2-3H5" />',
 };
-const colors = { store: "hsl(163 44% 14%)", home: "hsl(6 100% 60%)", courier: "hsl(214 84% 52%)" };
+// El destino va en amarillo de marca con ícono oscuro (blanco sobre amarillo no se distingue).
+const colors = { store: "hsl(163 44% 14%)", home: "hsl(46 100% 47%)", courier: "hsl(214 84% 52%)", offer: "hsl(262 83% 58%)" };
+const strokes = { store: "#fff", home: "hsl(40 60% 10%)", courier: "#fff", offer: "#fff" };
 
 const icon = (kind: MapMarker["kind"]) => divIcon({
   className: "",
   iconSize: [40, 40],
   iconAnchor: [20, 40],
   html: `<div style="width:40px;height:40px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${colors[kind]};box-shadow:0 4px 12px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;border:3px solid #fff">
-    <svg style="transform:rotate(45deg)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${glyph[kind]}</svg></div>`,
+    <svg style="transform:rotate(45deg)" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${strokes[kind]}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">${glyph[kind]}</svg></div>`,
 });
 
 /** Leaflet calcula su tamaño al montarse; dentro de ventanas animadas hay que recalcularlo o queda gris. */
@@ -56,8 +59,8 @@ export function DeliveryMap({ markers, className }: { markers: MapMarker[]; clas
       <MapContainer center={[first.lat, first.lng]} zoom={14} scrollWheelZoom={false} zoomControl={false} className="h-full w-full" attributionControl>
         <ZoomControl position="bottomright" />
         <TileLayer url={TILES} attribution={ATTRIBUTION} />
-        {markers.map((marker) => (
-          <Marker key={`${marker.kind}-${marker.lat}-${marker.lng}`} position={[marker.lat, marker.lng]} icon={icon(marker.kind)}>
+        {markers.map((marker, index) => (
+          <Marker key={`${marker.kind}-${index}-${marker.lat}-${marker.lng}`} position={[marker.lat, marker.lng]} icon={icon(marker.kind)}>
             {marker.label && <Tooltip direction="top" offset={[0, -36]}>{marker.label}</Tooltip>}
           </Marker>
         ))}

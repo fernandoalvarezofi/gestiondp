@@ -66,11 +66,13 @@ const MerchantPages = {
   Reviews: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantReviewsPage }))),
   Stats: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantStatsPage }))),
   Finance: lazy(() => import("./pages/delivery/merchant/MerchantFinance")),
+  Customers: lazy(() => import("./pages/delivery/merchant/MerchantCustomers")),
   Team: lazy(() => import("./pages/delivery/merchant/MerchantTeam")),
 };
 const CourierLayout = lazy(() => import("./pages/delivery/courier/CourierLayout"));
 const CourierPages = {
   Orders: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierOrdersPage }))),
+  Map: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierMapPage }))),
   Earnings: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierEarningsPage }))),
   Incentives: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierIncentivesPage }))),
   History: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierHistoryPage }))),
@@ -79,6 +81,7 @@ const CourierPages = {
 const DriverLayout = lazy(() => import("./pages/delivery/driver/DriverLayout"));
 const DriverPages = {
   Trips: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverTripsPage }))),
+  Map: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverMapPage }))),
   Earnings: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverEarningsPage }))),
   History: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverHistoryPage }))),
   Profile: lazy(() => import("./pages/delivery/driver/DriverPages").then((m) => ({ default: m.DriverProfilePage }))),
@@ -172,6 +175,7 @@ const App = () => (
                         <Route path="sucursales" element={<MerchantPages.Branches />} />
                         <Route path="opiniones" element={<MerchantPages.Reviews />} />
                         <Route path="estadisticas" element={<MerchantPages.Stats />} />
+                        <Route path="clientes" element={<MerchantPages.Customers />} />
                         <Route path="finanzas" element={<MerchantPages.Finance />} />
                         <Route path="tienda" element={<MerchantStorefront />} />
                         <Route path="nuevo" element={<MerchantNewStore />} />
@@ -187,6 +191,7 @@ const App = () => (
                       {/* Contexto Repartidor: entregas de pedidos y envíos. */}
                       <Route path="repartidor" element={<CourierLayout />}>
                         <Route index element={<CourierPages.Orders />} />
+                        <Route path="mapa" element={<CourierPages.Map />} />
                         <Route path="ganancias" element={<CourierPages.Earnings />} />
                         <Route path="incentivos" element={<CourierPages.Incentives />} />
                         <Route path="historial" element={<CourierPages.History />} />
@@ -196,6 +201,7 @@ const App = () => (
                       {/* Contexto Conductor: viajes de remís. */}
                       <Route path="conductor" element={<DriverLayout />}>
                         <Route index element={<DriverPages.Trips />} />
+                        <Route path="mapa" element={<DriverPages.Map />} />
                         <Route path="ganancias" element={<DriverPages.Earnings />} />
                         <Route path="historial" element={<DriverPages.History />} />
                         <Route path="perfil" element={<DriverPages.Profile />} />

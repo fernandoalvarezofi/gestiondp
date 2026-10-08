@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ActiveBatch } from "@/components/courier/ActiveBatch";
 import { ActiveEnvio, EnvioOfferCard } from "@/components/courier/EnvioCards";
 import type { Courier } from "@/components/courier/CourierApplication";
+import { DemandStrip, WorkMap, type WorkMarker } from "@/components/courier/WorkMap";
 import { CourierIncentives } from "@/components/courier/Incentives";
 import { PayoutForm } from "@/components/account/PayoutForm";
 import { CourierWallet } from "@/components/courier/CourierWallet";
@@ -30,6 +31,30 @@ export function CourierOrdersPage() {
     <div className="mx-auto max-w-2xl space-y-4">
       {offers.map((offer) => <OfferCard key={offer.pedido_id} offer={offer} onChange={refreshAll} />)}
       {envioOffers.map((offer) => <EnvioOfferCard key={offer.id} offer={offer} onChange={refreshAll} />)}
+    </div>
+  );
+}
+
+/** Mapa del repartidor: dónde está, el pedido o envío en curso, las ofertas con su punto de retiro y la demanda. */
+export function CourierMapPage() {
+  const { position, connected, currents, currentEnvio, offers } = useCourier();
+  const markers: WorkMarker[] = [
+    ...currents.flatMap((order) => [
+      ...(order.comercio?.latitud != null && order.comercio?.longitud != null ? [{ lat: Number(order.comercio.latitud), lng: Number(order.comercio.longitud), kind: "store" as const, label: `Retiro: ${order.comercio.nombre}` }] : []),
+      ...(order.latitud != null && order.longitud != null ? [{ lat: Number(order.latitud), lng: Number(order.longitud), kind: "home" as const, label: "Entrega" }] : []),
+    ]),
+    ...(currentEnvio ? [
+      { lat: Number(currentEnvio.origen_lat), lng: Number(currentEnvio.origen_lng), kind: "store" as const, label: "Retiro del paquete" },
+      { lat: Number(currentEnvio.destino_lat), lng: Number(currentEnvio.destino_lng), kind: "home" as const, label: "Entrega del paquete" },
+    ] : []),
+    ...offers.filter((offer) => offer.comercio_latitud != null && offer.comercio_longitud != null)
+      .map((offer) => ({ lat: Number(offer.comercio_latitud), lng: Number(offer.comercio_longitud), kind: "offer" as const, label: `Oferta: ${offer.comercio_nombre} · ${money(offer.ganancia)}` })),
+  ];
+  return (
+    <div className="mx-auto max-w-4xl space-y-3">
+      <DemandStrip />
+      <WorkMap position={position} connected={connected} markers={markers}
+        legend={[{ color: "hsl(214 84% 52%)", label: "Vos" }, { color: "hsl(163 44% 14%)", label: "Retiro" }, { color: "hsl(46 100% 47%)", label: "Entrega" }, { color: "hsl(262 83% 58%)", label: "Ofertas" }]} />
     </div>
   );
 }

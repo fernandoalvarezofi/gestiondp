@@ -112,13 +112,24 @@ export function useWorkerSession(mode: WorkMode) {
   const deliveredEnvios = useMemo(() => myEnvios.filter((envio) => envio.estado === "entregado"), [myEnvios]);
   const finishedViajes = useMemo(() => myViajes.filter((trip) => trip.estado === "completado" || trip.estado === "cancelado"), [myViajes]);
 
-  /** Conectarse/desconectarse. En el contexto Conductor, conectarse también activa la recepción de viajes. */
+  // El servidor reparte las ofertas según el modo de trabajo: estando conectado, el panel abierto define el modo
+  // (si no hay un trabajo en curso que terminar en el otro contexto).
+  const modo = deliveries ? "entregas" : "viajes";
+  useEffect(() => {
+    if (!courier || !connected || busyNow || courier.modo_trabajo === modo) return;
+    if (!deliveries && courier.remis_estado !== "aprobado") return;
+    db.from("delivery_repartidores").update({ modo_trabajo: modo, ...(deliveries ? {} : { acepta_remis: true }) }).eq("perfil_id", courier.perfil_id)
+      .then(({ error }: { error: unknown }) => { if (!error) setCourier((prev) => (prev ? { ...prev, modo_trabajo: modo, ...(deliveries ? {} : { acepta_remis: true }) } : prev)); });
+  }, [courier?.perfil_id, courier?.modo_trabajo, connected, busyNow, modo]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /** Conectarse/desconectarse. Conectarse fija el modo del panel (en Conductor también activa la recepción de viajes). */
   const toggleConnection = async () => {
     if (!courier) return;
     const next = !courier.disponible;
     if (next && courier.control_estado) { toast.error("Primero completá la selfie de control"); return; }
     if (next) await unlockAlarm();
     const patch: Partial<Courier> = { disponible: next };
+    if (next) patch.modo_trabajo = modo;
     if (next && !deliveries && !courier.acepta_remis) patch.acepta_remis = true;
     setCourier({ ...courier, ...patch });
     const { error } = await db.from("delivery_repartidores").update(patch).eq("perfil_id", courier.perfil_id);

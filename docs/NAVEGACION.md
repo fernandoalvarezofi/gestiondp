@@ -87,14 +87,21 @@ El carrito no va en la barra inferior: 5 pestañas es el máximo cómodo en un c
 
 Todas las pantallas y acciones anteriores siguen en su lugar: alta guiada del comercio, sucursales y selector de negocio, permisos por rol del equipo, ofertas y lotes del repartidor, envíos, selfie de control, metas y turnos, billetera, alta de conductor con documentos, las 27 secciones de administración con sus datos y acciones, MFA y avisos push.
 
-## 9. Pendiente
+## 9. Completado después (2026-10-08, segunda tanda)
 
-- **Separación de conductor y repartidor en el servidor:** hay un único `disponible`. Si alguien es las dos cosas y se conecta, el servidor le sigue ofreciendo entregas aunque esté en el panel de conductor (las ve al volver al panel de repartidor). Para separarlo del todo hace falta un "modo de trabajo" en `delivery_repartidores` que lean `delivery_ofertas_visibles`, `delivery_candidato_oferta` y `despacho_candidatos`. Es un cambio de despacho que hay que aprobar.
-- Pantallas pedidas que no existían y **no se inventaron**: Clientes y Reservas como secciones propias del comercio, Mapa del repartidor y del conductor (hoy el mapa está dentro del trabajo en curso), Analytics y Seguridad como secciones aparte en administración (hoy son Resumen, Auditoría y Errores), Mensajes de conductor.
+- **Modo de trabajo en el servidor** (`delivery_repartidores.modo_trabajo`: `entregas` | `viajes`, migración `20261118100000`). Quien está en modo viajes no ve ni puede tomar pedidos ni envíos, y no le llegan sus avisos. Quien está en modo entregas no ve ni puede tomar viajes. El despacho manual muestra "Conectado como conductor/repartidor". El modo lo fija el panel: al conectarse, o al abrir el panel estando conectado sin un trabajo en curso. Prueba: `supabase/tests/005_modo_trabajo.sql`.
+- **Comercio → Clientes** (`/app/comercio/clientes`, permiso `estadisticas`): RPC `delivery_comercio_clientes`. Solo muestra nombre de pila e inicial.
+- **Repartidor y Conductor → Mapa** (`/mapa`): ubicación, trabajo en curso, ofertas con punto de retiro y demanda del momento (`delivery_demanda_actual`).
+- **Administración → Analytics** (`delivery_admin_analitica`) y **→ Seguridad** (`delivery_admin_seguridad`: administradores con o sin 2FA, email enmascarado, suspendidos, actividad y errores de 24 h).
+- "Reservas" del comercio ya existía (Turnos); quedó como "Reservas y turnos".
+
+## 10. Pendiente
+
 - Las notificaciones (`/app/notificaciones`) son una sola lista por cuenta y se ven en el layout del cliente.
+- Mensajes entre conductor y pasajero (hoy el viaje usa código y teléfono; no hay chat de viaje).
 - Breadcrumbs en administración (hoy hay título de sección y botón Volver).
 
-## 10. Cómo agregar un rol o contexto nuevo
+## 11. Cómo agregar un rol o contexto nuevo
 
 1. Sumarlo a `APP_CONTEXTS` en `src/navigation/contexts.ts`: id, prefijo, `has(roles)` y `join`.
 2. Si depende de un dato nuevo, agregarlo en `RolesContext` (una consulta más en `refresh`).

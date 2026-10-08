@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contextFromPath, contextsFor } from "./contexts";
 import { isPublicClientPath } from "./guards";
-import { ADMIN_SECTIONS, adminNav, CLIENT_TABS, merchantNav, merchantSectionPermission, merchantTabs } from "./menus";
+import { ADMIN_SECTIONS, adminNav, CLIENT_TABS, COURIER_TABS, courierNav, driverNav, merchantNav, merchantSectionPermission, merchantTabs } from "./menus";
 import type { Permission } from "@/pages/delivery/merchant/context";
 
 const cliente = { isAdmin: false, isCourier: false, isDriver: false, storeId: null };
@@ -53,6 +53,14 @@ describe("menús", () => {
     expect(merchantTabs(operador)).toEqual(["/app/comercio", "/app/comercio/pedidos"]);
     expect(merchantSectionPermission("finanzas")).toBe("finanzas");
     expect(merchantSectionPermission("nuevo")).toBe("equipo");
+  });
+
+  it("repartidor y conductor tienen Mapa; el comercio, Clientes con permiso de estadísticas; admin, Analytics y Seguridad", () => {
+    expect(courierNav(0)[0].items.map((i) => i.to)).toContain("/app/repartidor/mapa");
+    expect(COURIER_TABS).toEqual(["/app/repartidor", "/app/repartidor/mapa", "/app/repartidor/ganancias", "/app/repartidor/historial", "/app/repartidor/perfil"]);
+    expect(driverNav(0)[0].items.map((i) => i.to)).toContain("/app/conductor/mapa");
+    expect(merchantSectionPermission("clientes")).toBe("estadisticas");
+    expect(ADMIN_SECTIONS.map((s) => s.id)).toEqual(expect.arrayContaining(["analytics", "seguridad"]));
   });
 
   it("cada sección de administración aparece una sola vez en el menú", () => {

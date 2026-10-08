@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
   const sends: Sends = [];
 
   if (evento === "viaje_nuevo" && viaje.estado === "buscando") {
-    const { data: drivers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("activo", true).eq("verificado", true).eq("disponible", true).eq("acepta_remis", true).eq("remis_estado", "aprobado").is("control_estado", null).limit(100);
+    const { data: drivers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("activo", true).eq("verificado", true).eq("disponible", true).eq("acepta_remis", true).eq("remis_estado", "aprobado").eq("modo_trabajo", "viajes").is("control_estado", null).limit(100);
     const free: string[] = [];
     for (const driver of drivers || []) {
       const { data: busy } = await supabase.rpc("delivery_repartidor_ocupado", { p_repartidor: driver.perfil_id });

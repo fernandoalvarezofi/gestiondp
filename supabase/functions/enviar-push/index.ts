@@ -202,7 +202,8 @@ async function handleEnvio(supabase: ReturnType<typeof createClient>, config: Re
   const sends: Sends = [];
 
   if (evento === "envio_nuevo" && envio.estado === "buscando") {
-    const { data: couriers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("activo", true).eq("verificado", true).eq("disponible", true).limit(100);
+    // Solo quien trabaja en modo entregas (panel de repartidor); los conectados como conductor no reciben envíos.
+    const { data: couriers } = await supabase.from("delivery_repartidores").select("perfil_id").eq("activo", true).eq("verificado", true).eq("disponible", true).eq("modo_trabajo", "entregas").limit(100);
     const free: string[] = [];
     for (const courier of couriers || []) {
       const { data: busy } = await supabase.rpc("delivery_repartidor_ocupado", { p_repartidor: courier.perfil_id });

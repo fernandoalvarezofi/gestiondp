@@ -1,7 +1,7 @@
 import {
   Banknote, BarChart3, Bike, Bug, Building2, CalendarCheck, Calculator, Car, CarTaxiFront, ClipboardList, Compass, Fingerprint, Flag, Globe, History,
   Home, Landmark, LayoutDashboard, LifeBuoy, Map, MapPinOff, Megaphone, MessageCircle, MessageCircleQuestion, Network, Package, PackageOpen,
-  Radio, Receipt, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UtensilsCrossed, Wallet, BookUser, type LucideIcon,
+  Radio, Receipt, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, UtensilsCrossed, Wallet, BookUser, ShieldCheck, TrendingUp, type LucideIcon,
 } from "lucide-react";
 import type { PanelNavGroup } from "@/components/panel/PanelShell";
 import type { Permission } from "@/pages/delivery/merchant/context";
@@ -45,9 +45,10 @@ export const MERCHANT_SECTIONS: MerchantSection[] = [
   { path: "opiniones", label: "Opiniones", icon: Star, group: "Tienda online", permission: "opiniones" },
   { path: "promociones", label: "Promociones y cupones", short: "Promos", icon: Megaphone, group: "Marketing", permission: "promociones" },
   { path: "campanas", label: "Campañas", icon: Send, group: "Marketing", permission: "promociones" },
+  { path: "clientes", label: "Clientes", icon: Users, group: "Ventas", permission: "estadisticas" },
   { path: "finanzas", label: "Finanzas y liquidaciones", short: "Finanzas", icon: Landmark, group: "Ventas", permission: "finanzas" },
   { path: "estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3, group: "Ventas", permission: "estadisticas" },
-  { path: "equipo", label: "Equipo", icon: Users, group: "Mi negocio", permission: "equipo" },
+  { path: "equipo", label: "Equipo", icon: UsersRound, group: "Mi negocio", permission: "equipo" },
   { path: "sucursales", label: "Mis comercios", short: "Comercios", icon: Building2, group: "Mi negocio", permission: "equipo" },
   { path: "configuracion", label: "Configuración", short: "Ajustes", icon: Settings, group: "Mi negocio", permission: "ajustes" },
   { path: "nuevo", label: "Crear otro comercio", icon: Store, group: "Mi negocio", permission: "equipo", hidden: true },
@@ -72,8 +73,12 @@ export const merchantTabs = (can: (permission: Permission) => boolean) =>
 
 // ───────────────────────── Repartidor ─────────────────────────
 
+/** Barra de abajo del repartidor en el celular (Metas y turnos queda en el menú lateral). */
+export const COURIER_TABS = ["/app/repartidor", "/app/repartidor/mapa", "/app/repartidor/ganancias", "/app/repartidor/historial", "/app/repartidor/perfil"];
+
 export const courierNav = (offers: number | undefined): PanelNavGroup[] => [{ items: [
   { to: "/app/repartidor", label: "Trabajos", icon: ClipboardList, end: true, badge: offers },
+  { to: "/app/repartidor/mapa", label: "Mapa", icon: Map },
   { to: "/app/repartidor/ganancias", label: "Ganancias", icon: Wallet },
   { to: "/app/repartidor/incentivos", label: "Metas y turnos", short: "Metas", icon: Target },
   { to: "/app/repartidor/historial", label: "Historial", icon: History },
@@ -84,6 +89,7 @@ export const courierNav = (offers: number | undefined): PanelNavGroup[] => [{ it
 
 export const driverNav = (offers: number | undefined): PanelNavGroup[] => [{ items: [
   { to: "/app/conductor", label: "Viajes", icon: CarTaxiFront, end: true, badge: offers },
+  { to: "/app/conductor/mapa", label: "Mapa", icon: Map },
   { to: "/app/conductor/ganancias", label: "Ganancias", icon: Wallet },
   { to: "/app/conductor/historial", label: "Historial", icon: History },
   { to: "/app/conductor/perfil", label: "Mi perfil", short: "Perfil", icon: UserCircle },
@@ -100,6 +106,7 @@ const ADMIN_GROUPS = ["General", "Operación", "Personas", "Dinero", "Marketing 
 export const ADMIN_SECTIONS: AdminSection[] = [
   { id: "resumen", label: "Resumen", icon: LayoutDashboard, group: "General" },
   { id: "operaciones", label: "Centro de operaciones", icon: Radio, group: "General" },
+  { id: "analytics", label: "Analytics", icon: TrendingUp, group: "General" },
   { id: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación", badge: "pedidos" },
   { id: "viajes", label: "Viajes de remís", icon: CarTaxiFront, group: "Operación" },
   { id: "envios", label: "Mensajería", icon: Package, group: "Operación" },
@@ -123,6 +130,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { id: "soporte", label: "Soporte", icon: LifeBuoy, group: "Soporte y confianza", badge: "soporte" },
   { id: "arrepentimientos", label: "Arrepentimientos", icon: Undo2, group: "Soporte y confianza" },
   { id: "opiniones", label: "Opiniones reportadas", icon: Flag, group: "Soporte y confianza", badge: "opiniones" },
+  { id: "seguridad", label: "Seguridad", icon: ShieldCheck, group: "Sistema" },
   { id: "auditoria", label: "Auditoría", icon: ScrollText, group: "Sistema" },
   { id: "errores", label: "Errores de la app", icon: Bug, group: "Sistema" },
   { id: "configuracion", label: "Configuración", icon: Settings, group: "Sistema" },

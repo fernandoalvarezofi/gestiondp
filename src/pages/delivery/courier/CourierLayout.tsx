@@ -9,7 +9,7 @@ import { PanelShell } from "@/components/panel/PanelShell";
 import { Button } from "@/components/ui/button";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { cn } from "@/lib/utils";
-import { courierNav } from "@/navigation/menus";
+import { COURIER_TABS, courierNav } from "@/navigation/menus";
 import { useWorkerSession, type WorkerSession } from "./useWorkerSession";
 
 export type CourierContext = WorkerSession & { courier: NonNullable<WorkerSession["courier"]> };
@@ -36,6 +36,7 @@ export default function CourierLayout() {
     <PanelShell
       panel="Repartidor"
       bottomTabs
+      tabs={COURIER_TABS}
       identity={
         <div className="flex items-center gap-3 rounded-2xl border bg-card p-2.5 group-data-[collapsible=icon]:hidden">
           <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", connected ? "bg-success/10 text-success" : "bg-muted text-muted-foreground")}><Bike className="h-5 w-5" /></span>

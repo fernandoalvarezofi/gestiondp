@@ -4,6 +4,8 @@ import { ArrowRight, Bike, Check, Pencil, Radio, X } from "lucide-react";
 import { BarSeries, ListRow, Metric, MetricStrip, PageIntro, RowList, Section, SectionLink, StatusPill, Surface } from "@/components/panel/kit";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
+import { AnalyticsPanel } from "@/components/admin/AnalyticsPanel";
+import { SecurityPanel } from "@/components/admin/SecurityPanel";
 import { AdminMfaNotice } from "@/components/admin/AdminMfaNotice";
 import { AnnouncementsManager } from "@/components/admin/AnnouncementsManager";
 import { AuditLog } from "@/components/admin/AuditLog";
@@ -197,6 +199,7 @@ function StoresSection() {
 const SECTIONS: Record<string, () => ReactNode> = {
   resumen: () => <Overview />,
   operaciones: () => <OperationsCenter />,
+  analytics: () => <AnalyticsPanel />,
   pedidos: () => <OrdersSection />,
   viajes: () => <RemisManager view="viajes" />,
   envios: () => <EnviosManager />,
@@ -220,6 +223,7 @@ const SECTIONS: Record<string, () => ReactNode> = {
   soporte: function Soporte() { const { setOpenClaims } = useAdmin(); return <SupportCenter onChange={setOpenClaims} />; },
   arrepentimientos: () => <WithdrawalsManager />,
   opiniones: function Opiniones() { const { setReportedReviews } = useAdmin(); return <ReportedReviews onChange={setReportedReviews} />; },
+  seguridad: () => <SecurityPanel />,
   auditoria: () => <AuditLog />,
   errores: () => <ErrorsPanel />,
   configuracion: () => <PlatformSettings />,

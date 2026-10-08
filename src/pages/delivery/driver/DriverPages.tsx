@@ -3,6 +3,7 @@ import { Bike, CarTaxiFront, PowerOff, ShieldCheck, Star } from "lucide-react";
 import { RemisEnrollment } from "@/components/courier/RemisEnrollment";
 import { ActiveViaje, ViajeOfferCard } from "@/components/courier/ViajeCards";
 import { CourierWallet } from "@/components/courier/CourierWallet";
+import { WorkMap, type WorkMarker } from "@/components/courier/WorkMap";
 import { EmptyState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, money } from "@/lib/delivery";
@@ -22,6 +23,31 @@ export function DriverTripsPage() {
     return <EmptyState icon={<CarTaxiFront className="h-7 w-7" />} title="Buscando viajes para vos" text={`Quedate conectado: apenas alguien pida un remís cerca (${categorias}), te suena el aviso.`} />;
   }
   return <div className="mx-auto max-w-2xl space-y-4">{viajeOffers.map((offer) => <ViajeOfferCard key={offer.id} offer={offer} onChange={refreshAll} />)}</div>;
+}
+
+/** Mapa del conductor: dónde está, el viaje en curso y la distancia a los pedidos de viaje cercanos. */
+export function DriverMapPage() {
+  const { position, connected, currentViaje, viajeOffers } = useDriver();
+  const markers: WorkMarker[] = currentViaje ? [
+    { lat: Number(currentViaje.origen_lat), lng: Number(currentViaje.origen_lng), kind: "store", label: "Buscar al pasajero" },
+    { lat: Number(currentViaje.destino_lat), lng: Number(currentViaje.destino_lng), kind: "home", label: "Destino" },
+  ] : [];
+  return (
+    <div className="mx-auto max-w-4xl space-y-3">
+      <WorkMap position={position} connected={connected} markers={markers}
+        legend={[{ color: "hsl(214 84% 52%)", label: "Vos" }, { color: "hsl(163 44% 14%)", label: "Pasajero" }, { color: "hsl(46 100% 47%)", label: "Destino" }]} />
+      {!currentViaje && viajeOffers.length > 0 && (
+        <ul className="divide-y overflow-hidden rounded-3xl border bg-card" aria-label="Viajes disponibles cerca">
+          {viajeOffers.map((offer) => (
+            <li key={offer.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+              <span className="min-w-0 truncate font-bold">{offer.origen_zona} → {offer.destino_zona}</span>
+              <span className="shrink-0 text-muted-foreground">{offer.dist_recogida_km != null ? `a ${Number(offer.dist_recogida_km).toFixed(1)} km` : "cerca"} · <span className="font-bold text-success">{money(offer.ganancia)}</span></span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 /** Ganancias: es la misma billetera de la cuenta de trabajo (viajes, entregas y bonos juntos). */
