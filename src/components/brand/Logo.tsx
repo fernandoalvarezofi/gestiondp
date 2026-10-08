@@ -11,8 +11,8 @@ export function LogoMark({ className, inverted = false }: { className?: string; 
     <svg viewBox="0 0 64 64" className={cn("h-9 w-9", className)} role="img" aria-label="Woref">
       <defs>
         <linearGradient id={gradient} x1="10" y1="4" x2="54" y2="62" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#34AE8B" />
-          <stop offset="1" stopColor="#21765D" />
+          <stop offset="0" stopColor="#2A2A2A" />
+          <stop offset="1" stopColor="#0A0A0A" />
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="18" fill={inverted ? "#fff" : `url(#${gradient})`} stroke="rgba(255,255,255,0.14)" strokeWidth="1" />
@@ -40,7 +40,7 @@ export function Logo({ className, inverted = false, compact = false }: { classNa
     <span className={cn("inline-flex items-center gap-2", className)} aria-label="Woref">
       <LogoMark className="h-9 w-9 shrink-0" inverted={inverted} />
       {!compact && (
-        <span className={cn("font-brand text-[1.65rem] font-black leading-none tracking-[-0.04em]", inverted ? "text-white" : "text-primary")}>
+        <span className={cn("font-brand text-[1.65rem] font-black leading-none tracking-[-0.04em]", inverted ? "text-white" : "text-[#111111] dark:text-white")}>
           woref
         </span>
       )}
