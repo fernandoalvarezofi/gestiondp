@@ -34,7 +34,7 @@ function Avatar({ hilo }: { hilo: HiloBandeja }) {
  * (pedido, viaje, envío o consulta a un local): no se le puede escribir a cualquiera.
  * En el celular se ve una cosa a la vez (lista o conversación).
  */
-export function Inbox({ comercio, rol, vacio, extra }: { comercio?: string; rol?: "cliente" | "repartidor" | "conductor"; vacio: { titulo: string; texto: string; accion?: ReactNode }; extra?: ReactNode }) {
+export function Inbox({ comercio, rol, vacio, extra, accion }: { comercio?: string; rol?: "cliente" | "repartidor" | "conductor"; vacio: { titulo: string; texto: string; accion?: ReactNode }; extra?: ReactNode; /** Botón para empezar una conversación nueva (por ejemplo, "Nueva consulta"). */ accion?: ReactNode }) {
   const [params, setParams] = useSearchParams();
   const activa = params.get("h");
   const [filas, setFilas] = useState<HiloBandeja[] | null>(null);
@@ -58,7 +58,7 @@ export function Inbox({ comercio, rol, vacio, extra }: { comercio?: string; rol?
   const actual = filas?.find((f) => f.id === activa) ?? null;
 
   if (!filas) return <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
-  if (filas.length === 0 && !activa) return <div className="space-y-4">{extra}<EmptyState icon={<MessageCircle className="h-7 w-7" />} title={vacio.titulo} text={vacio.texto} action={vacio.accion} /></div>;
+  if (filas.length === 0 && !activa) return <div className="space-y-4">{extra}<EmptyState icon={<MessageCircle className="h-7 w-7" />} title={vacio.titulo} text={vacio.texto} action={accion ?? vacio.accion} /></div>;
 
   return (
     <div className="space-y-4">
@@ -66,6 +66,7 @@ export function Inbox({ comercio, rol, vacio, extra }: { comercio?: string; rol?
       <div className="grid overflow-hidden rounded-3xl border bg-card md:h-[min(680px,calc(100vh-13rem))] md:grid-cols-[340px_1fr]">
         <div className={cn("flex min-h-0 flex-col md:border-r", activa && "max-md:hidden")}>
           <div className="space-y-2 border-b p-3">
+            {accion && <div className="flex">{accion}</div>}
             <label className="flex h-10 items-center gap-2 rounded-full border bg-background px-3 text-sm focus-within:border-primary">
               <Search className="h-4 w-4 text-muted-foreground" /><input value={busqueda} onChange={(e) => setBusqueda(e.target.value)} placeholder="Buscar" aria-label="Buscar conversaciones" className="min-w-0 flex-1 bg-transparent outline-none" />
             </label>
