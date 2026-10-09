@@ -29,6 +29,8 @@ export default function StoreDetail() {
   const tariff = useTariff(point);
   const [store, setStore] = useState<DeliveryStore | null>(null);
   const [products, setProducts] = useState<DeliveryProduct[]>([]);
+  // null = el menú todavía está cargando (no es lo mismo que un local sin productos).
+  const [menuListo, setMenuListo] = useState<boolean | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [sectionConfig, setSectionConfig] = useState<DeliverySection[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
@@ -56,6 +58,7 @@ export default function StoreDetail() {
       ]);
       setSectionConfig(configured || []);
       setProducts(catalog || []);
+      setMenuListo(true);
       setReviews(opinions || []);
       setCoupons((storeCoupons || []).filter((coupon: Coupon) => !coupon.vence_at || new Date(coupon.vence_at) > new Date()));
     })();
@@ -243,7 +246,9 @@ export default function StoreDetail() {
           </section>
         ))}
         {products.length > 0 && filtered.length === 0 && <EmptyState className="mt-6" title="No encontramos ese producto" text={activeDiet.length ? "Probá sacando algún filtro de dieta." : "Probá con otra palabra."} />}
-        {products.length === 0 && <EmptyState className="mt-6" title="Este local todavía no cargó su menú" />}
+        {products.length === 0 && (menuListo
+          ? <EmptyState className="mt-6" title="Este local todavía no cargó su menú" />
+          : <div className="mt-6 space-y-3" aria-busy="true" aria-label="Cargando el menú">{[0, 1, 2].map((k) => <div key={k} className="h-24 animate-pulse rounded-2xl bg-muted" />)}</div>)}
         </div>
         <div className="sticky top-24 hidden lg:block"><StoreCartPanel storeId={store.id} storeName={store.nombre} minimum={Number(store.pedido_minimo || 0)} /></div>
       </div>

@@ -59,6 +59,11 @@ export default function Cart() {
   const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [addingAddress, setAddingAddress] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  // Clave del intento de compra: si la respuesta se pierde y se vuelve a tocar "Confirmar", el servidor devuelve el
+  // mismo pedido en vez de crear otro. Se renueva solo después de un pedido creado.
+  const claveCompra = useRef<string>(crypto.randomUUID());
+  // Bloqueo inmediato contra el doble toque (el estado de React tarda un render en aplicarse).
+  const enviando = useRef(false);
   const [phone, setPhone] = useState("");
   const [storeInfo, setStoreInfo] = useState<DeliveryStore | null>(null);
   const point = useAddressPoint();
@@ -229,6 +234,7 @@ export default function Cart() {
   const closedWithoutSchedule = !openNow && !canSchedule;
 
   const checkout = async () => {
+    if (enviando.current) return;
     if (!user) {
       // El carrito se conserva: al volver de ingresar, el pedido sigue ahí.
       toast.info("Ingresá o creá tu cuenta para confirmar el pedido. Tu carrito te espera.");
@@ -239,6 +245,7 @@ export default function Cart() {
     if (phone.replace(/\D/g, "").length < 8) return toast.error("Dejanos un teléfono de contacto para coordinar la entrega");
     if (summary.missing > 0) return toast.error(`Te faltan ${money(summary.missing)} para el pedido mínimo`);
     if (waitingSlot) return toast.error("Elegí el horario del pedido");
+    enviando.current = true;
     setSubmitting(true);
     const online = payment === "mercadopago";
     const params = {
@@ -255,10 +262,18 @@ export default function Cart() {
       p_tipo_entrega: mode,
       p_programado_para: needsSlot ? slot : null,
     };
-    const { data: orderId, error } = online
-      ? await db.rpc("delivery_crear_pedido_online", params)
-      : await db.rpc("delivery_crear_pedido", { ...params, p_metodo_pago: payment, p_paga_con: payment === "efectivo" ? cashWith : null, p_usar_saldo: walletUsed > 0 });
-    if (error || !orderId) { setSubmitting(false); return toast.error(errorMessage(error, "No pudimos crear el pedido")); }
+    const { data: orderId, error } = await db.rpc("delivery_confirmar_pedido", {
+      ...params, p_clave: claveCompra.current, p_online: online,
+      p_metodo_pago: online ? "mercadopago" : payment, p_paga_con: !online && payment === "efectivo" ? cashWith : null, p_usar_saldo: !online && walletUsed > 0,
+    });
+    if (error || !orderId) {
+      enviando.current = false;
+      setSubmitting(false);
+      const sinRed = typeof navigator !== "undefined" && navigator.onLine === false;
+      return toast.error(sinRed ? "Sin conexión: revisala y volvé a tocar Confirmar. No se va a duplicar tu pedido." : errorMessage(error, "No pudimos crear el pedido"));
+    }
+    claveCompra.current = crypto.randomUUID();
+    enviando.current = false;
     // Dato informativo: si el cliente llegó desde la tienda online del comercio, el pedido se marca como tal.
     if (vinoDeTienda(store.id)) db.rpc("delivery_marcar_canal", { p_pedido: orderId, p_canal: "tienda" }).then(() => undefined, () => undefined);
     clearCart();
