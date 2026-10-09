@@ -25,8 +25,8 @@ export default function MerchantBookings() {
 
   const load = useCallback(async () => {
     const [{ data: s }, { data: p }, { data: ps }, { data: r }] = await Promise.all([
-      db.from("servicios").select("*").eq("comercio_id", store.id).order("orden").order("nombre"),
-      db.from("profesionales").select("*").eq("comercio_id", store.id).order("nombre"),
+      db.from("servicios").select("*").eq("comercio_id", store.id).is("eliminado_at", null).order("orden").order("nombre"),
+      db.from("profesionales").select("*").eq("comercio_id", store.id).is("eliminado_at", null).order("nombre"),
       db.from("profesional_servicios").select("profesional_id, servicio_id"),
       db.from("recursos").select("*").eq("comercio_id", store.id).order("orden").order("nombre"),
     ]);

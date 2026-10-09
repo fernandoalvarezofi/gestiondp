@@ -1,4 +1,6 @@
-import { db } from "@/lib/delivery";
+import { toast } from "sonner";
+import { confirmar } from "@/components/ui/dialogos";
+import { db, errorMessage } from "@/lib/delivery";
 
 export const TZ = "America/Argentina/Buenos_Aires";
 export type Modalidad = "en_local" | "a_domicilio" | "online";
@@ -201,3 +203,22 @@ export function isoALocal(iso: string): string {
 
 /** Primera letra en mayúscula ("viernes 9 de octubre" -> "Viernes 9 de octubre"). */
 export const cap1 = (t: string) => (t ? t.charAt(0).toUpperCase() + t.slice(1) : t);
+
+/**
+ * Elimina un servicio o un profesional de la agenda, pidiendo confirmación. El servidor decide: sin turnos se borra; con turnos
+ * pasados se archiva (el historial queda); con turnos por venir lo rechaza y explica por qué.
+ */
+export async function eliminarDeAgenda(tipo: "servicio" | "profesional", item: { id: string; nombre: string }): Promise<boolean> {
+  const ok = await confirmar({
+    titulo: `¿Eliminar ${tipo === "servicio" ? "el servicio" : "a"} “${item.nombre}”?`,
+    descripcion: tipo === "servicio"
+      ? "Deja de ofrecerse en tu página de reservas. Si ya tuvo turnos, se archiva y el historial se conserva."
+      : "Deja de recibir turnos. Si ya atendió turnos, se archiva y el historial se conserva. Primero reprogramá o cancelá sus turnos por venir.",
+    confirmar: "Eliminar", peligro: true,
+  });
+  if (!ok) return false;
+  const { data, error } = await db.rpc("agenda_eliminar", { p_tipo: tipo, p_id: item.id });
+  if (error) { toast.error(errorMessage(error)); return false; }
+  toast.success((data as { resultado: string }).resultado === "eliminado" ? `Eliminaste “${item.nombre}”` : `Archivamos “${item.nombre}”: su historial de turnos se conserva`);
+  return true;
+}

@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { db, errorMessage, formatDateTime } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
-import { Bloqueo, DIAS, hhmm, isoALocal, localAIso, Profesional, Servicio, Tramo, tramosValidos } from "@/services/bookings";
+import { Bloqueo, DIAS, hhmm, isoALocal, localAIso, Profesional, Servicio, Tramo, tramosValidos, eliminarDeAgenda } from "@/services/bookings";
 
 type Prof = Profesional & { servicios: string[] };
 const ORDEN_DIAS = [1, 2, 3, 4, 5, 6, 0];
@@ -31,6 +31,7 @@ export function TeamTab({ storeId, servicios, profesionales, onChange }: { store
                 <div className="min-w-0 flex-1"><p className="font-extrabold">{p.nombre}{!p.activo && <span className="ml-2 text-xs font-bold text-muted-foreground">(inactivo)</span>}</p>
                   <p className="text-sm text-muted-foreground">{p.servicios.length === 0 ? "Sin servicios asignados" : servicios.filter((s) => p.servicios.includes(s.id)).map((s) => s.nombre).join(", ")}</p></div>
                 <Button size="icon" variant="ghost" className="rounded-full" aria-label={`Editar ${p.nombre}`} onClick={() => setEdit(p)}><Pencil className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive" aria-label={`Eliminar ${p.nombre}`} onClick={async () => { if (await eliminarDeAgenda("profesional", p)) onChange(); }}><Trash2 className="h-4 w-4" /></Button>
               </li>
             ))}
           </ul>

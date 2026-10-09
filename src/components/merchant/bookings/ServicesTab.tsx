@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { Clock3, Loader2, Pencil, Plus } from "lucide-react";
+import { Clock3, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { db, errorMessage, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
-import { duracionTexto, Modalidad, MODALIDAD, Recurso, Servicio } from "@/services/bookings";
+import { duracionTexto, Modalidad, MODALIDAD, Recurso, Servicio, eliminarDeAgenda } from "@/services/bookings";
 
 type Draft = {
   id?: string; nombre: string; descripcion: string; duracion_min: string; precio: string; modalidad: Modalidad; anticipacion_horas: string; cancelar_hasta_horas: string; activo: boolean;
@@ -83,6 +83,7 @@ export function ServicesTab({ storeId, servicios, recursos, onChange }: { storeI
                 <div className="min-w-0 flex-1"><p className="font-extrabold">{s.nombre}{!s.activo && <span className="ml-2 text-xs font-bold text-muted-foreground">(oculto)</span>}</p><p className="text-sm text-muted-foreground">{detalle(s)}</p></div>
                 <span className="font-black tabular-nums">{s.precio > 0 ? money(s.precio) : "Consultar"}</span>
                 <Button size="icon" variant="ghost" className="rounded-full" aria-label={`Editar ${s.nombre}`} onClick={() => setDraft(aDraft(s))}><Pencil className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" className="rounded-full text-destructive hover:bg-destructive/10 hover:text-destructive" aria-label={`Eliminar ${s.nombre}`} onClick={async () => { if (await eliminarDeAgenda("servicio", s)) onChange(); }}><Trash2 className="h-4 w-4" /></Button>
               </li>
             ))}
           </ul>
