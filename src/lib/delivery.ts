@@ -43,6 +43,8 @@ export type DeliveryStore = {
   radio_entrega_km?: number | null;
   costo_por_km?: number | null;
   aprobado?: boolean;
+  /** Fecha de baja (solo la ven administración y el servidor; una tienda dada de baja no aparece en ningún lado). */
+  eliminado_at?: string | null;
   motivo_rechazo?: string | null;
   destacado?: boolean;
   activo?: boolean;

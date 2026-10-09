@@ -114,7 +114,7 @@ export default function AdminLayout() {
   }, [orders, stores, couriers]);
 
   const counts = {
-    pendingStores: stores.filter((store) => store.aprobado === false).length,
+    pendingStores: stores.filter((store) => store.aprobado === false && !store.eliminado_at).length,
     pendingIdentities,
     openClaims,
     reportedReviews,
