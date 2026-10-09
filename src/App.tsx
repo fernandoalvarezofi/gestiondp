@@ -56,6 +56,9 @@ const MerchantReturns = lazy(() => import("./pages/delivery/merchant/MerchantRet
 const MerchantBookings = lazy(() => import("./pages/delivery/merchant/MerchantBookings"));
 const MerchantInventory = lazy(() => import("./pages/delivery/merchant/MerchantInventory"));
 const MerchantCollections = lazy(() => import("./pages/delivery/merchant/MerchantCollections"));
+const CrmClientes = lazy(() => import("./pages/delivery/merchant/crm/CrmClientes"));
+const CrmFicha = lazy(() => import("./pages/delivery/merchant/crm/CrmFicha"));
+const CrmSeguimientos = lazy(() => import("./pages/delivery/merchant/crm/CrmSeguimientos"));
 const Storefront = lazy(() => import("./pages/Storefront"));
 const StorefrontPreviewFrame = lazy(() => import("./pages/StorefrontPreviewFrame"));
 const StorefrontProduct = lazy(() => import("./pages/StorefrontProduct"));
@@ -69,7 +72,6 @@ const MerchantPages = {
   Reviews: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantReviewsPage }))),
   Stats: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantStatsPage }))),
   Finance: lazy(() => import("./pages/delivery/merchant/MerchantFinance")),
-  Customers: lazy(() => import("./pages/delivery/merchant/MerchantCustomers")),
   Team: lazy(() => import("./pages/delivery/merchant/MerchantTeam")),
 };
 const CourierLayout = lazy(() => import("./pages/delivery/courier/CourierLayout"));
@@ -185,7 +187,9 @@ const App = () => (
                         <Route path="sucursales" element={<MerchantPages.Branches />} />
                         <Route path="opiniones" element={<MerchantPages.Reviews />} />
                         <Route path="estadisticas" element={<MerchantPages.Stats />} />
-                        <Route path="clientes" element={<MerchantPages.Customers />} />
+                        <Route path="clientes" element={<CrmClientes />} />
+                        <Route path="clientes/seguimientos" element={<CrmSeguimientos />} />
+                        <Route path="clientes/:id" element={<CrmFicha />} />
                         <Route path="finanzas" element={<MerchantPages.Finance />} />
                         <Route path="tienda" element={<MerchantStorefront />} />
                         <Route path="nuevo" element={<MerchantNewStore />} />

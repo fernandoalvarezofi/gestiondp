@@ -5,6 +5,7 @@ import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { Metric, MetricStrip } from "@/components/panel/kit";
 import { Button } from "@/components/ui/button";
+import { ClienteLink } from "@/components/merchant/ClienteLink";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { downloadCsv, toCsv } from "@/lib/csv";
@@ -204,7 +205,7 @@ export function OrderHistory({ store }: { store: DeliveryStore }) {
           {abierto && (
             <>
               <DialogTitle className="text-xl font-black">Pedido {shortId(abierto.id)}</DialogTitle>
-              <DialogDescription>{abierto.cliente?.nombre || "Cliente"} · {formatDateTime(abierto.created_at)}</DialogDescription>
+              <DialogDescription><ClienteLink clienteId={abierto.cliente_id}>{abierto.cliente?.nombre || "Cliente"}</ClienteLink> · {formatDateTime(abierto.created_at)}</DialogDescription>
               <div><StatusBadge estado={abierto.estado} /></div>
               <ul className="divide-y text-sm">
                 {(abierto.items || []).map((item, index) => <li key={item.id || index} className="flex justify-between gap-3 py-2"><span><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.opciones && item.opciones.length > 0 && <span className="block text-xs text-muted-foreground">{optionsLabel(item.opciones)}</span>}{item.notas && <span className="block text-xs text-muted-foreground">“{item.notas}”</span>}</span><span className="tabular-nums">{money(item.precio_unitario * item.cantidad)}</span></li>)}

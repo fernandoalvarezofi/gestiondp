@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { alarmReady, playChime, unlockAlarm } from "@/lib/alarm";
 import { OrderHistory } from "@/components/merchant/OrderHistory";
+import { ClienteLink } from "@/components/merchant/ClienteLink";
 import { KitchenDisplay } from "@/components/merchant/KitchenDisplay";
 import { PrintAlertsPanel } from "@/components/merchant/PrintAlertsPanel";
 import { AdjustmentsList, ItemStockButton } from "@/components/merchant/StockAdjust";
@@ -230,7 +231,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
     <article className={cn("rounded-xl border bg-card p-3.5", order.estado === "pendiente" && "border-brand-yellow/50", late && "border-destructive/50")}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="truncate text-[15px] font-extrabold leading-tight">{shortId(order.id)} <span className="font-semibold text-muted-foreground">· {order.cliente?.nombre || "Cliente"}</span></p>
+          <p className="truncate text-[15px] font-extrabold leading-tight">{shortId(order.id)} <span className="font-semibold text-muted-foreground">· <ClienteLink clienteId={order.cliente_id}>{order.cliente?.nombre || "Cliente"}</ClienteLink></span></p>
           <p className="mt-0.5 text-[12.5px] text-muted-foreground">{formatTime(order.visible_at || order.created_at)} · hace {minutesLabel(now - received)}</p>
         </div>
         <p className="shrink-0 font-display text-[17px] font-extrabold tabular-nums leading-tight">{money(order.subtotal)}</p>

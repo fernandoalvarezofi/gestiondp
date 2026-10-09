@@ -16,28 +16,32 @@ export { CLIENT_TABS, GUEST_TABS, type ClientTab } from "./clientMenu";
 
 // ───────────────────────── Comercio ─────────────────────────
 
-type MerchantSection = { path: string; label: string; short?: string; icon: LucideIcon; group: string; permission?: Permission; end?: boolean; hidden?: boolean; badge?: "pedidos" | "preguntas" | "mensajes" };
+type MerchantSection = { path: string; label: string; short?: string; icon: LucideIcon; group: string; permission?: Permission; end?: boolean; hidden?: boolean; badge?: "pedidos" | "preguntas" | "mensajes" | "clientes" | "turnos" };
 
-const MERCHANT_GROUPS = ["Operación", "Catálogo", "Tienda online", "Marketing", "Ventas", "Mi negocio"] as const;
+const MERCHANT_GROUPS = ["Operación diaria", "Clientes", "Catálogo", "Tienda online", "Marketing", "Ventas y análisis", "Mi negocio"] as const;
 
-/** Secciones del panel del comercio (ruta relativa a /app/comercio). `permission` es lo que exige el rol del equipo. */
+/**
+ * Secciones del panel del comercio (ruta relativa a /app/comercio). `permission` es lo que exige el rol del equipo.
+ * Orden pensado por frecuencia: lo de todos los días arriba (pedidos, agenda, mensajes), después clientes y catálogo,
+ * la tienda online, marketing, el análisis y por último la configuración del negocio.
+ */
 export const MERCHANT_SECTIONS: MerchantSection[] = [
-  { path: "", label: "Inicio", icon: LayoutDashboard, group: "Operación", end: true },
-  { path: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación", badge: "pedidos" },
-  { path: "devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen, group: "Operación", permission: "pedidos" },
-  { path: "turnos", label: "Reservas y turnos", short: "Turnos", icon: CalendarCheck, group: "Operación", permission: "pedidos" },
-  { path: "mensajes", label: "Mensajes", icon: MessageCircle, group: "Operación", badge: "mensajes" },
+  { path: "", label: "Inicio", icon: LayoutDashboard, group: "Operación diaria", end: true },
+  { path: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación diaria", badge: "pedidos" },
+  { path: "turnos", label: "Agenda y turnos", short: "Agenda", icon: CalendarCheck, group: "Operación diaria", permission: "pedidos", badge: "turnos" },
+  { path: "mensajes", label: "Mensajes", icon: MessageCircle, group: "Operación diaria", badge: "mensajes" },
+  { path: "clientes", label: "Clientes (CRM)", short: "Clientes", icon: Users, group: "Clientes", permission: "estadisticas", badge: "clientes" },
   { path: "menu", label: "Productos", short: "Catálogo", icon: UtensilsCrossed, group: "Catálogo", permission: "catalogo" },
   { path: "inventario", label: "Inventario", icon: Package, group: "Catálogo", permission: "catalogo" },
   { path: "colecciones", label: "Colecciones", icon: Tags, group: "Catálogo", permission: "catalogo" },
-  { path: "tienda", label: "Diseño de mi tienda", short: "Tienda", icon: Globe, group: "Tienda online", permission: "ajustes" },
+  { path: "tienda", label: "Mi tienda online", short: "Tienda", icon: Globe, group: "Tienda online", permission: "ajustes" },
   { path: "preguntas", label: "Preguntas", icon: MessageCircleQuestion, group: "Tienda online", permission: "opiniones", badge: "preguntas" },
   { path: "opiniones", label: "Opiniones", icon: Star, group: "Tienda online", permission: "opiniones" },
   { path: "promociones", label: "Promociones y cupones", short: "Promos", icon: Megaphone, group: "Marketing", permission: "promociones" },
   { path: "campanas", label: "Campañas", icon: Send, group: "Marketing", permission: "promociones" },
-  { path: "clientes", label: "Clientes", icon: Users, group: "Ventas", permission: "estadisticas" },
-  { path: "finanzas", label: "Finanzas y liquidaciones", short: "Finanzas", icon: Landmark, group: "Ventas", permission: "finanzas" },
-  { path: "estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3, group: "Ventas", permission: "estadisticas" },
+  { path: "estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3, group: "Ventas y análisis", permission: "estadisticas" },
+  { path: "finanzas", label: "Finanzas y liquidaciones", short: "Finanzas", icon: Landmark, group: "Ventas y análisis", permission: "finanzas" },
+  { path: "devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen, group: "Ventas y análisis", permission: "pedidos" },
   { path: "equipo", label: "Equipo", icon: UsersRound, group: "Mi negocio", permission: "equipo" },
   { path: "sucursales", label: "Mis comercios", short: "Comercios", icon: Building2, group: "Mi negocio", permission: "equipo" },
   { path: "configuracion", label: "Configuración", short: "Ajustes", icon: Settings, group: "Mi negocio", permission: "ajustes" },
@@ -49,7 +53,7 @@ const merchantTo = (path: string) => (path ? `/app/comercio/${path}` : "/app/com
 /** Permiso que exige una ruta del panel del comercio (primer tramo después de /app/comercio). */
 export const merchantSectionPermission = (section: string) => MERCHANT_SECTIONS.find((item) => item.path === section)?.permission;
 
-export function merchantNav(can: (permission: Permission) => boolean, badges: { pedidos: number; preguntas: number; mensajes?: number }): PanelNavGroup[] {
+export function merchantNav(can: (permission: Permission) => boolean, badges: { pedidos: number; preguntas: number; mensajes?: number; clientes?: number; turnos?: number }): PanelNavGroup[] {
   const allowed = MERCHANT_SECTIONS.filter((item) => !item.hidden && (!item.permission || can(item.permission)));
   return MERCHANT_GROUPS.map((label) => ({
     label,
@@ -59,7 +63,7 @@ export function merchantNav(can: (permission: Permission) => boolean, badges: { 
 
 /** Barra de abajo del comercio en el celular: lo más usado que el rol permite. */
 export const merchantTabs = (can: (permission: Permission) => boolean) =>
-  ["", "pedidos", "menu", "estadisticas", "configuracion"].filter((path) => { const need = merchantSectionPermission(path); return !need || can(need); }).map(merchantTo);
+  ["", "pedidos", "clientes", "menu", "configuracion"].filter((path) => { const need = merchantSectionPermission(path); return !need || can(need); }).map(merchantTo);
 
 // ───────────────────────── Repartidor ─────────────────────────
 

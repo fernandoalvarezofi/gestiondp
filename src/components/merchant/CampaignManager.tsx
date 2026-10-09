@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { BellRing, Loader2, Send, Users } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
@@ -15,7 +16,10 @@ import { cn } from "@/lib/utils";
 export function CampaignManager({ storeId, storeName, coupons }: { storeId: string; storeName: string; coupons: Coupon[] }) {
   const [counts, setCounts] = useState<CampaignCounts | null | undefined>(undefined);
   const [history, setHistory] = useState<Campaign[]>([]);
-  const [segment, setSegment] = useState<CampaignSegment>("recientes");
+  // Desde el CRM se puede abrir con un segmento ya elegido (?segmento=nuevos).
+  const [params] = useSearchParams();
+  const pedido = params.get("segmento") as CampaignSegment | null;
+  const [segment, setSegment] = useState<CampaignSegment>(pedido && ["todos_clientes", "recientes", "inactivos", "nuevos"].includes(pedido) ? pedido : "recientes");
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [coupon, setCoupon] = useState("");

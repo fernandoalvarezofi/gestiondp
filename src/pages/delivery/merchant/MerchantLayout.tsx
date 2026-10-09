@@ -139,6 +139,27 @@ export default function MerchantLayout() {
     return () => window.clearInterval(timer);
   }, [store?.id, loadPreguntas]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Avisos del menú: seguimientos de clientes vencidos (CRM) y turnos que esperan confirmación.
+  const [avisos, setAvisos] = useState<{ clientes: number; turnos: number }>({ clientes: 0, turnos: 0 });
+  const loadAvisos = useCallback(async () => {
+    const current = storeRef.current;
+    if (!current) return;
+    const [crm, turnos] = await Promise.all([
+      db.rpc("crm_resumen", { p_comercio: current.id }),
+      db.from("turnos").select("id", { count: "exact", head: true }).eq("comercio_id", current.id).eq("estado", "pendiente").gte("inicio", new Date().toISOString()),
+    ]);
+    setAvisos({
+      clientes: crm.error ? 0 : Number((crm.data as { tareas_vencidas?: number } | null)?.tareas_vencidas ?? 0),
+      turnos: turnos.error ? 0 : turnos.count ?? 0,
+    });
+  }, []);
+  useEffect(() => {
+    if (!store) return;
+    loadAvisos();
+    const timer = window.setInterval(loadAvisos, 120000);
+    return () => window.clearInterval(timer);
+  }, [store?.id, loadAvisos]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const loadReviews = useCallback(async () => {
     const current = storeRef.current;
     if (!current) return;
@@ -238,7 +259,7 @@ export default function MerchantLayout() {
           </div>
         </div>
       )}
-      groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes, mensajes: unreadMessages })}
+      groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes, mensajes: unreadMessages, clientes: avisos.clientes || undefined, turnos: avisos.turnos || undefined })}
       actions={<StoreStatusControl store={store} onChange={loadStore} />}
     >
       {store.aprobado === false && !store.motivo_rechazo && (section === "" || section === "configuracion"
