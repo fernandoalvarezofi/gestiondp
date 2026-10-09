@@ -588,7 +588,12 @@ function ProductEditor({ storeId, draft, categories, products, colecciones, onCl
             </fieldset>
           </div>
 
-          {tab !== "variantes" && <Button type="submit" className="w-full rounded-full" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{values.id ? "Guardar" : "Crear producto"}</Button>}
+          {tab !== "variantes" && (
+            <div className="sticky -bottom-5 z-10 -mx-5 border-t bg-background/95 px-5 py-3 backdrop-blur sm:-bottom-6 sm:-mx-6 sm:px-6">
+              {sinGuardar && <p className="mb-2 text-center text-xs font-semibold text-muted-foreground" role="status">Tenés cambios sin guardar</p>}
+              <Button type="submit" className="w-full rounded-full" disabled={saving || (Boolean(values.id) && !sinGuardar)}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{values.id ? (sinGuardar ? "Guardar cambios" : "Sin cambios") : "Crear producto"}</Button>
+            </div>
+          )}
         </form>
         {tab === "variantes" && (
           <>

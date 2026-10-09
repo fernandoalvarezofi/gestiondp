@@ -240,7 +240,7 @@ export default function DeliveryHome() {
       <section className="mt-10">
         <div className="px-4 sm:px-0">
           <h2 className="flex items-center gap-2 text-lg font-black sm:text-xl"><span aria-hidden className="h-5 w-1.5 shrink-0 rounded-full bg-brand-yellow" />Todos los locales</h2>
-          <p className="text-[13px] font-semibold text-muted-foreground">{list.length} {list.length === 1 ? "resultado" : "resultados"}</p>
+          <p className="text-[13px] font-semibold text-muted-foreground">{loading ? "Buscando locales…" : `${list.length} ${list.length === 1 ? "resultado" : "resultados"}`}</p>
         </div>
         <div className="scrollbar-none mt-3 flex gap-2 overflow-x-auto px-4 pb-1 sm:px-0">
           <label className="relative flex shrink-0 items-center">

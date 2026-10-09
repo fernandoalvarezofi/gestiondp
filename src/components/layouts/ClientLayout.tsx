@@ -58,12 +58,14 @@ export function ClientLayout() {
     const preferred = located.find((item) => item.predeterminada) || located[0] || addresses[0];
     setAddress(toCartAddress(preferred));
   }, [address, addresses, setAddress]);
-  // Primera vez sin ninguna dirección: pedimos la ubicación apenas entra (una sola vez por sesión).
+  // Primera vez sin ninguna dirección: pedimos la ubicación (una sola vez por sesión), pero solo en las pantallas donde
+  // la dirección cambia lo que se ve (qué locales llegan, costo de envío). En Ayuda, Perfil o Mensajes no interrumpimos.
+  const needsAddress = /^\/app(\/(explorar|buscar|categoria|tienda|carrito|promociones)(\/|$)|\/?$)/.test(location.pathname);
   useEffect(() => {
-    if (loading || addressesLoading || address || addresses.length || gateAsked) return;
+    if (loading || addressesLoading || address || addresses.length || gateAsked || !needsAddress) return;
     setGateAsked(true);
     setGateOpen(true);
-  }, [loading, addressesLoading, address, addresses.length, gateAsked]);
+  }, [loading, addressesLoading, address, addresses.length, gateAsked, needsAddress]);
 
   const guest = !session;
   const unreadMessages = useUnreadMessages({ rol: "cliente", enabled: !guest });
