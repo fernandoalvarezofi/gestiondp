@@ -11,6 +11,7 @@ import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { db, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
 import { Viaje, viajeActivo, viajeEstadoLabel, viajePasos, categoriaLabel } from "@/lib/remis";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 type Driver = { nombre: string | null; patente: string | null; telefono: string | null; viajes: number; calificacion: number | null; marca?: string | null; modelo?: string | null; color?: string | null; anio?: number | null; categoria?: string | null };
 
@@ -55,7 +56,7 @@ export default function RemisDetail() {
 
   const stepIndex = viajePasos.findIndex((step) => step.id === trip.estado);
   const cancel = async () => {
-    if (!window.confirm("¿Cancelar el viaje?")) return;
+    if (!(await confirmar({ titulo: "¿Cancelar el viaje?", descripcion: "Si ya hay un conductor asignado, se le avisa.", confirmar: "Cancelar viaje", cancelar: "Volver", peligro: true }))) return;
     setBusy(true);
     const { error } = await db.rpc("delivery_cancelar_viaje", { p_id: trip.id, p_motivo: null });
     setBusy(false);

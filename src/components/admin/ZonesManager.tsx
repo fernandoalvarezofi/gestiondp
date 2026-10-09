@@ -9,6 +9,7 @@ import { Switch } from "@/components/ui/switch";
 import { ajusteValor, useAjustes } from "@/hooks/useAjustes";
 import { db, errorMessage, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 const ZonesMap = lazy(() => import("@/components/admin/ZonesMap"));
 
@@ -60,7 +61,7 @@ export function ZonesManager() {
     setSelectedId(data.id);
   };
   const remove = async (zone: ZoneRow) => {
-    if (!window.confirm(`¿Borrar la zona ${zone.nombre}?`)) return;
+    if (!(await confirmar({ titulo: `¿Borrar la zona “${zone.nombre}”?`, descripcion: "Las direcciones dentro de esta zona pasan a usar la tarifa general o quedan fuera de cobertura.", confirmar: "Borrar zona", peligro: true }))) return;
     const { error } = await db.from("delivery_zonas").delete().eq("id", zone.id);
     if (error) return toast.error(errorMessage(error));
     setSelectedId(null);

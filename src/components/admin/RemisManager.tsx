@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { db, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
 import { CATEGORIAS, categoriaLabel, Viaje, viajeActivo, viajeEstadoLabel } from "@/lib/remis";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 type Driver = { remis_categorias: string[] | null; perfil_id: string; patente: string | null; telefono: string | null; remis_estado: "solicitado" | "aprobado" | "rechazado"; remis_motivo: string | null; acepta_remis: boolean; perfil: { nombre: string | null } | null };
 const stateLabel = { solicitado: "Por revisar", aprobado: "Habilitado", rechazado: "Rechazado" } as const;
@@ -57,7 +58,7 @@ export function RemisManager({ view }: { view?: "conductores" | "viajes" } = {})
     return true;
   };
   const cancelTrip = async (trip: Viaje) => {
-    if (!window.confirm("¿Cancelar este viaje por soporte?")) return;
+    if (!(await confirmar({ titulo: "¿Cancelar este viaje por soporte?", descripcion: "Se les avisa al pasajero y al conductor. No se puede deshacer.", confirmar: "Cancelar viaje", cancelar: "Volver", peligro: true }))) return;
     const { error } = await db.rpc("delivery_cancelar_viaje", { p_id: trip.id, p_motivo: "Cancelado por soporte" });
     if (error) return toast.error(errorMessage(error));
     toast.success("Viaje cancelado");

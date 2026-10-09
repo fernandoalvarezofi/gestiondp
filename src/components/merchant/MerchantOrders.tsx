@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlarmClock, BellRing, Globe, Settings2, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, PackageCheck, Phone, Printer, Search, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
+import { AlarmClock, BellRing, Globe, Settings2, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, PackageCheck, Phone, Printer, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "@/components/delivery/Common";
 import { ChatButton } from "@/components/delivery/OrderChat";
-import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { StatusPill } from "@/components/panel/kit";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -11,13 +9,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { alarmReady, playChime, unlockAlarm } from "@/lib/alarm";
+import { OrderHistory } from "@/components/merchant/OrderHistory";
 import { KitchenDisplay } from "@/components/merchant/KitchenDisplay";
 import { PrintAlertsPanel } from "@/components/merchant/PrintAlertsPanel";
 import { AdjustmentsList, ItemStockButton } from "@/components/merchant/StockAdjust";
 import { printOrderTicket, readPrintSettings } from "@/lib/print";
 import { distanceKm, formatKm } from "@/lib/geo";
-import { db, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, formatDateTime, formatSlot, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
+import { db, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, formatSlot, formatTime, metodoPagoLabel, money, optionsLabel, shortId } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { pedirTexto } from "@/components/ui/dialogos";
 
 const columns: { estado: EstadoPedido; title: string; hint: string }[] = [
   { estado: "pendiente", title: "Nuevos", hint: "Aceptalos o rechazalos" },
@@ -124,7 +124,7 @@ export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOr
         </button>
       )}
 
-      {view === "tablero" ? <Board orders={orders} store={store} now={now} onChange={onChange} /> : view === "cocina" ? <KitchenDisplay storeId={store.id} orders={orders} onChange={onChange} /> : <History orders={orders} store={store} />}
+      {view === "tablero" ? <Board orders={orders} store={store} now={now} onChange={onChange} /> : view === "cocina" ? <KitchenDisplay storeId={store.id} orders={orders} onChange={onChange} /> : <OrderHistory store={store} />}
     </div>
   );
 }
@@ -192,7 +192,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
     if (ok) { toast.success("Pedido actualizado"); onChange(); }
   };
   const deliverPickup = async () => {
-    const codigo = window.prompt("Pedile al cliente su código de retiro (4 dígitos)");
+    const codigo = await pedirTexto({ titulo: "Entregar pedido para retirar", descripcion: "Pedile al cliente el código de retiro que ve en su pedido.", etiqueta: "Código de 4 dígitos", modoTeclado: "numeric", maximo: 4, confirmar: "Entregar", validar: (v) => (/^\d{4}$/.test(v) ? null : "El código tiene 4 números") });
     if (!codigo) return;
     setBusy(true);
     const ok = await changeOrderStatus(order.id, "entregado", undefined, codigo.trim());
@@ -370,68 +370,6 @@ function RejectDialog({ open, onOpenChange, order, onDone }: { open: boolean; on
         <Button variant="destructive" className="rounded-full" onClick={reject} disabled={saving || !text}>Cancelar pedido</Button>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function History({ orders, store }: { orders: DeliveryOrder[]; store: DeliveryStore }) {
-  const [term, setTerm] = useState("");
-  const [filter, setFilter] = useState<"todos" | "entregado" | "cancelado">("todos");
-  const [open, setOpen] = useState<DeliveryOrder | null>(null);
-  const closed = orders.filter((order) => order.estado === "entregado" || order.estado === "cancelado");
-  const list = closed.filter((order) => (filter === "todos" || order.estado === filter) && (!term.trim() || `${shortId(order.id)} ${order.cliente?.nombre || ""}`.toLowerCase().includes(term.trim().toLowerCase())));
-
-  return (
-    <div className="mt-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <label className="flex h-10 min-w-[220px] flex-1 items-center gap-2 rounded-full border bg-card px-4"><Search className="h-4 w-4 text-muted-foreground" /><input value={term} onChange={(event) => setTerm(event.target.value)} placeholder="Buscar por número o cliente" aria-label="Buscar pedido" className="min-w-0 flex-1 bg-transparent text-sm outline-none" /></label>
-        {(["todos", "entregado", "cancelado"] as const).map((item) => (
-          <button key={item} type="button" onClick={() => setFilter(item)} className={cn("rounded-full border px-4 py-2 text-sm font-bold", filter === item ? "border-foreground bg-foreground text-background" : "bg-card")}>{item === "todos" ? `Todos (${closed.length})` : item === "entregado" ? "Entregados" : "Cancelados"}</button>
-        ))}
-      </div>
-      {list.length ? (
-        <div className="mt-4 overflow-x-auto rounded-2xl border bg-card">
-          <table className="w-full min-w-[680px] text-sm">
-            <thead className="border-b text-left text-muted-foreground"><tr><th className="p-3">Pedido</th><th className="p-3">Fecha</th><th className="p-3">Cliente</th><th className="p-3">Productos</th><th className="p-3">Estado</th><th className="p-3 text-right">Total</th></tr></thead>
-            <tbody className="divide-y">
-              {list.map((order) => (
-                <tr key={order.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setOpen(order)} tabIndex={0} onKeyDown={(event) => event.key === "Enter" && setOpen(order)}>
-                  <td className="p-3 font-bold">{shortId(order.id)}</td>
-                  <td className="p-3">{formatDateTime(order.created_at)}</td>
-                  <td className="p-3">{order.cliente?.nombre || "—"}</td>
-                  <td className="max-w-[240px] truncate p-3">{(order.items || []).map((item) => `${item.cantidad}× ${item.nombre}`).join(", ")}</td>
-                  <td className="p-3"><StatusBadge estado={order.estado} /></td>
-                  <td className="p-3 text-right font-bold">{money(order.total)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : <EmptyState className="mt-4" title={closed.length ? "No hay pedidos con ese filtro" : "Todavía no hay pedidos finalizados"} />}
-
-      <Dialog open={Boolean(open)} onOpenChange={(next) => !next && setOpen(null)}>
-        <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
-          {open && (
-            <>
-              <DialogTitle className="text-xl font-black">Pedido {shortId(open.id)}</DialogTitle>
-              <DialogDescription>{open.cliente?.nombre || "Cliente"} · {formatDateTime(open.created_at)}</DialogDescription>
-              <ul className="divide-y text-sm">
-                {(open.items || []).map((item, index) => <li key={item.id || index} className="flex justify-between gap-3 py-2"><span><span className="font-bold">{item.cantidad}×</span> {item.nombre}{item.opciones && item.opciones.length > 0 && <span className="block text-xs text-muted-foreground">{optionsLabel(item.opciones)}</span>}</span><span>{money(item.precio_unitario * item.cantidad)}</span></li>)}
-              </ul>
-              <dl className="space-y-1 border-t pt-2 text-sm">
-                <div className="flex justify-between"><dt className="text-muted-foreground">Productos</dt><dd>{money(open.subtotal)}</dd></div>
-                {Number(open.descuento) > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Descuento {open.cupon_codigo && `(${open.cupon_codigo})`}</dt><dd>-{money(open.descuento)}</dd></div>}
-                <div className="flex justify-between"><dt className="text-muted-foreground">Tipo</dt><dd>{open.tipo_entrega === "retiro" ? "Retiro en el local" : "Envío"}</dd></div>
-                <div className="flex justify-between"><dt className="text-muted-foreground">Pago</dt><dd>{metodoPagoLabel[open.metodo_pago]}</dd></div>
-                {open.aceptado_en_seg != null && <div className="flex justify-between"><dt className="text-muted-foreground">Respondiste en</dt><dd>{open.aceptado_en_seg < 60 ? `${open.aceptado_en_seg} s` : `${Math.round(open.aceptado_en_seg / 60)} min`}</dd></div>}
-                {open.confirmado_at && (open.listo_at || open.en_camino_at) && <div className="flex justify-between"><dt className="text-muted-foreground">Preparación real</dt><dd>{Math.round((new Date((open.listo_at || open.en_camino_at) as string).getTime() - new Date(open.confirmado_at).getTime()) / 60000)} min{open.preparacion_min ? ` (prometidos ${open.preparacion_min})` : ""}</dd></div>}
-                {open.motivo_cancelacion && <div className="flex justify-between gap-4"><dt className="text-muted-foreground">Motivo</dt><dd className="text-right">{open.motivo_cancelacion}</dd></div>}
-              </dl>
-              <Button variant="outline" className="rounded-full" onClick={() => printOrderTicket(open, store, readPrintSettings(), 1)}><Printer className="h-4 w-4" />Imprimir comanda</Button>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
   );
 }
 

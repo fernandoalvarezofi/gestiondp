@@ -5,6 +5,7 @@ import { AddressForm, AddressIcon, fullAddress, SavedAddress, useSavedAddresses 
 import { Button } from "@/components/ui/button";
 import { db, errorMessage } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 /** Direcciones guardadas: elegir la principal, eliminar y sumar nuevas. */
 export function AddressesSection() {
@@ -21,7 +22,7 @@ export function AddressesSection() {
     reload();
   };
   const remove = async (address: SavedAddress) => {
-    if (!window.confirm(`¿Eliminar “${address.alias}”?`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar la dirección “${address.alias}”?`, descripcion: "Los pedidos anteriores conservan la dirección con la que se hicieron.", confirmar: "Eliminar", peligro: true }))) return;
     setBusy(address.id);
     const { error } = await db.from("delivery_direcciones").delete().eq("id", address.id);
     setBusy(null);

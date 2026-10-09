@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { Archive, BadgePercent, FileClock, FolderPlus, History as HistoryIcon, Send } from "lucide-react";
 import { catalogoMasivo, Coleccion, duplicarProducto, fetchColecciones, guardarProductosColeccion, isoADateTimeLocal, localDateTimeAIso, programarOferta, slugify, slugValido } from "@/services/catalogPro";
 import { ProductHistoryDialog } from "@/components/merchant/ProductHistory";
+import { confirmar, pedirTexto } from "@/components/ui/dialogos";
 
 type Draft = {
   id?: string; nombre: string; descripcion: string; categoria: string; precio: string; precio_anterior: string; stock: string; imagen_url: string; imagenes: string[]; destacado: boolean; disponible: boolean;
@@ -144,7 +145,7 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
   const toggle = (product: DeliveryProduct, field: "disponible" | "destacado") => patchProduct(product, { [field]: !product[field] });
 
   const remove = async (product: DeliveryProduct) => {
-    if (!window.confirm(`¿Eliminar “${product.nombre}”? Los pedidos anteriores no se ven afectados.`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar “${product.nombre}”?`, descripcion: "Desaparece del menú y de la tienda. Los pedidos anteriores no se ven afectados. Si solo querés ocultarlo un tiempo, marcalo como no disponible.", confirmar: "Eliminar", peligro: true }))) return;
     if (await run(() => db.from("delivery_productos").delete().eq("id", product.id), "Producto eliminado")) onChange();
   };
 
@@ -179,18 +180,18 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
     if (await run(() => db.from("delivery_secciones").upsert({ comercio_id: storeId, nombre: name, orden, visible }, { onConflict: "comercio_id,nombre" }))) loadConfig();
   };
   const renameSection = async (name: string) => {
-    const next = window.prompt("Nuevo nombre de la sección", name)?.trim();
+    const next = await pedirTexto({ titulo: "Renombrar sección", descripcion: "Los productos de la sección pasan al nombre nuevo.", etiqueta: "Nombre", inicial: name, maximo: 40, confirmar: "Guardar", validar: (v) => (v !== name && names.includes(v) ? "Ya tenés una sección con ese nombre" : null) });
     if (!next || next === name) return;
     if (await run(() => db.rpc("delivery_renombrar_seccion", { p_comercio: storeId, p_actual: name, p_nuevo: next }), "Sección renombrada")) { loadConfig(); onChange(); }
   };
   const addSection = async () => {
-    const name = window.prompt("Nombre de la nueva sección (ej.: Bebidas, Postres)")?.trim().slice(0, 40);
+    const name = await pedirTexto({ titulo: "Nueva sección", etiqueta: "Nombre", placeholder: "Ej.: Bebidas, Postres", maximo: 40, confirmar: "Crear sección", validar: (v) => (names.includes(v) ? "Ya tenés una sección con ese nombre" : null) });
     if (!name) return;
     if (names.includes(name)) return toast.error("Ya tenés una sección con ese nombre");
     if (await run(() => db.from("delivery_secciones").insert({ comercio_id: storeId, nombre: name, orden: names.length * 10 }), "Sección creada")) loadConfig();
   };
   const deleteSection = async (name: string) => {
-    if (!window.confirm(`¿Eliminar la sección “${name}”?`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar la sección “${name}”?`, descripcion: "Se borra la sección del menú. Los productos que tenga no se eliminan.", confirmar: "Eliminar", peligro: true }))) return;
     if (await run(() => db.from("delivery_secciones").delete().eq("comercio_id", storeId).eq("nombre", name))) loadConfig();
   };
 
@@ -214,15 +215,15 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
     if (await run(action, success)) { setSelected(new Set()); onChange(); }
   };
   const bulkPrice = async () => {
-    const raw = window.prompt("Ajuste de precio en % (ej.: 10 sube 10%, -15 baja 15% y muestra el precio anterior como oferta)");
+    const raw = await pedirTexto({ titulo: `Ajustar precios de ${ids.length} ${ids.length === 1 ? "producto" : "productos"}`, descripcion: "Un número positivo sube el precio; uno negativo lo baja y muestra el precio anterior tachado como oferta.", etiqueta: "Porcentaje", placeholder: "Ej.: 10 o -15", modoTeclado: "decimal", maximo: 6, confirmar: "Continuar", validar: (v) => { const n = Number(v.replace(",", ".")); return !Number.isFinite(n) || n === 0 || n < -90 || n > 300 ? "Escribí un porcentaje entre -90 y 300 (distinto de 0)" : null; } });
     if (raw === null) return;
     const pct = Number(raw.replace(",", "."));
     if (!Number.isFinite(pct) || pct === 0 || pct < -90 || pct > 300) return toast.error("Ingresá un porcentaje entre -90 y 300");
-    if (!window.confirm(`Se ${pct > 0 ? "sube" : "baja"} ${Math.abs(pct)}% el precio de ${ids.length} productos. ¿Continuar?`)) return;
+    if (!(await confirmar({ titulo: `¿${pct > 0 ? "Subir" : "Bajar"} ${Math.abs(pct)}% el precio de ${ids.length} ${ids.length === 1 ? "producto" : "productos"}?`, descripcion: "El cambio queda en el historial de cada producto.", confirmar: "Aplicar" }))) return;
     await bulk(() => db.rpc("delivery_ajustar_precios", { p_comercio: storeId, p_ids: ids, p_pct: pct }), "Precios actualizados");
   };
   const bulkDelete = async () => {
-    if (!window.confirm(`¿Eliminar ${ids.length} productos? No se puede deshacer.`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar ${ids.length} ${ids.length === 1 ? "producto" : "productos"}?`, descripcion: "No se puede deshacer. Si solo querés sacarlos de la venta, ocultalos.", confirmar: "Eliminar", peligro: true }))) return;
     await bulk(() => db.from("delivery_productos").delete().in("id", ids), "Productos eliminados");
   };
 

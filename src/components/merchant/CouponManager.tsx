@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Coupon, couponValue, db, errorMessage, formatDateTime, money } from "@/lib/delivery";
+import { confirmar } from "@/components/ui/dialogos";
 
 /** Alta, pausa y baja de cupones. Con storeId son cupones del comercio; sin storeId, cupones globales (admin). */
 export function CouponManager({ storeId, coupons, onChange }: { storeId: string | null; coupons: (Coupon & { comercio?: { nombre: string } | null })[]; onChange: () => void }) {
@@ -51,7 +52,7 @@ export function CouponManager({ storeId, coupons, onChange }: { storeId: string 
   };
 
   const remove = async (coupon: Coupon) => {
-    if (!window.confirm(`¿Eliminar el cupón ${coupon.codigo}?`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar el cupón ${coupon.codigo}?`, descripcion: "Deja de funcionar al instante. Los pedidos que ya lo usaron no cambian.", confirmar: "Eliminar", peligro: true }))) return;
     const { error } = await db.from("delivery_cupones").delete().eq("id", coupon.id);
     if (error) return toast.error(errorMessage(error));
     onChange();

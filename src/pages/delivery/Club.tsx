@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { couponLabel, PersonalCoupon } from "@/hooks/useMyCoupons";
 import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 type Level = "bronce" | "plata" | "oro";
 type Reward = { id: string; nombre: string; descripcion: string | null; puntos: number };
@@ -42,7 +43,7 @@ export default function Club() {
   }, [load]);
 
   const redeem = async (reward: Reward) => {
-    if (!window.confirm(`¿Canjear ${reward.puntos} puntos por “${reward.nombre}”?`)) return;
+    if (!(await confirmar({ titulo: `¿Canjear “${reward.nombre}”?`, descripcion: `Se descuentan ${reward.puntos} puntos de tu saldo.`, confirmar: "Canjear" }))) return;
     setBusy(reward.id);
     const { data: coupon, error } = await db.rpc("delivery_club_canjear", { p_premio: reward.id });
     setBusy(null);

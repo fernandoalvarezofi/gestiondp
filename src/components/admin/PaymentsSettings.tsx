@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { db, DeliveryOrder, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
+import { confirmar } from "@/components/ui/dialogos";
 
 type MpStatus = { configurado: boolean; modo: "prueba" | "produccion" | null; termina_en: string | null; actualizado: string | null; firma_configurada?: boolean };
 const ESTADO_PAGO: Record<string, { texto: string; clase: string }> = {
@@ -59,7 +60,7 @@ export function PaymentsSettings({ orders, onChange }: { orders: DeliveryOrder[]
   };
 
   const remove = async () => {
-    if (!window.confirm("¿Desactivar el pago con Mercado Pago? Los clientes van a poder pagar solo al recibir.")) return;
+    if (!(await confirmar({ titulo: "¿Desactivar el pago con Mercado Pago?", descripcion: "Desde ahora los clientes solo van a poder pagar al recibir. Los pagos ya hechos no cambian.", confirmar: "Desactivar", peligro: true }))) return;
     const { error } = await db.rpc("delivery_admin_guardar_mp", { p_access_token: "" });
     if (error) return toast.error(errorMessage(error));
     toast.success("Pago online desactivado");

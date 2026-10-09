@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowLeft, ChevronRight } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronRight, RotateCw, WifiOff } from "lucide-react";
 import { isRootPath, pageTitle, useGoBack } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +43,23 @@ export function EmptyState({ icon, title, text, action, className }: { icon?: Re
       <p className="font-display text-lg font-bold">{title}</p>
       {text && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{text}</p>}
       {action && <div className="mt-5">{action}</div>}
+    </div>
+  );
+}
+
+/**
+ * Error al cargar datos: dice qué no se pudo cargar, por qué (sin conexión o falla) y ofrece reintentar.
+ * Evita que una falla se vea como "no hay nada", que confunde más que el error.
+ */
+export function ErrorState({ title = "No pudimos cargar la información", error, onRetry, className }: { title?: string; error?: unknown; onRetry?: () => void; className?: string }) {
+  const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+  const detail = offline ? "Parece que no tenés conexión a internet. Revisala y volvé a intentar." : error instanceof Error && error.message ? error.message : "Puede ser una falla momentánea. Probá de nuevo en unos segundos.";
+  return (
+    <div role="alert" className={cn("flex flex-col items-center rounded-3xl border border-destructive/30 bg-destructive/[0.04] px-6 py-12 text-center", className)}>
+      <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10 text-destructive" aria-hidden>{offline ? <WifiOff className="h-6 w-6" /> : <AlertTriangle className="h-6 w-6" />}</span>
+      <p className="font-display text-lg font-bold">{title}</p>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">{detail}</p>
+      {onRetry && <button type="button" onClick={onRetry} className="mt-5 inline-flex h-10 items-center gap-2 rounded-full border bg-card px-5 text-sm font-bold hover:bg-muted"><RotateCw className="h-4 w-4" />Reintentar</button>}
     </div>
   );
 }

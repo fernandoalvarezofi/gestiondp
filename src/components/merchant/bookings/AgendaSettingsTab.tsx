@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { db, errorMessage } from "@/lib/delivery";
 import { AjustesAgenda, Cierre, fetchAjustesAgenda, hoyLocal, Recurso } from "@/services/bookings";
+import { confirmar } from "@/components/ui/dialogos";
 
 const fechaCorta = (d: string) => `${Number(d.slice(8))}/${Number(d.slice(5, 7))}/${d.slice(0, 4)}`;
 
@@ -88,7 +89,7 @@ export function AgendaSettingsTab({ storeId, recursos, onChange }: { storeId: st
                 <span className="font-bold">{r.nombre}{!r.activo && <span className="ml-1 font-normal text-muted-foreground">(inactiva)</span>}</span>
                 <span className="flex items-center gap-2">
                   <Switch checked={r.activo} aria-label={`Activa ${r.nombre}`} onCheckedChange={(v) => run(() => db.from("recursos").update({ activo: v }).eq("id", r.id), v ? "Sala activada" : "Sala desactivada", true)} />
-                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full text-destructive" aria-label={`Eliminar ${r.nombre}`} disabled={busy} onClick={() => window.confirm(`¿Eliminar ${r.nombre}? Los servicios que la usaban quedan sin sala.`) && run(() => db.from("recursos").delete().eq("id", r.id), "Sala eliminada", true)}><Trash2 className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full text-destructive" aria-label={`Eliminar ${r.nombre}`} disabled={busy} onClick={async () => (await confirmar({ titulo: `¿Eliminar “${r.nombre}”?`, descripcion: "Los servicios que la usaban quedan sin sala asignada. Los turnos ya tomados no cambian.", confirmar: "Eliminar", peligro: true })) && run(() => db.from("recursos").delete().eq("id", r.id), "Sala eliminada", true)}><Trash2 className="h-4 w-4" /></Button>
                 </span>
               </li>
             ))}

@@ -13,6 +13,7 @@ import { db, errorMessage, img } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { Coleccion, fetchColecciones, guardarProductosColeccion, slugify, slugValido } from "@/services/catalogPro";
 import { useMerchant } from "./context";
+import { confirmar } from "@/components/ui/dialogos";
 
 type ColeccionConProductos = Coleccion & { productos: string[] };
 type Draft = { id?: string; nombre: string; slug: string; descripcion: string; imagen_url: string; activa: boolean; productos: string[] };
@@ -48,7 +49,7 @@ export default function MerchantCollections() {
     } finally { setSaving(false); }
   };
   const borrar = async (c: ColeccionConProductos) => {
-    if (!window.confirm(`¿Eliminar la colección “${c.nombre}”? Los productos no se borran.`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar la colección “${c.nombre}”?`, descripcion: "Los productos no se borran; solo dejan de estar agrupados.", confirmar: "Eliminar", peligro: true }))) return;
     const { error } = await db.from("delivery_colecciones").delete().eq("id", c.id);
     if (error) return toast.error(errorMessage(error));
     toast.success("Colección eliminada"); load();

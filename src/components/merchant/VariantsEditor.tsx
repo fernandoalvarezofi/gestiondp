@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { db, errorMessage, ProductVariant } from "@/lib/delivery";
+import { confirmar } from "@/components/ui/dialogos";
 
 const lista = (text: string) => [...new Set(text.split(",").map((part) => part.trim()).filter(Boolean))].slice(0, 20);
 
@@ -66,7 +67,7 @@ export function VariantsEditor({ productId, onChange }: { productId: string; onC
     run(db.from("delivery_producto_variantes").update(cambios).eq("id", v.id));
 
   const borrar = async (v: ProductVariant) => {
-    if (!window.confirm(`¿Eliminar la variante “${v.nombre}”?`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar la variante “${v.nombre}”?`, descripcion: "Su stock se pierde. Los pedidos anteriores no cambian.", confirmar: "Eliminar", peligro: true }))) return;
     const quedan = variantes.length - 1;
     const ok = await run(db.from("delivery_producto_variantes").delete().eq("id", v.id));
     if (ok && quedan === 0) await run(db.from("delivery_productos").update({ usa_variantes: false }).eq("id", productId));

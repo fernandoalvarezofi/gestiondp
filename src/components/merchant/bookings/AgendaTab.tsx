@@ -11,6 +11,7 @@ import {
 } from "@/services/bookings";
 import { NuevoTurnoDialog, TurnoDialog } from "./BookingDialogs";
 import type { SlotValue } from "./SlotPicker";
+import { confirmar } from "@/components/ui/dialogos";
 
 type Prof = Profesional & { servicios: string[] };
 type Vista = "dia" | "semana" | "mes";
@@ -60,7 +61,7 @@ export function AgendaTab({ storeId, servicios, profesionales }: { storeId: stri
 
   const masivo = async (accion: AccionMasiva) => {
     const ids = [...sel];
-    if (accion === "cancelar" && !window.confirm(`¿Cancelar ${ids.length} turnos? Les avisamos a las personas.`)) return;
+    if (accion === "cancelar" && !(await confirmar({ titulo: `¿Cancelar ${ids.length} ${ids.length === 1 ? "turno" : "turnos"}?`, descripcion: "Les avisamos a las personas y los horarios quedan libres para otros.", confirmar: "Cancelar turnos", cancelar: "Volver", peligro: true }))) return;
     setBusy(true);
     try {
       const r = await turnoMasivo(ids, accion, accion === "cancelar" ? "Cancelado por el local" : undefined);

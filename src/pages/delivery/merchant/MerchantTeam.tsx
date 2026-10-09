@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { db, errorMessage } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { roleLabel, roleSummary, TeamRole, useMerchant } from "./context";
+import { confirmar } from "@/components/ui/dialogos";
 
 type Member = { id: string; email: string; rol: Exclude<TeamRole, "dueno">; estado: "invitado" | "activo"; nombre: string | null };
 const roles = ["encargado", "operador"] as const;
@@ -45,7 +46,7 @@ export default function MerchantTeam() {
     load();
   };
   const remove = async (member: Member) => {
-    if (!window.confirm(member.estado === "invitado" ? `¿Cancelar la invitación a ${member.email}?` : `¿Quitar a ${member.nombre || member.email} del equipo? Pierde el acceso al instante.`)) return;
+    if (!(await (member.estado === "invitado" ? confirmar({ titulo: `¿Cancelar la invitación a ${member.email}?`, confirmar: "Cancelar invitación", cancelar: "Volver" }) : confirmar({ titulo: `¿Quitar a ${member.nombre || member.email} del equipo?`, descripcion: "Pierde el acceso al instante.", confirmar: "Quitar acceso", peligro: true })))) return;
     const { error } = await db.rpc("delivery_equipo_quitar", { p_id: member.id });
     if (error) return toast.error(errorMessage(error));
     load();

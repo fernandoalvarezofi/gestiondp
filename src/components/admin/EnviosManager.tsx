@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { db, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
 import { Envio, envioActivo, EnvioEstado, envioEstadoLabel, tamanoLabel } from "@/lib/envios";
 import { cn } from "@/lib/utils";
+import { pedirTexto } from "@/components/ui/dialogos";
 
 type Row = Envio & { cliente?: { nombre: string } | null; repartidor?: { nombre: string } | null };
 
@@ -25,7 +26,7 @@ export function EnviosManager() {
   }, [load]);
 
   const cancel = async (envio: Row) => {
-    const motivo = window.prompt("Motivo de la cancelación (lo verá el cliente)", "Cancelado por soporte");
+    const motivo = await pedirTexto({ titulo: "Cancelar el envío", descripcion: "El cliente recibe el aviso con este motivo. Si había un repartidor asignado, se le libera.", etiqueta: "Motivo (lo ve el cliente)", inicial: "Cancelado por soporte", maximo: 200, confirmar: "Cancelar envío", peligro: true });
     if (motivo === null) return;
     const { error } = await db.rpc("delivery_cancelar_envio", { p_id: envio.id, p_motivo: motivo });
     if (error) return toast.error(errorMessage(error));

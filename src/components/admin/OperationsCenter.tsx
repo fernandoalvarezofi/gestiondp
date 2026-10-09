@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { db, EstadoPedido, errorMessage, formatTime, money, shortId } from "@/lib/delivery";
 import { DEFAULT_CENTER, distanceKm, formatKm } from "@/lib/geo";
 import { cn } from "@/lib/utils";
+import { pedirTexto } from "@/components/ui/dialogos";
 
 const OpsMap = lazy(() => import("@/components/admin/OpsMap"));
 
@@ -116,7 +117,7 @@ export function OperationsCenter() {
   };
 
   const release = async (order: OpsOrder) => {
-    const reason = window.prompt("Motivo para quitarle el pedido al repartidor (queda registrado)", "No responde");
+    const reason = await pedirTexto({ titulo: "Quitarle el pedido al repartidor", descripcion: "El pedido se vuelve a ofrecer a otros repartidores. El motivo queda registrado en el historial.", etiqueta: "Motivo", inicial: "No responde", maximo: 200, confirmar: "Liberar pedido" });
     if (!reason) return;
     setBusy(order.id);
     const { error } = await db.rpc("delivery_admin_liberar_pedido", { p_pedido: order.id, p_motivo: reason });

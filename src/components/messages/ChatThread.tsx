@@ -9,6 +9,7 @@ import { envioEstadoLabel, type EnvioEstado } from "@/lib/envios";
 import { viajeEstadoLabel, type ViajeEstado } from "@/lib/remis";
 import { cn } from "@/lib/utils";
 import { db } from "@/lib/delivery";
+import { confirmar, pedirTexto } from "@/components/ui/dialogos";
 import {
   archivarHilo, bloquearConsulta, enviarMensaje, fetchHiloInfo, fetchMensajes, linkUbicacion, marcarLeido, MAX_MENSAJE, reportarMensaje,
   respuestasRapidas, subirFoto, urlFoto, type HiloInfo, type Mensaje,
@@ -125,7 +126,7 @@ export function ChatThread({ hiloId, onActivity, showHeader = true, className }:
     catch (error) { toast.error(errorMessage(error)); }
   };
   const reportar = async (m: Mensaje) => {
-    const motivo = window.prompt("¿Qué pasó con este mensaje? Lo revisa el equipo de Woref.", "Mensaje ofensivo");
+    const motivo = await pedirTexto({ titulo: "Reportar mensaje", descripcion: "Lo revisa el equipo de Woref. La otra persona no se entera de que lo reportaste.", etiqueta: "¿Qué pasó?", inicial: "Mensaje ofensivo", multilinea: true, maximo: 300, confirmar: "Reportar" });
     if (!motivo) return;
     try { await reportarMensaje(m.id, motivo); toast.success("Gracias. Lo vamos a revisar."); } catch (error) { toast.error(errorMessage(error)); }
   };
@@ -134,7 +135,7 @@ export function ChatThread({ hiloId, onActivity, showHeader = true, className }:
   };
   const bloquear = async () => {
     if (!info) return;
-    if (!info.bloqueado && !window.confirm("¿Bloquear a esta persona? No va a poder escribirle más consultas a tu local.")) return;
+    if (!info.bloqueado && !(await confirmar({ titulo: "¿Bloquear a esta persona?", descripcion: "No va a poder escribirle más consultas a tu local. Podés desbloquearla después.", confirmar: "Bloquear", peligro: true }))) return;
     try { await bloquearConsulta(hiloId, !info.bloqueado); toast.success(info.bloqueado ? "Desbloqueado" : "Bloqueado"); cargar(); } catch (error) { toast.error(errorMessage(error)); }
   };
 

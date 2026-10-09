@@ -1,5 +1,6 @@
 import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { DialogosHost } from "@/components/ui/dialogos";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
@@ -113,6 +114,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <Sonner position="top-center" richColors />
+        <DialogosHost />
         <AuthProvider>
           <RolesProvider>
           <CartProvider>

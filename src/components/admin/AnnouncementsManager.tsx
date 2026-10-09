@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Campaign, platformSegmentLabel, segmentLabel, validateCampaign } from "@/lib/campanas";
 import { db, errorMessage, formatDateTime } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 /** Anuncios de la plataforma (avisos push a todos, a repartidores o a comercios) y registro de todas las campañas enviadas. */
 export function AnnouncementsManager() {
@@ -28,7 +29,7 @@ export function AnnouncementsManager() {
     event.preventDefault();
     const problem = validateCampaign(title, message);
     if (problem) return toast.error(problem);
-    if (!window.confirm(`¿Enviar este anuncio a "${platformSegmentLabel[segment]}"? No se puede deshacer.`)) return;
+    if (!(await confirmar({ titulo: `¿Enviar el anuncio a “${platformSegmentLabel[segment]}”?`, descripcion: "Les llega como notificación al instante. Un anuncio enviado no se puede retirar.", confirmar: "Enviar anuncio" }))) return;
     setSending(true);
     const { error } = await db.rpc("delivery_admin_campana_crear", { p_segmento: segment, p_titulo: title, p_mensaje: message });
     setSending(false);

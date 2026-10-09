@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { slugify, slugValido } from "@/services/catalogPro";
 import { borrarPagina, CLASE_PAGINA, ClasePagina, fetchPaginas, guardarPagina, Pagina, PAGINAS_SUGERIDAS } from "@/services/storeBuilder";
 import { BlockSettings } from "./BlockSettings";
+import { confirmar } from "@/components/ui/dialogos";
 
 type Draft = { id: string | null; tipo: Pagina["tipo"]; clase: ClasePagina; slug: string; titulo: string; contenido: string; bloques: Bloque[]; estado: Pagina["estado"]; seo_titulo: string; seo_descripcion: string; imagen_url: string };
 const TIPOS_LANDING: BloqueTipo[] = ["portada", "banner", "oferta", "productos", "imagen_texto", "texto", "galeria", "confianza", "faq", "video", "cinta", "newsletter", "servicios", "separador"];
@@ -69,7 +70,7 @@ export function PagesPanel({ storeId, storeSlug, categorias, colecciones, previe
     try { await Promise.all(lista.map((p, orden) => (p.orden === orden ? null : guardarPagina(storeId, p.id, { ...p, orden })))); onChanged(); } catch (error) { toast.error(errorMessage(error)); load(); }
   };
   const eliminar = async (p: Pagina) => {
-    if (!window.confirm(`¿Eliminar la página “${p.titulo}”? Si está en el menú, se quita sola de la tienda.`)) return;
+    if (!(await confirmar({ titulo: `¿Eliminar la página “${p.titulo}”?`, descripcion: "Si está en el menú de la tienda, se quita sola.", confirmar: "Eliminar", peligro: true }))) return;
     try { await borrarPagina(p.id); toast.success("Página eliminada"); load(); onChanged(); } catch (error) { toast.error(errorMessage(error)); }
   };
   const faltantes = PAGINAS_SUGERIDAS.filter((s) => !(paginas ?? []).some((p) => p.clase === s.clase));

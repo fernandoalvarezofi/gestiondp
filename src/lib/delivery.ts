@@ -469,6 +469,8 @@ export function errorMessage(error: unknown, fallback = "Algo salió mal. Probá
 }
 
 export const storeSelect = "*";
+/** Pedido como lo ve el comercio: ítems con su producto y el nombre del cliente. */
+export const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 export const orderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario,notas,opciones), comercio:delivery_comercios(nombre,slug,imagen_url,logo_url,direccion,telefono,latitud,longitud)";
 
 export type ChatCanal = "comercio" | "repartidor";

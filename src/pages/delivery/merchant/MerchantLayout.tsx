@@ -10,7 +10,7 @@ import { StoreStatusControl } from "@/components/merchant/StoreStatusControl";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { playChime } from "@/lib/alarm";
-import { COMERCIO_COLS, Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, isOpenNow, isPaused, money, productSelect, shortId } from "@/lib/delivery";
+import { COMERCIO_COLS, Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, merchantOrderSelect, isOpenNow, isPaused, money, productSelect, shortId } from "@/lib/delivery";
 import { notifyDesktop, printOrderTicket, readPrintSettings } from "@/lib/print";
 import { cn } from "@/lib/utils";
 import { TeamInvitations } from "@/components/merchant/TeamInvitations";
@@ -25,7 +25,6 @@ import { roleLabel, type Branch, type MerchantContext, type Permission, type Sto
 const ACTIVE_KEY = "woref-sucursal";
 const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
 
-const merchantOrderSelect = "*, items:delivery_pedido_items(id,producto_id,nombre,cantidad,precio_unitario,notas,opciones), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
 export default function MerchantLayout() {
   const { user } = useAuth();

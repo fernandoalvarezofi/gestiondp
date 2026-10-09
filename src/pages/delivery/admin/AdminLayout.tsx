@@ -9,6 +9,7 @@ import { StoreFormValues, StoreSettingsForm, storeToFormValues } from "@/compone
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Coupon, db, DeliveryOrder, DeliveryStore, EstadoPedido, errorMessage, pedidoActivo } from "@/lib/delivery";
 import { adminNav } from "@/navigation/menus";
+import { pedirTexto } from "@/components/ui/dialogos";
 
 const adminOrderSelect = "*, items:delivery_pedido_items(id,nombre,cantidad,precio_unitario), comercio:delivery_comercios(nombre,slug,imagen_url,direccion), cliente:perfiles!delivery_pedidos_cliente_id_fkey(nombre)";
 
@@ -117,7 +118,7 @@ export default function AdminLayout() {
     loadStores();
   };
   const moderate = async (store: DeliveryStore, approve: boolean) => {
-    const motivo = approve ? null : window.prompt("¿Por qué lo rechazás? (lo verá el dueño del comercio)", "Faltan fotos o datos del local");
+    const motivo = approve ? null : await pedirTexto({ titulo: `Rechazar ${store.nombre}`, descripcion: "El dueño ve este motivo y puede corregir y volver a enviar.", etiqueta: "Motivo", inicial: "Faltan fotos o datos del local", multilinea: true, maximo: 300, confirmar: "Rechazar", peligro: true });
     if (!approve && motivo === null) return;
     const { error } = await db.rpc("delivery_moderar_comercio", { p_comercio: store.id, p_aprobado: approve, p_motivo: motivo });
     if (error) { toast.error(errorMessage(error)); return; }
@@ -125,7 +126,7 @@ export default function AdminLayout() {
     loadStores();
   };
   const advance = async (order: DeliveryOrder, estado: EstadoPedido) => {
-    const motivo = estado === "cancelado" ? window.prompt("Motivo de la cancelación (lo verá el cliente)", "Cancelado por soporte") : undefined;
+    const motivo = estado === "cancelado" ? await pedirTexto({ titulo: "Cancelar el pedido", descripcion: "El cliente recibe el aviso con este motivo. Si pagó online, el pago queda para reintegrar.", etiqueta: "Motivo (lo ve el cliente)", inicial: "Cancelado por soporte", maximo: 200, confirmar: "Cancelar pedido", peligro: true }) : undefined;
     if (estado === "cancelado" && motivo === null) return;
     if (await changeOrderStatus(order.id, estado, motivo || undefined)) { toast.success("Pedido actualizado"); loadOrders(); }
   };

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { db, errorMessage, ProductGroup, ProductOption, sortGroups } from "@/lib/delivery";
+import { confirmar } from "@/components/ui/dialogos";
 
 const presets = [
   { label: "Tamaño (obligatorio)", nombre: "Tamaño", minimo: 1, maximo: 1, opciones: ["Chico", "Grande"] },
@@ -75,7 +76,7 @@ export function OptionGroupsEditor({ productId, onChange }: { productId: string;
                 {[1, 2, 3, 4, 5, 6, 8, 10].map((value) => <option key={value} value={value}>{value}</option>)}
               </select>
             </label>
-            <Button type="button" size="icon" variant="ghost" aria-label="Eliminar grupo" onClick={() => window.confirm(`¿Eliminar el grupo “${group.nombre}” y sus opciones?`) && run(db.from("delivery_producto_grupos").delete().eq("id", group.id), "Grupo eliminado")}><Trash2 className="h-4 w-4" /></Button>
+            <Button type="button" size="icon" variant="ghost" aria-label="Eliminar grupo" onClick={async () => (await confirmar({ titulo: `¿Eliminar el grupo “${group.nombre}”?`, descripcion: "Se borran también todas sus opciones.", confirmar: "Eliminar", peligro: true })) && run(db.from("delivery_producto_grupos").delete().eq("id", group.id), "Grupo eliminado")}><Trash2 className="h-4 w-4" /></Button>
           </div>
           <ul className="mt-2 space-y-1.5">
             {group.opciones.map((option) => (

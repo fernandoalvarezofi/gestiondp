@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Input } from "@/components/ui/input";
 import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 /** Liquidaciones de todos los comercios: generarlas, ver el detalle y marcar cuándo se saldaron. */
 export function SettlementsManager() {
@@ -27,7 +28,7 @@ export function SettlementsManager() {
   useEffect(() => { load(); }, [load]);
 
   const generate = async () => {
-    if (!window.confirm("Se cierra el período de todos los comercios con pedidos entregados sin liquidar, hasta este momento. ¿Continuar?")) return;
+    if (!(await confirmar({ titulo: "¿Cerrar el período de liquidación?", descripcion: "Se genera la liquidación de todos los comercios con pedidos entregados sin liquidar hasta este momento. Los pedidos incluidos ya no entran en la próxima.", confirmar: "Cerrar período" }))) return;
     setGenerating(true);
     const { data, error } = await db.rpc("delivery_admin_generar_todas", { p_hasta: new Date().toISOString() });
     setGenerating(false);

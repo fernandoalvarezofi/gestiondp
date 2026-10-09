@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { errorMessage } from "@/lib/delivery";
 import { cambiarRolIntegrante, fetchIntegrantes, fetchMisNegocios, invitarIntegrante, Integrante, Negocio, quitarIntegrante, RolNegocio } from "@/services/business";
+import { confirmar } from "@/components/ui/dialogos";
 
 export const ROL_NEGOCIO: Record<RolNegocio, { nombre: string; detalle: string }> = {
   owner: { nombre: "Dueño", detalle: "Acceso total al negocio y a todas sus tiendas." },
@@ -53,7 +54,7 @@ export function BusinessTeam({ storeId }: { storeId: string }) {
     cargar();
   };
   const quitar = async (i: Integrante) => {
-    if (!window.confirm(i.estado === "invitado" ? "¿Cancelar esta invitación?" : `¿Quitar a ${i.nombre || "esta persona"} del negocio? Pierde el acceso a todas las tiendas al instante.`)) return;
+    if (!(await (i.estado === "invitado" ? confirmar({ titulo: "¿Cancelar esta invitación?", descripcion: "El enlace deja de funcionar. Podés invitar de nuevo cuando quieras.", confirmar: "Cancelar invitación", cancelar: "Volver" }) : confirmar({ titulo: `¿Quitar a ${i.nombre || "esta persona"} del negocio?`, descripcion: "Pierde el acceso a todas las tiendas al instante.", confirmar: "Quitar acceso", peligro: true })))) return;
     const { error } = await quitarIntegrante(negocio.id, i.user_id);
     if (error) return toast.error(errorMessage(error));
     cargar();

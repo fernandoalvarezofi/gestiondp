@@ -23,6 +23,7 @@ import { EtaBreakdown, OrderHistory } from "@/components/delivery/OrderEvents";
 import { useOrderEta } from "@/hooks/useOrderEta";
 import { useRoute } from "@/lib/route";
 import type { MapMarker } from "@/components/maps/DeliveryMap";
+import { confirmar } from "@/components/ui/dialogos";
 
 const statusCopy: Record<string, string> = {
   pendiente: "El comercio está revisando tu pedido.",
@@ -96,7 +97,7 @@ export default function OrderDetail() {
   if (!order) return <div className="mx-auto max-w-3xl px-4 py-6"><div className="h-60 animate-pulse rounded-3xl bg-muted" /></div>;
 
   const cancel = async () => {
-    if (!window.confirm("¿Seguro que querés cancelar el pedido?")) return;
+    if (!(await confirmar({ titulo: "¿Cancelar el pedido?", descripcion: "Le avisamos al local. Si pagaste online, el reintegro se gestiona solo.", confirmar: "Cancelar pedido", cancelar: "Volver", peligro: true }))) return;
     setBusy(true);
     const { error } = await db.rpc("delivery_actualizar_estado", { p_pedido: order.id, p_estado: "cancelado", p_motivo: "Cancelado por el cliente" });
     setBusy(false);

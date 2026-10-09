@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 import { fetchColecciones } from "@/services/catalogPro";
 import { descartarBorrador, fetchBorrador, fetchPaginas, guardarBorrador, Pagina, publicarTienda, restaurarVersion } from "@/services/storeBuilder";
 import { useMerchant } from "./context";
+import { confirmar } from "@/components/ui/dialogos";
 
 const nombreDe = (tipo: Bloque["tipo"]) => TIPOS_BLOQUE.find((item) => item.tipo === tipo)?.nombre ?? tipo;
 const resumenDe = (bloque: Bloque) => {
@@ -277,7 +278,7 @@ export default function MerchantStorefront() {
     } catch (error) { toast.error(errorMessage(error)); }
   };
   const descartar = async () => {
-    if (!window.confirm("¿Descartar todos los cambios sin publicar y volver a lo que está en línea?")) return;
+    if (!(await confirmar({ titulo: "¿Descartar los cambios sin publicar?", descripcion: "El editor vuelve a lo que está en línea. Lo que no publicaste se pierde.", confirmar: "Descartar", peligro: true }))) return;
     try { await descartarBorrador(store.id); } catch { /* si falla, igual se vuelve a lo publicado en pantalla */ }
     const base = normalizeTheme(store.tienda_tema);
     reemplazar(base, true); ultimoGuardado.current = serializarTema(base); setBorradorAt(null); setOpenId(null);

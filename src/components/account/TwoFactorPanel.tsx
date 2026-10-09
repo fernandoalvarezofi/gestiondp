@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { formatDateTime } from "@/lib/delivery";
 import { disableTotp, enrollTotp, isSixDigits, listTotpFactors, TotpFactor, verifyTotp } from "@/lib/mfa";
+import { confirmar } from "@/components/ui/dialogos";
 
 /** Activar o desactivar la verificación en dos pasos con una app de autenticación (TOTP). */
 export function TwoFactorPanel() {
@@ -36,7 +37,7 @@ export function TwoFactorPanel() {
     } catch (error) { toast.error((error as Error).message); } finally { setBusy(false); }
   };
   const disable = async (factor: TotpFactor) => {
-    if (!window.confirm(roles.isAdmin ? "Sos administrador: sin el segundo factor la cuenta queda menos protegida. ¿Desactivarlo igual?" : "¿Desactivar la verificación en dos pasos?")) return;
+    if (!(await confirmar({ titulo: "¿Desactivar la verificación en dos pasos?", descripcion: roles.isAdmin ? "Sos administrador: sin el segundo factor la cuenta queda mucho menos protegida y algunas acciones de administración se bloquean." : "Tu cuenta va a quedar protegida solo con la contraseña.", confirmar: "Desactivar", peligro: true }))) return;
     setBusy(true);
     try { await disableTotp(factor.id); toast.success("Desactivada"); await Promise.all([load(), refreshMfa()]); } catch (error) { toast.error((error as Error).message); } finally { setBusy(false); }
   };

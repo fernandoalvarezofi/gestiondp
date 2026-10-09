@@ -11,6 +11,7 @@ import { useCourierLocation } from "@/hooks/useCourierLocation";
 import { db, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
 import { Envio, envioActivo, envioEstadoLabel, envioPasos, tamanoLabel } from "@/lib/envios";
 import { cn } from "@/lib/utils";
+import { confirmar } from "@/components/ui/dialogos";
 
 /** Seguimiento de un envío: estado en tiempo real, mapa con el repartidor, código de entrega y cancelación. */
 export default function EnvioDetail() {
@@ -51,7 +52,7 @@ export default function EnvioDetail() {
 
   const stepIndex = envioPasos.findIndex((step) => step.id === envio.estado);
   const cancel = async () => {
-    if (!window.confirm("¿Cancelar el envío?")) return;
+    if (!(await confirmar({ titulo: "¿Cancelar el envío?", descripcion: "Si ya había un repartidor asignado, se le avisa.", confirmar: "Cancelar envío", cancelar: "Volver", peligro: true }))) return;
     setCancelling(true);
     const { error } = await db.rpc("delivery_cancelar_envio", { p_id: envio.id, p_motivo: null });
     setCancelling(false);

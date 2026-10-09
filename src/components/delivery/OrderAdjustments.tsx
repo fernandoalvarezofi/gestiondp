@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { OrderAdjustment, useOrderAdjustments } from "@/components/merchant/StockAdjust";
 import { Button } from "@/components/ui/button";
 import { db, errorMessage, money } from "@/lib/delivery";
+import { confirmar } from "@/components/ui/dialogos";
 
 /** Cuando al comercio le falta un producto, el cliente elige: aceptar el reemplazo, seguir sin el producto o cancelar. */
 export function OrderAdjustments({ orderId, onChange }: { orderId: string; onChange: () => void }) {
@@ -20,7 +21,7 @@ export function OrderAdjustments({ orderId, onChange }: { orderId: string; onCha
   }, []);
 
   const respond = async (adjustment: OrderAdjustment, accept: boolean) => {
-    if (!accept && adjustment.tipo === "quitar" && !window.confirm("Si no seguís sin este producto, se cancela el pedido. ¿Cancelar el pedido?")) return;
+    if (!accept && adjustment.tipo === "quitar" && !(await confirmar({ titulo: "¿Cancelar el pedido?", descripcion: "Si no aceptás seguir sin este producto, el pedido se cancela. Si pagaste online, se te reintegra.", confirmar: "Cancelar pedido", cancelar: "Volver", peligro: true }))) return;
     setBusy(adjustment.id);
     const { error } = await db.rpc("delivery_responder_ajuste", { p_ajuste: adjustment.id, p_acepta: accept });
     setBusy(null);
