@@ -1,7 +1,7 @@
 -- PRUEBAS DEL INVENTARIO CON MOVIMIENTOS (Fase 2, paso 1). Transacción que se deshace sola.
 -- Una venta real (delivery_crear_pedido), su cancelación y una edición manual: cada una deja su asiento con el motivo correcto.
 do $t$
-declare dueno uuid := gen_random_uuid(); cli uuid := gen_random_uuid(); cat delivery_categoria; c1 uuid; prod uuid; var uuid; ped uuid; fallos text := ''; n int;
+declare dueno uuid := gen_random_uuid(); cli uuid := gen_random_uuid(); cat delivery_categoria; c1 uuid; prod uuid; var uuid; ped uuid; fallos text := ''; n int; msg text;
 begin
   select categoria into cat from delivery_comercios limit 1;
   insert into auth.users (instance_id, id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at, confirmation_token, email_change, email_change_token_new, recovery_token)
@@ -15,7 +15,15 @@ begin
   perform set_config('request.jwt.claims', json_build_object('sub', cli, 'role', 'authenticated')::text, true);
   perform set_config('role', 'authenticated', true);
   ped := delivery_crear_pedido(c1, jsonb_build_array(jsonb_build_object('producto_id', prod, 'cantidad', 3)), '', null, 'efectivo', 0, null, null, '11 5555 5555', null, null, 'retiro', null, null, false);
+  -- pedir más de lo que hay (quedan 7) falla con un mensaje claro y no toca el stock
+  begin
+    perform delivery_crear_pedido(c1, jsonb_build_array(jsonb_build_object('producto_id', prod, 'cantidad', 8)), '', null, 'efectivo', 0, null, null, '11 5555 5555', null, null, 'retiro', null, null, false);
+    fallos := fallos || E'- se pudo vender más que el stock
+';
+  exception when others then msg := sqlerrm; end;
   perform set_config('role', 'postgres', true);
+  if (select stock from delivery_productos where id = prod) <> 7 or msg not like 'No hay stock suficiente%' then fallos := fallos || E'- la sobreventa no se rechazó bien
+'; end if;
   select count(*) into n from inventario_movimientos where producto_id = prod and motivo = 'venta' and delta = -3 and stock_antes = 10 and stock_despues = 7;
   if n <> 1 then fallos := fallos || format(E'- la venta no dejó su asiento (venta -3): %s\n', n); end if;
 
