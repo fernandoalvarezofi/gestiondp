@@ -1,4 +1,4 @@
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { fetchMyProfile } from "@/services/profile";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarClock, Car, Loader2, MapPin, Moon, Users } from "lucide-react";
@@ -38,6 +38,9 @@ export default function Remis() {
   const quote = quotes?.[categoria] ?? null;
   const [quoting, setQuoting] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Clave del intento: si la respuesta se pierde y se vuelve a tocar, el servidor devuelve lo mismo en vez de duplicarlo.
+  const claveIntento = useRef<string>(crypto.randomUUID());
+  const enviando = useRef(false);
   const [recent, setRecent] = useState<Viaje[]>([]);
 
   useEffect(() => {
@@ -84,13 +87,18 @@ export default function Remis() {
     if (!PHONE.test(phone.trim())) return toast.error("Dejanos un teléfono para que el conductor te contacte");
     if (later && !validSchedule(when)) return toast.error("Elegí una hora entre 30 minutos y 7 días desde ahora");
     if (!quote?.ok) return toast.error(reason ?? "Esperá la cotización");
+    if (enviando.current) return;
+    enviando.current = true;
     setSaving(true);
-    const { data, error } = await db.rpc("delivery_crear_viaje", {
+    const { data, error } = await db.rpc("delivery_solicitar_viaje", {
+      p_clave: claveIntento.current,
       p_origen: origin.label, p_olat: origin.lat, p_olng: origin.lng, p_destino: dest.label, p_dlat: dest.lat, p_dlng: dest.lng,
       p_pasajeros: passengers, p_notas: notes.trim() || null, p_telefono: phone.trim(), p_programado: scheduled, p_propina: tip, p_categoria: categoria,
     });
     setSaving(false);
-    if (error) return toast.error(errorMessage(error));
+    enviando.current = false;
+    if (error) return toast.error(navigator.onLine === false ? "Sin conexión: revisala y volvé a intentar. No se va a duplicar." : errorMessage(error));
+    claveIntento.current = crypto.randomUUID();
     toast.success(scheduled ? "¡Viaje reservado!" : "¡Pedido enviado! Buscamos un conductor.");
     navigate(`/app/remis/${data}`);
   };

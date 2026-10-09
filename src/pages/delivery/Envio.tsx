@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, useRef } from "react";
 import { fetchMyProfile } from "@/services/profile";
 import { useNavigate } from "react-router-dom";
 import { Banknote, Loader2, MapPin, Package, PackageCheck } from "lucide-react";
@@ -42,6 +42,9 @@ export default function Envio() {
   const [quote, setQuote] = useState<EnvioQuote | null>(null);
   const [quoting, setQuoting] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Clave del intento: si la respuesta se pierde y se vuelve a tocar, el servidor devuelve lo mismo en vez de duplicarlo.
+  const claveIntento = useRef<string>(crypto.randomUUID());
+  const enviando = useRef(false);
 
   // Los datos del remitente se completan con los de la cuenta (se pueden cambiar).
   useEffect(() => { if (roles.nombre && !oName) setOName(roles.nombre); }, [roles.nombre]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -81,14 +84,19 @@ export default function Envio() {
     if (!PHONE.test(oPhone.trim()) || !PHONE.test(dPhone.trim())) return toast.error("Revisá los teléfonos de contacto");
     if (what.trim().length < 3) return toast.error("Contanos qué vas a enviar");
     if (!quote?.ok) return toast.error(reason ?? "Esperá la cotización");
+    if (enviando.current) return;
+    enviando.current = true;
     setSaving(true);
-    const { data, error } = await db.rpc("delivery_crear_envio", {
+    const { data, error } = await db.rpc("delivery_solicitar_envio", {
+      p_clave: claveIntento.current,
       p_origen: origin.label, p_olat: origin.lat, p_olng: origin.lng, p_ocontacto: oName.trim(), p_otel: oPhone.trim(), p_onotas: oNotes.trim() || null,
       p_destino: dest.label, p_dlat: dest.lat, p_dlng: dest.lng, p_dcontacto: dName.trim(), p_dtel: dPhone.trim(), p_dnotas: dNotes.trim() || null,
       p_descripcion: what.trim(), p_tamano: size, p_quien_paga: payer, p_propina: tip,
     });
     setSaving(false);
-    if (error) return toast.error(errorMessage(error));
+    enviando.current = false;
+    if (error) return toast.error(navigator.onLine === false ? "Sin conexión: revisala y volvé a intentar. No se va a duplicar." : errorMessage(error));
+    claveIntento.current = crypto.randomUUID();
     toast.success("¡Pedido enviado! Buscamos un repartidor.");
     navigate(`/app/envios/${data}`);
   };
