@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ContextChatButton } from "@/components/messages/ContextChat";
 import { Check, KeyRound, Loader2, MapPin, Package, PackageCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "@/components/delivery/Common";
+import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { MapView } from "@/components/maps/LazyMaps";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,8 +22,12 @@ export default function EnvioDetail() {
   const [code, setCode] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
 
+  const [loadError, setLoadError] = useState<unknown>(null);
   const load = useCallback(async () => {
-    const { data } = await db.from("delivery_envios").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await db.from("delivery_envios").select("*").eq("id", id).maybeSingle();
+    // Una falla (p. ej. al recargar en tiempo real) no borra el envío que ya se estaba mostrando.
+    if (error) { setLoadError(new Error(errorMessage(error))); return; }
+    setLoadError(null);
     setEnvio(data ?? null);
     if (data) {
       const { data: row } = await db.from("delivery_envio_codigos").select("codigo").eq("envio_id", id).maybeSingle();
@@ -47,6 +51,7 @@ export default function EnvioDetail() {
     ...(courier ? [{ lat: courier.lat, lng: courier.lng, kind: "courier" as const, label: "Repartidor" }] : []),
   ] : [], [envio, courier]);
 
+  if (loadError && !envio) return <div className="mx-auto max-w-2xl px-4 py-14"><ErrorState title="No pudimos cargar el envío" error={loadError} onRetry={load} /></div>;
   if (envio === undefined) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!envio || envio.cliente_id !== user?.id) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<Package className="h-7 w-7" />} title="No encontramos este envío" action={<Button asChild className="rounded-full"><Link to="/app/pedidos">Ver mis pedidos</Link></Button>} /></div>;
 

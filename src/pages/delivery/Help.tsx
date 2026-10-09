@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ChevronRight, Headset, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState, PageHeader } from "@/components/delivery/Common";
+import { EmptyState, PageHeader, ErrorState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,10 +25,13 @@ export default function Help() {
   const [detail, setDetail] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [loadError, setLoadError] = useState<unknown>(null);
   const load = useCallback(async () => {
-    const { data } = await db.from("delivery_reclamos").select("*").order("ultimo_mensaje_at", { ascending: false }).limit(100);
-    setTickets((data as Reclamo[]) || []);
+    const { data, error } = await db.from("delivery_reclamos").select("*").order("ultimo_mensaje_at", { ascending: false }).limit(100);
     setLoading(false);
+    if (error) { setLoadError(new Error(errorMessage(error))); return; }
+    setLoadError(null);
+    setTickets((data as Reclamo[]) || []);
   }, []);
 
   useEffect(() => {
@@ -51,7 +54,8 @@ export default function Help() {
   return (
     <div className="mx-auto max-w-2xl px-4 pb-14 pt-5 sm:px-6">
       <PageHeader eyebrow="Soporte" title="Ayuda" subtitle="Escribinos y te respondemos por acá, con aviso a tu celular." actions={<Button className="rounded-full" onClick={() => setOpen(true)}><Plus className="h-4 w-4" />Nueva consulta</Button>} />
-      {loading ? <div className="mt-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> : tickets.length === 0 ? (
+      {loadError && tickets.length === 0 ? <ErrorState className="mt-6" title="No pudimos cargar tus consultas" error={loadError} onRetry={() => { setLoading(true); load(); }} />
+        : loading ? <div className="mt-10 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div> : tickets.length === 0 ? (
         <EmptyState className="mt-6" icon={<Headset className="h-8 w-8" />} title="No tenés consultas" text="Si tenés un problema con un pedido, abrilo desde Mis pedidos. Para cualquier otra cosa, escribinos acá." />
       ) : (
         <ul className="mt-6 space-y-2">

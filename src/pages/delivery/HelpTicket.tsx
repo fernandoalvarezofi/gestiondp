@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Gift, Loader2, Star } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState, PageHeader } from "@/components/delivery/Common";
+import { EmptyState, PageHeader, ErrorState } from "@/components/delivery/Common";
 import { TicketThread } from "@/components/support/TicketThread";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,8 +19,11 @@ export default function HelpTicket() {
   const [comment, setComment] = useState("");
   const [saving, setSaving] = useState(false);
 
+  const [loadError, setLoadError] = useState<unknown>(null);
   const load = useCallback(async () => {
-    const { data } = await db.from("delivery_reclamos").select("*").eq("id", id!).maybeSingle();
+    const { data, error } = await db.from("delivery_reclamos").select("*").eq("id", id!).maybeSingle();
+    if (error) { setLoadError(new Error(errorMessage(error))); return; }
+    setLoadError(null);
     setTicket((data as Reclamo) || null);
   }, [id]);
 
@@ -39,6 +42,7 @@ export default function HelpTicket() {
     load();
   };
 
+  if (loadError && !ticket) return <div className="mx-auto max-w-md px-4 py-10"><ErrorState title="No pudimos cargar la consulta" error={loadError} onRetry={load} /></div>;
   if (ticket === undefined) return <div className="flex justify-center py-20"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
   if (!ticket) return <EmptyState className="mx-auto mt-10 max-w-md" title="No encontramos esta consulta" action={<Button asChild className="rounded-full"><Link to="/app/ayuda">Volver a Ayuda</Link></Button>} />;
 

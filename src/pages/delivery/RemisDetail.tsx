@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ContextChatButton } from "@/components/messages/ContextChat";
 import { Car, Check, KeyRound, Loader2, MapPin, Navigation, Phone, Star, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "@/components/delivery/Common";
+import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { MapView } from "@/components/maps/LazyMaps";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
@@ -25,8 +25,12 @@ export default function RemisDetail() {
   const [driver, setDriver] = useState<Driver | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const [loadError, setLoadError] = useState<unknown>(null);
   const load = useCallback(async () => {
-    const { data } = await db.from("delivery_viajes").select("*").eq("id", id).maybeSingle();
+    const { data, error } = await db.from("delivery_viajes").select("*").eq("id", id).maybeSingle();
+    // Una falla (p. ej. al recargar en tiempo real) no borra el viaje que ya se estaba mostrando.
+    if (error) { setLoadError(new Error(errorMessage(error))); return; }
+    setLoadError(null);
     setTrip(data ?? null);
     if (!data) return;
     const { data: row } = await db.from("delivery_viaje_codigos").select("codigo").eq("viaje_id", id).maybeSingle();
@@ -51,6 +55,7 @@ export default function RemisDetail() {
     ...(driverPosition ? [{ lat: driverPosition.lat, lng: driverPosition.lng, kind: "courier" as const, label: "Conductor" }] : []),
   ] : [], [trip, driverPosition]);
 
+  if (loadError && !trip) return <div className="mx-auto max-w-2xl px-4 py-14"><ErrorState title="No pudimos cargar el viaje" error={loadError} onRetry={load} /></div>;
   if (trip === undefined) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   if (!trip || trip.cliente_id !== user?.id) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<Car className="h-7 w-7" />} title="No encontramos este viaje" action={<Button asChild className="rounded-full"><Link to="/app/remis">Pedir un remís</Link></Button>} /></div>;
 
