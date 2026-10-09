@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { db, errorMessage } from "@/lib/delivery";
+import { supabase } from "@/integrations/supabase/client";
 
 type Resumen = {
   nombre: string; modo: "eliminar" | "baja"; pedidos: number; pedidos_activos: number; turnos: number; turnos_futuros: number;
   sin_liquidar: number; productos: number; sucursales: number; bloqueos: string[];
 };
-export type ResultadoEliminacion = { resultado: "eliminada" | "baja"; nombre: string };
+export type ResultadoEliminacion = { resultado: "eliminada" | "baja"; nombre: string; archivos?: string[] };
 
 /**
  * Eliminar una tienda. Primero muestra qué va a pasar con ESTA tienda (se borra del todo si no tiene historial; si tiene pedidos
@@ -47,6 +48,9 @@ export function DeleteStorePanel({ storeId, onDone }: { storeId: string; onDone:
     setEnviando(false);
     if (falla) { toast.error(errorMessage(falla)); cargar(); return; }
     const r = data as ResultadoEliminacion;
+    // Fotos que eran solo de esta tienda: se borran del almacenamiento (la base no puede hacerlo). Si alguna no se puede
+    // (p. ej. la subió otra persona del equipo), queda guardada sin afectar nada.
+    if (r.archivos?.length) await supabase.storage.from("delivery").remove(r.archivos).catch(() => undefined);
     toast.success(r.resultado === "eliminada" ? `Eliminaste “${r.nombre}”` : `Diste de baja “${r.nombre}”`);
     onDone(r);
   };
