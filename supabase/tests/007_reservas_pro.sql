@@ -52,6 +52,7 @@ begin
   reset role;
   insert into t_res values ('reserva online confirmada', (select estado = 'confirmado' from turnos where id = t1), null);
   insert into t_res values ('ocupación incluye la limpieza', (select ocupa_hasta = fin + interval '15 minutes' from turnos where id = t1), null);
+  insert into t_res values ('CRM: la reserva creó el contacto', (select contacto_id is not null from turnos where id = t1), null);
 
   -- 2. Doble reserva del mismo horario.
   perform pg_temp.como(c2); set local role authenticated;
@@ -101,6 +102,8 @@ begin
   exception when others then insert into t_res values ('otro no ve la agenda', true, sqlerrm); end;
   begin perform turno_crear_panel(corte, pablo, pg_temp.h('13:00'), null, 'Falso'); insert into t_res values ('otro no carga turnos', false, 'sin error');
   exception when others then insert into t_res values ('otro no carga turnos', true, sqlerrm); end;
+  begin perform agenda_lista_espera(loc); insert into t_res values ('otro no ve la lista de espera', false, 'sin error');
+  exception when others then insert into t_res values ('otro no ve la lista de espera', true, sqlerrm); end;
   reset role;
   perform pg_temp.como(d); set local role authenticated; perform turno_cambiar_estado(tp, 'confirmado'); reset role;
   insert into t_res values ('el local confirma y avisa', (select estado = 'confirmado' from turnos where id = tp) and exists (select 1 from notificaciones where usuario_id = c3 and tipo = 'TURNO_CONFIRMADO'), null);
@@ -127,13 +130,17 @@ begin
 
   -- 11. Turno desde el panel para alguien sin cuenta, en el horario que se liberó.
   perform pg_temp.como(d); set local role authenticated;
+  insert into t_res values ('el local ve la lista de espera', jsonb_array_length(agenda_lista_espera(loc)) = 1, null);
   tw := turno_crear_panel(corte, pablo, pg_temp.h('10:00'), null, 'Marta Mostrador', '2355 456789', null, 1, 'Prefiere tijera');
   insert into t_res values ('turno del panel sin cuenta', tw is not null, null);
   v := turno_cliente_ficha(tw);
-  insert into t_res values ('ficha del cliente', v->>'nombre' = 'Marta Mostrador' and (v->>'total')::int = 1, v::text);
+  insert into t_res values ('ficha del cliente', v->>'nombre' = 'Marta Mostrador' and (v->>'total')::int = 1 and (v->>'contacto_id') is not null, v::text);
   -- 12. El local cancela: se avisa a la lista de espera.
   perform turno_cancelar(tw, 'Se enfermó');
+  -- 12b. Turno del panel para un contacto del CRM (sin cuenta): queda en la misma ficha.
+  tp := turno_crear_panel(corte, pablo, pg_temp.h('16:00', 6), null, null, null, null, 1, null, (v->>'contacto_id')::uuid);
   reset role;
+  insert into t_res values ('turno para un contacto del CRM', (select contacto_id::text = v->>'contacto_id' and cliente_nombre = 'Marta Mostrador' from turnos where id = tp), null);
   insert into t_res values ('lista de espera avisada', exists (select 1 from turnos_espera where cliente_id = c2 and avisado_at is not null)
     and exists (select 1 from notificaciones where usuario_id = c2 and tipo = 'TURNO_LIBERADO'), null);
 
