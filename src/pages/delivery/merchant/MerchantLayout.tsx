@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { Building2, ChevronsUpDown, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { StoreLogo } from "@/components/delivery/StoreCard";
@@ -72,11 +73,17 @@ export default function MerchantLayout() {
     setActiveId(id);
   }, []);
 
+  // Si la última actualización de pedidos falló: se avisa y se conservan los datos anteriores.
+  const [ordersError, setOrdersError] = useState(false);
   const loadOrders = useCallback(async () => {
     const current = storeRef.current;
     if (!current) return;
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { data } = await db.from("delivery_pedidos").select(merchantOrderSelect).eq("comercio_id", current.id).gte("created_at", since).order("created_at", { ascending: false }).limit(300);
+    const { data, error } = await db.from("delivery_pedidos").select(merchantOrderSelect).eq("comercio_id", current.id).gte("created_at", since).order("created_at", { ascending: false }).limit(300);
+    // Ante una falla NO se vacía el tablero ni se olvidan los pedidos conocidos: si no, al volver la conexión todos los
+    // pendientes parecían nuevos (sonaban otra vez y, con impresión automática, se imprimían comandas repetidas).
+    if (error) { setOrdersError(true); return; }
+    setOrdersError(false);
     const list: DeliveryOrder[] = data || [];
     const pending = list.filter((order) => order.estado === "pendiente").map((order) => order.id);
     const fresh = knownPending.current ? list.filter((order) => order.estado === "pendiente" && !knownPending.current!.has(order.id)) : [];
@@ -106,6 +113,17 @@ export default function MerchantLayout() {
     const { data } = await db.from("delivery_cupones").select("*").eq("comercio_id", current.id).order("created_at", { ascending: false });
     setCoupons(data || []);
   }, []);
+
+  // Respaldo del tiempo real: si el canal se corta en silencio (celular en segundo plano, red inestable), los pedidos se
+  // siguen actualizando cada 30 s, al volver a la pestaña y al recuperar la conexión.
+  useEffect(() => {
+    if (!store?.id) return;
+    const timer = window.setInterval(() => { if (document.visibilityState === "visible") loadOrders(); }, 30000);
+    const alVolver = () => { if (document.visibilityState === "visible") loadOrders(); };
+    document.addEventListener("visibilitychange", alVolver);
+    window.addEventListener("online", alVolver);
+    return () => { window.clearInterval(timer); document.removeEventListener("visibilitychange", alVolver); window.removeEventListener("online", alVolver); };
+  }, [store?.id, loadOrders]);
 
   const [preguntasPendientes, setPreguntasPendientes] = useState(0);
   const loadPreguntas = useCallback(async () => {
@@ -227,6 +245,7 @@ export default function MerchantLayout() {
         ? <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>
         : <p className="mb-4 flex flex-wrap items-center gap-x-2 rounded-full border border-warning/40 bg-warning/10 px-4 py-2 text-[13px]"><span className="font-bold">En revisión: los clientes todavía no ven tu local.</span><Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Completar verificación</Link></p>)}
       {store.aprobado === false && store.motivo_rechazo && <p className="mb-4 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive"><span className="font-bold">Tu comercio no fue aprobado:</span> {store.motivo_rechazo}. Corregilo en Configuración y escribinos para revisarlo de nuevo.</p>}
+      {ordersError && <div role="alert" className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm"><span className="font-bold text-destructive">No pudimos actualizar tus pedidos.</span><span className="text-muted-foreground">Revisá la conexión; reintentamos solos cada 30 segundos.</span><Button size="sm" variant="outline" className="ml-auto rounded-full" onClick={() => loadOrders()}>Reintentar ahora</Button></div>}
       {store.activo === false && <p className="mb-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Tu comercio fue pausado por administración y no aparece para los clientes. Escribinos para revisarlo.</p>}
       {(location.pathname === "/app/comercio" || location.pathname === "/app/comercio/pedidos") && <PushPrompt className="mb-4" title="No te pierdas ningún pedido" text="Activá los avisos y te llega una notificación apenas entra un pedido, aunque tengas la app cerrada." />}
       {blocked

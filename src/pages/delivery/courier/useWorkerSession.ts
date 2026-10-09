@@ -48,31 +48,35 @@ export function useWorkerSession(mode: WorkMode) {
   const { user } = useAuth();
   const [courier, setCourier] = useState<Courier | null>(null);
   const [loading, setLoading] = useState(true);
+  // Falla al cargar la cuenta: sin esto, un corte de red mostraba la pantalla de alta a un repartidor ya verificado.
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [mine, setMine] = useState<DeliveryOrder[]>([]);
   const [myEnvios, setMyEnvios] = useState<Envio[]>([]);
   const [myViajes, setMyViajes] = useState<Viaje[]>([]);
 
   const reloadCourier = useCallback(async () => {
     if (!user) return;
-    const { data } = await db.from("delivery_repartidores").select("*").eq("perfil_id", user.id).maybeSingle();
+    const { data, error } = await db.from("delivery_repartidores").select("*").eq("perfil_id", user.id).maybeSingle();
+    if (error) { setLoadError(new Error(errorMessage(error))); setLoading(false); return; }
+    setLoadError(null);
     setCourier(data || null);
     setLoading(false);
   }, [user]);
 
   const loadOrders = useCallback(async () => {
     if (!user) return;
-    const { data } = await db.from("delivery_pedidos").select(courierSelect).eq("repartidor_id", user.id).order("created_at", { ascending: false }).limit(100);
-    setMine(data || []);
+    const { data, error } = await db.from("delivery_pedidos").select(courierSelect).eq("repartidor_id", user.id).order("created_at", { ascending: false }).limit(100);
+    if (!error) setMine(data || []);
   }, [user]);
   const loadEnvios = useCallback(async () => {
     if (!user) return;
-    const { data } = await db.from("delivery_envios").select("*").eq("repartidor_id", user.id).order("created_at", { ascending: false }).limit(100);
-    setMyEnvios(data || []);
+    const { data, error } = await db.from("delivery_envios").select("*").eq("repartidor_id", user.id).order("created_at", { ascending: false }).limit(100);
+    if (!error) setMyEnvios(data || []);
   }, [user]);
   const loadViajes = useCallback(async () => {
     if (!user) return;
-    const { data } = await db.from("delivery_viajes").select("*").eq("conductor_id", user.id).order("created_at", { ascending: false }).limit(100);
-    setMyViajes(data || []);
+    const { data, error } = await db.from("delivery_viajes").select("*").eq("conductor_id", user.id).order("created_at", { ascending: false }).limit(100);
+    if (!error) setMyViajes(data || []);
   }, [user]);
 
   useEffect(() => { reloadCourier(); }, [reloadCourier]);
@@ -140,7 +144,7 @@ export function useWorkerSession(mode: WorkMode) {
   const refreshAll = () => { loadOrders(); loadEnvios(); loadViajes(); refreshOffers(); envios.refresh(); viajes.refresh(); };
 
   return {
-    loading, courier, approved, connected, reloadCourier, toggleConnection, refreshAll,
+    loading, loadError, courier, approved, connected, reloadCourier, toggleConnection, refreshAll,
     position: sharing.position, sharingStatus: sharing.status,
     current, currents, currentEnvio, currentViaje, busyDelivery, busyNow,
     offers: offers as Offer[], envioOffers: envios.list, viajeOffers: viajes.list,

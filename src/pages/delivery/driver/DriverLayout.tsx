@@ -14,6 +14,7 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { cn } from "@/lib/utils";
 import { driverNav } from "@/navigation/menus";
 import { useWorkerSession, type WorkerSession } from "../courier/useWorkerSession";
+import { ErrorState } from "@/components/delivery/Common";
 
 export type DriverContext = WorkerSession & { courier: NonNullable<WorkerSession["courier"]> };
 export const useDriver = () => useOutletContext<DriverContext>();
@@ -47,6 +48,7 @@ export default function DriverLayout() {
   useEffect(() => { if (!loading && approvedDriver !== roles.isDriver) roles.refresh(); }, [loading, approvedDriver]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (session.loadError && !courier) return <div className="mx-auto max-w-md px-4 py-16"><ErrorState title="No pudimos cargar tu cuenta de trabajo" error={session.loadError} onRetry={reloadCourier} /></div>;
   if (!courier || !courier.verificado) return <DriverOnboarding><CourierApplication courier={courier} onDone={reloadCourier} /></DriverOnboarding>;
   if (!courier.activo) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<CarTaxiFront className="h-7 w-7" />} title="Tu cuenta está pausada" text="Comunicate con soporte para reactivarla." /></div>;
   if (courier.remis_estado !== "aprobado") return <DriverOnboarding><RemisEnrollment courier={courier} onChanged={reloadCourier} /></DriverOnboarding>;

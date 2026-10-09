@@ -13,6 +13,7 @@ import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { cn } from "@/lib/utils";
 import { COURIER_TABS, courierNav } from "@/navigation/menus";
 import { useWorkerSession, type WorkerSession } from "./useWorkerSession";
+import { ErrorState } from "@/components/delivery/Common";
 
 export type CourierContext = WorkerSession & { courier: NonNullable<WorkerSession["courier"]> };
 export const useCourier = () => useOutletContext<CourierContext>();
@@ -30,6 +31,7 @@ export default function CourierLayout() {
   useEffect(() => { if (!loading && active !== roles.isCourier) roles.refresh(); }, [loading, active]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
+  if (session.loadError && !courier) return <div className="mx-auto max-w-md px-4 py-16"><ErrorState title="No pudimos cargar tu cuenta de trabajo" error={session.loadError} onRetry={reloadCourier} /></div>;
   if (!courier || !courier.verificado) return <><OnboardingBar /><CourierApplication courier={courier} onDone={reloadCourier} /></>;
   if (!courier.activo) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<Bike className="h-7 w-7" />} title="Tu cuenta de repartidor está pausada" text="Comunicate con soporte para reactivarla." /></div>;
 
