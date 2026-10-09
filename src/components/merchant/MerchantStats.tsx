@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Globe, Loader2 } from "lucide-react";
-import { EmptyState } from "@/components/delivery/Common";
+import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { BarSeries, Delta, Metric, MetricStrip, PageIntro, Section, Surface } from "@/components/panel/kit";
 import { db, errorMessage, metodoPagoLabel, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
@@ -26,13 +26,13 @@ export function MerchantStats({ storeId, rating, reviews }: { storeId: string; r
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tienda, setTienda] = useState<{ pedidos: number; ventas: number } | null>(null);
+  const [reintento, setReintento] = useState(0);
 
   // Lo vendido a través de la tienda online (pedidos entregados cuyo cliente llegó desde /t/...).
   useEffect(() => {
     let active = true;
-    const desde = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
-    db.from("delivery_pedidos").select("subtotal").eq("comercio_id", storeId).eq("canal", "tienda").eq("estado", "entregado").gte("created_at", desde).limit(5000)
-      .then(({ data }: { data: { subtotal: number }[] | null }) => { if (active) setTienda({ pedidos: (data || []).length, ventas: (data || []).reduce((total, row) => total + Number(row.subtotal), 0) }); }, () => undefined);
+    db.rpc("delivery_ventas_tienda_online", { p_comercio: storeId, p_dias: days })
+      .then(({ data }: { data: { pedidos: number; ventas: number } | null }) => { if (active && data) setTienda({ pedidos: Number(data.pedidos), ventas: Number(data.ventas) }); }, () => undefined);
     return () => { active = false; };
   }, [storeId, days]);
 
@@ -46,7 +46,7 @@ export function MerchantStats({ storeId, rating, reviews }: { storeId: string; r
       else setStats(data);
     });
     return () => { active = false; };
-  }, [storeId, days]);
+  }, [storeId, days, reintento]);
 
   const period = (
     <div className="inline-flex rounded-full border bg-card p-0.5" role="tablist" aria-label="Período">
@@ -57,7 +57,7 @@ export function MerchantStats({ storeId, rating, reviews }: { storeId: string; r
   );
   const intro = <PageIntro description="Cómo le va a tu local, comparado con el período anterior." actions={period} />;
 
-  if (error) return <div className="space-y-5">{intro}<EmptyState title="No pudimos cargar las estadísticas" text={error} /></div>;
+  if (error) return <div className="space-y-5">{intro}<ErrorState title="No pudimos cargar las estadísticas" error={new Error(error)} onRetry={() => { setError(null); setDays((d) => d); setReintento((n) => n + 1); }} /></div>;
   if (!stats) return <div className="space-y-5">{intro}<div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div></div>;
 
   const answered = stats.pedidos + stats.rechazados + stats.sin_respuesta;
