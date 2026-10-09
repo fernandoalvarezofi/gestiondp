@@ -46,11 +46,21 @@ export default function OrderDetail() {
   const [busy, setBusy] = useState(false);
   const [paying, setPaying] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
+  // Vuelve de Mercado Pago con el pago hecho, pero el servidor todavía no recibió la confirmación: no se ofrece pagar de
+  // nuevo (riesgo de cobro doble) hasta que pasen unos minutos sin novedades.
+  const [confirmandoHasta, setConfirmandoHasta] = useState<number | null>(null);
+  const [, setTic] = useState(0);
+  useEffect(() => {
+    if (!confirmandoHasta) return;
+    const t = window.setTimeout(() => setTic((n) => n + 1), Math.max(0, confirmandoHasta - Date.now()) + 50);
+    return () => window.clearTimeout(t);
+  }, [confirmandoHasta]);
 
   // Al volver de Mercado Pago: avisamos el resultado (la confirmación real llega por el aviso del servidor).
   useEffect(() => {
     const result = searchParams.get("pago");
     if (!result) return;
+    if (result === "aprobado" || result === "pendiente") setConfirmandoHasta(Date.now() + 3 * 60 * 1000);
     if (result === "aprobado") toast.success("¡Pago recibido! Estamos confirmándolo con Mercado Pago.");
     else if (result === "pendiente") toast.info("Tu pago quedó en proceso. Te avisamos cuando se acredite.");
     else toast.error("El pago no se completó. Podés intentarlo de nuevo.");
@@ -138,12 +148,12 @@ export default function OrderDetail() {
       <div className={cn("relative z-10 bg-background px-4 pt-5", showMap ? "-mt-6 rounded-t-[28px] sm:mt-0 sm:rounded-none sm:px-0" : "sm:px-0")}>
       <PageHeader
         eyebrow={`Pedido ${shortId(order.id)}`}
-        title={awaitingPayment ? "Falta completar el pago" : estadoTitulo(order)}
+        title={awaitingPayment ? (confirmandoHasta && Date.now() < confirmandoHasta && order.pago_estado === "pendiente" ? "Confirmando tu pago" : "Falta completar el pago") : estadoTitulo(order)}
         subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : order.estado === "en_camino" && retiro ? statusCopy.listo : statusCopy[order.estado]}
         actions={<StatusBadge estado={order.estado} />}
       />
 
-      {order.metodo_pago === "mercadopago" && <PaymentStatus order={order} onPay={pay} paying={paying} />}
+      {order.metodo_pago === "mercadopago" && <PaymentStatus order={order} onPay={pay} paying={paying} confirmando={Boolean(confirmandoHasta && Date.now() < confirmandoHasta)} />}
       <OrderAdjustments orderId={order.id} onChange={load} />
 
       {order.estado !== "cancelado" && (
@@ -268,8 +278,16 @@ function RateOrder({ orderId, storeName, onDone }: { orderId: string; storeName:
   );
 }
 
-function PaymentStatus({ order, onPay, paying }: { order: DeliveryOrder; onPay: () => void; paying: boolean }) {
+function PaymentStatus({ order, onPay, paying, confirmando }: { order: DeliveryOrder; onPay: () => void; paying: boolean; confirmando?: boolean }) {
   const status = order.pago_estado;
+  if (status === "pendiente" && confirmando && order.estado === "pendiente") {
+    return (
+      <section className="mt-4 rounded-3xl border border-info/30 bg-info/5 p-4 sm:p-5" role="status">
+        <p className="flex items-center gap-2 font-bold"><Loader2 className="h-4 w-4 animate-spin" />Confirmando tu pago con Mercado Pago…</p>
+        <p className="mt-1 text-sm text-muted-foreground">Suele tardar unos segundos. Apenas se acredite, el comercio recibe tu pedido. No hace falta que pagues de nuevo.</p>
+      </section>
+    );
+  }
   if (status === "aprobado") {
     return <p className="mt-4 flex items-center gap-2 rounded-2xl bg-success/10 p-3 text-sm font-semibold text-success"><CheckCircle2 className="h-5 w-5" />Pagado con Mercado Pago</p>;
   }
