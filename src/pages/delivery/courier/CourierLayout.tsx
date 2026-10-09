@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useLocation, useOutletContext } from "react-router-dom";
 import { Bike, Loader2, Power, PowerOff } from "lucide-react";
 import { CourierApplication } from "@/components/courier/CourierApplication";
+import { OnboardingBar } from "@/components/courier/OnboardingBar";
 import { SelfieControl } from "@/components/courier/SelfieControl";
 import { EmptyState } from "@/components/delivery/Common";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
@@ -29,7 +30,7 @@ export default function CourierLayout() {
   useEffect(() => { if (!loading && active !== roles.isCourier) roles.refresh(); }, [loading, active]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-  if (!courier || !courier.verificado) return <CourierApplication courier={courier} onDone={reloadCourier} />;
+  if (!courier || !courier.verificado) return <><OnboardingBar /><CourierApplication courier={courier} onDone={reloadCourier} /></>;
   if (!courier.activo) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<Bike className="h-7 w-7" />} title="Tu cuenta de repartidor está pausada" text="Comunicate con soporte para reactivarla." /></div>;
 
   const context: CourierContext = { ...session, courier };

@@ -57,7 +57,7 @@ export function DriverEarningsPage() {
   return (
     <div className="space-y-3">
       <p className="rounded-2xl border bg-card p-3 text-sm text-muted-foreground">Tu billetera es una sola: suma tus viajes de remís y, si también hacés entregas, lo que ganás como repartidor.</p>
-      <CourierWallet refreshKey={finishedViajes.length} />
+      <CourierWallet refreshKey={finishedViajes.length} unidad={["viaje", "viajes"]} />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Outlet, useLocation, useOutletContext } from "react-router-dom";
 import { CarTaxiFront, Loader2, Power, PowerOff } from "lucide-react";
 import { CourierApplication } from "@/components/courier/CourierApplication";
+import { OnboardingBar } from "@/components/courier/OnboardingBar";
 import { RemisEnrollment } from "@/components/courier/RemisEnrollment";
 import { SelfieControl } from "@/components/courier/SelfieControl";
 import { EmptyState } from "@/components/delivery/Common";
@@ -20,6 +21,8 @@ export const useDriver = () => useOutletContext<DriverContext>();
 /** Paso previo al panel: quien todavía no es conductor aprobado ve cómo sumarse (verificación + licencia y cédula). */
 function DriverOnboarding({ children }: { children: React.ReactNode }) {
   return (
+    <>
+    <OnboardingBar />
     <div className="mx-auto max-w-2xl space-y-4 px-4 py-8">
       <header className="flex items-center gap-3">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-tile"><CarTaxiFront className="h-6 w-6" /></span>
@@ -28,6 +31,7 @@ function DriverOnboarding({ children }: { children: React.ReactNode }) {
       <p className="text-muted-foreground">Llevá pasajeros con tu auto y cobrá en efectivo. Primero verificamos tu identidad y después revisamos tu licencia y la cédula del vehículo.</p>
       {children}
     </div>
+    </>
   );
 }
 

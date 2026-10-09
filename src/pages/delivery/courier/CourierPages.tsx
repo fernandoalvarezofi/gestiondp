@@ -62,7 +62,7 @@ export function CourierMapPage() {
 
 export function CourierEarningsPage() {
   const { delivered, deliveredEnvios } = useCourier();
-  return <CourierWallet refreshKey={delivered.length + deliveredEnvios.length} />;
+  return <CourierWallet refreshKey={delivered.length + deliveredEnvios.length} unidad={["entrega", "entregas"]} />;
 }
 
 export function CourierIncentivesPage() {

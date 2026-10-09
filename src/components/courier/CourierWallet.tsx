@@ -18,7 +18,9 @@ const PERIODS = [7, 30, 90] as const;
 const axis = { fill: "hsl(var(--muted-foreground))", fontSize: 12 };
 
 /** Ganancias, saldo con Woref y efectivo a rendir. Sirve para el propio repartidor y, con `courierId`, para administración. */
-export function CourierWallet({ courierId, refreshKey }: { courierId?: string; refreshKey?: number }) {
+/** `unidad`: cómo se llama cada trabajo para quien mira (entregas para el repartidor, viajes para el conductor). */
+export function CourierWallet({ courierId, refreshKey, unidad = ["trabajo", "trabajos"] }: { courierId?: string; refreshKey?: number; unidad?: [string, string] }) {
+  const cuantos = (n: number) => `${n} ${n === 1 ? unidad[0] : unidad[1]}`;
   const [days, setDays] = useState<(typeof PERIODS)[number]>(30);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -67,14 +69,17 @@ export function CourierWallet({ courierId, refreshKey }: { courierId?: string; r
       {period}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard label="Hoy" value={money(wallet.hoy.ganancia)} icon={<Wallet className="h-4 w-4" />} hint={`${wallet.hoy.viajes} ${wallet.hoy.viajes === 1 ? "viaje" : "viajes"}`} />
-        <StatCard label={`Últimos ${wallet.dias} días`} value={money(wallet.periodo.ganancia)} icon={<Bike className="h-4 w-4" />} hint={`${wallet.periodo.viajes} viajes · ${money(wallet.periodo.propinas)} en propinas`} />
+        <StatCard label="Hoy" value={money(wallet.hoy.ganancia)} icon={<Wallet className="h-4 w-4" />} hint={cuantos(wallet.hoy.viajes)} />
+        <StatCard label={`Últimos ${wallet.dias} días`} value={money(wallet.periodo.ganancia)} icon={<Bike className="h-4 w-4" />} hint={`${cuantos(wallet.periodo.viajes)} · ${money(wallet.periodo.propinas)} en propinas`} />
         <StatCard label="Recorrido" value={`${Number(wallet.periodo.km).toLocaleString("es-AR")} km`} icon={<Route className="h-4 w-4" />} hint={wallet.periodo.viajes ? `${money(Number(wallet.periodo.ganancia) / wallet.periodo.viajes)} por viaje` : undefined} />
         <StatCard label="Tiempo de entrega" value={wallet.periodo.minutos_promedio == null ? "—" : `${wallet.periodo.minutos_promedio} min`} icon={<Clock3 className="h-4 w-4" />} hint="Desde que retirás hasta que entregás" />
       </div>
 
       <section className="rounded-3xl border bg-card p-4 sm:p-5">
         <h3 className="font-extrabold">Ganancias por día</h3>
+        {chart.every((d) => !Number(d.ganancia)) ? (
+          <p className="mt-4 grid h-40 place-items-center rounded-2xl border border-dashed text-center text-sm text-muted-foreground">Sin ganancias en los últimos {wallet.dias} días.<br />Conectate para empezar a recibir ofertas.</p>
+        ) : (
         <div className="mt-4 h-56" role="img" aria-label={`Ganancias diarias de los últimos ${wallet.dias} días`}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chart} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
@@ -82,12 +87,13 @@ export function CourierWallet({ courierId, refreshKey }: { courierId?: string; r
               <XAxis dataKey="etiqueta" tickLine={false} axisLine={false} tick={axis} interval="preserveStartEnd" minTickGap={24} />
               <YAxis tickLine={false} axisLine={false} width={56} tick={axis} tickFormatter={(value: number) => (value >= 1000 ? `$${Math.round(value / 1000)}k` : `$${value}`)} />
               <Tooltip cursor={{ fill: "hsl(var(--muted))" }} content={({ active, payload, label }) => active && payload?.length ? (
-                <div className="rounded-xl border bg-popover px-3 py-2 text-sm shadow-pop"><p className="font-bold">{label}</p><p>{money(payload[0].payload.ganancia)}</p><p className="text-muted-foreground">{payload[0].payload.viajes} viajes</p></div>
+                <div className="rounded-xl border bg-popover px-3 py-2 text-sm shadow-pop"><p className="font-bold">{label}</p><p>{money(payload[0].payload.ganancia)}</p><p className="text-muted-foreground">{cuantos(payload[0].payload.viajes)}</p></div>
               ) : null} />
               <Bar dataKey="ganancia" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} maxBarSize={32} />
             </BarChart>
           </ResponsiveContainer>
         </div>
+        )}
       </section>
 
       <div className="grid gap-6 lg:grid-cols-2">
