@@ -34,7 +34,7 @@ export type MerchantContext = {
   loadProducts: () => Promise<void>;
   loadCoupons: () => Promise<void>;
   loadReviews: () => Promise<void>;
-  saveSettings: (values: StoreFormValues) => Promise<void>;
+  saveSettings: (values: StoreFormValues) => Promise<boolean>;
   /** Todos los locales de la cuenta (propios y donde se es parte del equipo). */
   branches: Branch[];
   switchStore: (id: string) => void;

@@ -1,14 +1,14 @@
-import { ReactNode, useEffect, useMemo, useState } from "react";
+import { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { CarTaxiFront, ChevronRight, Package, Receipt, RotateCcw } from "lucide-react";
+import { CarTaxiFront, ChevronRight, Loader2, Package, Receipt, RotateCcw } from "lucide-react";
 import { Envio, envioActivo, envioEstadoLabel } from "@/lib/envios";
 import { Viaje, viajeActivo, viajeEstadoLabel } from "@/lib/remis";
-import { EmptyState, PageHeader } from "@/components/delivery/Common";
+import { EmptyState, ErrorState, PageHeader } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { useReorder } from "@/hooks/useReorder";
-import { db, DeliveryOrder, formatDateTime, img, money, orderSelect, pedidoActivo } from "@/lib/delivery";
+import { db, DeliveryOrder, errorMessage, formatDateTime, img, money, orderSelect, pedidoActivo } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 type Filtro = "todos" | "activos" | "completados" | "cancelados";
@@ -18,6 +18,8 @@ const FILTROS: { id: Filtro; label: string }[] = [
 type Grupo = "activos" | "completados" | "cancelados";
 /** Una fila de la lista: pedido a un comercio, envío de paquete o viaje de remís. */
 type Item = { id: string; at: string; grupo: Grupo; node: ReactNode };
+/** Cuántos de cada tipo se traen por tanda; "Ver anteriores" suma otra tanda. */
+const TANDA = 30;
 
 /** Mis pedidos (contexto Cliente): pedidos, envíos y viajes en un mismo lugar, con filtros por estado. */
 export default function Orders() {
@@ -26,30 +28,54 @@ export default function Orders() {
   const [envios, setEnvios] = useState<Envio[]>([]);
   const [viajes, setViajes] = useState<Viaje[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
+  const [limite, setLimite] = useState(TANDA);
+  const [hayMas, setHayMas] = useState(false);
+  const [masCargando, setMasCargando] = useState(false);
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const reorder = useReorder();
+  const limiteRef = useRef(limite);
+  limiteRef.current = limite;
+
+  const load = useCallback(async () => {
+    if (!user) return;
+    const n = limiteRef.current;
+    const [pedidos, paquetes, remises] = await Promise.all([
+      db.from("delivery_pedidos").select(orderSelect).eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(n),
+      db.from("delivery_envios").select("*").eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(n),
+      db.from("delivery_viajes").select("*").eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(n),
+    ]);
+    const falla = pedidos.error || paquetes.error || remises.error;
+    if (falla) { setError(new Error(errorMessage(falla))); setLoading(false); return; }
+    setError(null);
+    setOrders(pedidos.data || []);
+    setEnvios(paquetes.data || []);
+    setViajes(remises.data || []);
+    setHayMas([pedidos.data, paquetes.data, remises.data].some((lista) => (lista?.length ?? 0) >= n));
+    setLoading(false);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
-    const load = async () => {
-      const [{ data }, { data: parcels }, { data: trips }] = await Promise.all([
-        db.from("delivery_pedidos").select(orderSelect).eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(50),
-        db.from("delivery_envios").select("*").eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(30),
-        db.from("delivery_viajes").select("*").eq("cliente_id", user.id).order("created_at", { ascending: false }).limit(30),
-      ]);
-      setOrders(data || []);
-      setEnvios(parcels || []);
-      setViajes(trips || []);
-      setLoading(false);
-    };
     load();
+    // Varios cambios seguidos (p. ej. el pedido avanza de estado y se asigna repartidor) disparan una sola recarga.
+    let timer: number | undefined;
+    const programar = () => { window.clearTimeout(timer); timer = window.setTimeout(load, 300); };
     const channel = db.channel(`pedidos-cliente-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos", filter: `cliente_id=eq.${user.id}` }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_envios", filter: `cliente_id=eq.${user.id}` }, load)
-      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_viajes", filter: `cliente_id=eq.${user.id}` }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos", filter: `cliente_id=eq.${user.id}` }, programar)
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_envios", filter: `cliente_id=eq.${user.id}` }, programar)
+      .on("postgres_changes", { event: "*", schema: "public", table: "delivery_viajes", filter: `cliente_id=eq.${user.id}` }, programar)
       .subscribe();
-    return () => { db.removeChannel(channel); };
-  }, [user]);
+    return () => { window.clearTimeout(timer); db.removeChannel(channel); };
+  }, [user, load]);
+
+  const verAnteriores = async () => {
+    setMasCargando(true);
+    limiteRef.current = limite + TANDA;
+    setLimite(limite + TANDA);
+    await load();
+    setMasCargando(false);
+  };
 
   const items = useMemo<Item[]>(() => [
     ...orders.map((order) => ({
@@ -83,7 +109,9 @@ export default function Orders() {
   return (
     <div className="mx-auto max-w-4xl px-4 pb-14 pt-5 sm:px-6">
       <PageHeader eyebrow="Seguimiento" title="Mis pedidos" />
-      {loading ? (
+      {error && !items.length ? (
+        <ErrorState className="mt-6" title="No pudimos cargar tus pedidos" error={error} onRetry={() => { setLoading(true); load(); }} />
+      ) : loading ? (
         <div className="mt-6 space-y-3">{[0, 1, 2].map((key) => <div key={key} className="h-28 animate-pulse rounded-3xl bg-muted" />)}</div>
       ) : items.length === 0 ? (
         <EmptyState className="mt-6" icon={<Receipt className="h-7 w-7" />} title="Todavía no hiciste pedidos" text="Cuando confirmes un pedido, un envío o un viaje, vas a poder seguirlo desde acá en tiempo real." action={<Button asChild className="rounded-full"><Link to="/app/explorar">Explorar</Link></Button>} />
@@ -112,6 +140,11 @@ export default function Orders() {
               <div className="mt-3 space-y-3">{resto.map((item) => <div key={item.id}>{item.node}</div>)}</div>
             </section>
           )}
+          {hayMas && (
+            <div className="mt-6 flex justify-center">
+              <Button variant="outline" className="rounded-full" onClick={verAnteriores} disabled={masCargando}>{masCargando && <Loader2 className="h-4 w-4 animate-spin" />}Ver anteriores</Button>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -121,7 +154,7 @@ export default function Orders() {
 function ServiceRow({ to, active, icon, title, detail, when, total, status }: { to: string; active: boolean; icon: ReactNode; title: string; detail: string; when: string; total: number; status: string }) {
   return (
     <Link to={to} className={cn("flex items-center gap-3 rounded-3xl border bg-card p-3 transition-shadow hover:shadow-soft sm:p-4", active && "border-primary/40")}>
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">{icon}</span>
+      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-yellow/20 text-brand-yellow-foreground dark:text-brand-yellow">{icon}</span>
       <div className="min-w-0 flex-1">
         <p className="truncate font-extrabold">{title}</p>
         <p className="truncate text-sm text-muted-foreground">{detail}</p>

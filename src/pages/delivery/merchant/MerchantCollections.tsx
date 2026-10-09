@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, ExternalLink, Layers, Loader2, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { PageIntro } from "@/components/panel/kit";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
@@ -59,14 +60,9 @@ export default function MerchantCollections() {
   const candidatos = draft ? products.filter((p) => (p.estado ?? "publicado") !== "archivado" && !draft.productos.includes(p.id) && (!q || `${p.nombre} ${p.categoria}`.toLowerCase().includes(q))).slice(0, 40) : [];
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold"><Layers className="h-6 w-6 text-primary" />Colecciones</h1>
-          <p className="text-sm text-muted-foreground">Agrupá productos para campañas, temporadas o regalos. Cada colección tiene su página y la podés mostrar en la portada.</p>
-        </div>
-        <Button className="rounded-full" onClick={() => setDraft({ nombre: "", slug: "", descripcion: "", imagen_url: "", activa: true, productos: [] })}><Plus className="h-4 w-4" />Nueva colección</Button>
-      </div>
+    <div className="space-y-5">
+      <PageIntro description="Agrupá productos para campañas, temporadas o regalos. Cada colección tiene su página y la podés mostrar en la portada."
+        actions={<Button className="rounded-full" onClick={() => setDraft({ nombre: "", slug: "", descripcion: "", imagen_url: "", activa: true, productos: [] })}><Plus className="h-4 w-4" />Nueva colección</Button>} />
       {!cols ? <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /> : cols.length === 0 ? (
         <EmptyState icon={<Layers className="h-7 w-7" />} title="Todavía no armaste colecciones" text="Por ejemplo: “Día de la Madre”, “Lo nuevo”, “Combos para compartir”." />
       ) : (

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, PauseCircle, PlayCircle, Power } from "lucide-react";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { db, DeliveryStore, errorMessage, formatTime, isOpenNow, isPaused, nextOpening } from "@/lib/delivery";
+import { db, DeliveryStore, errorMessage, estadoOperativo, isPaused } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 
 const PAUSES = [{ minutes: 15, label: "15 minutos" }, { minutes: 30, label: "30 minutos" }, { minutes: 60, label: "1 hora" }, { minutes: 120, label: "2 horas" }, { minutes: 1440, label: "Hasta mañana" }];
@@ -18,8 +18,10 @@ export function StoreStatusControl({ store, onChange }: { store: DeliveryStore; 
   }, [store]);
 
   const paused = isPaused(store);
-  const open = isOpenNow(store);
-  const outsideHours = store.esta_abierto && !paused && !open;
+  const estado = estadoOperativo(store);
+  const open = estado.recibe;
+  const outsideHours = estado.clave === "fuera_horario";
+  const enRevision = estado.clave === "revision" || estado.clave === "suspendido";
 
   const pause = async (minutes: number | null) => {
     const { error } = await db.rpc("delivery_pausar_comercio", { p_comercio: store.id, p_minutos: minutes });
@@ -34,14 +36,14 @@ export function StoreStatusControl({ store, onChange }: { store: DeliveryStore; 
     onChange();
   };
 
-  const label = !store.esta_abierto ? "Cerrado" : paused ? `En pausa hasta las ${formatTime(store.pausado_hasta)}` : open ? "Abierto · recibiendo pedidos" : nextOpening(store.horarios) || "Fuera de horario";
-  const tone = open ? "border-success/40 bg-success/10 text-success" : paused ? "border-warning/50 bg-warning/15" : "bg-muted text-muted-foreground";
+  const label = estado.etiqueta;
+  const tone = open ? "border-success/40 bg-success/10 text-success" : paused || enRevision ? "border-warning/50 bg-warning/15" : "bg-muted text-muted-foreground";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button type="button" className={cn("flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-bold sm:px-4 sm:py-2", tone)} aria-label="Cambiar estado del local">
-          <span className={cn("h-2.5 w-2.5 rounded-full", open ? "bg-success" : paused ? "bg-warning" : "bg-muted-foreground")} />
+          <span className={cn("h-2.5 w-2.5 rounded-full", open ? "bg-success" : paused || enRevision ? "bg-warning" : "bg-muted-foreground")} />
           <span className="max-sm:sr-only">{label}</span><ChevronDown className="h-4 w-4" />
         </button>
       </DropdownMenuTrigger>
@@ -56,6 +58,7 @@ export function StoreStatusControl({ store, onChange }: { store: DeliveryStore; 
         )}
         <DropdownMenuItem onClick={() => setOpenFlag(!store.esta_abierto)}><Power className="h-4 w-4" />{store.esta_abierto ? "Cerrar el comercio" : "Abrir el comercio"}</DropdownMenuItem>
         {outsideHours && <p className="px-2 py-1.5 text-xs text-muted-foreground">Estás fuera de tu horario de atención. Podés cambiarlo en Configuración.</p>}
+        {enRevision && <p className="px-2 py-1.5 text-xs text-muted-foreground">{estado.clave === "revision" ? "Tu local todavía no fue aprobado: los clientes no lo ven. Podés dejarlo abierto para que empiece a recibir pedidos apenas se apruebe." : "Tu local está suspendido: escribinos desde Ayuda."}</p>}
       </DropdownMenuContent>
     </DropdownMenu>
   );

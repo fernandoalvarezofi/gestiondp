@@ -1,5 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Boxes, Loader2, PackageSearch, Search } from "lucide-react";
+import { AlertTriangle, Loader2, PackageSearch, Search } from "lucide-react";
+import { Metric, MetricStrip, PageIntro } from "@/components/panel/kit";
 import { toast } from "sonner";
 import { MOTIVO_STOCK } from "@/components/merchant/StockHistory";
 import { Button } from "@/components/ui/button";
@@ -38,19 +39,14 @@ export default function MerchantInventory() {
     .sort((a, b) => (vista === "alertas" ? (a.stock ?? 0) - (b.stock ?? 0) : a.nombre.localeCompare(b.nombre, "es")));
 
   return (
-    <div className="mx-auto max-w-5xl space-y-5">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold"><Boxes className="h-6 w-6 text-primary" />Inventario</h1>
-        <p className="text-sm text-muted-foreground">Stock de productos y variantes, alertas y cada movimiento con su motivo. Las ventas descuentan y las cancelaciones devuelven solas.</p>
-      </div>
-      <dl className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        {[
-          ["Stock bajo o agotado", resumen ? String(filas.filter(bajo).length) : "…", "productos o variantes"],
-          ["Valor del inventario", resumen ? money(resumen.valor_inventario) : "…", "a costo (si lo cargaste)"],
-          ["Publicados", resumen ? String(resumen.publicados) : "…", `${resumen?.agotados ?? 0} agotados`],
-          ["Sin foto", resumen ? String(resumen.sin_foto) : "…", "se venden menos"],
-        ].map(([k, v, s]) => <div key={k} className="rounded-3xl border bg-card p-4"><dt className="text-xs font-bold text-muted-foreground">{k}</dt><dd className="mt-1 text-2xl font-black tabular-nums">{v}</dd><p className="text-xs text-muted-foreground">{s}</p></div>)}
-      </dl>
+    <div className="space-y-5">
+      <PageIntro description="Stock de productos y variantes, alertas y cada movimiento con su motivo. Las ventas descuentan y las cancelaciones devuelven solas." />
+      <MetricStrip cols={4}>
+        <Metric label="Stock bajo o agotado" value={resumen ? filas.filter(bajo).length : "…"} hint="productos o variantes" />
+        <Metric label="Valor del inventario" value={resumen ? money(resumen.valor_inventario) : "…"} hint="a costo (si lo cargaste)" />
+        <Metric label="Publicados" value={resumen ? resumen.publicados : "…"} hint={`${resumen?.agotados ?? 0} agotados`} />
+        <Metric label="Sin foto" value={resumen ? resumen.sin_foto : "…"} hint="se venden menos" />
+      </MetricStrip>
       <div className="flex flex-wrap items-center gap-2">
         <div role="tablist" aria-label="Vista" className="flex rounded-full border bg-card p-1">
           {([["alertas", "Alertas"], ["todo", "Todo el stock"], ["movimientos", "Movimientos"]] as const).map(([v, l]) => <button key={v} type="button" role="tab" aria-selected={vista === v} onClick={() => setVista(v)} className={cn("h-8 rounded-full px-3.5 text-sm font-bold", vista === v ? "bg-foreground text-background" : "hover:bg-muted")}>{l}</button>)}

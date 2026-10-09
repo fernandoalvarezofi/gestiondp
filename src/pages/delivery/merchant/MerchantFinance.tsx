@@ -40,6 +40,9 @@ export default function MerchantFinance() {
   const balance = Number(pending.balance);
 
   const ventasN = Number(pending.ventas);
+  // Reparto de cada $100: con ventas, el real del período (incluye el efecto de los cupones); sin ventas, el nominal de la comisión.
+  const pctComision = ventasN ? Math.max(0, Math.min(100, (Number(pending.comision) / ventasN) * 100)) : Number(data.comision_pct);
+  const pctVos = ventasN ? Math.max(0, Math.min(100, (Number(pending.neto) / ventasN) * 100)) : 100 - Number(data.comision_pct);
   const waterfall: { label: string; hint?: string; value: number; sign?: "−" | "="; strong?: boolean }[] = [
     { label: "Ventas", hint: `${pending.pedidos} ${pending.pedidos === 1 ? "pedido entregado" : "pedidos entregados"}`, value: Number(pending.ventas) },
     { label: `Comisión de Woref (${data.comision_pct}%)`, hint: Number(pending.descuentos) > 0 ? `Descontando tus cupones: ${money(pending.descuentos)}` : "Sobre tus ventas", value: Number(pending.comision), sign: "−" },
@@ -60,8 +63,8 @@ export default function MerchantFinance() {
           </div>
           <div className="mt-8">
             <p className="mb-2 text-[12.5px] font-semibold text-white/65">De cada $100 que vendés</p>
-            <div className="flex h-2.5 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-white" style={{ width: `${ventasN ? Math.max(0, Math.min(100, (Number(pending.neto) / ventasN) * 100)) : 0}%` }} /><div className="h-full bg-brand-yellow" style={{ width: `${ventasN ? Math.max(0, Math.min(100, (Number(pending.comision) / ventasN) * 100)) : 0}%` }} /></div>
-            <p className="mt-2 flex justify-between text-[12.5px] text-white/70"><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white" />Para vos {ventasN ? Math.round((Number(pending.neto) / ventasN) * 100) : 0}%</span><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-brand-yellow" />Comisión {data.comision_pct}%</span></p>
+            <div className="flex h-2.5 overflow-hidden rounded-full bg-white/15"><div className="h-full bg-white" style={{ width: `${pctVos}%` }} /><div className="h-full bg-brand-yellow" style={{ width: `${pctComision}%` }} /></div>
+            <p className="mt-2 flex justify-between text-[12.5px] text-white/70"><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-white" />Para vos {Math.round(pctVos)}%</span><span><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-brand-yellow" />Comisión {data.comision_pct}%</span></p>
           </div>
           <p className="mt-6 max-w-md text-xs leading-relaxed text-white/55">Administración cierra el período y te lo paga o cobra. Hasta entonces, este número puede cambiar con cada pedido.</p>
         </section>

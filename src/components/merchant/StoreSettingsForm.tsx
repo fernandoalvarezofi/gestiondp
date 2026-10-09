@@ -1,4 +1,6 @@
 import { FormEvent, useState } from "react";
+import { useAvisoSalida } from "@/hooks/useAvisoSalida";
+import { cn } from "@/lib/utils";
 import { Loader2 } from "lucide-react";
 import { ImageUpload } from "@/components/delivery/ImageUpload";
 import { ClosuresEditor } from "@/components/merchant/ClosuresEditor";
@@ -46,10 +48,14 @@ const toNumber = (value: string) => (value === "" ? 0 : Number(value));
 export type SettingsSection = "general" | "horarios" | "entrega" | "operacion";
 
 /** Sin `section` muestra todo (alta de un comercio nuevo); con `section` muestra solo esa parte de la configuración. */
-export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<void>; section?: SettingsSection }) {
+export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<boolean | void>; section?: SettingsSection }) {
   const show = (name: SettingsSection) => !section || section === name;
   const [values, setValues] = useState<StoreFormValues>(initial);
   const [saving, setSaving] = useState(false);
+  // Lo último guardado: si el formulario difiere, hay cambios sin guardar (aviso al salir y barra de guardado visible).
+  const [base, setBase] = useState<StoreFormValues>(initial);
+  const sinGuardar = JSON.stringify(values) !== JSON.stringify(base);
+  useAvisoSalida(sinGuardar);
   const set = <K extends keyof StoreFormValues>(key: K, value: StoreFormValues[K]) => setValues((current) => ({ ...current, [key]: value }));
 
   const submit = async (event: FormEvent) => {
@@ -60,7 +66,8 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: {
       return;
     }
     setSaving(true);
-    await onSubmit({
+    try {
+    const ok = await onSubmit({
       ...values,
       nombre: values.nombre.trim(),
       direccion: values.direccion.trim(),
@@ -73,7 +80,10 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: {
       tiempo_max: Math.max(values.tiempo_max, values.tiempo_min),
       horario: scheduleSummary(values.horarios),
     });
-    setSaving(false);
+    if (ok !== false) setBase(values);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -151,7 +161,13 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: {
       </fieldset>
       </>)}
 
-      <Button type="submit" className="rounded-full" disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{submitLabel}</Button>
+      <div className={cn("flex flex-wrap items-center gap-3", sinGuardar && "sticky bottom-[calc(env(safe-area-inset-bottom)+4.5rem)] z-20 -mx-3 rounded-2xl border bg-card/95 p-3 shadow-lg backdrop-blur md:bottom-4")}>
+        <Button type="submit" className="rounded-full" disabled={saving || (!sinGuardar && Boolean(section))}>{saving && <Loader2 className="h-4 w-4 animate-spin" />}{submitLabel}</Button>
+        {sinGuardar && <>
+          <span className="text-sm font-semibold text-muted-foreground" role="status">Tenés cambios sin guardar</span>
+          <Button type="button" variant="ghost" className="ml-auto rounded-full" disabled={saving} onClick={() => setValues(base)}>Descartar</Button>
+        </>}
+      </div>
     </form>
   );
 }

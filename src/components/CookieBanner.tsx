@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Cookie, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ export function CookieBanner() {
   const [abierto, setAbierto] = useState(false);
   const [configurar, setConfigurar] = useState(false);
   const [eleccion, setEleccion] = useState({ preferencias: true, medicion: true });
+  const caja = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isNativeApp()) return;
@@ -33,13 +34,26 @@ export function CookieBanner() {
     return () => window.removeEventListener(EVENTO_ABRIR, reabrir);
   }, []);
 
+  const visible = abierto && !pathname.startsWith("/vista-previa-tienda");
+  // Mientras está abierto reserva su alto al final de la página: así nunca tapa un botón (p. ej. "Iniciar sesión" en el celular),
+  // porque siempre se puede desplazar el contenido por encima del aviso.
+  useEffect(() => {
+    const el = caja.current;
+    if (!visible || !el) return;
+    const ajustar = () => { document.body.style.paddingBottom = `${el.offsetHeight + 8}px`; };
+    ajustar();
+    const obs = new ResizeObserver(ajustar);
+    obs.observe(el);
+    return () => { obs.disconnect(); document.body.style.paddingBottom = ""; };
+  }, [visible, configurar]);
+
   // No se muestra dentro de la vista previa del editor de tiendas.
-  if (!abierto || pathname.startsWith("/vista-previa-tienda")) return null;
+  if (!visible) return null;
 
   const decidir = (valor: { preferencias: boolean; medicion: boolean }) => { guardarConsentimiento(valor); setEleccion(valor); setAbierto(false); setConfigurar(false); };
 
   return (
-    <div role="dialog" aria-modal="false" aria-labelledby="cookies-titulo" aria-describedby="cookies-texto"
+    <div ref={caja} role="dialog" aria-modal="false" aria-labelledby="cookies-titulo" aria-describedby="cookies-texto"
       className="pb-safe fixed inset-x-0 bottom-0 z-[60] p-3 sm:bottom-4 sm:left-4 sm:right-auto sm:w-[420px] sm:p-0">
       <div className="max-h-[80vh] overflow-y-auto rounded-3xl border bg-card p-4 text-card-foreground shadow-pop sm:p-5">
         <div className="flex items-start gap-3">
@@ -65,7 +79,7 @@ export function CookieBanner() {
           </ul>
         )}
 
-        <div className={cn("mt-4 grid gap-2", configurar ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3")}>
+        <div className={cn("mt-4 grid gap-2", configurar ? "grid-cols-2" : "grid-cols-3")}>
           {configurar ? (
             <>
               <Button variant="outline" className="rounded-full font-bold" onClick={() => decidir({ preferencias: false, medicion: false })}>Solo necesarias</Button>
@@ -73,9 +87,9 @@ export function CookieBanner() {
             </>
           ) : (
             <>
-              <Button variant="ghost" className="col-span-2 rounded-full font-bold sm:col-span-1" onClick={() => setConfigurar(true)}>Configurar</Button>
-              <Button variant="outline" className="rounded-full font-bold" onClick={() => decidir({ preferencias: false, medicion: false })}>Rechazar</Button>
-              <Button className="rounded-full font-bold" onClick={() => decidir({ preferencias: true, medicion: true })}>Aceptar</Button>
+              <Button variant="ghost" className="rounded-full px-2 font-bold" onClick={() => setConfigurar(true)}>Configurar</Button>
+              <Button variant="outline" className="rounded-full px-2 font-bold" onClick={() => decidir({ preferencias: false, medicion: false })}>Rechazar</Button>
+              <Button className="rounded-full px-2 font-bold" onClick={() => decidir({ preferencias: true, medicion: true })}>Aceptar</Button>
             </>
           )}
         </div>

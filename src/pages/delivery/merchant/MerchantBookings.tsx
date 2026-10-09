@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import { CalendarCheck, ExternalLink, Loader2 } from "lucide-react";
+import { ExternalLink, Loader2 } from "lucide-react";
+import { PageIntro } from "@/components/panel/kit";
 import { Link } from "react-router-dom";
 import { AgendaSettingsTab } from "@/components/merchant/bookings/AgendaSettingsTab";
 import { AgendaTab } from "@/components/merchant/bookings/AgendaTab";
@@ -38,14 +39,9 @@ export default function MerchantBookings() {
 
   const tabs: [Tab, string][] = [["agenda", "Agenda"], ["metricas", "Métricas"], ...(puedeConfigurar ? ([["servicios", "Servicios"], ["equipo", "Equipo"], ["ajustes", "Salas, cierres y avisos"]] as [Tab, string][]) : [])];
   return (
-    <div className="mx-auto max-w-6xl space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-extrabold"><CalendarCheck className="h-6 w-6 text-primary" />Reservas y turnos</h1>
-          <p className="text-sm text-muted-foreground">Tus clientes reservan solo en horarios realmente libres; vos ves y manejás todo desde acá.</p>
-        </div>
-        <Link to={`/t/${store.slug}/reservar`} target="_blank" className="inline-flex items-center gap-1 rounded-full border px-4 py-2 text-sm font-bold hover:bg-muted">Ver página de reservas<ExternalLink className="h-4 w-4" /></Link>
-      </div>
+    <div className="space-y-5">
+      <PageIntro description="Tus clientes reservan solo en horarios realmente libres; vos ves y manejás todo desde acá."
+        actions={<Link to={`/t/${store.slug}/reservar`} target="_blank" className="inline-flex items-center gap-1 rounded-full border bg-card px-4 py-2 text-sm font-bold hover:bg-muted">Ver página de reservas<ExternalLink className="h-4 w-4" /></Link>} />
       <div role="tablist" aria-label="Sección" className="scrollbar-none flex gap-2 overflow-x-auto">
         {tabs.map(([id, label]) => <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cn("h-9 shrink-0 rounded-full border px-4 text-sm font-bold", tab === id ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{label}</button>)}
       </div>

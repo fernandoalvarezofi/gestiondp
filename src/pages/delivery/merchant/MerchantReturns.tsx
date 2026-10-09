@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2, PackageOpen } from "lucide-react";
+import { PageIntro } from "@/components/panel/kit";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
@@ -39,11 +40,8 @@ export default function MerchantReturns() {
 
   const list = groups[tab];
   return (
-    <div className="mx-auto max-w-3xl space-y-5">
-      <div>
-        <h1 className="flex items-center gap-2 text-2xl font-extrabold"><PackageOpen className="h-6 w-6 text-primary" />Devoluciones</h1>
-        <p className="text-sm text-muted-foreground">Los clientes tienen 7 días desde la entrega para pedirlas. Al confirmar el reintegro se descuenta de tus ventas y se te devuelve la comisión correspondiente.</p>
-      </div>
+    <div className="space-y-5">
+      <PageIntro description="Los clientes tienen 7 días desde la entrega para pedirlas. Al confirmar el reintegro se descuenta de tus ventas y se te devuelve la comisión correspondiente." />
       <div role="tablist" aria-label="Estado" className="flex gap-2">
         {([["pendientes", "Para responder"], ["aprobadas", "Aprobadas"], ["historial", "Historial"]] as const).map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={tab === id} onClick={() => setTab(id)} className={cn("h-9 rounded-full border px-4 text-sm font-bold", tab === id ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>

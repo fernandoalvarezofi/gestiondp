@@ -6,6 +6,7 @@ import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-
 import { ThemeProvider } from "next-themes";
 import { NativeShell } from "@/components/NativeShell";
 import { CookieBanner } from "@/components/CookieBanner";
+import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { isNativeApp } from "@/lib/native";
 import { Loader2 } from "lucide-react";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -115,6 +116,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
         <Sonner position="top-center" richColors />
         <DialogosHost />
+        <ConnectionBanner />
         <AuthProvider>
           <RolesProvider>
           <CartProvider>

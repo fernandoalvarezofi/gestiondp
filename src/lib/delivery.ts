@@ -117,6 +117,20 @@ export const writePickupPreference = (pickup: boolean) => { try { window.session
 export const isPaused = (store: Pick<DeliveryStore, "pausado_hasta">) => Boolean(store.pausado_hasta && new Date(store.pausado_hasta).getTime() > Date.now());
 export const isOpenNow = (store: Pick<DeliveryStore, "esta_abierto" | "horarios"> & Partial<Pick<DeliveryStore, "pausado_hasta">>) => store.esta_abierto && !isPaused(store) && withinSchedule(store.horarios);
 
+/**
+ * Estado operativo del local visto por su dueño: si de verdad está recibiendo pedidos y, si no, por qué.
+ * Un solo criterio para el control de estado, el saludo del inicio y cualquier otro aviso (antes cada uno decía algo distinto).
+ */
+export type EstadoOperativo = { clave: "revision" | "suspendido" | "cerrado" | "pausa" | "fuera_horario" | "abierto"; etiqueta: string; detalle: string; recibe: boolean };
+export function estadoOperativo(store: Pick<DeliveryStore, "esta_abierto" | "horarios" | "pausado_hasta"> & { aprobado?: boolean | null; activo?: boolean | null }): EstadoOperativo {
+  if (store.aprobado === false) return { clave: "revision", etiqueta: "En revisión", detalle: "todavía no es visible para los clientes", recibe: false };
+  if (store.activo === false) return { clave: "suspendido", etiqueta: "Suspendido", detalle: "no aparece para los clientes", recibe: false };
+  if (!store.esta_abierto) return { clave: "cerrado", etiqueta: "Cerrado", detalle: "no estás recibiendo pedidos", recibe: false };
+  if (isPaused(store)) return { clave: "pausa", etiqueta: `En pausa hasta las ${formatTime(store.pausado_hasta)}`, detalle: "pausaste los pedidos nuevos", recibe: false };
+  if (!withinSchedule(store.horarios)) { const prox = nextOpening(store.horarios); return { clave: "fuera_horario", etiqueta: prox || "Fuera de horario", detalle: prox ? `fuera de horario · ${prox.charAt(0).toLowerCase()}${prox.slice(1)}` : "fuera de tu horario de atención", recibe: false }; }
+  return { clave: "abierto", etiqueta: "Abierto · recibiendo pedidos", detalle: "recibiendo pedidos", recibe: true };
+}
+
 /** Próxima apertura para mostrar "Abre hoy a las 10:00" / "Abre el lunes a las 12:00". */
 export function nextOpening(horarios: Horarios | null | undefined) {
   if (!horarios) return null;

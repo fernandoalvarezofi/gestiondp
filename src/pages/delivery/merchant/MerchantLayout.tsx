@@ -10,7 +10,7 @@ import { StoreStatusControl } from "@/components/merchant/StoreStatusControl";
 import { PanelShell } from "@/components/panel/PanelShell";
 import { useAuth } from "@/contexts/AuthContext";
 import { playChime } from "@/lib/alarm";
-import { COMERCIO_COLS, Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, merchantOrderSelect, isOpenNow, isPaused, money, productSelect, shortId } from "@/lib/delivery";
+import { COMERCIO_COLS, Coupon, db, DeliveryOrder, DeliveryProduct, DeliveryStore, errorMessage, merchantOrderSelect, estadoOperativo, money, productSelect, shortId } from "@/lib/delivery";
 import { notifyDesktop, printOrderTicket, readPrintSettings } from "@/lib/print";
 import { cn } from "@/lib/utils";
 import { TeamInvitations } from "@/components/merchant/TeamInvitations";
@@ -142,11 +142,12 @@ export default function MerchantLayout() {
   }, [loadStore, loadOrders, loadProducts, loadCoupons, loadReviews]);
 
   const saveSettings = async (values: StoreFormValues) => {
-    if (!store) return;
+    if (!store) return false;
     const { error } = await db.from("delivery_comercios").update(values).eq("id", store.id);
-    if (error) { toast.error(errorMessage(error)); return; }
+    if (error) { toast.error(errorMessage(error)); return false; }
     toast.success("Cambios guardados");
     await loadStore();
+    return true;
   };
 
   const unreadMessages = useUnreadMessages({ comercio: store?.id ?? null, enabled: Boolean(store && access?.permisos.includes("pedidos")) });
@@ -167,7 +168,10 @@ export default function MerchantLayout() {
   }
 
   const pendingCount = orders.filter((order) => order.estado === "pendiente").length;
-  const open = isOpenNow(store);
+  const estado = estadoOperativo(store);
+  const open = estado.recibe;
+  const corto = open ? "Abierto" : estado.clave === "revision" ? "En revisión" : estado.clave === "suspendido" ? "Suspendido" : estado.clave === "pausa" ? "En pausa" : estado.clave === "fuera_horario" ? "Fuera de horario" : "Cerrado";
+  const puntoTono = open ? "bg-success" : estado.clave === "cerrado" ? "bg-muted-foreground" : "bg-warning";
   const can = (permission: Permission) => access.permisos.includes(permission);
   const section = location.pathname.split("/")[3] ?? "";
   const needed = merchantSectionPermission(section);
@@ -185,7 +189,7 @@ export default function MerchantLayout() {
           <DropdownMenuTrigger asChild>
             <button type="button" aria-label="Cambiar de sucursal" className="flex w-full items-center gap-3 rounded-2xl border bg-card p-2.5 text-left group-data-[collapsible=icon]:hidden">
               <StoreLogo store={store} className="h-10 w-10 shrink-0 text-sm" />
-              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-extrabold leading-tight">{store.nombre}</span><span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className={cn("h-2 w-2 rounded-full", open ? "bg-success" : isPaused(store) ? "bg-warning" : "bg-muted-foreground")} />{open ? "Abierto" : isPaused(store) ? "En pausa" : "Cerrado"}</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-extrabold leading-tight">{store.nombre}</span><span className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className={cn("h-2 w-2 rounded-full", puntoTono)} />{corto}</span></span>
               <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
             </button>
           </DropdownMenuTrigger>
@@ -212,14 +216,16 @@ export default function MerchantLayout() {
           <StoreLogo store={store} className="h-10 w-10 shrink-0 text-sm" />
           <div className="min-w-0">
             <p className="truncate text-sm font-extrabold leading-tight">{store.nombre}</p>
-            <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className={cn("h-2 w-2 rounded-full", open ? "bg-success" : isPaused(store) ? "bg-warning" : "bg-muted-foreground")} />{open ? "Abierto" : isPaused(store) ? "En pausa" : "Cerrado"}</p>
+            <p className="flex items-center gap-1.5 text-[11px] font-bold text-muted-foreground"><span className={cn("h-2 w-2 rounded-full", puntoTono)} />{corto}</p>
           </div>
         </div>
       )}
       groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes, mensajes: unreadMessages })}
       actions={<StoreStatusControl store={store} onChange={loadStore} />}
     >
-      {store.aprobado === false && !store.motivo_rechazo && <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>}
+      {store.aprobado === false && !store.motivo_rechazo && (section === "" || section === "configuracion"
+        ? <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>
+        : <p className="mb-4 flex flex-wrap items-center gap-x-2 rounded-full border border-warning/40 bg-warning/10 px-4 py-2 text-[13px]"><span className="font-bold">En revisión: los clientes todavía no ven tu local.</span><Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Completar verificación</Link></p>)}
       {store.aprobado === false && store.motivo_rechazo && <p className="mb-4 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive"><span className="font-bold">Tu comercio no fue aprobado:</span> {store.motivo_rechazo}. Corregilo en Configuración y escribinos para revisarlo de nuevo.</p>}
       {store.activo === false && <p className="mb-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Tu comercio fue pausado por administración y no aparece para los clientes. Escribinos para revisarlo.</p>}
       {(location.pathname === "/app/comercio" || location.pathname === "/app/comercio/pedidos") && <PushPrompt className="mb-4" title="No te pierdas ningún pedido" text="Activá los avisos y te llega una notificación apenas entra un pedido, aunque tengas la app cerrada." />}

@@ -4,7 +4,7 @@ import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, HelpCircle, Mess
 import { Button } from "@/components/ui/button";
 import { Delta, ListRow, Metric, MetricStrip, PageIntro, ProgressRing, RowList, Section, SectionLink, StatusPill, type Tone } from "@/components/panel/kit";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
-import { estadoCorto, img, money, shortId } from "@/lib/delivery";
+import { estadoCorto, img, money, shortId, estadoOperativo } from "@/lib/delivery";
 import { Permission, useMerchant } from "./context";
 
 const TZ = "America/Argentina/Buenos_Aires";
@@ -73,7 +73,7 @@ export default function MerchantHome() {
     <div className="space-y-6">
       <PageIntro
         title={`${greeting()}${first ? `, ${first}` : ""}`}
-        description={<span className="first-letter:capitalize">{dateText} · {store.esta_abierto ? "recibiendo pedidos" : "pausado: no estás recibiendo pedidos"}</span>}
+        description={<span className="first-letter:capitalize">{dateText} · {estadoOperativo(store).detalle}</span>}
         actions={<>
           <Button asChild variant="outline" size="sm" className="rounded-full"><Link to={`/app/tienda/${store.slug}`}>Ver como cliente<ExternalLink className="h-3.5 w-3.5" /></Link></Button>
           {can("catalogo") && <Button asChild size="sm" className="rounded-full"><Link to="/app/comercio/menu"><Plus className="h-4 w-4" />Nuevo producto</Link></Button>}

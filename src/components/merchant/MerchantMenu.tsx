@@ -23,6 +23,7 @@ import { Archive, BadgePercent, FileClock, FolderPlus, History as HistoryIcon, S
 import { catalogoMasivo, Coleccion, duplicarProducto, fetchColecciones, guardarProductosColeccion, isoADateTimeLocal, localDateTimeAIso, programarOferta, slugify, slugValido } from "@/services/catalogPro";
 import { ProductHistoryDialog } from "@/components/merchant/ProductHistory";
 import { confirmar, pedirTexto } from "@/components/ui/dialogos";
+import { useAvisoSalida } from "@/hooks/useAvisoSalida";
 
 type Draft = {
   id?: string; nombre: string; descripcion: string; categoria: string; precio: string; precio_anterior: string; stock: string; imagen_url: string; imagenes: string[]; destacado: boolean; disponible: boolean;
@@ -76,7 +77,11 @@ const toDraft = (product: DeliveryProduct, colecciones: string[] = []): Draft =>
   en_tienda: product.en_tienda !== false,
 });
 
-const soldOut = (product: DeliveryProduct) => !product.disponible || product.stock === 0;
+/** Sin stock para vender: el producto sin variantes con stock 0, o con variantes y ninguna con stock. */
+const sinStock = (product: DeliveryProduct) => (product.usa_variantes && product.variantes?.length
+  ? product.variantes.every((v) => !v.disponible || v.stock === 0)
+  : product.stock === 0);
+const soldOut = (product: DeliveryProduct) => !product.disponible || sinStock(product);
 
 /** Edita un número en el lugar (precio o stock): Enter o salir del campo guarda, Escape cancela. */
 function InlineNumber({ value, label, format, allowEmpty, onSave }: { value: number | null | undefined; label: string; format: (value: number | null | undefined) => string; allowEmpty?: boolean; onSave: (value: number | null) => Promise<void> }) {
@@ -318,6 +323,7 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
                       <p className="flex flex-wrap items-center gap-1.5 font-bold">{product.destacado && <Star className="h-3.5 w-3.5 shrink-0 fill-warning text-warning" />}<span className="truncate">{product.nombre}</span>
                         {(product.estado ?? "publicado") !== "publicado" && <span className={cn("rounded-full px-1.5 text-[10px] font-bold", ESTADO_PRODUCTO[product.estado ?? "publicado"].clase)}>{ESTADO_PRODUCTO[product.estado ?? "publicado"].texto}</span>}
                         {product.promo_activa && <span className="inline-flex items-center gap-0.5 rounded-full bg-brand-yellow/25 px-1.5 text-[10px] font-bold text-brand-yellow-foreground"><BadgePercent className="h-3 w-3" />oferta</span>}
+                        {product.disponible && sinStock(product) && <span className="rounded-full bg-destructive/10 px-1.5 text-[10px] font-bold text-destructive">agotado</span>}
                         {stockBajo(product) && <span className="rounded-full bg-warning/25 px-1.5 text-[10px] font-bold">stock bajo</span>}
                         {!product.imagen_url && <span className="rounded-full bg-warning/20 px-1.5 text-[10px] font-bold">sin foto</span>}
                         {product.sku && <span className="text-[11px] font-semibold text-muted-foreground">{product.sku}</span>}</p>
@@ -329,7 +335,7 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
                         <InlineNumber value={product.stock} label="Stock" allowEmpty format={(value) => (value == null ? "ilimitado" : String(value))} onSave={async (value) => { await patchProduct(product, { stock: value }); }} />
                       </p>
                     </div>
-                    <label className="hidden items-center gap-2 text-xs font-semibold text-muted-foreground sm:flex">{product.disponible ? "Disponible" : "Pausado"}<Switch checked={product.disponible} onCheckedChange={() => toggle(product, "disponible")} /></label>
+                    <label className="hidden items-center gap-2 text-xs font-semibold text-muted-foreground sm:flex">{!product.disponible ? "Pausado" : sinStock(product) ? "Sin stock" : "Disponible"}<Switch checked={product.disponible} onCheckedChange={() => toggle(product, "disponible")} /></label>
                     <Switch className="sm:hidden" checked={product.disponible} onCheckedChange={() => toggle(product, "disponible")} aria-label="Disponible" />
                     <span className="flex items-center gap-0.5">
                       <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label={`Editar ${product.nombre}`} title="Editar" onClick={() => setDraft(toDraft(product, colecciones.filter((c) => c.productos.includes(product.id)).map((c) => c.id)))}><Pencil className="h-4 w-4" /></Button>
@@ -376,9 +382,18 @@ function ProductEditor({ storeId, draft, categories, products, colecciones, onCl
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<EditorTab>("general");
   const [openedFor, setOpenedFor] = useState<Draft | null>(null);
+  // Valores tal como están guardados: si difieren de los del formulario, hay cambios sin guardar.
+  const [guardado, setGuardado] = useState<Draft | null>(null);
   const [buscaRel, setBuscaRel] = useState("");
   const nameInput = useRef<HTMLInputElement>(null);
-  if (draft !== openedFor) { setOpenedFor(draft); if (draft) { setValues(draft); setTab("general"); } }
+  if (draft !== openedFor) { setOpenedFor(draft); if (draft) { setValues(draft); setGuardado(draft); setTab("general"); } }
+  const sinGuardar = Boolean(draft) && guardado !== null && JSON.stringify(values) !== JSON.stringify(guardado);
+  useAvisoSalida(sinGuardar);
+  const cerrar = async () => {
+    if (saving) return;
+    if (sinGuardar && !(await confirmar({ titulo: "¿Descartar los cambios?", descripcion: "Hay cambios en este producto que todavía no guardaste.", confirmar: "Descartar", cancelar: "Seguir editando", peligro: true }))) return;
+    onClose();
+  };
   const set = <K extends keyof Draft>(key: K, value: Draft[K]) => setValues((current) => ({ ...current, [key]: value }));
   const toggleTag = (tag: string) => set("etiquetas", values.etiquetas.includes(tag) ? values.etiquetas.filter((item) => item !== tag) : values.etiquetas.length >= 6 ? values.etiquetas : [...values.etiquetas, tag]);
   const toggleIn = (key: "relacionados" | "colecciones", id: string, max: number) => set(key, values[key].includes(id) ? values[key].filter((x) => x !== id) : values[key].length >= max ? values[key] : [...values[key], id]);
@@ -463,9 +478,10 @@ function ProductEditor({ storeId, draft, categories, products, colecciones, onCl
       }
     } catch (error) { setSaving(false); toast.error(errorMessage(error)); onSaved(false); return; }
     setSaving(false);
-    if (values.id) { toast.success("Producto guardado"); onSaved(true); return; }
+    if (values.id) { setGuardado(values); toast.success("Producto guardado"); onSaved(true); return; }
     // Queda abierto para sumarle variantes y opciones al producto recién creado.
     setValues((current) => ({ ...current, id }));
+    setGuardado({ ...values, id });
     setTab("variantes");
     toast.success("Producto creado. Si querés, agregale variantes u opciones.");
     onSaved(false);
@@ -474,7 +490,7 @@ function ProductEditor({ storeId, draft, categories, products, colecciones, onCl
   const candidatosRel = products.filter((p) => p.id !== values.id && (p.estado ?? "publicado") !== "archivado" && (!buscaRel.trim() || p.nombre.toLowerCase().includes(buscaRel.trim().toLowerCase()))).slice(0, 30);
 
   return (
-    <Dialog open={Boolean(draft)} onOpenChange={(open) => !open && !saving && onClose()}>
+    <Dialog open={Boolean(draft)} onOpenChange={(open) => { if (!open) cerrar(); }}>
       <DialogContent className="max-h-[92vh] max-w-2xl overflow-y-auto">
         <DialogHeader><DialogTitle className="text-xl font-extrabold">{values.id ? "Editar producto" : "Nuevo producto"}</DialogTitle></DialogHeader>
         <div role="tablist" aria-label="Secciones del producto" className="scrollbar-none -mx-1 flex gap-1.5 overflow-x-auto px-1">
