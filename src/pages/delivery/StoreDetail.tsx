@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Bike, ChevronRight, Clock3, Copy, Info, MapPin, Phone, Search, Share2, ShoppingBag, Star, Store as StoreIcon, Ticket, X } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState } from "@/components/delivery/Common";
+import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { FavoriteButton } from "@/components/delivery/FavoriteButton";
 import { ProductCard } from "@/components/delivery/ProductCard";
 import { StoreCartPanel } from "@/components/delivery/StoreCartPanel";
@@ -13,7 +13,7 @@ import { SmartImage } from "@/components/delivery/SmartImage";
 import { CartStore } from "@/contexts/CartContext";
 import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
-import { COMERCIO_COLS, Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary, tagLabels } from "@/lib/delivery";
+import { errorMessage, COMERCIO_COLS, Coupon, couponValue, db, DeliveryProduct, DeliverySection, DeliveryStore, formatDateTime, img, isOpenNow, money, nextOpening, orderSections, productSelect, scheduleSummary, tagLabels } from "@/lib/delivery";
 
 const dietTags = ["vegano", "vegetariano", "sin_tacc", "apto_celiacos", "sin_azucar"];
 import { formatKm, storeReach } from "@/lib/geo";
@@ -33,6 +33,7 @@ export default function StoreDetail() {
   const [sectionConfig, setSectionConfig] = useState<DeliverySection[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [term, setTerm] = useState("");
   const [searching, setSearching] = useState(false);
   const [diet, setDiet] = useState<string[]>([]);
@@ -43,7 +44,8 @@ export default function StoreDetail() {
 
   useEffect(() => {
     (async () => {
-      const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      const { data: found, error: falla } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      if (falla) { setLoadError(new Error(errorMessage(falla))); return; }
       if (!found) { setNotFound(true); return; }
       setStore(found);
       const [{ data: catalog }, { data: opinions }, { data: storeCoupons }, { data: configured }] = await Promise.all([
@@ -95,6 +97,7 @@ export default function StoreDetail() {
   const storePoint = store?.latitud != null && store?.longitud != null ? { lat: Number(store.latitud), lng: Number(store.longitud) } : null;
   const road = useRoute(storePoint, point, { persist: true });
 
+  if (loadError) return <div className="mx-auto max-w-3xl px-4 py-16"><ErrorState title="No pudimos abrir este local" error={loadError} onRetry={() => window.location.reload()} /></div>;
   if (notFound) return <div className="mx-auto max-w-3xl px-4 py-16"><EmptyState icon={<StoreIcon className="h-7 w-7" />} title="No encontramos este local" text="Puede que ya no esté disponible." /></div>;
   if (!store) return <div className="mx-auto max-w-5xl sm:px-6 sm:pt-6"><div className="h-52 animate-pulse bg-muted sm:rounded-3xl" /><div className="mx-4 mt-4 h-24 animate-pulse rounded-3xl bg-muted" /></div>;
 

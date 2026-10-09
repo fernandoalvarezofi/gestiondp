@@ -12,6 +12,7 @@ import { COMERCIO_COLS, db, DeliveryProduct, DeliverySection, DeliveryStore, img
 import type { VendedorResumen } from "@/lib/marketplace";
 import { storefrontUrl } from "@/lib/storefront";
 import { parseVista } from "@/lib/storeRoutes";
+import { ErrorState } from "@/components/delivery/Common";
 
 /** Tienda online pública de un comercio (/t/:slug): se puede ver y armar el pedido sin cuenta; al confirmar se pide ingresar. */
 export default function Storefront() {
@@ -28,13 +29,14 @@ export default function Storefront() {
   const [servicios, setServicios] = useState<ServicioTienda[]>([]);
   const [paginas, setPaginas] = useState<PaginaTienda[]>([]);
   const [colecciones, setColecciones] = useState<ColeccionTienda[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "missing" | "error">("loading");
 
   useEffect(() => {
     let alive = true;
     setState("loading");
     (async () => {
-      const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      const { data: found, error: falla } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      if (falla) { if (alive) setState("error"); return; }
       if (!alive) return;
       if (!found) { setState("missing"); return; }
       // Solo lo publicado: aunque quien mira sea del equipo (que por permisos ve borradores), la tienda muestra lo mismo que ve un cliente.
@@ -101,6 +103,7 @@ export default function Storefront() {
   useEffect(() => { if (store) { const t = normalizeTheme(store.tienda_tema); cargarPixeles({ pixel_meta: t.pixel_meta, ga4: t.ga4 }); } }, [store, vista]);
 
   if (state === "loading") return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (state === "error") return <div className="mx-auto flex min-h-screen max-w-md items-center px-6"><ErrorState className="w-full" title="No pudimos abrir esta tienda" onRetry={() => window.location.reload()} /></div>;
   if (state === "missing" || !store) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">

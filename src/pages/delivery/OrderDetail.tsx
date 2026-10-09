@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Bike, CalendarClock, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { BackBar, EmptyState, PageHeader } from "@/components/delivery/Common";
+import { BackBar, EmptyState, PageHeader, ErrorState } from "@/components/delivery/Common";
 import { OrderTimeline, StatusBadge } from "@/components/delivery/OrderStatus";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -42,6 +42,7 @@ export default function OrderDetail() {
   const [order, setOrder] = useState<DeliveryOrder | null>(null);
   const [code, setCode] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   const [paying, setPaying] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -76,7 +77,9 @@ export default function OrderDetail() {
   const eta = useRoute(courier, etaTarget, { profile: "moto", refreshMs: 60000 });
 
   const load = useCallback(async () => {
-    const { data } = await db.from("delivery_pedidos").select(orderSelect).eq("id", id).maybeSingle();
+    const { data, error: falla } = await db.from("delivery_pedidos").select(orderSelect).eq("id", id).maybeSingle();
+    if (falla) { setLoadError(new Error(errorMessage(falla))); return; }
+    setLoadError(null);
     if (!data) { setNotFound(true); return; }
     setOrder(data);
   }, [id]);
@@ -93,6 +96,7 @@ export default function OrderDetail() {
     return () => { db.removeChannel(channel); };
   }, [id, load]);
 
+  if (loadError && !order) return <div className="mx-auto max-w-2xl px-4 py-14"><ErrorState title="No pudimos cargar el pedido" error={loadError} onRetry={load} /></div>;
   if (notFound) return <div className="mx-auto max-w-2xl px-4 py-14"><EmptyState icon={<Receipt className="h-7 w-7" />} title="No encontramos este pedido" action={<Button asChild className="rounded-full"><Link to="/app/pedidos">Ver mis pedidos</Link></Button>} /></div>;
   if (!order) return <div className="mx-auto max-w-3xl px-4 py-6"><div className="h-60 animate-pulse rounded-3xl bg-muted" /></div>;
 

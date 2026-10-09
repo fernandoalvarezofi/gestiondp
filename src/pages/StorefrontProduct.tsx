@@ -28,6 +28,7 @@ import { descuentoPct, fotosDe, insignias, type VendedorResumen } from "@/lib/ma
 import { normalizeTheme, storefrontUrl } from "@/lib/storefront";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { cn } from "@/lib/utils";
+import { ErrorState } from "@/components/delivery/Common";
 
 
 /** Ficha de producto de una tienda online (/t/:slug/p/:id), con el diseño de esa tienda: fotos, precio, envío, vendedor, preguntas y más productos. */
@@ -42,7 +43,7 @@ export default function StorefrontProduct() {
   const [product, setProduct] = useState<DeliveryProduct | null>(null);
   const [others, setOthers] = useState<DeliveryProduct[]>([]);
   const [vendedor, setVendedor] = useState<VendedorResumen | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [quantity, setQuantity] = useState(1);
   const [varianteId, setVarianteId] = useState<string | null>(null);
   const [options, setOptions] = useState(false);
@@ -58,7 +59,8 @@ export default function StorefrontProduct() {
     setQuantity(1);
     setVarianteId(null);
     (async () => {
-      const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      const { data: found, error: falla } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      if (falla) { if (alive) setState("error"); return; }
       if (!alive) return;
       if (!found) { setState("missing"); return; }
       // El producto se puede abrir por su id o por su dirección amigable (slug). Solo lo publicado.
@@ -124,6 +126,7 @@ export default function StorefrontProduct() {
   });
 
   if (state === "loading") return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (state === "error") return <div className="mx-auto flex min-h-screen max-w-md items-center px-6"><ErrorState className="w-full" title="No pudimos abrir esta tienda" onRetry={() => window.location.reload()} /></div>;
   if (state === "missing" || !store || !product) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">

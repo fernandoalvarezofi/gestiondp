@@ -14,6 +14,7 @@ import { estiloTienda } from "@/lib/storefrontStyle";
 import { cn } from "@/lib/utils";
 import { fetchMyProfile } from "@/services/profile";
 import { cap1, DiaLibre, duracionTexto, fechaCorta, fechaLarga, fetchHorarios, fetchServiciosDeTienda, googleCalendarUrl, horaLocal, hoyLocal, icsDeTurno, MODALIDAD, Profesional, reservarTurno, Servicio, sumarDias, unirseEspera } from "@/services/bookings";
+import { ErrorState } from "@/components/delivery/Common";
 
 type Datos = { servicios: Servicio[]; profesionales: (Profesional & { servicios: string[] })[] };
 type Confirmado = { id: string; inicio: string; fin: string; servicio: string; profesional: string | null; pendiente: boolean };
@@ -31,7 +32,7 @@ export default function Booking() {
   const [anotado, setAnotado] = useState(false);
   const [store, setStore] = useState<DeliveryStore | null>(null);
   const [datos, setDatos] = useState<Datos | null>(null);
-  const [state, setState] = useState<"loading" | "ready" | "missing">("loading");
+  const [state, setState] = useState<"loading" | "ready" | "missing" | "error">("loading");
   const [servicioId, setServicioId] = useState<string | null>(null);
   const [profesionalId, setProfesionalId] = useState<string | null>(null);
   const [dias, setDias] = useState<DiaLibre[] | null>(null);
@@ -45,7 +46,8 @@ export default function Booking() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      const { data: found, error: falla } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
+      if (falla) { if (alive) setState("error"); return; }
       if (!alive) return;
       if (!found) { setState("missing"); return; }
       const d = await fetchServiciosDeTienda(found.id);
@@ -76,6 +78,7 @@ export default function Booking() {
   const style = useMemo(() => estiloTienda(theme), [theme]);
 
   if (state === "loading") return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (state === "error") return <div className="mx-auto flex min-h-screen max-w-md items-center px-6"><ErrorState className="w-full" title="No pudimos abrir esta tienda" onRetry={() => window.location.reload()} /></div>;
   if (state === "missing" || !store || !datos) {
     return <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center"><StoreIcon className="h-10 w-10 text-muted-foreground" /><h1 className="mt-4 text-2xl font-extrabold">No encontramos este local</h1><Button asChild className="mt-6 rounded-full"><Link to="/app">Volver</Link></Button></div>;
   }
