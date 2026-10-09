@@ -47,11 +47,12 @@ export type Turno = {
 };
 export type TurnoAgenda = {
   id: string; inicio: string; fin: string; estado: EstadoTurno; precio: number; notas: string | null; telefono: string | null; servicio: string; profesional_id: string; profesional: string; cliente: string; puede_cerrar: boolean;
-  servicio_id?: string; color?: string | null; recurso?: string | null; cliente_id?: string | null; personas?: number; origen?: "online" | "panel"; grupal?: boolean;
+  servicio_id?: string; color?: string | null; recurso?: string | null; cliente_id?: string | null; contacto_id?: string | null; personas?: number; origen?: "online" | "panel"; grupal?: boolean;
+  creado?: string; confirmado_at?: string | null; duracion_min?: number;
   nota_interna?: string | null; reprogramaciones?: number; cancelado_por?: "cliente" | "comercio" | null; motivo_cancelacion?: string | null; puede_empezar?: boolean;
 };
 export type FichaCliente = {
-  cliente_id: string | null; nombre: string; telefono: string | null; con_cuenta: boolean; nota: string | null; total: number; completados: number; ausentes: number; cancelados: number;
+  cliente_id: string | null; contacto_id?: string | null; etiquetas?: string[]; nombre: string; telefono: string | null; con_cuenta: boolean; nota: string | null; total: number; completados: number; ausentes: number; cancelados: number;
   gastado: number; pedidos: number; primera_visita: string | null;
   turnos: { id: string; inicio: string; estado: EstadoTurno; servicio: string; profesional: string; precio: number }[];
   historial: { evento: string; detalle: Record<string, unknown>; fecha: string; por: string }[];
@@ -117,10 +118,11 @@ export async function turnoMasivo(ids: string[], accion: AccionMasiva, motivo?: 
   if (error) throw error;
   return data;
 }
-export async function crearTurnoPanel(input: { servicio: string; profesional: string; inicio: string; cliente?: string | null; nombre?: string; telefono?: string; notas?: string; personas?: number; notaInterna?: string }) {
+export async function crearTurnoPanel(input: { servicio: string; profesional: string; inicio: string; cliente?: string | null; contacto?: string | null; nombre?: string; telefono?: string; notas?: string; personas?: number; notaInterna?: string }) {
   const { data, error } = await db.rpc("turno_crear_panel", {
     p_servicio: input.servicio, p_profesional: input.profesional, p_inicio: input.inicio, p_cliente: input.cliente ?? null, p_cliente_nombre: input.nombre?.trim() || null,
     p_telefono: input.telefono?.trim() || null, p_notas: input.notas?.trim() || null, p_personas: input.personas ?? 1, p_nota_interna: input.notaInterna?.trim() || null,
+    p_contacto: input.contacto ?? null,
   });
   if (error) throw error;
   return data as string;
@@ -221,4 +223,45 @@ export async function eliminarDeAgenda(tipo: "servicio" | "profesional", item: {
   if (error) { toast.error(errorMessage(error)); return false; }
   toast.success((data as { resultado: string }).resultado === "eliminado" ? `Eliminaste “${item.nombre}”` : `Archivamos “${item.nombre}”: su historial de turnos se conserva`);
   return true;
+}
+
+export type EnEspera = { id: string; fecha: string; servicio_id: string; servicio: string; profesional: string | null; avisado_at: string | null; creado: string; cliente_id: string; contacto_id: string | null; cliente: string; telefono: string | null };
+export async function fetchListaEspera(comercio: string): Promise<EnEspera[]> { const { data, error } = await db.rpc("agenda_lista_espera", { p_comercio: comercio }); if (error) throw error; return data ?? []; }
+export async function quitarDeEspera(id: string) { const { error } = await db.rpc("agenda_espera_quitar", { p_id: id }); if (error) throw error; }
+/** Repeticiones de un turno: misma hora cada 1, 2 o 4 semanas (o mensual). Devuelve las fechas "YYYY-MM-DD" siguientes. */
+export function fechasRepetidas(fecha: string, cada: "semana" | "quincena" | "mes", veces: number): string[] {
+  const out: string[] = [];
+  for (let i = 1; i < veces; i++) {
+    if (cada === "mes") { const d = new Date(`${fecha}T12:00:00Z`); d.setUTCMonth(d.getUTCMonth() + i); out.push(d.toISOString().slice(0, 10)); }
+    else out.push(sumarDias(fecha, i * (cada === "semana" ? 7 : 14)));
+  }
+  return out;
+}
+
+/**
+ * Turnos que se superponen en una misma columna del calendario: a cada uno le toca un carril y se divide el ancho
+ * entre los carriles de su grupo (como Google Calendar). Devuelve { carril, de } por id.
+ */
+export function carriles(items: { id: string; inicio: string; fin: string }[]): Record<string, { carril: number; de: number }> {
+  const orden = [...items].sort((a, b) => a.inicio.localeCompare(b.inicio) || b.fin.localeCompare(a.fin));
+  const out: Record<string, { carril: number; de: number }> = {};
+  let grupo: string[] = []; let finGrupo = ""; let libres: string[] = [];
+  const cerrar = () => { const de = libres.length; grupo.forEach((id) => { out[id].de = de; }); grupo = []; libres = []; };
+  for (const t of orden) {
+    if (grupo.length && t.inicio >= finGrupo) cerrar();
+    let c = libres.findIndex((fin) => fin <= t.inicio);
+    if (c === -1) { c = libres.length; libres.push(t.fin); } else libres[c] = t.fin;
+    out[t.id] = { carril: c, de: 1 };
+    grupo.push(t.id);
+    finGrupo = grupo.length === 1 || t.fin > finGrupo ? t.fin : finGrupo;
+  }
+  cerrar();
+  return out;
+}
+
+/** Minutos de atención de un día según los tramos semanales (para sombrear lo que está fuera de horario). */
+export function tramosDelDia(tramos: Tramo[], fecha: string): [number, number][] {
+  const dia = diaDeSemana(fecha);
+  const amin = (t: string) => { const [h, m] = t.slice(0, 5).split(":").map(Number); return h * 60 + m; };
+  return tramos.filter((t) => t.dia_semana === dia).map((t) => [amin(t.desde), amin(t.hasta)] as [number, number]).sort((a, b) => a[0] - b[0]);
 }

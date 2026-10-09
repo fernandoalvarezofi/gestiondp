@@ -197,6 +197,7 @@ const App = () => (
                         <Route path="devoluciones" element={<MerchantReturns />} />
                         <Route path="mensajes" element={<MerchantMessages />} />
                         <Route path="turnos" element={<MerchantBookings />} />
+                        <Route path="turnos/:seccion" element={<MerchantBookings />} />
                         <Route path="equipo" element={<MerchantPages.Team />} />
                         <Route path="configuracion" element={<Navigate to="general" replace />} />
                         <Route path="configuracion/:seccion" element={<MerchantSettings />} />

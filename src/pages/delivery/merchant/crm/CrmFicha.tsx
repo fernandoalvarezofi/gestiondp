@@ -162,7 +162,7 @@ export default function CrmFicha() {
             </dl>
             <div className="mt-4 grid grid-cols-2 gap-2">
               {wa && <Button asChild variant="outline" size="sm" className="rounded-full"><a href={wa} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />WhatsApp</a></Button>}
-              <Button asChild variant="outline" size="sm" className="rounded-full"><Link to={`/app/comercio/turnos?nuevo=1&contacto=${ficha.id}`}><CalendarPlus className="h-4 w-4" />Nuevo turno</Link></Button>
+              <Button asChild variant="outline" size="sm" className="rounded-full"><Link to={`/app/comercio/turnos/calendario?nuevo=1&contacto=${ficha.id}`}><CalendarPlus className="h-4 w-4" />Nuevo turno</Link></Button>
               {ficha.con_cuenta && <Button asChild variant="outline" size="sm" className="rounded-full"><Link to="/app/comercio/mensajes"><MessageCircle className="h-4 w-4" />Conversaciones</Link></Button>}
               <Button variant="outline" size="sm" className="rounded-full" onClick={() => setActividad({ tipo: "tarea" })}><AlarmClock className="h-4 w-4" />Seguimiento</Button>
             </div>
@@ -228,7 +228,7 @@ function Linea({ titulo, eventos, onTarea, onBorrar, onEditar }: { titulo?: stri
         {eventos.map((e) => {
           const ic = ICONO[e.tipo];
           const vencida = e.tipo === "tarea" && e.estado === "vencida";
-          const enlace = e.tipo === "turno" ? `/app/comercio/turnos?turno=${e.id}` : e.tipo === "pedido" ? "/app/comercio/pedidos" : e.tipo === "mensaje" ? "/app/comercio/mensajes" : null;
+          const enlace = e.tipo === "turno" ? `/app/comercio/turnos/calendario?turno=${e.id}` : e.tipo === "pedido" ? "/app/comercio/pedidos" : e.tipo === "mensaje" ? "/app/comercio/mensajes" : null;
           return (
             <li key={`${e.tipo}-${e.id}`} className="relative grid grid-cols-[64px_40px_minmax(0,1fr)] items-start gap-x-2">
               <div className="pt-2 text-right text-xs leading-tight text-muted-foreground"><span className={cn("block font-bold tabular-nums", vencida ? "text-destructive" : "text-foreground")}>{hora(e.fecha)}</span>{dia(e.fecha)}</div>

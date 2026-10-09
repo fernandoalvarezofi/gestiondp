@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { diaDeSemana, duracionTexto, hhmm, horaLocal, hoyLocal, sumarDias, tramosValidos } from "./bookings";
+import { carriles, diaDeSemana, duracionTexto, fechasRepetidas, hhmm, horaLocal, hoyLocal, sumarDias, tramosDelDia, tramosValidos } from "./bookings";
 
 describe("fechas en horario de Argentina", () => {
   it("la hora se muestra en Argentina aunque el navegador esté en otra zona", () => {
@@ -64,4 +64,26 @@ describe("campos de fecha y hora", () => {
     expect(isoALocal("2026-10-06T13:30:00Z")).toBe("2026-10-06T10:30");
   });
   it("vacío sigue vacío", () => { expect(localAIso("")).toBe(""); });
+});
+
+describe("calendario de la agenda", () => {
+  it("repite cada semana, quincena o mes sin incluir la primera fecha", () => {
+    expect(fechasRepetidas("2026-10-09", "semana", 3)).toEqual(["2026-10-16", "2026-10-23"]);
+    expect(fechasRepetidas("2026-10-09", "quincena", 2)).toEqual(["2026-10-23"]);
+    expect(fechasRepetidas("2026-10-09", "mes", 3)).toEqual(["2026-11-09", "2026-12-09"]);
+    expect(fechasRepetidas("2026-10-09", "semana", 1)).toEqual([]);
+  });
+  it("los turnos superpuestos se reparten en carriles y los sueltos ocupan todo el ancho", () => {
+    const t = (id: string, a: string, b: string) => ({ id, inicio: `2026-10-09T${a}:00Z`, fin: `2026-10-09T${b}:00Z` });
+    const r = carriles([t("a", "10:00", "11:00"), t("b", "10:30", "11:30"), t("c", "11:00", "12:00"), t("d", "13:00", "14:00")]);
+    expect(r.a).toEqual({ carril: 0, de: 2 });
+    expect(r.b).toEqual({ carril: 1, de: 2 });
+    expect(r.c).toEqual({ carril: 0, de: 2 });
+    expect(r.d).toEqual({ carril: 0, de: 1 });
+  });
+  it("los tramos de atención se toman del día de la semana", () => {
+    const tramos = [{ dia_semana: 5, desde: "14:00:00", hasta: "18:00:00" }, { dia_semana: 5, desde: "09:00", hasta: "12:30" }, { dia_semana: 1, desde: "09:00", hasta: "18:00" }];
+    expect(tramosDelDia(tramos, "2026-10-09")).toEqual([[540, 750], [840, 1080]]);
+    expect(tramosDelDia(tramos, "2026-10-10")).toEqual([]);
+  });
 });

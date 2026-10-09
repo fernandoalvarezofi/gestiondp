@@ -1,81 +1,26 @@
-import { FormEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { CalendarClock, History, Loader2, Phone, StickyNote, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import {
-  cambiarEstadoTurno, cap1, crearTurnoPanel, ESTADO_TURNO, EVENTO_TURNO, fechaLarga, fechaLocal, fetchFicha, FichaCliente, guardarNotaCliente, guardarNotaInterna,
-  horaLocal, hoyLocal, Profesional, reprogramarTurno, Servicio, TurnoAgenda,
+  cambiarEstadoTurno, cap1, ESTADO_TURNO, EVENTO_TURNO, fechaLarga, fechaLocal, fetchFicha, FichaCliente, guardarNotaCliente, guardarNotaInterna,
+  horaLocal, Profesional, reprogramarTurno, Servicio, TurnoAgenda,
 } from "@/services/bookings";
+import { ClienteLink } from "@/components/merchant/ClienteLink";
+import type { ClienteTurno } from "./NuevoTurnoDialog";
 import { SlotPicker, slotIso, SlotValue } from "./SlotPicker";
 
 type Prof = Profesional & { servicios: string[] };
 
-/** Turno cargado por el local: alguien llamó, escribió o vino al mostrador. Nace confirmado. */
-export function NuevoTurnoDialog({ open, onOpenChange, servicios, profesionales, inicial, cliente, onCreated }: {
-  open: boolean; onOpenChange: (v: boolean) => void; servicios: Servicio[]; profesionales: Prof[]; inicial?: Partial<SlotValue>;
-  cliente?: { id: string | null; nombre: string; telefono: string | null } | null; onCreated: () => void;
-}) {
-  const [slot, setSlot] = useState<SlotValue>({ servicio: "", profesional: "", fecha: hoyLocal(), hora: "" });
-  const [nombre, setNombre] = useState("");
-  const [telefono, setTelefono] = useState("");
-  const [notas, setNotas] = useState("");
-  const [interna, setInterna] = useState("");
-  const [personas, setPersonas] = useState(1);
-  const [busy, setBusy] = useState(false);
-  useEffect(() => {
-    if (!open) return;
-    setSlot({ servicio: "", profesional: "", fecha: hoyLocal(), hora: "", ...inicial });
-    setNombre(cliente?.nombre ?? ""); setTelefono(cliente?.telefono ?? ""); setNotas(""); setInterna(""); setPersonas(1);
-  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
-  const servicio = servicios.find((s) => s.id === slot.servicio);
-  const capacidad = servicio?.capacidad ?? 1;
-
-  const submit = async (e: FormEvent) => {
-    e.preventDefault();
-    const inicio = slotIso(slot);
-    if (!slot.servicio || !slot.profesional || !inicio) return toast.error("Elegí servicio, profesional, día y hora");
-    if (!cliente?.id && nombre.trim().length < 2) return toast.error("Escribí el nombre de la persona");
-    setBusy(true);
-    try {
-      await crearTurnoPanel({ servicio: slot.servicio, profesional: slot.profesional, inicio, cliente: cliente?.id ?? null, nombre: cliente?.id ? undefined : nombre, telefono, notas, personas, notaInterna: interna });
-      toast.success(`Turno agendado: ${cap1(fechaLarga(inicio))} a las ${horaLocal(inicio)}`);
-      onOpenChange(false); onCreated();
-    } catch (error) { toast.error(errorMessage(error)); } finally { setBusy(false); }
-  };
-
-  return (
-    <Dialog open={open} onOpenChange={(v) => !busy && onOpenChange(v)}>
-      <DialogContent className="max-h-[92vh] max-w-xl overflow-y-auto">
-        <DialogTitle className="text-xl font-extrabold">Nuevo turno</DialogTitle>
-        <DialogDescription>Para quien llamó, escribió o vino al local. Queda confirmado y ocupa la agenda al instante.</DialogDescription>
-        <form onSubmit={submit} className="space-y-4">
-          <SlotPicker servicios={servicios} profesionales={profesionales} value={slot} onChange={setSlot} />
-          {capacidad > 1 && (
-            <div className="space-y-1.5"><Label htmlFor="nt-pers">Personas (cupo {capacidad} por horario)</Label><Input id="nt-pers" type="number" min={1} max={capacidad} value={personas} onChange={(e) => setPersonas(Math.max(1, Math.min(capacidad, Number(e.target.value) || 1)))} /></div>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5"><Label htmlFor="nt-nombre">Nombre</Label><Input id="nt-nombre" maxLength={80} disabled={Boolean(cliente?.id)} value={nombre} onChange={(e) => setNombre(e.target.value)} placeholder="Nombre y apellido" /></div>
-            <div className="space-y-1.5"><Label htmlFor="nt-tel">Teléfono</Label><Input id="nt-tel" inputMode="tel" maxLength={30} value={telefono} onChange={(e) => setTelefono(e.target.value)} placeholder="Para avisarle si cambia algo" /></div>
-          </div>
-          <div className="space-y-1.5"><Label htmlFor="nt-notas">Nota para el turno (la ve la persona si tiene cuenta)</Label><Textarea id="nt-notas" maxLength={300} value={notas} onChange={(e) => setNotas(e.target.value)} className="min-h-[56px] resize-none" /></div>
-          <div className="space-y-1.5"><Label htmlFor="nt-int">Nota interna (solo el equipo)</Label><Textarea id="nt-int" maxLength={1000} value={interna} onChange={(e) => setInterna(e.target.value)} className="min-h-[56px] resize-none" /></div>
-          <Button type="submit" className="w-full rounded-full" disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Agendar turno</Button>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 /** Detalle del turno: acciones según el estado, reprogramar, ficha del cliente, notas e historial. */
 export function TurnoDialog({ turno, storeId, servicios, profesionales, onClose, onChanged, onAgendarOtro }: {
   turno: TurnoAgenda | null; storeId: string; servicios: Servicio[]; profesionales: Prof[]; onClose: () => void; onChanged: () => void;
-  onAgendarOtro: (cliente: { id: string | null; nombre: string; telefono: string | null }, servicio: string) => void;
+  onAgendarOtro: (cliente: ClienteTurno, servicio: string) => void;
 }) {
   const [ficha, setFicha] = useState<FichaCliente | null>(null);
   const [modo, setModo] = useState<"ver" | "reprogramar" | "cancelar">("ver");
@@ -112,7 +57,7 @@ export function TurnoDialog({ turno, storeId, servicios, profesionales, onClose,
         </div>
 
         <div className="rounded-2xl border p-3">
-          <p className="flex items-center gap-2 font-extrabold"><UserRound className="h-4 w-4 text-primary" />{ficha?.nombre ?? turno.cliente}{(turno.personas ?? 1) > 1 && <span className="text-sm font-semibold text-muted-foreground">· {turno.personas} personas</span>}</p>
+          <p className="flex items-center gap-2 font-extrabold"><UserRound className="h-4 w-4 text-primary" /><ClienteLink contactoId={ficha?.contacto_id ?? turno.contacto_id} clienteId={ficha?.cliente_id}>{ficha?.nombre ?? turno.cliente}</ClienteLink>{(turno.personas ?? 1) > 1 && <span className="text-sm font-semibold text-muted-foreground">· {turno.personas} personas</span>}</p>
           {(ficha?.telefono ?? turno.telefono) && <a href={`tel:${(ficha?.telefono ?? turno.telefono ?? "").replace(/[^\d+]/g, "")}`} className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-primary"><Phone className="h-3.5 w-3.5" />{ficha?.telefono ?? turno.telefono}</a>}
           {ficha ? (
             <dl className="mt-3 grid grid-cols-3 gap-2 text-center text-xs sm:grid-cols-5">
@@ -137,7 +82,7 @@ export function TurnoDialog({ turno, storeId, servicios, profesionales, onClose,
             </>}
             {activo && futuro && <Button variant="outline" className="rounded-full" onClick={() => setModo("reprogramar")}><CalendarClock className="h-4 w-4" />Cambiar horario</Button>}
             {activo && <Button variant="ghost" className="rounded-full text-destructive" onClick={() => setModo("cancelar")}>{turno.estado === "pendiente" ? "Rechazar" : "Cancelar"}</Button>}
-            {ficha && <Button variant="ghost" className="rounded-full" onClick={() => onAgendarOtro({ id: ficha.cliente_id, nombre: ficha.nombre, telefono: ficha.telefono }, turno.servicio_id ?? "")}>Agendar otro turno</Button>}
+            {ficha && <Button variant="ghost" className="rounded-full" onClick={() => onAgendarOtro({ contactoId: ficha.contacto_id, id: ficha.cliente_id, nombre: ficha.nombre, telefono: ficha.telefono }, turno.servicio_id ?? "")}>Agendar otro turno</Button>}
           </div>
         )}
         {modo === "reprogramar" && (
@@ -167,7 +112,7 @@ export function TurnoDialog({ turno, storeId, servicios, profesionales, onClose,
           <Textarea id="td-int" maxLength={1000} value={interna} onChange={(e) => setInterna(e.target.value)} className="min-h-[56px] resize-none" placeholder="Solo la ve el equipo" />
           {interna !== (turno.nota_interna ?? "") && <Button size="sm" variant="outline" className="rounded-full" disabled={busy} onClick={() => run(() => guardarNotaInterna(turno.id, interna), "Nota guardada", false)}>Guardar nota</Button>}
         </div>
-        {ficha?.con_cuenta && ficha.cliente_id && (
+        {ficha?.cliente_id && (
           <div className="space-y-1.5">
             <Label htmlFor="td-cli">Nota sobre esta persona (para todos sus turnos y pedidos)</Label>
             <Textarea id="td-cli" maxLength={2000} value={notaCliente} onChange={(e) => setNotaCliente(e.target.value)} className="min-h-[56px] resize-none" placeholder="Preferencias, alergias, cómo le gusta que la atiendan…" />

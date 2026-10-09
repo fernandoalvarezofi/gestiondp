@@ -146,11 +146,11 @@ export default function MerchantLayout() {
     if (!current) return;
     const [crm, turnos] = await Promise.all([
       db.rpc("crm_resumen", { p_comercio: current.id }),
-      db.from("turnos").select("id", { count: "exact", head: true }).eq("comercio_id", current.id).eq("estado", "pendiente").gte("inicio", new Date().toISOString()),
+      db.rpc("agenda_avisos", { p_comercio: current.id }),
     ]);
     setAvisos({
       clientes: crm.error ? 0 : Number((crm.data as { tareas_vencidas?: number } | null)?.tareas_vencidas ?? 0),
-      turnos: turnos.error ? 0 : turnos.count ?? 0,
+      turnos: turnos.error ? 0 : Number((turnos.data as { por_confirmar?: number } | null)?.por_confirmar ?? 0),
     });
   }, []);
   useEffect(() => {
