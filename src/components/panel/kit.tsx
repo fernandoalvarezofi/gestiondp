@@ -89,6 +89,8 @@ export function Metric({ label, value, hint, delta, spark, featured, className }
 
 /** Línea mínima de tendencia (sin ejes): solo la forma de los datos. */
 export function Sparkline({ values, className }: { values: number[]; className?: string }) {
+  // Sin datos (o todo en cero) no hay tendencia que mostrar: una línea plana solo confunde.
+  if (values.length < 2 || values.every((v) => !v)) return null;
   const max = Math.max(...values, 1);
   const min = Math.min(...values, 0);
   const span = max - min || 1;

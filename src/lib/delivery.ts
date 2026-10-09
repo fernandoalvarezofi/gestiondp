@@ -151,7 +151,8 @@ export function nextOpening(horarios: Horarios | null | undefined) {
 export function scheduleSummary(horarios: Horarios | null | undefined) {
   if (!horarios) return "";
   const short = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-  const label = (day: number) => (horarios[String(day)] || []).map((turno) => `${turno.abre}–${turno.cierra}`).join(", ") || "Cerrado";
+  // Un turno que abre y cierra a la misma hora (p. ej. 00:00–00:00) es abierto las 24 horas.
+  const label = (day: number) => (horarios[String(day)] || []).map((turno) => (turno.abre === turno.cierra ? "24 horas" : `${turno.abre}–${turno.cierra}`)).join(", ") || "Cerrado";
   const order = [1, 2, 3, 4, 5, 6, 0];
   const groups: { days: number[]; text: string }[] = [];
   for (const day of order) {
@@ -159,7 +160,7 @@ export function scheduleSummary(horarios: Horarios | null | undefined) {
     const last = groups[groups.length - 1];
     if (last && last.text === text) last.days.push(day); else groups.push({ days: [day], text });
   }
-  if (groups.length === 1) return groups[0].text === "Cerrado" ? "Cerrado" : `Todos los días ${groups[0].text}`;
+  if (groups.length === 1) return groups[0].text === "Cerrado" ? "Cerrado" : groups[0].text === "24 horas" ? "Abierto las 24 horas" : `Todos los días ${groups[0].text}`;
   return groups.map(({ days, text }) => `${days.length > 2 ? `${short[days[0]]} a ${short[days[days.length - 1]].toLowerCase()}` : days.map((day) => short[day]).join(" y ")} ${text}`).join(" · ");
 }
 
