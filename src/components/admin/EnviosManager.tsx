@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Package } from "lucide-react";
 import { toast } from "sonner";
-import { EmptyState, StatCard } from "@/components/delivery/Common";
+import { EmptyState, StatCard, ErrorState } from "@/components/delivery/Common";
 import { Button } from "@/components/ui/button";
 import { db, errorMessage, formatDateTime, money, shortId } from "@/lib/delivery";
 import { Envio, envioActivo, EnvioEstado, envioEstadoLabel, tamanoLabel } from "@/lib/envios";
@@ -16,9 +16,12 @@ export function EnviosManager() {
   const [filter, setFilter] = useState<"activos" | "todos" | EnvioEstado>("activos");
 
   const load = useCallback(async () => {
-    const { data } = await db.from("delivery_envios").select("*, cliente:perfiles!delivery_envios_cliente_perfil_fkey(nombre)").order("created_at", { ascending: false }).limit(200);
+    const { data, error } = await db.from("delivery_envios").select("*, cliente:perfiles!delivery_envios_cliente_perfil_fkey(nombre)").order("created_at", { ascending: false }).limit(200);
+    if (error) { setLoadError(new Error(errorMessage(error))); return; }
+    setLoadError(null);
     setRows(data || []);
   }, []);
+  const [loadError, setLoadError] = useState<unknown>(null);
   useEffect(() => {
     load();
     const channel = db.channel("admin-envios").on("postgres_changes", { event: "*", schema: "public", table: "delivery_envios" }, load).subscribe();
@@ -34,6 +37,7 @@ export function EnviosManager() {
     load();
   };
 
+  if (loadError && !rows) return <ErrorState title="No pudimos cargar los envíos" error={loadError} onRetry={load} />;
   if (!rows) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   const today = new Date().toDateString();

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FilePlus2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { PayoutForm } from "@/components/account/PayoutForm";
-import { EmptyState, StatCard } from "@/components/delivery/Common";
+import { EmptyState, StatCard, ErrorState } from "@/components/delivery/Common";
 import { periodLabel, Settlement, SettlementDetail } from "@/components/finance/SettlementDetail";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -22,9 +22,12 @@ export function SettlementsManager() {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
-    const { data } = await db.from("delivery_liquidaciones").select("*, comercio:delivery_comercios(nombre)").order("created_at", { ascending: false }).limit(300);
+    const { data, error } = await db.from("delivery_liquidaciones").select("*, comercio:delivery_comercios(nombre)").order("created_at", { ascending: false }).limit(300);
+    if (error) { setLoadError(new Error(errorMessage(error))); return; }
+    setLoadError(null);
     setRows(data || []);
   }, []);
+  const [loadError, setLoadError] = useState<unknown>(null);
   useEffect(() => { load(); }, [load]);
 
   const generate = async () => {
@@ -47,6 +50,7 @@ export function SettlementsManager() {
     load();
   };
 
+  if (loadError && !rows) return <ErrorState title="No pudimos cargar las liquidaciones" error={loadError} onRetry={load} />;
   if (!rows) return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>;
 
   const open = rows.filter((row) => row.estado === "pendiente");
