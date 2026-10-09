@@ -21,6 +21,11 @@ export type AdminContext = {
   coupons: Coupon[];
   stats: { gmv: number; count: number; active: number; stores: number; online: number };
   counts: { pendingStores: number; pendingIdentities: number; openClaims: number; reportedReviews: number; refunds: number };
+  /** Si ya llegaron comercios, pedidos y repartidores (antes de eso los números no son reales). */
+  ready: boolean;
+  /** Qué no se pudo cargar (vacío si todo anduvo). */
+  loadErrors: string[];
+  reloadAll: () => void;
   loadStores: () => Promise<void>;
   loadOrders: () => Promise<void>;
   loadCouriers: () => Promise<void>;
@@ -53,19 +58,29 @@ export default function AdminLayout() {
   const [reportedReviews, setReportedReviews] = useState(0);
   const [reportedMessages, setReportedMessages] = useState(0);
   const [pendingIdentities, setPendingIdentities] = useState(0);
+  // Qué datos ya llegaron y cuáles fallaron: sin esto el panel mostraba ceros ("Todos aprobados", "no hay pedidos") mientras cargaba o si fallaba.
+  const [loaded, setLoaded] = useState({ stores: false, orders: false, couriers: false });
+  const [failed, setFailed] = useState<Record<string, string>>({});
+  const mark = useCallback((key: "stores" | "orders" | "couriers", label: string, error: unknown) => {
+    setLoaded((current) => (current[key] ? current : { ...current, [key]: true }));
+    setFailed((current) => { const next = { ...current }; if (error) next[key] = `${label}: ${errorMessage(error)}`; else delete next[key]; return next; });
+  }, []);
 
   const loadStores = useCallback(async () => {
-    const { data } = await db.rpc("delivery_admin_comercios");
-    setStores(data || []);
-  }, []);
+    const { data, error } = await db.rpc("delivery_admin_comercios");
+    if (!error) setStores(data || []);
+    mark("stores", "Comercios", error);
+  }, [mark]);
   const loadOrders = useCallback(async () => {
-    const { data } = await db.from("delivery_pedidos").select(adminOrderSelect).order("created_at", { ascending: false }).limit(200);
-    setOrders(data || []);
-  }, []);
+    const { data, error } = await db.from("delivery_pedidos").select(adminOrderSelect).order("created_at", { ascending: false }).limit(200);
+    if (!error) setOrders(data || []);
+    mark("orders", "Pedidos", error);
+  }, [mark]);
   const loadCouriers = useCallback(async () => {
-    const { data } = await db.from("delivery_repartidores").select("*, perfil:perfiles(nombre)").order("created_at", { ascending: false });
-    setCouriers(data || []);
-  }, []);
+    const { data, error } = await db.from("delivery_repartidores").select("*, perfil:perfiles(nombre)").order("created_at", { ascending: false });
+    if (!error) setCouriers(data || []);
+    mark("couriers", "Repartidores", error);
+  }, [mark]);
   const loadIdentities = useCallback(async () => {
     const { count } = await db.from("delivery_identidad").select("perfil_id", { count: "exact", head: true }).eq("estado", "en_revision");
     setPendingIdentities(count ?? 0);
@@ -79,8 +94,11 @@ export default function AdminLayout() {
     loadStores(); loadOrders(); loadCouriers(); loadCoupons(); loadIdentities();
     db.rpc("delivery_admin_resenas_reportadas").then(({ data }: { data: unknown[] | null }) => setReportedReviews(data?.length ?? 0), () => undefined);
     db.rpc("msg_admin_reportes").then(({ data }: { data: unknown[] | null }) => setReportedMessages(data?.length ?? 0), () => undefined);
-    const channel = db.channel("admin-pedidos").on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos" }, loadOrders).subscribe();
-    return () => { db.removeChannel(channel); };
+    // Con muchos pedidos moviéndose a la vez, una sola recarga cada medio segundo.
+    let timer: number | undefined;
+    const programar = () => { window.clearTimeout(timer); timer = window.setTimeout(loadOrders, 500); };
+    const channel = db.channel("admin-pedidos").on("postgres_changes", { event: "*", schema: "public", table: "delivery_pedidos" }, programar).subscribe();
+    return () => { window.clearTimeout(timer); db.removeChannel(channel); };
   }, [loadStores, loadOrders, loadCouriers, loadCoupons, loadIdentities]);
 
   const stats = useMemo(() => {
@@ -90,7 +108,7 @@ export default function AdminLayout() {
       gmv: todayOrders.reduce((total, order) => total + Number(order.total), 0),
       count: todayOrders.length,
       active: orders.filter((order) => pedidoActivo(order.estado)).length,
-      stores: stores.filter((store) => store.activo !== false).length,
+      stores: stores.filter((store) => store.activo !== false && store.aprobado !== false).length,
       online: couriers.filter((courier) => courier.disponible && courier.activo).length,
     };
   }, [orders, stores, couriers]);
@@ -111,7 +129,7 @@ export default function AdminLayout() {
   const setCommission = async (store: DeliveryStore, raw: string) => {
     const pct = Number(raw);
     if (raw.trim() === "" || !Number.isFinite(pct) || pct < 0 || pct > 50) { toast.error("La comisión debe estar entre 0 y 50 %"); return; }
-    if (pct === Number(store.comision_pct ?? 10)) return;
+    if (store.comision_pct != null && pct === Number(store.comision_pct)) return;
     const { error } = await db.rpc("delivery_admin_comision", { p_comercio: store.id, p_pct: pct });
     if (error) { toast.error(errorMessage(error)); return; }
     toast.success(`Comisión de ${store.nombre}: ${pct}%`);
@@ -133,6 +151,9 @@ export default function AdminLayout() {
 
   const context: AdminContext = {
     stores, orders, couriers, coupons, stats, counts,
+    ready: loaded.stores && loaded.orders && loaded.couriers,
+    loadErrors: Object.values(failed),
+    reloadAll: () => { loadStores(); loadOrders(); loadCouriers(); },
     loadStores, loadOrders, loadCouriers, loadCoupons, loadIdentities, setOpenClaims, setReportedReviews, setReportedMessages,
     updateStore, setCommission, moderate, advance, editStore: setEditing, reviewStore: setReviewing,
   };

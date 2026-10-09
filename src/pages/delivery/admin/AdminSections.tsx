@@ -1,6 +1,10 @@
 import { ReactNode, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowRight, Bike, Check, Pencil, Radio, X } from "lucide-react";
+import { ArrowRight, Bike, Check, Pencil, Radio, Search, X } from "lucide-react";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { confirmar } from "@/components/ui/dialogos";
+import { ErrorState } from "@/components/delivery/Common";
 import { BarSeries, ListRow, Metric, MetricStrip, PageIntro, RowList, Section, SectionLink, StatusPill, Surface } from "@/components/panel/kit";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
 import { AccountingPanel } from "@/components/admin/AccountingPanel";
@@ -34,7 +38,8 @@ import { CouponManager } from "@/components/merchant/CouponManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { categoriaLabel, DeliveryOrder, EstadoPedido, estadoCorto, formatDateTime, img, isOpenNow, money, pedidoActivo, shortId } from "@/lib/delivery";
+import { categoriaLabel, DeliveryOrder, DeliveryStore, EstadoPedido, estadoCorto, formatDateTime, img, isOpenNow, money, pedidoActivo, shortId } from "@/lib/delivery";
+import { cn } from "@/lib/utils";
 import { ADMIN_REDIRECTS, ADMIN_SECTIONS, adminTo } from "@/navigation/menus";
 import { useAdmin } from "./AdminLayout";
 
@@ -71,7 +76,7 @@ function PendingStores() {
 }
 
 function Overview() {
-  const { orders, stats, counts } = useAdmin();
+  const { orders, stats, counts, ready, loadErrors, reloadAll } = useAdmin();
   const queue = [
     { label: "Tickets de soporte abiertos", value: counts.openClaims, to: "/app/admin/soporte" },
     { label: "Comercios por aprobar", value: counts.pendingStores, to: "/app/admin/comercios" },
@@ -92,11 +97,12 @@ function Overview() {
       <PageIntro title="Centro de control" description={<span className="first-letter:capitalize">{new Date().toLocaleDateString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", weekday: "long", day: "numeric", month: "long" })} · {stats.active} {stats.active === 1 ? "pedido en curso" : "pedidos en curso"} ahora</span>}
         actions={<Button asChild size="sm" className="rounded-full"><Link to="/app/admin/operaciones"><Radio className="h-4 w-4" />Abrir operaciones en vivo</Link></Button>} />
       <AdminMfaNotice />
+      {loadErrors.length > 0 && <ErrorState title="Parte del resumen no se pudo cargar" error={new Error(loadErrors.join(" · "))} onRetry={reloadAll} />}
       <MetricStrip cols={5}>
-        <Metric featured label="Facturado hoy" value={money(stats.gmv)} hint={`${stats.count} ${stats.count === 1 ? "pedido" : "pedidos"} hoy`} spark={days.map((d) => d.facturado)} />
-        <Metric label="En curso" value={stats.active} hint="Pedidos activos" />
-        <Metric label="Comercios activos" value={stats.stores} hint={counts.pendingStores ? `${counts.pendingStores} por aprobar` : "Todos aprobados"} />
-        <Metric label="Repartidores" value={stats.online} hint="Conectados ahora" />
+        <Metric featured label="Facturado hoy" value={ready ? money(stats.gmv) : "…"} hint={ready ? `${stats.count} ${stats.count === 1 ? "pedido" : "pedidos"} hoy` : "Cargando…"} spark={ready ? days.map((d) => d.facturado) : undefined} />
+        <Metric label="En curso" value={ready ? stats.active : "…"} hint="Pedidos activos" />
+        <Metric label="Comercios activos" value={ready ? stats.stores : "…"} hint={!ready ? "Cargando…" : counts.pendingStores ? `${counts.pendingStores} por aprobar` : "Todos aprobados"} />
+        <Metric label="Repartidores" value={ready ? stats.online : "…"} hint="Conectados ahora" />
       </MetricStrip>
       <PendingStores />
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -109,7 +115,7 @@ function Overview() {
               {orders.slice(0, 6).map((order) => (
                 <ListRow key={order.id} to="/app/admin/pedidos" lead={<StatusBadge estado={order.estado} />} title={<>{shortId(order.id)} <span className="font-medium text-muted-foreground">· {order.comercio?.nombre}</span></>} meta={`${order.cliente?.nombre?.split(" ")[0] || "Cliente"} · ${formatDateTime(order.created_at)}`} trailing={<span className="font-extrabold tabular-nums">{money(order.total)}</span>} />
               ))}
-              {orders.length === 0 && <p className="px-4 py-6 text-center text-sm text-muted-foreground">Todavía no hay pedidos.</p>}
+              {orders.length === 0 && <p className="px-4 py-6 text-center text-sm text-muted-foreground">{ready ? "Todavía no hay pedidos." : "Cargando pedidos…"}</p>}
             </RowList>
           </Section>
         </div>
@@ -127,7 +133,7 @@ function Overview() {
 }
 
 function OrdersSection() {
-  const { orders, advance } = useAdmin();
+  const { orders, advance, ready } = useAdmin();
   const [statusFilter, setStatusFilter] = useState<EstadoPedido | "activos" | "todos">("activos");
   const filteredOrders = orders.filter((order) => statusFilter === "todos" || (statusFilter === "activos" ? pedidoActivo(order.estado) : order.estado === statusFilter));
   return (
@@ -163,35 +169,74 @@ function OrdersSection() {
             ))}
           </tbody>
         </table>
-        {filteredOrders.length === 0 && <p className="p-8 text-center text-muted-foreground">No hay pedidos con este filtro.</p>}
+        {filteredOrders.length === 0 && <p className="p-8 text-center text-muted-foreground">{ready ? "No hay pedidos con este filtro." : "Cargando pedidos…"}</p>}
       </div>
     </>
   );
 }
 
 function StoresSection() {
-  const { stores, setCommission, updateStore, reviewStore, editStore } = useAdmin();
+  const { stores, setCommission, updateStore, reviewStore, editStore, ready } = useAdmin();
+  const [busca, setBusca] = useState("");
+  const [filtro, setFiltro] = useState<"todos" | "pendientes" | "visibles" | "ocultos">("todos");
+  const norm = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const lista = stores.filter((store) => (filtro === "todos" || (filtro === "pendientes" ? store.aprobado === false : filtro === "visibles" ? store.activo !== false && store.aprobado !== false : store.activo === false))
+    && (!busca.trim() || norm(`${store.nombre} ${store.slug} ${store.direccion} ${store.rubro ?? ""}`).includes(norm(busca.trim()))));
+  const cuenta = { todos: stores.length, pendientes: stores.filter((x) => x.aprobado === false).length, visibles: stores.filter((x) => x.activo !== false && x.aprobado !== false).length, ocultos: stores.filter((x) => x.activo === false).length };
+
+  // Cambiar la comisión afecta lo que se le cobra al comercio desde el próximo pedido: se confirma antes de aplicar.
+  const cambiarComision = async (store: DeliveryStore, raw: string, input: HTMLInputElement) => {
+    const pct = Number(raw);
+    if (store.comision_pct != null && pct === Number(store.comision_pct)) return;
+    if (raw.trim() === "" || !Number.isFinite(pct) || pct < 0 || pct > 50) { toast.error("La comisión debe estar entre 0 y 50 %"); input.value = String(store.comision_pct ?? ""); return; }
+    const ok = await confirmar({ titulo: `¿Cambiar la comisión de ${store.nombre} a ${pct}%?`, descripcion: `Hoy paga ${store.comision_pct ?? "—"}%. El cambio se aplica a los pedidos nuevos y queda en la auditoría.`, confirmar: "Cambiar comisión" });
+    if (!ok) { input.value = String(store.comision_pct ?? ""); return; }
+    await setCommission(store, raw);
+  };
+  const cambiarVisible = async (store: DeliveryStore, visible: boolean) => {
+    if (!visible && !(await confirmar({ titulo: `¿Ocultar ${store.nombre}?`, descripcion: "Deja de aparecer para los clientes al instante y no recibe pedidos nuevos. Los pedidos en curso siguen.", confirmar: "Ocultar comercio", peligro: true }))) return;
+    await updateStore(store, { activo: visible });
+  };
+
   return (
     <div className="space-y-4">
       <PendingStores />
-      <ul className="divide-y overflow-hidden rounded-3xl border bg-card">
-        {stores.map((store) => (
-          <li key={store.id} className="flex flex-wrap items-center gap-3 p-3">
-            <img src={img(store.imagen_url, 160)} alt="" className="h-12 w-16 rounded-xl object-cover" />
-            <div className="min-w-0 flex-1">
-              <Link to={`/app/tienda/${store.slug}`} className="font-bold hover:underline">{store.nombre}</Link>
-              <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion} · {isOpenNow(store) ? "Abierto" : "Cerrado"}{store.aprobado === false && " · Pendiente de aprobación"}</p>
-            </div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold">Comisión
-              <Input key={`${store.id}-${store.comision_pct}`} type="number" inputMode="decimal" min={0} max={50} step={0.5} defaultValue={store.comision_pct ?? 10} className="h-8 w-16 px-2 text-right" aria-label={`Comisión de ${store.nombre} en porcentaje`} onBlur={(event) => setCommission(store, event.target.value)} />%
-            </label>
-            <label className="flex items-center gap-2 text-xs font-semibold">Destacado<Switch checked={Boolean(store.destacado)} onCheckedChange={(checked) => updateStore(store, { destacado: checked })} /></label>
-            <label className="flex items-center gap-2 text-xs font-semibold">Visible<Switch checked={store.activo !== false} onCheckedChange={(checked) => updateStore(store, { activo: checked })} /></label>
-            <Button size="sm" variant="outline" className="rounded-full" onClick={() => reviewStore(store)}>Verificación</Button>
-            <Button size="icon" variant="ghost" aria-label="Editar comercio" onClick={() => editStore(store)}><Pencil className="h-4 w-4" /></Button>
-          </li>
-        ))}
-      </ul>
+      <div className="flex flex-wrap items-center gap-2">
+        <label className="flex h-10 min-w-[220px] flex-1 items-center gap-2 rounded-full border bg-card px-4"><Search className="h-4 w-4 text-muted-foreground" aria-hidden /><input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por nombre, dirección o rubro" aria-label="Buscar comercio" className="min-w-0 flex-1 bg-transparent text-sm outline-none" /></label>
+        <div className="scrollbar-none flex gap-1.5 overflow-x-auto" role="group" aria-label="Filtrar comercios">
+          {(["todos", "pendientes", "visibles", "ocultos"] as const).map((id) => (
+            <button key={id} type="button" aria-pressed={filtro === id} onClick={() => setFiltro(id)} className={cn("h-9 shrink-0 rounded-full border px-3.5 text-[13px] font-bold", filtro === id ? "border-foreground bg-foreground text-background" : "bg-card hover:bg-muted")}>{id === "todos" ? "Todos" : id === "pendientes" ? "Por aprobar" : id === "visibles" ? "Visibles" : "Ocultos"} <span className="tabular-nums opacity-70">{cuenta[id]}</span></button>
+          ))}
+        </div>
+      </div>
+      {!ready ? (
+        <div className="space-y-2" aria-busy="true" aria-label="Cargando comercios">{[0, 1, 2, 3].map((k) => <Skeleton key={k} className="h-16 w-full rounded-2xl" />)}</div>
+      ) : lista.length === 0 ? (
+        <p className="rounded-3xl border border-dashed p-8 text-center text-sm text-muted-foreground">{stores.length ? "Ningún comercio coincide con la búsqueda o el filtro." : "Todavía no hay comercios."}</p>
+      ) : (
+        <ul className="divide-y overflow-hidden rounded-3xl border bg-card">
+          {lista.map((store) => (
+            <li key={store.id} className="flex flex-wrap items-center gap-3 p-3">
+              <img src={img(store.imagen_url, 160)} alt="" className="h-12 w-16 rounded-xl object-cover" />
+              <div className="min-w-0 flex-1 basis-48">
+                <Link to={`/app/tienda/${store.slug}`} className="font-bold hover:underline">{store.nombre}</Link>
+                <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion}</p>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {store.aprobado === false ? <StatusPill tone="warning">Por aprobar</StatusPill> : store.activo === false ? <StatusPill tone="danger">Oculto</StatusPill> : isOpenNow(store) ? <StatusPill tone="success" dot>Abierto</StatusPill> : <StatusPill>Cerrado</StatusPill>}
+                </div>
+              </div>
+              <label className="flex items-center gap-1.5 text-xs font-semibold">Comisión
+                <Input key={`${store.id}-${store.comision_pct}`} type="number" inputMode="decimal" min={0} max={50} step={0.5} defaultValue={store.comision_pct ?? ""} className="h-8 w-16 px-2 text-right" aria-label={`Comisión de ${store.nombre} en porcentaje`}
+                  onBlur={(event) => cambiarComision(store, event.target.value, event.currentTarget)} onKeyDown={(event) => { if (event.key === "Enter") event.currentTarget.blur(); }} />%
+              </label>
+              <label className="flex items-center gap-2 text-xs font-semibold">Destacado<Switch checked={Boolean(store.destacado)} onCheckedChange={(checked) => updateStore(store, { destacado: checked })} /></label>
+              <label className="flex items-center gap-2 text-xs font-semibold">Visible<Switch checked={store.activo !== false} onCheckedChange={(checked) => cambiarVisible(store, checked)} /></label>
+              <Button size="sm" variant="outline" className="rounded-full" onClick={() => reviewStore(store)}>Verificación</Button>
+              <Button size="icon" variant="ghost" aria-label={`Editar ${store.nombre}`} onClick={() => editStore(store)}><Pencil className="h-4 w-4" /></Button>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
