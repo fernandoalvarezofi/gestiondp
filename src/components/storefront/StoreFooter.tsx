@@ -9,7 +9,7 @@ type Enlace = { label: string; onClick: () => void };
 type Red = { href: string; label: string; icon: ReactNode };
 
 /** Pie de página completo de la tienda: marca, navegación, datos del local, medios de pago y redes. */
-export function StoreFooter({ store, enlaces, redes, preview, widthClass }: { store: DeliveryStore; enlaces: Enlace[]; redes: Red[]; preview?: boolean; widthClass: string }) {
+export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie }: { store: DeliveryStore; enlaces: Enlace[]; redes: Red[]; preview?: boolean; widthClass: string; pie?: string }) {
   const [pagoOnline, setPagoOnline] = useState(false);
   useEffect(() => {
     if (preview) return;
@@ -29,7 +29,7 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass }: { st
       <div className={`mx-auto grid gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 lg:grid-cols-4 ${widthClass}`}>
         <div className="space-y-3">
           <div className="flex items-center gap-3"><StoreLogo store={store} className="h-10 w-10" /><p className="text-lg font-extrabold">{store.nombre}</p></div>
-          {store.descripcion && <p className="line-clamp-3 text-sm text-muted-foreground">{store.descripcion}</p>}
+          {(pie || store.descripcion) && <p className="line-clamp-4 whitespace-pre-line text-sm text-muted-foreground">{pie || store.descripcion}</p>}
           {redes.length > 0 && (
             <div className="flex gap-2 pt-1">
               {redes.map((r) => (
@@ -43,7 +43,7 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass }: { st
           <nav aria-label="Navegación de la tienda">
             <h2 className="text-sm font-extrabold uppercase tracking-wide">Tienda</h2>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              {enlaces.map((e) => <li key={e.label}><button type="button" onClick={e.onClick} className="text-left hover:text-foreground">{e.label}</button></li>)}
+              {enlaces.map((e, i) => <li key={`${e.label}-${i}`}><button type="button" onClick={e.onClick} className="text-left hover:text-foreground">{e.label}</button></li>)}
             </ul>
           </nav>
         )}

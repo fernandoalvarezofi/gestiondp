@@ -10,6 +10,7 @@ type Movimiento = { id: number; fecha: string; producto: string; variante: strin
 export const MOTIVO_STOCK: Record<string, string> = {
   alta: "Stock inicial", venta: "Venta", cancelacion: "Pedido cancelado (se devolvió)", impago: "Pedido sin pagar (se devolvió)",
   vencido: "Pedido sin respuesta (se devolvió)", ajuste_pedido: "Ajuste por falta de stock", ajuste: "Ajuste manual",
+  recepcion: "Ingreso de mercadería", merma: "Merma o rotura", devolucion: "Devolución de un cliente", inventario: "Conteo de inventario",
 };
 
 /** Historial de movimientos de stock de un producto: quién, cuándo, cuánto y por qué. Lo ve quien puede editar el catálogo del local. */

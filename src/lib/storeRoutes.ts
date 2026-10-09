@@ -5,7 +5,14 @@ export type Vista =
   | { tipo: "inicio" }
   | { tipo: "coleccion"; categoria: string }
   | { tipo: "ofertas" }
-  | { tipo: "buscar"; q: string };
+  | { tipo: "buscar"; q: string }
+  /** Colección armada a mano por el comercio (/coleccion/<slug>). */
+  | { tipo: "curada"; slug: string }
+  /** Página informativa o landing de campaña (/pagina/<slug>). */
+  | { tipo: "pagina"; slug: string };
+
+export const curatedPath = (slug: string, coleccion: string) => `/t/${slug}/coleccion/${coleccion}`;
+export const pagePath = (slug: string, pagina: string) => `/t/${slug}/pagina/${pagina}`;
 
 export const VISTA_INICIO: Vista = { tipo: "inicio" };
 
@@ -22,13 +29,17 @@ export function parseVista(pathname: string, search: string, categoriaParam?: st
     try { categoria = decodeURIComponent(categoriaParam); } catch { /* se usa tal cual */ }
     return { tipo: "coleccion", categoria: categoria.slice(0, 60) };
   }
+  const curada = limpio.match(/\/coleccion\/([a-z0-9]+(?:-[a-z0-9]+)*)$/);
+  if (curada) return { tipo: "curada", slug: curada[1].slice(0, 70) };
+  const pagina = limpio.match(/\/pagina\/([a-z0-9]+(?:-[a-z0-9]+)*)$/);
+  if (pagina) return { tipo: "pagina", slug: pagina[1].slice(0, 70) };
   if (/\/ofertas$/.test(limpio)) return { tipo: "ofertas" };
   if (/\/buscar$/.test(limpio)) return { tipo: "buscar", q: (new URLSearchParams(search).get("q") ?? "").slice(0, 80) };
   return VISTA_INICIO;
 }
 
 /** Clave estable de una vista (para saber si cambió de página). */
-export const vistaKey = (v: Vista) => (v.tipo === "coleccion" ? `c:${v.categoria}` : v.tipo === "buscar" ? `b:${v.q}` : v.tipo);
+export const vistaKey = (v: Vista) => (v.tipo === "coleccion" ? `c:${v.categoria}` : v.tipo === "buscar" ? `b:${v.q}` : v.tipo === "curada" ? `k:${v.slug}` : v.tipo === "pagina" ? `p:${v.slug}` : v.tipo);
 
 const normalizar = (texto: string) => texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().trim();
 

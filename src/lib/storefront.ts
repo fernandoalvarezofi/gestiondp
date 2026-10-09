@@ -6,7 +6,7 @@
  * Todo lo que viene de la base se vuelve a validar acá antes de usarse en estilos, enlaces o imágenes.
  */
 
-export type Plantilla = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado";
+export type Plantilla = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado" | "estudio" | "taller";
 export type Seccion = "categorias" | "destacados" | "catalogo" | "acerca" | "opiniones" | "contacto";
 
 // ---------------------------------------------------------------- diseño global
@@ -55,7 +55,7 @@ export const ASPECTOS: { id: Diseno["aspecto"]; nombre: string }[] = [
 ];
 
 // ---------------------------------------------------------------- bloques
-export type EstiloPortada = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado" | "simple";
+export type EstiloPortada = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado" | "estudio" | "taller" | "simple";
 export type EnlaceTipo = "catalogo" | "whatsapp" | "url";
 type Base = { id: string; visible: boolean };
 
@@ -64,7 +64,10 @@ export type BloqueTexto = Base & { tipo: "texto"; titulo?: string; texto?: strin
 export type BloqueImagenTexto = Base & { tipo: "imagen_texto"; imagen_url?: string; lado: "izquierda" | "derecha"; titulo?: string; texto?: string; boton?: string; enlace_tipo: EnlaceTipo; enlace_url?: string };
 export type BloqueBanner = Base & { tipo: "banner"; imagen_url?: string; titulo?: string; texto?: string; boton?: string; enlace_tipo: EnlaceTipo; enlace_url?: string; alto: "chico" | "medio" | "grande" };
 export type BloqueColecciones = Base & { tipo: "colecciones"; titulo?: string; estilo: "tarjetas" | "circulos" | "lista" };
-export type BloqueProductos = Base & { tipo: "productos"; titulo?: string; fuente: "destacados" | "categoria" | "todos"; categoria?: string; cantidad: number; columnas: number };
+export type FuenteProductos = "destacados" | "categoria" | "todos" | "coleccion" | "nuevos" | "ofertas";
+export type BloqueProductos = Base & { tipo: "productos"; titulo?: string; fuente: FuenteProductos; categoria?: string; coleccion?: string; cantidad: number; columnas: number };
+/** Servicios con reserva de turnos (solo se muestra si el local ofrece turnos). */
+export type BloqueServicios = Base & { tipo: "servicios"; titulo?: string; texto?: string; cantidad: number; estilo: "tarjetas" | "lista" };
 export type BloqueCatalogo = Base & { tipo: "catalogo"; titulo?: string; columnas: number; filtros: boolean };
 export type GaleriaItem = { url: string; texto?: string };
 export type BloqueGaleria = Base & { tipo: "galeria"; titulo?: string; imagenes: GaleriaItem[]; columnas: number };
@@ -83,16 +86,63 @@ export type BloquePoliticas = Base & { tipo: "politicas"; titulo?: string; items
 export type BloqueOferta = Base & { tipo: "oferta"; titulo?: string; texto?: string; boton?: string; hasta?: string; enlace_tipo: EnlaceTipo; enlace_url?: string };
 export type BloqueVideo = Base & { tipo: "video"; titulo?: string; texto?: string; url?: string };
 
-export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueCinta | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador;
+export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueCinta | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador | BloqueServicios;
 export type BloqueTipo = Bloque["tipo"];
 
-export const MAX_BLOQUES = 24;
+export const MAX_BLOQUES = 30;
+
+// ---------------------------------------------------------------- navegación
+export type MenuTipo = "inicio" | "catalogo" | "ofertas" | "categoria" | "coleccion" | "pagina" | "reservar" | "url";
+export type MenuItem = { texto: string; tipo: MenuTipo; destino?: string };
+export const MENU_TIPOS: { tipo: MenuTipo; nombre: string; necesita?: "categoria" | "coleccion" | "pagina" | "url" }[] = [
+  { tipo: "inicio", nombre: "Inicio" }, { tipo: "catalogo", nombre: "Catálogo completo" }, { tipo: "ofertas", nombre: "Ofertas" },
+  { tipo: "categoria", nombre: "Una sección del catálogo", necesita: "categoria" }, { tipo: "coleccion", nombre: "Una colección", necesita: "coleccion" },
+  { tipo: "pagina", nombre: "Una página (Nosotros, Envíos…)", necesita: "pagina" }, { tipo: "reservar", nombre: "Reservar turno" }, { tipo: "url", nombre: "Enlace externo (https)", necesita: "url" },
+];
+const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+/** Valida el menú (mismas reglas que el servidor): hasta 12 enlaces, destinos seguros. */
+export function normalizeMenu(raw: unknown): MenuItem[] {
+  if (!Array.isArray(raw)) return [];
+  const out: MenuItem[] = [];
+  for (const el of raw.slice(0, 12)) {
+    if (!el || typeof el !== "object") continue;
+    const e = el as Record<string, unknown>;
+    const tipo = MENU_TIPOS.find((m) => m.tipo === e.tipo)?.tipo;
+    const textoMenu = text(e.texto, 30);
+    const destino = text(e.destino, 200);
+    if (!tipo || !textoMenu) continue;
+    if ((tipo === "coleccion" || tipo === "pagina") && !SLUG_RE.test(destino)) continue;
+    if (tipo === "categoria" && (!destino || destino.length > 60)) continue;
+    if (tipo === "url" && !/^https:\/\/[^\s<>"]+$/.test(destino)) continue;
+    out.push({ texto: textoMenu, tipo, ...(tipo === "inicio" || tipo === "catalogo" || tipo === "ofertas" || tipo === "reservar" ? {} : { destino }) });
+  }
+  return out;
+}
+/** Dirección interna (o externa, para "url") de un enlace del menú. */
+export function menuHref(slug: string, item: MenuItem): string {
+  const base = `/t/${slug}`;
+  switch (item.tipo) {
+    case "inicio": return base;
+    case "catalogo": return `${base}#catalogo`;
+    case "ofertas": return `${base}/ofertas`;
+    case "categoria": return `${base}/c/${encodeURIComponent(item.destino ?? "")}`;
+    case "coleccion": return `${base}/coleccion/${item.destino}`;
+    case "pagina": return `${base}/pagina/${item.destino}`;
+    case "reservar": return `${base}/reservar`;
+    case "url": return item.destino ?? base;
+  }
+}
+export type CatalogoOrden = "relevancia" | "recientes" | "precio_asc" | "precio_desc" | "nombre";
+export const CATALOGO_ORDENES: { id: CatalogoOrden; nombre: string }[] = [
+  { id: "relevancia", nombre: "Destacados primero" }, { id: "recientes", nombre: "Más nuevos" }, { id: "precio_asc", nombre: "Menor precio" }, { id: "precio_desc", nombre: "Mayor precio" }, { id: "nombre", nombre: "Nombre (A-Z)" },
+];
 
 export const TIPOS_BLOQUE: { tipo: BloqueTipo; nombre: string; detalle: string; unico?: boolean }[] = [
   { tipo: "portada", nombre: "Portada", detalle: "Lo primero que se ve: foto grande, título y botón", unico: true },
   { tipo: "banner", nombre: "Banner de oferta", detalle: "Una imagen ancha con mensaje y botón" },
   { tipo: "colecciones", nombre: "Colecciones", detalle: "Tus categorías como tarjetas con foto" },
-  { tipo: "productos", nombre: "Selección de productos", detalle: "Destacados, una categoría o los últimos" },
+  { tipo: "productos", nombre: "Selección de productos", detalle: "Destacados, novedades, ofertas, una sección o una colección" },
+  { tipo: "servicios", nombre: "Servicios y turnos", detalle: "Tus servicios con precio y duración, con botón para reservar", unico: true },
   { tipo: "catalogo", nombre: "Catálogo completo", detalle: "Todos tus productos con filtros", unico: true },
   { tipo: "imagen_texto", nombre: "Imagen con texto", detalle: "Foto a un lado y tu mensaje al otro" },
   { tipo: "texto", nombre: "Texto", detalle: "Un título y un párrafo" },
@@ -133,6 +183,22 @@ export type TiendaTema = {
   secciones?: Seccion[];
   diseno?: Partial<Diseno>;
   bloques?: Bloque[];
+  /** Navegación del encabezado (si está vacía se muestran las secciones del catálogo). */
+  menu?: MenuItem[];
+  /** Buscadores y redes: título, descripción, ícono de pestaña e imagen para compartir; indexar=false pide no aparecer en Google. */
+  seo_titulo?: string;
+  seo_descripcion?: string;
+  favicon_url?: string;
+  og_imagen?: string;
+  indexar?: boolean;
+  /** Catálogo: orden inicial y si se muestra el buscador. */
+  catalogo_orden?: CatalogoOrden;
+  mostrar_busqueda?: boolean;
+  /** Texto libre del pie de página. */
+  pie?: string;
+  /** Analítica propia del comercio (se cargan solo con consentimiento de medición). */
+  pixel_meta?: string;
+  ga4?: string;
 };
 
 export const PLANTILLAS: { id: Plantilla; nombre: string; ideal: string; detalle: string; color: string }[] = [
@@ -143,6 +209,8 @@ export const PLANTILLAS: { id: Plantilla; nombre: string; ideal: string; detalle
   { id: "impacto", nombre: "Impacto", ideal: "Súper, kioscos, ofertas", detalle: "Portada de color con título gigante, cuenta regresiva y compra rápida.", color: "#E2552C" },
   { id: "mercado", nombre: "Mercado", ideal: "Súper, ferretería, catálogos grandes", detalle: "Denso y directo: banner principal, ofertas, categorías y muchos productos a la vista.", color: "#2563EB" },
   { id: "gourmet", nombre: "Gourmet", ideal: "Restaurantes, panaderías, cafés", detalle: "Carta con fotos, secciones con título decorado y lectura cómoda de precios.", color: "#7A2E2E" },
+  { id: "estudio", nombre: "Estudio", ideal: "Belleza, bienestar, salud, servicios", detalle: "Calmo y luminoso: servicios con turnos al frente, fotos en óvalo y botón de reserva siempre a mano.", color: "#9D6B53" },
+  { id: "taller", nombre: "Taller", ideal: "Artesanías, hogar, deco, regalos", detalle: "Papel kraft, fotos tipo polaroid y tipografía de autor: cada producto con su historia.", color: "#5C6B3B" },
 ];
 
 export const SECCIONES: { id: Seccion; nombre: string; detalle: string; obligatoria?: boolean }[] = [
@@ -171,6 +239,10 @@ export const DISENO_PLANTILLA: Record<Plantilla, Diseno> = {
   urbano: { ...DISENO_BASE, fondo: "#0A0A0B", texto: "#F4F4F5", radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "display", ancho: "amplio" },
   // Mercado: denso y directo, con ofertas y categorías a la vista como en un marketplace. Pensada para súper, kioscos, ferretería y catálogos grandes.
   mercado: { ...DISENO_BASE, radio: "suave", aspecto: "1 / 1", fuente_titulos: "sans", ancho: "amplio", espaciado: "compacto" },
+  // Estudio: fondo cálido muy claro, letras amistosas, mucho aire; pensada para belleza, bienestar y servicios con turnos.
+  estudio: { ...DISENO_BASE, fondo: "#FBF7F4", texto: "#2B2321", radio: "pildora", aspecto: "4 / 5", fuente_titulos: "redondeada", espaciado: "amplio", cabecera: "centro" },
+  // Taller: papel kraft, tipografía editorial y tarjetas cuadradas tipo polaroid; artesanías, hogar y regalos.
+  taller: { ...DISENO_BASE, fondo: "#F3ECE0", texto: "#2F2A22", radio: "cuadrado", aspecto: "1 / 1", fuente_titulos: "editorial", fuente_texto: "serif", descripcion: false },
 };
 
 export const TEMA_BASE = {
@@ -228,7 +300,8 @@ export const nuevoId = () => `b${Math.random().toString(36).slice(2, 9)}`;
 const ALTOS = ["chico", "medio", "grande"] as const;
 const ALINEACIONES = ["izquierda", "centro"] as const;
 const ENLACES = ["catalogo", "whatsapp", "url"] as const;
-const ESTILOS_PORTADA = ["boutique", "galeria", "impacto", "gourmet", "atelier", "urbano", "mercado", "simple"] as const;
+const ESTILOS_PORTADA = ["boutique", "galeria", "impacto", "gourmet", "atelier", "urbano", "mercado", "estudio", "taller", "simple"] as const;
+const FUENTES_PRODUCTOS = ["destacados", "categoria", "todos", "coleccion", "nuevos", "ofertas"] as const;
 const FONDOS_TEXTO = ["ninguno", "suave", "color"] as const;
 const ICONOS_IDS = ICONOS.map((item) => item.id);
 
@@ -254,6 +327,7 @@ export function bloqueNuevo(tipo: BloqueTipo, plantilla: Plantilla = "boutique")
     case "politicas": return { ...base, tipo, titulo: "Envíos, cambios y garantía", items: [{ t: "Envíos", x: "Entregamos en la zona cercana al local. El costo y el tiempo se calculan con tu dirección." }, { t: "Cambios y devoluciones", x: "Podés cambiar tu compra dentro de los 10 días con el comprobante." }, { t: "Medios de pago", x: "Efectivo, transferencia o tarjeta." }] };
     case "oferta": return { ...base, tipo, titulo: "Oferta por tiempo limitado", texto: "Aprovechá antes de que termine.", boton: "Ver productos", hasta: finDeSemana(), enlace_tipo: "catalogo" };
     case "video": return { ...base, tipo, titulo: "Conocenos" };
+    case "servicios": return { ...base, tipo, titulo: "Reservá tu turno", texto: "Elegí el servicio, el día y la hora. Te confirmamos al instante.", cantidad: 6, estilo: "tarjetas" };
   }
 }
 
@@ -270,7 +344,8 @@ export function normalizeBloque(raw: unknown, index: number): Bloque | null {
     case "imagen_texto": return { ...base, tipo: "imagen_texto", imagen_url: httpsUrl(s.imagen_url) || undefined, lado: pick(s.lado, ["izquierda", "derecha"] as const, "izquierda"), titulo: opt(s.titulo, 80), texto: opt(s.texto, 600), boton: opt(s.boton, 24), ...enlace };
     case "banner": return { ...base, tipo: "banner", imagen_url: httpsUrl(s.imagen_url) || undefined, titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), alto: pick(s.alto, ALTOS, "medio"), ...enlace };
     case "colecciones": return { ...base, tipo: "colecciones", titulo: opt(s.titulo, 80), estilo: pick(s.estilo, ["tarjetas", "circulos", "lista"] as const, "tarjetas") };
-    case "productos": return { ...base, tipo: "productos", titulo: opt(s.titulo, 80), fuente: pick(s.fuente, ["destacados", "categoria", "todos"] as const, "destacados"), categoria: opt(s.categoria, 60), cantidad: clampInt(s.cantidad, 2, 12, 4), columnas: clampInt(s.columnas, 2, 5, 4) };
+    case "productos": return { ...base, tipo: "productos", titulo: opt(s.titulo, 80), fuente: pick(s.fuente, FUENTES_PRODUCTOS, "destacados"), categoria: opt(s.categoria, 60), coleccion: typeof s.coleccion === "string" && SLUG_RE.test(s.coleccion) ? s.coleccion.slice(0, 70) : undefined, cantidad: clampInt(s.cantidad, 2, 12, 4), columnas: clampInt(s.columnas, 2, 5, 4) };
+    case "servicios": return { ...base, tipo: "servicios", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), cantidad: clampInt(s.cantidad, 1, 12, 6), estilo: pick(s.estilo, ["tarjetas", "lista"] as const, "tarjetas") };
     case "catalogo": return { ...base, tipo: "catalogo", titulo: opt(s.titulo, 80), columnas: clampInt(s.columnas, 2, 5, 4), filtros: s.filtros !== false };
     case "galeria": {
       const imagenes = (Array.isArray(s.imagenes) ? s.imagenes : []).slice(0, 8).map((item): GaleriaItem | null => {
@@ -337,6 +412,30 @@ export function paginaDePlantilla(plantilla: Plantilla, tema: Pick<TiendaTema, "
   const quitar = (lista: (Bloque | null)[]) => lista.filter((x): x is Bloque => x !== null);
 
   switch (plantilla) {
+    case "estudio":
+      return quitar([
+        portada,
+        b<BloqueServicios>("servicios", "servicios", { titulo: "Nuestros servicios", texto: "Elegí el servicio, el día y la hora. Recibís la confirmación al instante.", estilo: "tarjetas", cantidad: 6 }),
+        acerca ?? b<BloqueImagenTexto>("imagen_texto", "equipo", { lado: "derecha", titulo: "Un espacio pensado para vos", texto: "Contá quiénes atienden, su experiencia y cómo es la experiencia en tu local. Cambiá esta foto por una tuya.", boton: "Ver productos", enlace_tipo: "catalogo" }),
+        beneficios([{ icono: "tiempo", titulo: "Turnos online", texto: "Reservá en un minuto, sin llamar" }, { icono: "calidad", titulo: "Profesionales", texto: "Equipo con experiencia" }, soporte]),
+        b<BloqueProductos>("productos", "destacados", { titulo: "Para llevar a casa", fuente: "destacados", cantidad: 4, columnas: 4 }),
+        catalogo("Productos", 4),
+        b<BloqueOpiniones>("opiniones", "opiniones"),
+        b<BloqueFaq>("faq", "faq", { titulo: "Antes de tu turno", items: [{ p: "¿Puedo cambiar el horario?", r: "Sí, desde Mis turnos, hasta las horas que indica cada servicio." }, { p: "¿Cómo pago?", r: "En el local, con efectivo, transferencia o tarjeta." }] }),
+        b<BloqueContacto>("contacto", "contacto"),
+      ]);
+    case "taller":
+      return quitar([
+        portada,
+        b<BloqueCinta>("cinta", "cinta", { estilo: "claro", items: ["Hecho a mano", "Piezas únicas", "Envíos a domicilio", "Regalos con tarjeta"] }),
+        acerca ?? b<BloqueTexto>("texto", "manifiesto", { titulo: "Cada pieza tiene su historia", texto: "Contá cómo trabajás, con qué materiales y por qué cada pieza es distinta.", alineacion: "centro", fondo: "suave" }),
+        b<BloqueProductos>("productos", "nuevos", { titulo: "Recién salidos del taller", fuente: "nuevos", cantidad: 4, columnas: 4 }),
+        b<BloqueGaleria>("galeria", "galeria", { titulo: "En el taller", imagenes: [], columnas: 3 }),
+        b<BloqueColecciones>("colecciones", "colecciones", { titulo: "Explorá", estilo: "tarjetas" }),
+        catalogo("Todas las piezas", 3),
+        b<BloquePoliticas>("politicas", "politicas"),
+        ...cierre,
+      ]);
     case "atelier":
       return quitar([
         portada,
@@ -486,6 +585,17 @@ export function normalizeTheme(raw: unknown): TemaNormalizado {
     facebook: social(source.facebook),
     web: httpsUrl(source.web, 200) || undefined,
     whatsapp: /^[0-9]{8,15}$/.test(text(source.whatsapp, 15)) ? text(source.whatsapp, 15) : undefined,
+    menu: normalizeMenu(source.menu),
+    seo_titulo: text(source.seo_titulo, 70) || undefined,
+    seo_descripcion: text(source.seo_descripcion, 170) || undefined,
+    favicon_url: httpsUrl(source.favicon_url) || undefined,
+    og_imagen: httpsUrl(source.og_imagen) || undefined,
+    indexar: source.indexar !== false,
+    catalogo_orden: pick(source.catalogo_orden, CATALOGO_ORDENES.map((o) => o.id), "relevancia"),
+    mostrar_busqueda: source.mostrar_busqueda !== false,
+    pie: text(source.pie, 300) || undefined,
+    pixel_meta: /^[0-9]{8,20}$/.test(text(source.pixel_meta, 20)) ? text(source.pixel_meta, 20) : undefined,
+    ga4: /^G-[A-Z0-9]{4,14}$/.test(text(source.ga4, 16)) ? text(source.ga4, 16) : undefined,
   };
   const guardados = Array.isArray(source.bloques) ? source.bloques.slice(0, MAX_BLOQUES).map((item, index) => normalizeBloque(item, index)).filter((item): item is Bloque => item !== null) : null;
   // Sin bloques guardados (tiendas anteriores o recién creadas) la página se arma a partir de la plantilla y las secciones.

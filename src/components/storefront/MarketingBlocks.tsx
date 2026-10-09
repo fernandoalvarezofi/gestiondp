@@ -36,18 +36,20 @@ export function Cuenta({ hasta, style, onTermino }: { hasta: string; style?: CSS
   );
 }
 
-/** Formulario de suscripción por email de la tienda. El servidor valida, ignora repetidos y limita el volumen. */
+/** Formulario de suscripción por email de la tienda. Pide consentimiento explícito; el servidor lo exige, valida, ignora repetidos y limita el volumen. */
 export function NewsletterForm({ comercioId, boton, preview, buttonStyle, inputStyle }: { comercioId: string; boton: string; preview?: boolean; buttonStyle: CSSProperties; inputStyle?: CSSProperties }) {
   const [email, setEmail] = useState("");
   const [estado, setEstado] = useState<"libre" | "enviando" | "listo">("libre");
   const [error, setError] = useState<string | null>(null);
+  const [acepto, setAcepto] = useState(false);
 
   const enviar = async (event: FormEvent) => {
     event.preventDefault();
     if (preview || estado === "enviando") return;
     setError(null);
+    if (!acepto) { setError("Marcá la casilla para aceptar recibir novedades."); return; }
     setEstado("enviando");
-    const { error: failure } = await db.rpc("delivery_tienda_suscribir", { p_comercio: comercioId, p_email: email });
+    const { error: failure } = await db.rpc("delivery_tienda_suscribir", { p_comercio: comercioId, p_email: email, p_consentimiento: true });
     if (failure) { setEstado("libre"); setError(errorMessage(failure, "No pudimos registrar tu email")); return; }
     setEstado("listo");
   };
@@ -56,13 +58,17 @@ export function NewsletterForm({ comercioId, boton, preview, buttonStyle, inputS
     return <p className="flex items-center justify-center gap-2 text-lg font-bold" role="status"><Check className="h-5 w-5" />¡Listo! Te avisamos de las novedades.</p>;
   }
   return (
-    <form onSubmit={enviar} className="mx-auto flex max-w-md flex-col gap-2 sm:flex-row" noValidate>
+    <form onSubmit={enviar} className="mx-auto flex max-w-md flex-col gap-2 sm:flex-row sm:flex-wrap" noValidate>
       <label className="sr-only" htmlFor="newsletter-email">Tu email</label>
       <input id="newsletter-email" type="email" autoComplete="email" inputMode="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={160} required placeholder="tu@email.com"
         className="h-12 min-w-0 flex-1 border bg-background px-4 text-base text-foreground outline-none focus-visible:ring-2" style={inputStyle} />
       <button type="submit" disabled={estado === "enviando"} className="inline-flex h-12 items-center justify-center gap-2 px-6 text-base font-bold transition-opacity hover:opacity-90 disabled:opacity-60" style={buttonStyle}>
         {estado === "enviando" && <Loader2 className="h-4 w-4 animate-spin" />}{boton}
       </button>
+      <label className="flex items-start gap-2 text-left text-sm sm:basis-full">
+        <input type="checkbox" checked={acepto} onChange={(e) => setAcepto(e.target.checked)} className="mt-0.5 h-4 w-4 shrink-0" />
+        <span>Acepto recibir novedades y ofertas de esta tienda por email. Puedo pedirle a la tienda la baja cuando quiera.</span>
+      </label>
       {error && <p className="text-sm font-semibold text-destructive sm:basis-full" role="alert">{error}</p>}
     </form>
   );

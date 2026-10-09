@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Monitor, Smartphone } from "lucide-react";
+import { Monitor, Smartphone, Tablet } from "lucide-react";
 import type { PreviewData } from "@/pages/StorefrontPreviewFrame";
 import { cn } from "@/lib/utils";
 
@@ -8,10 +8,10 @@ export function PreviewPane({ data, selected, onSelect, className }: { data: Pre
   const iframe = useRef<HTMLIFrameElement>(null);
   const holder = useRef<HTMLDivElement>(null);
   const ready = useRef(false);
-  const [device, setDevice] = useState<"escritorio" | "celular">("escritorio");
+  const [device, setDevice] = useState<"escritorio" | "tableta" | "celular">("escritorio");
   const [scale, setScale] = useState(0.5);
-  const width = device === "celular" ? 390 : 1280;
-  const height = device === "celular" ? 780 : 820;
+  const width = device === "celular" ? 390 : device === "tableta" ? 820 : 1280;
+  const height = device === "celular" ? 780 : device === "tableta" ? 1000 : 820;
 
   const send = useCallback((message: unknown) => {
     if (ready.current) iframe.current?.contentWindow?.postMessage(message, window.location.origin);
@@ -48,8 +48,8 @@ export function PreviewPane({ data, selected, onSelect, className }: { data: Pre
       <div className="mb-2 flex items-center justify-between gap-2">
         <p className="text-sm font-bold text-muted-foreground">Vista previa en vivo <span className="font-normal">· tocá un bloque para editarlo</span></p>
         <div className="flex rounded-full border bg-card p-0.5" role="group" aria-label="Tamaño de pantalla">
-          {([["escritorio", Monitor, "Computadora"], ["celular", Smartphone, "Celular"]] as const).map(([id, Icon, label]) => (
-            <button key={id} type="button" aria-pressed={device === id} aria-label={label} onClick={() => setDevice(id)} className={cn("flex h-8 items-center gap-1.5 rounded-full px-3 text-xs font-bold transition-colors", device === id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}><Icon className="h-4 w-4" />{label}</button>
+          {([["escritorio", Monitor, "Computadora"], ["tableta", Tablet, "Tableta"], ["celular", Smartphone, "Celular"]] as const).map(([id, Icon, label]) => (
+            <button key={id} type="button" aria-pressed={device === id} aria-label={label} title={label} onClick={() => setDevice(id)} className={cn("flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-bold transition-colors", device === id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}><Icon className="h-4 w-4" /><span className="hidden 2xl:inline">{label}</span></button>
           ))}
         </div>
       </div>

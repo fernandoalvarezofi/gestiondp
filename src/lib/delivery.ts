@@ -176,10 +176,46 @@ export type DeliveryProduct = {
   /** Promedio y cantidad de opiniones (solo compradores). */
   rating_avg?: number | null;
   rating_count?: number;
+  /** Catálogo pro: tipo, ciclo de publicación, códigos, costo, alertas, SEO y oferta programada. */
+  tipo?: TipoProducto;
+  estado?: EstadoProducto;
+  publicar_desde?: string | null;
+  sku?: string | null;
+  codigo_barras?: string | null;
+  costo?: number | null;
+  stock_minimo?: number | null;
+  slug?: string | null;
+  seo_titulo?: string | null;
+  seo_descripcion?: string | null;
+  descripcion_larga?: string | null;
+  relacionados?: string[];
+  precio_promo?: number | null;
+  promo_desde?: string | null;
+  promo_hasta?: string | null;
+  promo_activa?: boolean;
+  promo_respaldo?: { precio?: number; precio_anterior?: number | null } | null;
 };
+export type TipoProducto = "fisico" | "digital" | "servicio";
+export type EstadoProducto = "borrador" | "publicado" | "programado" | "archivado";
+export const TIPO_PRODUCTO: Record<TipoProducto, string> = { fisico: "Físico", digital: "Digital", servicio: "Servicio" };
+export const ESTADO_PRODUCTO: Record<EstadoProducto, { texto: string; clase: string }> = {
+  publicado: { texto: "Publicado", clase: "bg-success/15 text-success" },
+  borrador: { texto: "Borrador", clase: "bg-muted text-muted-foreground" },
+  programado: { texto: "Programado", clase: "bg-sky-500/15 text-sky-700 dark:text-sky-300" },
+  archivado: { texto: "Archivado", clase: "bg-foreground/10 text-foreground/70" },
+};
+/** Precio regular (sin la oferta programada que esté corriendo). */
+export const precioRegular = (p: Pick<DeliveryProduct, "precio" | "promo_activa" | "promo_respaldo">) => Number(p.promo_activa && p.promo_respaldo?.precio != null ? p.promo_respaldo.precio : p.precio);
+/** Margen estimado en % sobre el precio de venta (null si falta el costo). */
+export const margen = (precio: number, costo: number | null | undefined) => (costo == null || !(precio > 0) ? null : Math.round(((precio - costo) / precio) * 100));
+/** Stock por debajo del mínimo configurado (producto simple o alguna variante). */
+export function stockBajo(p: Pick<DeliveryProduct, "stock" | "stock_minimo" | "usa_variantes" | "variantes">): boolean {
+  if (p.usa_variantes) return (p.variantes ?? []).some((v) => v.stock != null && (v.stock_minimo ?? p.stock_minimo) != null && v.stock <= Number(v.stock_minimo ?? p.stock_minimo));
+  return p.stock != null && p.stock_minimo != null && p.stock <= p.stock_minimo;
+}
 
 /** Variante de un producto (talle, color…): stock, SKU y precio propios; sin precio usa el del producto. */
-export type ProductVariant = { id: string; producto_id: string; nombre: string; sku: string | null; precio: number | null; stock: number | null; disponible: boolean; orden: number };
+export type ProductVariant = { id: string; producto_id: string; nombre: string; sku: string | null; precio: number | null; stock: number | null; disponible: boolean; orden: number; codigo_barras?: string | null; costo?: number | null; stock_minimo?: number | null };
 
 /** Variantes que se pueden comprar ahora, en el orden elegido. */
 export function variantesDisponibles(product: Pick<DeliveryProduct, "variantes">): ProductVariant[] {

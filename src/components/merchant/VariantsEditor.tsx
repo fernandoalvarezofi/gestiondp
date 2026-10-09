@@ -62,7 +62,7 @@ export function VariantsEditor({ productId, onChange }: { productId: string; onC
     if (ok) await run(db.from("delivery_productos").update({ usa_variantes: true }).eq("id", productId), `${nuevas.length} variante${nuevas.length === 1 ? "" : "s"} agregada${nuevas.length === 1 ? "" : "s"}`);
   };
 
-  const guardar = (v: ProductVariant, cambios: Partial<Pick<ProductVariant, "nombre" | "sku" | "precio" | "stock" | "disponible">>) =>
+  const guardar = (v: ProductVariant, cambios: Partial<Pick<ProductVariant, "nombre" | "sku" | "precio" | "stock" | "disponible" | "codigo_barras" | "costo" | "stock_minimo">>) =>
     run(db.from("delivery_producto_variantes").update(cambios).eq("id", v.id));
 
   const borrar = async (v: ProductVariant) => {
@@ -93,17 +93,20 @@ export function VariantsEditor({ productId, onChange }: { productId: string; onC
         <>
           {variantes.length > 0 && (
             <div className="overflow-x-auto rounded-2xl border">
-              <table className="w-full min-w-[560px] text-sm">
+              <table className="w-full min-w-[880px] text-sm">
                 <thead className="bg-muted text-left text-xs font-bold text-muted-foreground">
-                  <tr><th className="px-3 py-2">Variante</th><th className="px-2 py-2">SKU</th><th className="px-2 py-2">Precio</th><th className="px-2 py-2">Stock</th><th className="px-2 py-2">Activa</th><th className="w-10" /></tr>
+                  <tr><th className="px-3 py-2">Variante</th><th className="px-2 py-2">SKU</th><th className="px-2 py-2">Cód. barras</th><th className="px-2 py-2">Precio</th><th className="px-2 py-2">Costo</th><th className="px-2 py-2">Stock</th><th className="px-2 py-2">Mínimo</th><th className="px-2 py-2">Activa</th><th className="w-10" /></tr>
                 </thead>
                 <tbody className="divide-y">
                   {variantes.map((v) => (
                     <tr key={v.id}>
                       <td className="px-3 py-1.5"><Input defaultValue={v.nombre} maxLength={80} aria-label="Nombre de la variante" className="h-9" onBlur={(e) => { const t = e.target.value.trim(); if (t && t !== v.nombre) guardar(v, { nombre: t }); else e.target.value = v.nombre; }} /></td>
                       <td className="px-2 py-1.5"><Input defaultValue={v.sku ?? ""} maxLength={40} aria-label="SKU" placeholder="—" className="h-9 w-28" onBlur={(e) => { const t = e.target.value.trim(); if ((t || null) !== (v.sku ?? null)) guardar(v, { sku: t || null }); }} /></td>
+                      <td className="px-2 py-1.5"><Input defaultValue={v.codigo_barras ?? ""} maxLength={32} aria-label="Código de barras" placeholder="—" className="h-9 w-32" onBlur={(e) => { const t = e.target.value.trim(); if ((t || null) !== (v.codigo_barras ?? null)) { if (t && !/^[0-9A-Za-z-]{4,32}$/.test(t)) { toast.error("Código de barras inválido"); e.target.value = v.codigo_barras ?? ""; return; } guardar(v, { codigo_barras: t || null }); } }} /></td>
                       <td className="px-2 py-1.5"><Input defaultValue={v.precio ?? ""} inputMode="decimal" aria-label="Precio" placeholder="Igual" className="h-9 w-24" onBlur={(e) => { const n = numero(e.target.value); if (n !== (v.precio == null ? null : Number(v.precio))) guardar(v, { precio: n }); }} /></td>
+                      <td className="px-2 py-1.5"><Input defaultValue={v.costo ?? ""} inputMode="decimal" aria-label="Costo" placeholder="Igual" className="h-9 w-24" onBlur={(e) => { const n = numero(e.target.value); if (n !== (v.costo == null ? null : Number(v.costo))) guardar(v, { costo: n }); }} /></td>
                       <td className="px-2 py-1.5"><Input defaultValue={v.stock ?? ""} inputMode="numeric" aria-label="Stock" placeholder="Sin límite" className="h-9 w-24" onBlur={(e) => { const n = numero(e.target.value); const entero = n == null ? null : Math.floor(n); if (entero !== v.stock) guardar(v, { stock: entero }); }} /></td>
+                      <td className="px-2 py-1.5"><Input defaultValue={v.stock_minimo ?? ""} inputMode="numeric" aria-label="Stock mínimo" placeholder="—" className="h-9 w-20" onBlur={(e) => { const n = numero(e.target.value); const entero = n == null ? null : Math.floor(n); if (entero !== (v.stock_minimo ?? null)) guardar(v, { stock_minimo: entero }); }} /></td>
                       <td className="px-2 py-1.5"><Switch checked={v.disponible} onCheckedChange={(c) => guardar(v, { disponible: c })} aria-label="Variante activa" /></td>
                       <td className="px-1 py-1.5"><Button type="button" size="icon" variant="ghost" aria-label="Eliminar variante" onClick={() => borrar(v)}><Trash2 className="h-4 w-4" /></Button></td>
                     </tr>

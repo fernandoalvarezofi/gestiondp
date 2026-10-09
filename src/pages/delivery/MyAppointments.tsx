@@ -8,19 +8,20 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { Textarea } from "@/components/ui/textarea";
 import { errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
-import { cancelarTurno, cap1, duracionTexto, ESTADO_TURNO, fechaLarga, fetchMisTurnos, googleCalendarUrl, horaLocal, icsDeTurno, MODALIDAD, Turno } from "@/services/bookings";
+import { cancelarTurno, cap1, DiaLibre, duracionTexto, ESTADO_TURNO, fechaCorta, fechaLarga, fetchHorarios, fetchMisTurnos, googleCalendarUrl, horaLocal, hoyLocal, icsDeTurno, MODALIDAD, reprogramarTurno, Turno } from "@/services/bookings";
 
-/** Mis turnos: los próximos (con opción de cancelar dentro del plazo y de sumarlos al calendario) y el historial. */
+/** Mis turnos: los próximos (cancelar o cambiar de horario dentro del plazo, sumarlos al calendario) y el historial. */
 export default function MyAppointments() {
   const [turnos, setTurnos] = useState<Turno[] | null>(null);
   const [cancelando, setCancelando] = useState<Turno | null>(null);
+  const [cambiando, setCambiando] = useState<Turno | null>(null);
   const [motivo, setMotivo] = useState("");
   const [busy, setBusy] = useState(false);
   const load = useCallback(async () => { setTurnos(await fetchMisTurnos()); }, []);
   useEffect(() => { load(); }, [load]);
 
   const ahora = Date.now();
-  const proximos = (turnos ?? []).filter((t) => t.estado === "confirmado" && new Date(t.fin).getTime() >= ahora).sort((a, b) => a.inicio.localeCompare(b.inicio));
+  const proximos = (turnos ?? []).filter((t) => ["pendiente", "confirmado", "en_curso"].includes(t.estado) && new Date(t.fin).getTime() >= ahora).sort((a, b) => a.inicio.localeCompare(b.inicio));
   const historial = (turnos ?? []).filter((t) => !proximos.includes(t));
 
   const cancelar = async () => {
@@ -52,9 +53,11 @@ export default function MyAppointments() {
                       </div>
                       <p className="mt-2 text-sm"><Link to={`/t/${t.comercio_slug}`} className="font-bold hover:underline">{t.comercio}</Link> · con {t.profesional} · {MODALIDAD[t.modalidad]}{t.precio > 0 && ` · ${money(t.precio)} en el lugar`}</p>
                       {t.direccion && t.modalidad === "en_local" && <p className="text-sm text-muted-foreground"><MapPin className="mr-1 inline h-3.5 w-3.5" />{t.direccion}</p>}
+                      {t.estado === "pendiente" && <p className="mt-2 rounded-xl bg-brand-yellow/15 p-2 text-sm">El local tiene que confirmar este turno. Te avisamos apenas responda.</p>}
                       <div className="mt-3 flex flex-wrap gap-2">
                         <Button size="sm" variant="outline" className="rounded-full" onClick={() => ics(t)}><CalendarPlus className="h-4 w-4" />Calendario</Button>
                         <Button size="sm" variant="outline" className="rounded-full" asChild><a href={googleCalendarUrl(t)} target="_blank" rel="noopener noreferrer">Google Calendar</a></Button>
+                        {t.puede_reprogramar && t.servicio_id && <Button size="sm" variant="outline" className="rounded-full" onClick={() => setCambiando(t)}>Cambiar horario</Button>}
                         {t.puede_cancelar ? <Button size="sm" variant="ghost" className="rounded-full text-destructive" onClick={() => { setCancelando(t); setMotivo(""); }}>Cancelar turno</Button>
                           : <span className="self-center text-xs text-muted-foreground">Ya no se puede cancelar desde acá (venció el {formatDateTime(t.cancelar_hasta)}). Comunicate con el local.</span>}
                       </div>
@@ -79,6 +82,7 @@ export default function MyAppointments() {
             )}
           </div>
         )}
+      <CambiarHorario turno={cambiando} onClose={() => setCambiando(null)} onDone={() => { setCambiando(null); load(); }} />
       <Dialog open={Boolean(cancelando)} onOpenChange={(open) => !open && !busy && setCancelando(null)}>
         <DialogContent className="max-w-md">
           <DialogTitle className="text-xl font-extrabold">¿Cancelar el turno?</DialogTitle>
@@ -88,5 +92,40 @@ export default function MyAppointments() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Cambiar el horario de un turno propio: solo muestra horarios libres reales del mismo servicio y profesional. */
+function CambiarHorario({ turno, onClose, onDone }: { turno: Turno | null; onClose: () => void; onDone: () => void }) {
+  const [dias, setDias] = useState<DiaLibre[] | null>(null);
+  const [fecha, setFecha] = useState<string | null>(null);
+  const [inicio, setInicio] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!turno?.servicio_id) return;
+    setDias(null); setInicio(null);
+    fetchHorarios(turno.servicio_id, turno.profesional_id ?? null, hoyLocal(), 21).then((d) => { setDias(d); setFecha(d[0]?.fecha ?? null); }).catch(() => setDias([]));
+  }, [turno]);
+  if (!turno) return null;
+  const dia = dias?.find((d) => d.fecha === fecha);
+  const guardar = async () => {
+    if (!inicio) return;
+    setBusy(true);
+    try { await reprogramarTurno(turno.id, inicio); toast.success(`Listo: tu turno pasó al ${fechaLarga(inicio)} a las ${horaLocal(inicio)}`); onDone(); } catch (error) { toast.error(errorMessage(error)); } finally { setBusy(false); }
+  };
+  return (
+    <Dialog open onOpenChange={(v) => !v && !busy && onClose()}>
+      <DialogContent className="max-w-lg">
+        <DialogTitle className="text-xl font-extrabold">Cambiar horario</DialogTitle>
+        <DialogDescription>{turno.servicio} con {turno.profesional}. Ahora: {cap1(fechaLarga(turno.inicio))} a las {horaLocal(turno.inicio)}.</DialogDescription>
+        {!dias ? <Loader2 className="mx-auto h-6 w-6 animate-spin text-primary" /> : dias.length === 0 ? <p className="rounded-2xl bg-muted p-4 text-sm text-muted-foreground">No hay otros horarios libres en los próximos días.</p> : (
+          <>
+            <div className="scrollbar-none flex gap-2 overflow-x-auto pb-1">{dias.map((d) => <button key={d.fecha} type="button" aria-pressed={fecha === d.fecha} onClick={() => { setFecha(d.fecha); setInicio(null); }} className={cn("shrink-0 rounded-2xl border px-3 py-1.5 text-sm font-bold capitalize", fecha === d.fecha ? "border-primary bg-primary text-primary-foreground" : "bg-card")}>{fechaCorta(`${d.fecha}T15:00:00Z`)}</button>)}</div>
+            <div className="grid max-h-56 grid-cols-4 gap-2 overflow-y-auto">{[...new Set((dia?.horarios ?? []).map((h) => h.inicio))].filter((i) => i !== turno.inicio).map((i) => <button key={i} type="button" aria-pressed={inicio === i} onClick={() => setInicio(i)} className={cn("h-10 rounded-xl border text-sm font-extrabold tabular-nums", inicio === i ? "border-primary bg-primary text-primary-foreground" : "bg-card")}>{horaLocal(i)}</button>)}</div>
+          </>
+        )}
+        <Button className="rounded-full" disabled={!inicio || busy} onClick={guardar}>{busy && <Loader2 className="h-4 w-4 animate-spin" />}Confirmar cambio</Button>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -20,12 +20,22 @@ function Enlace({ tipo, url, onChange }: { tipo: "catalogo" | "whatsapp" | "url"
 }
 
 /** Controles de cada tipo de bloque. Los cambios se mandan a `onChange` y la vista previa se actualiza al instante. */
-export function BlockSettings({ bloque, categorias, onChange }: { bloque: Bloque; categorias: string[]; onChange: Patch }) {
+export function BlockSettings({ bloque, categorias, colecciones = [], onChange }: { bloque: Bloque; categorias: string[]; colecciones?: { slug: string; nombre: string }[]; onChange: Patch }) {
   switch (bloque.tipo) {
+    case "servicios":
+      return (
+        <div className="space-y-4">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Texto label="Texto" value={bloque.texto} max={200} multiline onChange={(texto) => onChange({ texto })} />
+          <Opciones label="Estilo" value={bloque.estilo} options={[{ id: "tarjetas", label: "Tarjetas" }, { id: "lista", label: "Lista" }]} onChange={(estilo) => onChange({ estilo })} />
+          <Numero label="Cuántos servicios mostrar" value={bloque.cantidad} min={1} max={12} onChange={(cantidad) => onChange({ cantidad })} />
+          <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">Muestra tus servicios con turnos (Reservas y turnos → Servicios). Si no tenés servicios activos, el bloque no se ve.</p>
+        </div>
+      );
     case "portada":
       return (
         <div className="space-y-4">
-          <Opciones label="Estilo de portada" value={bloque.estilo} onChange={(estilo) => onChange({ estilo })} options={[{ id: "simple", label: "Foto completa" }, { id: "boutique", label: "Foto + datos" }, { id: "galeria", label: "Editorial" }, { id: "impacto", label: "De color" }, { id: "gourmet", label: "Arco" }]} />
+          <Opciones label="Estilo de portada" value={bloque.estilo} onChange={(estilo) => onChange({ estilo })} options={[{ id: "simple", label: "Foto completa" }, { id: "boutique", label: "Foto + datos" }, { id: "galeria", label: "Editorial" }, { id: "impacto", label: "De color" }, { id: "gourmet", label: "Arco" }, { id: "atelier", label: "Revista" }, { id: "urbano", label: "Urbano" }, { id: "mercado", label: "Mercado" }, { id: "estudio", label: "Estudio (turnos)" }, { id: "taller", label: "Polaroids" }]} />
           <ImageUpload label="Foto de portada (si no subís una, usamos la de tu local)" folder="comercios" value={bloque.imagen_url} onChange={(imagen_url) => onChange({ imagen_url })} className="max-w-sm" />
           <Texto label="Título" value={bloque.titulo} max={80} placeholder="El nombre de tu comercio" onChange={(titulo) => onChange({ titulo })} />
           <Texto label="Frase bajo el título" value={bloque.subtitulo} max={200} onChange={(subtitulo) => onChange({ subtitulo })} />
@@ -82,7 +92,16 @@ export function BlockSettings({ bloque, categorias, onChange }: { bloque: Bloque
       return (
         <div className="space-y-4">
           <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
-          <Opciones label="Qué mostrar" value={bloque.fuente} options={[{ id: "destacados", label: "Destacados" }, { id: "categoria", label: "Una categoría" }, { id: "todos", label: "Todos" }]} onChange={(fuente) => onChange({ fuente })} hint={bloque.fuente === "destacados" ? "Son los productos que marcás con estrella en tu menú." : undefined} />
+          <Opciones label="Qué mostrar" value={bloque.fuente} options={[{ id: "destacados", label: "Destacados" }, { id: "nuevos", label: "Novedades" }, { id: "ofertas", label: "En oferta" }, { id: "categoria", label: "Una sección" }, { id: "coleccion", label: "Una colección" }, { id: "todos", label: "Todos" }]} onChange={(fuente) => onChange({ fuente })}
+            hint={bloque.fuente === "destacados" ? "Son los productos que marcás con estrella en tu catálogo." : bloque.fuente === "nuevos" ? "Los últimos productos que cargaste." : bloque.fuente === "ofertas" ? "Los que tienen precio rebajado u oferta activa." : undefined} />
+          {bloque.fuente === "coleccion" && (
+            <Campo label="Colección" hint={colecciones.length === 0 ? "Todavía no armaste colecciones: creálas en Catálogo → Colecciones." : undefined}>
+              <select value={bloque.coleccion ?? ""} onChange={(event) => onChange({ coleccion: event.target.value || undefined })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" aria-label="Colección">
+                <option value="">Elegí una…</option>
+                {colecciones.map((c) => <option key={c.slug} value={c.slug}>{c.nombre}</option>)}
+              </select>
+            </Campo>
+          )}
           {bloque.fuente === "categoria" && (
             <Campo label="Categoría">
               <select value={bloque.categoria ?? ""} onChange={(event) => onChange({ categoria: event.target.value })} className="flex h-10 w-full rounded-md border border-input bg-background px-3 text-sm" aria-label="Categoría">

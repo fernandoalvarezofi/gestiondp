@@ -52,6 +52,8 @@ const MerchantNewStore = lazy(() => import("./pages/delivery/merchant/MerchantNe
 const MerchantQuestions = lazy(() => import("./pages/delivery/merchant/MerchantQuestions"));
 const MerchantReturns = lazy(() => import("./pages/delivery/merchant/MerchantReturns"));
 const MerchantBookings = lazy(() => import("./pages/delivery/merchant/MerchantBookings"));
+const MerchantInventory = lazy(() => import("./pages/delivery/merchant/MerchantInventory"));
+const MerchantCollections = lazy(() => import("./pages/delivery/merchant/MerchantCollections"));
 const Storefront = lazy(() => import("./pages/Storefront"));
 const StorefrontPreviewFrame = lazy(() => import("./pages/StorefrontPreviewFrame"));
 const StorefrontProduct = lazy(() => import("./pages/StorefrontProduct"));
@@ -127,6 +129,8 @@ const App = () => (
                     <Route path="/t/:slug/c/:categoria" element={<Storefront />} />
                     <Route path="/t/:slug/ofertas" element={<Storefront />} />
                     <Route path="/t/:slug/buscar" element={<Storefront />} />
+                    <Route path="/t/:slug/coleccion/:coleccion" element={<Storefront />} />
+                    <Route path="/t/:slug/pagina/:pagina" element={<Storefront />} />
                     <Route path="/t/:slug/p/:id" element={<StorefrontProduct />} />
                     <Route path="/t/:slug/reservar" element={<Booking />} />
                     <Route path="/vista-previa-tienda" element={<StorefrontPreviewFrame />} />
@@ -170,6 +174,8 @@ const App = () => (
                         <Route index element={<MerchantHome />} />
                         <Route path="pedidos" element={<MerchantPages.Orders />} />
                         <Route path="menu" element={<MerchantPages.Menu />} />
+                        <Route path="inventario" element={<MerchantInventory />} />
+                        <Route path="colecciones" element={<MerchantCollections />} />
                         <Route path="promociones" element={<MerchantPages.Promos />} />
                         <Route path="campanas" element={<MerchantPages.Campaigns />} />
                         <Route path="sucursales" element={<MerchantPages.Branches />} />

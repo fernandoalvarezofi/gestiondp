@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeTheme, readableOn, SECCIONES_BASE, TEMA_BASE } from "./storefront";
+import { MAX_BLOQUES, menuHref, normalizeBloque, normalizeMenu, normalizeTheme, readableOn, SECCIONES_BASE, TEMA_BASE } from "./storefront";
 
 describe("normalizeTheme", () => {
   it("usa los valores base cuando no hay tema", () => {
@@ -74,7 +74,7 @@ describe("bloques y diseño", () => {
   });
   it("acota números, listas y cantidad de bloques", () => {
     const muchos = Array.from({ length: 40 }, () => ({ tipo: "separador" }));
-    expect(normalizeTheme({ bloques: muchos }).bloques.length).toBeLessThanOrEqual(25);
+    expect(normalizeTheme({ bloques: muchos }).bloques.length).toBeLessThanOrEqual(MAX_BLOQUES + 1);
     const productos = normalizeTheme({ bloques: [{ tipo: "productos", cantidad: 999, columnas: -3 }] }).bloques[0] as { cantidad: number; columnas: number };
     expect(productos.cantidad).toBe(12);
     expect(productos.columnas).toBe(2);

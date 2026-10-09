@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { RichText } from "@/components/storefront/RichText";
+import { aplicarHead, cargarPixeles } from "@/lib/storeHead";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Politicas } from "@/components/storefront/MarketingBlocks";
 import { MiniCart } from "@/components/storefront/MiniCart";
@@ -59,9 +61,11 @@ export default function StorefrontProduct() {
       const { data: found } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
       if (!alive) return;
       if (!found) { setState("missing"); return; }
+      // El producto se puede abrir por su id o por su dirección amigable (slug). Solo lo publicado.
+      const esId = /^[0-9a-f-]{36}$/i.test(id ?? "");
       const [{ data: item }, { data: catalog }, { data: resumen }] = await Promise.all([
-        db.from("delivery_productos").select(productSelect).eq("id", id).eq("comercio_id", found.id).eq("en_tienda", true).maybeSingle(),
-        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("disponible", true).eq("en_tienda", true).order("orden").order("nombre").limit(200),
+        db.from("delivery_productos").select(productSelect).eq(esId ? "id" : "slug", id).eq("comercio_id", found.id).eq("en_tienda", true).eq("estado", "publicado").maybeSingle(),
+        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("disponible", true).eq("en_tienda", true).eq("estado", "publicado").order("orden").order("nombre").limit(200),
         db.rpc("delivery_vendedor_resumen", { p_slug: found.slug }),
       ]);
       if (!alive) return;
@@ -83,27 +87,30 @@ export default function StorefrontProduct() {
   // Título, descripción y datos estructurados (Product) para buscadores y para compartir.
   useEffect(() => {
     if (!store || !product) return;
-    const previousTitle = document.title;
-    document.title = `${product.nombre} · ${store.nombre}`;
-    const description = (product.descripcion || `${product.nombre} en ${store.nombre}. Pedilo online.`).slice(0, 155);
-    const meta = document.querySelector('meta[name="description"]');
-    const previousDescription = meta?.getAttribute("content") ?? null;
-    meta?.setAttribute("content", description);
-    const script = document.createElement("script");
-    script.type = "application/ld+json";
+    const description = product.seo_descripcion || product.descripcion || `${product.nombre} en ${store.nombre}. Pedilo online.`;
     const fotos = fotosDe(product).filter((url) => /^https:\/\//i.test(url));
-    script.text = JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "Product",
-      name: product.nombre,
-      description,
-      image: fotos.length ? fotos : undefined,
-      brand: { "@type": "Brand", name: store.nombre },
-      offers: { "@type": "Offer", priceCurrency: "ARS", price: Number(product.precio), availability: product.stock === 0 || !product.disponible ? "https://schema.org/OutOfStock" : "https://schema.org/InStock", url: `${storefrontUrl(store.slug)}/p/${product.id}` },
-    }).replace(/</g, "\\u003c");
-    document.head.appendChild(script);
-    return () => { document.title = previousTitle; if (previousDescription !== null) meta?.setAttribute("content", previousDescription); script.remove(); };
-  }, [store, product]);
+    const canonica = `${storefrontUrl(store.slug)}/p/${product.slug || product.id}`;
+    const agotado = product.stock === 0 || !product.disponible;
+    cargarPixeles({ pixel_meta: theme.pixel_meta, ga4: theme.ga4 }, "ViewContent", { content_ids: [product.id], content_type: "product", value: Number(product.precio), currency: "ARS" });
+    return aplicarHead({
+      titulo: `${product.seo_titulo || product.nombre} · ${store.nombre}`, descripcion: description, canonica, favicon: theme.favicon_url, imagen: fotos[0] ?? null, indexar: theme.indexar !== false,
+      jsonLd: {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: product.nombre,
+        description: description.slice(0, 500),
+        image: fotos.length ? fotos : undefined,
+        sku: product.sku ?? undefined,
+        gtin: product.codigo_barras && /^\d{8,14}$/.test(product.codigo_barras) ? product.codigo_barras : undefined,
+        brand: { "@type": "Brand", name: product.marca || store.nombre },
+        ...(Number(product.rating_count) > 0 ? { aggregateRating: { "@type": "AggregateRating", ratingValue: Number(product.rating_avg).toFixed(1), reviewCount: product.rating_count } } : {}),
+        offers: {
+          "@type": "Offer", priceCurrency: "ARS", price: Number(product.precio), url: canonica, availability: agotado ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+          ...(product.promo_activa && product.promo_hasta ? { priceValidUntil: product.promo_hasta.slice(0, 10) } : {}),
+        },
+      },
+    });
+  }, [store, product, theme]);
 
   // Barra de compra fija en el celular: aparece cuando el botón principal sale de la pantalla.
   const ctaRef = useRef<HTMLDivElement>(null);
@@ -159,7 +166,9 @@ export default function StorefrontProduct() {
       { t: "Envíos", x: `${fee === "Envío gratis" ? "Envío gratis" : fee} a tu dirección. Llega en ${store.tiempo_min}-${store.tiempo_max} minutos${store.acepta_retiro ? ". También podés retirarlo en el local." : "."}` },
       { t: "Medios de pago", x: `${pagoOnline ? "Mercado Pago (tarjeta, débito, dinero en cuenta), " : ""}efectivo o transferencia.` },
     ] };
-  const related = [...others.filter((other) => other.categoria === product.categoria), ...others.filter((other) => other.categoria !== product.categoria)].slice(0, 8);
+  // Primero los relacionados que eligió el comercio (en su orden), después los de la misma sección y el resto.
+  const elegidos = (product.relacionados ?? []).map((rid) => others.find((o) => o.id === rid)).filter((o): o is DeliveryProduct => Boolean(o));
+  const related = [...elegidos, ...others.filter((other) => !elegidos.includes(other) && other.categoria === product.categoria), ...others.filter((other) => !elegidos.includes(other) && other.categoria !== product.categoria)].slice(0, 8);
 
   const add = (goToCart: boolean) => {
     const agregado = addItem(product, cartStore, quantity, undefined, [], variante ? { id: variante.id, nombre: variante.nombre, precio: variante.precio } : undefined);
@@ -293,10 +302,12 @@ export default function StorefrontProduct() {
 
         <div className="mt-14 grid gap-10 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-12">
           <div className="min-w-0 space-y-12">
-            {(product.descripcion || !!product.etiquetas?.length) && (
+            {(product.descripcion || product.descripcion_larga || !!product.etiquetas?.length) && (
               <section>
                 <h2 className="text-xl font-extrabold sm:text-2xl">Descripción</h2>
-                {product.descripcion && <p className="mt-4 whitespace-pre-line leading-relaxed text-muted-foreground">{product.descripcion}</p>}
+                {product.descripcion && !product.descripcion_larga && <p className="mt-4 whitespace-pre-line leading-relaxed text-muted-foreground">{product.descripcion}</p>}
+                {product.descripcion_larga && <RichText texto={product.descripcion_larga} className="mt-4 text-muted-foreground" />}
+                {(product.sku || product.marca) && <p className="mt-4 text-xs text-muted-foreground">{product.marca ? `Marca: ${product.marca}` : ""}{product.marca && product.sku ? " · " : ""}{product.sku ? `Código: ${product.sku}` : ""}</p>}
                 {!!product.etiquetas?.length && <p className="mt-4 flex flex-wrap gap-2">{product.etiquetas.map((tag) => <span key={tag} className="rounded-full bg-muted px-3 py-1 text-xs font-bold text-muted-foreground">{tagLabels[tag] ?? tag}</span>)}</p>}
               </section>
             )}

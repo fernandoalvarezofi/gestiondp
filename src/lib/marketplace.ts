@@ -60,13 +60,14 @@ export function insignias(product: Pick<DeliveryProduct, "id" | "precio" | "prec
 }
 
 // ------------------------------------------------------------------ filtros y orden del catálogo
-export type Orden = "relevancia" | "menor" | "mayor" | "nuevos" | "descuento";
+export type Orden = "relevancia" | "menor" | "mayor" | "nuevos" | "descuento" | "nombre";
 export const ORDENES: { id: Orden; nombre: string }[] = [
   { id: "relevancia", nombre: "Más relevantes" },
   { id: "menor", nombre: "Menor precio" },
   { id: "mayor", nombre: "Mayor precio" },
   { id: "descuento", nombre: "Mayor descuento" },
   { id: "nuevos", nombre: "Más nuevos" },
+  { id: "nombre", nombre: "Nombre (A-Z)" },
 ];
 
 export type FiltrosCatalogo = { min: number | null; max: number | null; soloOferta: boolean; orden: Orden };
@@ -87,6 +88,7 @@ export function filtrarYOrdenar<T extends Pick<DeliveryProduct, "precio" | "prec
     case "mayor": return [...out].sort((a, b) => Number(b.precio) - Number(a.precio));
     case "descuento": return [...out].sort((a, b) => (descuentoPct(b) ?? 0) - (descuentoPct(a) ?? 0));
     case "nuevos": return [...out].sort((a, b) => fecha(b) - fecha(a));
+    case "nombre": return [...out].sort((a, b) => String((a as unknown as { nombre?: string }).nombre ?? "").localeCompare(String((b as unknown as { nombre?: string }).nombre ?? ""), "es"));
     default: return [...out].sort((a, b) => {
       // Relevancia: más vendidos, luego destacados, luego el orden elegido por el comercio.
       const va = masVendidos.includes(ids(a)) ? 1 : 0, vb = masVendidos.includes(ids(b)) ? 1 : 0;

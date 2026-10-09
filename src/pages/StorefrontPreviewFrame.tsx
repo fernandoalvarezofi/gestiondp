@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
-import { StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
+import { ColeccionTienda, PaginaTienda, ServicioTienda, StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
 import type { DeliveryProduct, DeliverySection, DeliveryStore } from "@/lib/delivery";
 import type { VendedorResumen } from "@/lib/marketplace";
 import type { TemaNormalizado } from "@/lib/storefront";
+import type { Vista } from "@/lib/storeRoutes";
 
-export type PreviewData = { store: DeliveryStore; tema: TemaNormalizado; products: DeliveryProduct[]; sections: DeliverySection[]; reviews: StorefrontReview[]; vendedor?: VendedorResumen | null };
+export type PreviewData = {
+  store: DeliveryStore; tema: TemaNormalizado; products: DeliveryProduct[]; sections: DeliverySection[]; reviews: StorefrontReview[]; vendedor?: VendedorResumen | null;
+  servicios?: ServicioTienda[]; colecciones?: ColeccionTienda[]; paginas?: PaginaTienda[]; reservaHref?: string | null;
+  /** Qué página de la tienda se previsualiza (inicio, una página propia, una colección…). */
+  vista?: Vista;
+};
 
 /**
  * Página que se carga dentro del marco de vista previa del editor. No lee nada de la base: muestra solo lo que le manda
@@ -39,6 +45,11 @@ export default function StorefrontPreviewFrame() {
       sections={data.sections}
       reviews={data.reviews}
       vendedor={data.vendedor ?? null}
+      servicios={data.servicios ?? []}
+      colecciones={data.colecciones ?? []}
+      paginas={data.paginas ?? []}
+      reservaHref={data.reservaHref ?? null}
+      vista={data.vista}
       preview
       selectedBlock={selected}
       onSelectBlock={(id) => { setSelected(id); window.parent.postMessage({ tipo: "woref-bloque", id }, window.location.origin); }}

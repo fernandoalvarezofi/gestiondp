@@ -10,13 +10,16 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
 import { DeliveryProduct, DeliverySection, DeliveryStore, isOpenNow, money, nextOpening, orderSections, scheduleSummary } from "@/lib/delivery";
 import { storeReach } from "@/lib/geo";
-import { Bloque, BloqueBanner, BloqueCatalogo, readableOn, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { Bloque, BloqueBanner, BloqueCatalogo, CatalogoOrden, menuHref, normalizeBloque, readableOn, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { RichText } from "@/components/storefront/RichText";
+import { CalendarCheck } from "lucide-react";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
 import { NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
 import { StoreFooter } from "@/components/storefront/StoreFooter";
 import { CategoriesMenu, StoreMobileMenu, StoreSearch } from "@/components/storefront/StoreNav";
-import { collectionPath, offersPath, searchPath, storePath, tieneDescuento, Vista, VISTA_INICIO, vistaKey } from "@/lib/storeRoutes";
+import { collectionPath, curatedPath, offersPath, pagePath, searchPath, storePath, tieneDescuento, Vista, VISTA_INICIO, vistaKey } from "@/lib/storeRoutes";
+import { duracionTexto } from "@/services/bookings";
 import { MiniCart } from "@/components/storefront/MiniCart";
 import { SellerCard } from "@/components/storefront/SellerCard";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -42,7 +45,18 @@ type Props = {
   vista?: Vista;
   /** Si el local ofrece turnos en línea: enlace a la página de reservas. */
   reservaHref?: string | null;
+  /** Servicios con turnos (para el bloque "Servicios y turnos"). */
+  servicios?: ServicioTienda[];
+  /** Colecciones armadas a mano (bloque de productos por colección y página /coleccion/<slug>). */
+  colecciones?: ColeccionTienda[];
+  /** Páginas publicadas (pie, menú y página /pagina/<slug>). */
+  paginas?: PaginaTienda[];
 };
+export type ServicioTienda = { id: string; nombre: string; descripcion: string | null; duracion_min: number; precio: number; imagen_url: string | null; capacidad?: number };
+export type ColeccionTienda = { id: string; nombre: string; slug: string; descripcion: string | null; imagen_url: string | null; productos: string[] };
+export type PaginaTienda = { id: string; slug: string; titulo: string; tipo: "informativa" | "landing"; clase: string; contenido: string | null; bloques: unknown[]; imagen_url: string | null; seo_titulo?: string | null; seo_descripcion?: string | null };
+/** Orden del catálogo elegido por el comercio → orden de los filtros. */
+const ORDEN_INICIAL: Record<CatalogoOrden, FiltrosCatalogo["orden"]> = { relevancia: "relevancia", recientes: "nuevos", precio_asc: "menor", precio_desc: "mayor", nombre: "nombre" };
 
 type Group = { name: string; items: DeliveryProduct[] };
 
@@ -60,7 +74,7 @@ const ALTO_SEP = { chico: "h-4", medio: "h-10", grande: "h-20" } as const;
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 /** Tienda online de un comercio: arma la página con los bloques y el diseño elegidos. Es la misma pantalla para el sitio público y la vista previa del editor. */
-export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista, reservaHref = null }: Props) {
+export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista, reservaHref = null, servicios = [], colecciones = [], paginas = [] }: Props) {
   // Solo se muestra en la tienda lo que el comercio publicó en este canal.
   const products = useMemo(() => allProducts.filter((product) => product.en_tienda !== false), [allProducts]);
   const theme = useMemo(() => tema ?? normalizeTheme(store.tienda_tema), [tema, store.tienda_tema]);
@@ -73,15 +87,17 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   const esInicio = vistaActual.tipo === "inicio";
   const [term, setTerm] = useState(vistaActual.tipo === "buscar" ? vistaActual.q : "");
   const [category, setCategory] = useState<string | null>(vistaActual.tipo === "coleccion" ? vistaActual.categoria : null);
-  const [filtros, setFiltros] = useState<FiltrosCatalogo>(vistaActual.tipo === "ofertas" ? { ...SIN_FILTROS, soloOferta: true } : SIN_FILTROS);
+  // El orden inicial lo elige el comercio en el editor (Catálogo → orden).
+  const filtrosBase = useMemo<FiltrosCatalogo>(() => ({ ...SIN_FILTROS, orden: ORDEN_INICIAL[theme.catalogo_orden ?? "relevancia"] ?? "relevancia" }), [theme.catalogo_orden]);
+  const [filtros, setFiltros] = useState<FiltrosCatalogo>(vistaActual.tipo === "ofertas" ? { ...filtrosBase, soloOferta: true } : filtrosBase);
   // Al pasar de una página de la tienda a otra se reinician la búsqueda, la categoría y los filtros.
   const claveVista = vistaKey(vistaActual);
   useEffect(() => {
     setTerm(vistaActual.tipo === "buscar" ? vistaActual.q : "");
     setCategory(vistaActual.tipo === "coleccion" ? vistaActual.categoria : null);
-    setFiltros(vistaActual.tipo === "ofertas" ? { ...SIN_FILTROS, soloOferta: true } : SIN_FILTROS);
+    setFiltros(vistaActual.tipo === "ofertas" ? { ...filtrosBase, soloOferta: true } : filtrosBase);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [claveVista]);
+  }, [claveVista, filtrosBase]);
   const [rango, setRango] = useState({ min: "", max: "" });
   const [drawer, setDrawer] = useState(false);
   const masVendidos = useMemo(() => (vendedor?.mas_vendidos ?? []).map((item) => item.producto_id), [vendedor]);
@@ -163,7 +179,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   ];
   const grid = (items: DeliveryProduct[], columnas: number) => (
     <div className={cn("grid", d.descripcion ? "grid-cols-1 gap-x-8 md:grid-cols-2" : cn(COLUMNAS[columnas] ?? COLUMNAS[4], "gap-x-4 gap-y-8"))}>
-      {items.map((product) => <ProductCard key={product.id} product={product} store={cartStore} disabled={unavailable} variant={d.descripcion ? "row" : "shop"} badges={insignias(product, masVendidos)} href={preview ? undefined : `/t/${store.slug}/p/${product.id}`} />)}
+      {items.map((product) => <ProductCard key={product.id} product={product} store={cartStore} disabled={unavailable} variant={d.descripcion ? "row" : "shop"} badges={insignias(product, masVendidos)} href={preview ? undefined : `/t/${store.slug}/p/${product.slug || product.id}`} />)}
     </div>
   );
 
@@ -297,6 +313,67 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         </section>
       );
     }
+    if (b.estilo === "estudio") {
+      // Estudio: texto calmo a un lado, foto en óvalo con una tarjeta flotante de "próximo turno" y la reserva siempre a mano.
+      const fotos = available.filter((p) => p.imagen_url).slice(0, 1);
+      return (
+        <section className={cn("mx-auto px-4 pb-6 pt-10 sm:px-6 sm:pt-16", width)}>
+          <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+            <div className={cn(b.alineacion === "centro" && "text-center lg:text-left")}>
+              <span className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold" style={{ borderColor: "var(--sf-accent)", color: "var(--sf-accent)" }}>{statusChip}</span>
+              <h1 className="mt-5 text-4xl font-bold leading-[1.08] sm:text-6xl" style={headingStyle}>{title}</h1>
+              {sub && <p className="mt-5 max-w-md text-lg leading-relaxed opacity-70">{sub}</p>}
+              <div className="mt-8 flex flex-wrap items-center gap-3">
+                {reservaHref && servicios.length > 0
+                  ? (preview ? <span className="inline-flex items-center gap-2 px-6 py-3 font-bold" style={{ ...accent, ...radiusButton }}><CalendarCheck className="h-4 w-4" />Reservar turno</span>
+                    : <Link to={reservaHref} className="inline-flex items-center gap-2 px-6 py-3 font-bold" style={{ ...accent, ...radiusButton }}><CalendarCheck className="h-4 w-4" />Reservar turno</Link>)
+                  : <Boton onClick={() => go("catalogo")}>{cta}<ArrowRight className="h-4 w-4" /></Boton>}
+                {servicios.length > 0 && <button type="button" onClick={() => go("servicios")} className="px-4 py-3 text-sm font-semibold underline-offset-4 hover:underline">Ver servicios</button>}
+              </div>
+              {servicios.length > 0 && <p className="mt-6 text-sm opacity-70">{servicios.length} {servicios.length === 1 ? "servicio" : "servicios"} desde {money(Math.min(...servicios.map((s) => Number(s.precio) || 0)) || 0)}</p>}
+            </div>
+            <div className="relative mx-auto w-full max-w-md">
+              <div className="relative aspect-[4/5] overflow-hidden rounded-[999px] bg-muted shadow-pop"><SmartImage src={image ?? fotos[0]?.imagen_url} width={900} loading="eager" /></div>
+              <div aria-hidden className="absolute -right-3 top-8 h-24 w-24 rounded-full opacity-30 blur-2xl" style={{ background: "var(--sf-accent)" }} />
+              {servicios[0] && (
+                <div className="absolute -left-2 bottom-10 max-w-[70%] rounded-2xl border bg-card p-3 text-card-foreground shadow-pop sm:-left-8">
+                  <p className="text-[11px] font-bold uppercase tracking-wider opacity-60">Más elegido</p>
+                  <p className="truncate font-extrabold" style={headingStyle}>{servicios[0].nombre}</p>
+                  <p className="text-xs opacity-70">{duracionTexto(servicios[0].duracion_min)}{servicios[0].precio > 0 ? ` · ${money(servicios[0].precio)}` : ""}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      );
+    }
+    if (b.estilo === "taller") {
+      // Taller: papel kraft, fotos tipo polaroid inclinadas y una nota escrita a mano.
+      const polaroids = [image, ...available.filter((p) => p.imagen_url && p.imagen_url !== image).slice(0, 2).map((p) => p.imagen_url)].filter(Boolean).slice(0, 3) as string[];
+      return (
+        <section className={cn("mx-auto px-4 pb-10 pt-10 sm:px-6 sm:pt-14", width)}>
+          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr]">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.3em] opacity-60">{store.rubro || "Hecho a mano"}</p>
+              <h1 className="mt-4 text-5xl font-semibold leading-[1.02] sm:text-7xl" style={headingStyle}>{title}</h1>
+              {sub && <p className="mt-5 max-w-md text-lg italic leading-relaxed opacity-75">{sub}</p>}
+              <div className="mt-7 flex flex-wrap items-center gap-4">
+                <Boton onClick={() => go("catalogo")}>{cta}<ArrowRight className="h-4 w-4" /></Boton>
+                <span className="text-sm opacity-70">{statusChip}</span>
+              </div>
+            </div>
+            <div className="relative h-[340px] sm:h-[440px]">
+              {polaroids.map((src, i) => (
+                <figure key={src + i} className={cn("absolute w-[58%] bg-white p-2.5 pb-9 shadow-pop", i === 0 && "left-[6%] top-[8%] -rotate-6", i === 1 && "right-[4%] top-0 rotate-3", i === 2 && "bottom-0 left-[28%] -rotate-1")} style={{ zIndex: 3 - i }}>
+                  <div className="relative aspect-square overflow-hidden bg-muted"><SmartImage src={src} width={700} loading={i === 0 ? "eager" : "lazy"} /></div>
+                </figure>
+              ))}
+              {polaroids.length === 0 && <div className="absolute inset-0 border-2 border-dashed" style={{ borderColor: "var(--sf-accent)" }} />}
+            </div>
+          </div>
+        </section>
+      );
+    }
     // boutique y simple: foto a todo el ancho con texto encima
     const center = b.alineacion === "centro";
     return (
@@ -395,12 +472,55 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         );
       }
       case "productos": {
-        const list = b.fuente === "destacados" ? featured : b.fuente === "categoria" ? available.filter((product) => product.categoria === b.categoria) : available;
+        const col = b.fuente === "coleccion" ? colecciones.find((c) => c.slug === b.coleccion) : undefined;
+        const porId = new Map(available.map((p) => [p.id, p]));
+        const list = b.fuente === "destacados" ? featured
+          : b.fuente === "categoria" ? available.filter((product) => product.categoria === b.categoria)
+          : b.fuente === "coleccion" ? (col?.productos ?? []).map((id) => porId.get(id)).filter((p): p is DeliveryProduct => Boolean(p))
+          : b.fuente === "nuevos" ? [...available].sort((x, y) => (y.created_at ?? "").localeCompare(x.created_at ?? ""))
+          : b.fuente === "ofertas" ? available.filter(tieneDescuento)
+          : available;
         if (!list.length) return null;
+        const tituloPorDefecto = b.fuente === "destacados" ? "Destacados" : b.fuente === "nuevos" ? "Novedades" : b.fuente === "ofertas" ? "Ofertas" : b.fuente === "coleccion" ? col?.nombre ?? "Colección" : b.categoria || "Productos";
+        const verTodo = b.fuente === "coleccion" && col ? curatedPath(store.slug, col.slug) : b.fuente === "categoria" && b.categoria ? collectionPath(store.slug, b.categoria) : b.fuente === "ofertas" ? offersPath(store.slug) : null;
         return (
           <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
-            <Titulo>{b.titulo || (b.fuente === "destacados" ? "Destacados" : b.categoria || "Productos")}</Titulo>
+            <div className="flex items-end justify-between gap-3"><Titulo>{b.titulo || tituloPorDefecto}</Titulo>{verTodo && !preview && list.length > b.cantidad && <Link to={verTodo} className="mb-6 shrink-0 text-sm font-bold underline-offset-4 hover:underline">Ver todo</Link>}</div>
             {grid(list.slice(0, b.cantidad), b.columnas)}
+          </section>
+        );
+      }
+      case "servicios": {
+        if (!servicios.length || !reservaHref) return null;
+        const lista = servicios.slice(0, b.cantidad);
+        const reservar = (id: string) => `${reservaHref}?servicio=${id}`;
+        return (
+          <section id="servicios" className={cn("mx-auto scroll-mt-24 px-4 sm:px-6", width, space)}>
+            <Titulo>{b.titulo || "Servicios"}</Titulo>
+            {b.texto && <p className={cn("-mt-3 mb-6 max-w-2xl opacity-70", centered && "mx-auto text-center")}>{b.texto}</p>}
+            {b.estilo === "lista" ? (
+              <ul className="divide-y overflow-hidden border bg-card text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
+                {lista.map((s) => (
+                  <li key={s.id} className="flex flex-wrap items-center gap-3 p-4">
+                    <div className="min-w-0 flex-1"><p className="font-extrabold" style={headingStyle}>{s.nombre}</p><p className="text-sm opacity-70">{duracionTexto(s.duracion_min)}{(s.capacidad ?? 1) > 1 ? ` · grupal, hasta ${s.capacidad} personas` : ""}{s.descripcion ? ` · ${s.descripcion}` : ""}</p></div>
+                    <span className="font-black tabular-nums">{s.precio > 0 ? money(s.precio) : "Consultar"}</span>
+                    {preview ? <span className="px-4 py-2 text-sm font-bold" style={{ ...accent, ...radiusButton }}>Reservar</span> : <Link to={reservar(s.id)} className="px-4 py-2 text-sm font-bold" style={{ ...accent, ...radiusButton }}>Reservar</Link>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {lista.map((s) => (
+                  <article key={s.id} className="flex flex-col border bg-card p-5 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full" style={accent}><CalendarCheck className="h-5 w-5" /></span>
+                    <h3 className="mt-4 text-lg font-extrabold" style={headingStyle}>{s.nombre}</h3>
+                    {s.descripcion && <p className="mt-1 line-clamp-3 text-sm opacity-70">{s.descripcion}</p>}
+                    <p className="mt-3 flex items-center gap-3 text-sm"><span className="inline-flex items-center gap-1 opacity-70"><Clock3 className="h-4 w-4" />{duracionTexto(s.duracion_min)}</span><span className="ml-auto text-base font-black tabular-nums">{s.precio > 0 ? money(s.precio) : "Consultar"}</span></p>
+                    <div className="mt-4">{preview ? <span className="block px-4 py-2.5 text-center text-sm font-bold" style={{ ...accent, ...radiusButton }}>Reservar turno</span> : <Link to={reservar(s.id)} className="block px-4 py-2.5 text-center text-sm font-bold" style={{ ...accent, ...radiusButton }}>Reservar turno</Link>}</div>
+                  </article>
+                ))}
+              </div>
+            )}
           </section>
         );
       }
@@ -701,7 +821,18 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     : <Link key={label} to={to} className={linkClass}>{label}</Link>);
   const hayAcerca = bloques.some((b) => b.tipo === "texto" && b.id === "acerca");
   const hayContacto = bloques.some((b) => b.tipo === "contacto");
-  const navigation = (
+  // Menú propio del comercio (si lo armó); si no, las secciones automáticas de siempre.
+  const menuPropio = (theme.menu ?? []).filter((m) => m.tipo !== "reservar" || reservaHref);
+  const enlaceMenu = (m: (typeof menuPropio)[number], clase: string) => {
+    const href = menuHref(store.slug, m);
+    if (preview) return <span key={m.texto + href} className={clase}>{m.texto}</span>;
+    if (m.tipo === "url") return <a key={m.texto + href} href={href} target="_blank" rel="noopener noreferrer" className={clase}>{m.texto}</a>;
+    if (m.tipo === "catalogo" && esInicio) return <button key={m.texto + href} type="button" onClick={() => go("catalogo")} className={clase}>{m.texto}</button>;
+    return <Link key={m.texto + href} to={href} className={clase}>{m.texto}</Link>;
+  };
+  const navigation = menuPropio.length > 0 ? (
+    <nav className="hidden items-center gap-1 lg:flex" aria-label="Menú de la tienda">{menuPropio.map((m) => enlaceMenu(m, linkClass))}</nav>
+  ) : (
     <nav className="hidden items-center gap-1 lg:flex" aria-label="Secciones">
       {!esInicio && !preview && <Link to={storePath(store.slug)} className={linkClass}>Inicio</Link>}
       <CategoriesMenu slug={store.slug} categorias={categorias} preview={preview} />
@@ -714,12 +845,14 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   const menuMovil = (
     <StoreMobileMenu nombre={store.nombre} slug={store.slug} categorias={categorias} hayOfertas={hayOfertas} preview={preview} scope={pageStyle}
       enlaces={[
+        ...menuPropio.filter((m) => m.tipo !== "url").map((m) => ({ label: m.texto, to: menuHref(store.slug, m) })),
         { label: "Todos los productos", to: searchPath(store.slug, "") },
+        ...paginas.slice(0, 6).map((p) => ({ label: p.titulo, to: pagePath(store.slug, p.slug) })),
         ...(hayAcerca ? [esInicio ? { label: "Nosotros", onClick: () => go("acerca") } : { label: "Nosotros", to: aSeccion("acerca") }] : []),
         ...(hayContacto ? [esInicio ? { label: "Contacto", onClick: () => go("contacto") } : { label: "Contacto", to: aSeccion("contacto") }] : []),
       ]} />
   );
-  const searchBox = <StoreSearch key={claveVista} slug={store.slug} products={available} categorias={categorias} preview={preview} radius={radiusButton} initial={vistaActual.tipo === "buscar" ? vistaActual.q : ""} className="hidden w-64 xl:block" />;
+  const searchBox = theme.mostrar_busqueda === false ? null : <StoreSearch key={claveVista} slug={store.slug} products={available} categorias={categorias} preview={preview} radius={radiusButton} initial={vistaActual.tipo === "buscar" ? vistaActual.q : ""} className="hidden w-64 xl:block" />;
   const cartClass = "inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-bold";
   const cart = preview
     ? <span className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</span>
@@ -739,7 +872,60 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   );
 
   // ---- páginas internas de la tienda (colección, ofertas, búsqueda): cabecera con ruta + catálogo con filtros + confianza/newsletter/políticas
+  const migas = (titulo: string) => (
+    <nav aria-label="Ruta" className="mb-3 flex flex-wrap items-center gap-1.5 text-sm opacity-70">
+      {preview ? <span className="font-semibold">Inicio</span> : <Link to={storePath(store.slug)} className="font-semibold hover:underline">Inicio</Link>}
+      <span aria-hidden>›</span><span aria-current="page">{titulo}</span>
+    </nav>
+  );
+  const noEncontrado = (titulo: string, texto: string) => (
+    <section className={cn("mx-auto px-4 py-16 text-center sm:px-6", width)}>
+      <p className="text-xl font-extrabold">{titulo}</p>
+      <p className="mt-1 opacity-70">{texto}</p>
+      <Link to={storePath(store.slug)} className="mt-5 inline-flex items-center gap-2 px-6 py-3 font-bold" style={{ ...accent, ...radiusButton }}>Volver al inicio</Link>
+    </section>
+  );
+  // Colección armada a mano: cabecera con imagen y descripción + sus productos en el orden elegido.
+  const renderCurada = (slug: string) => {
+    const col = colecciones.find((c) => c.slug === slug);
+    if (!col) return noEncontrado("No encontramos esa colección", "Puede que ya no esté disponible.");
+    const porId = new Map(available.map((p) => [p.id, p]));
+    const items = col.productos.map((id) => porId.get(id)).filter((p): p is DeliveryProduct => Boolean(p));
+    return (
+      <>
+        <section className={cn("mx-auto px-4 pt-8 sm:px-6", width)}>
+          {migas(col.nombre)}
+          <div className={cn("grid items-center gap-6", col.imagen_url && "md:grid-cols-[1fr_1fr]")}>
+            <div><h1 className="text-3xl font-black leading-tight sm:text-5xl" style={headingStyle}>{col.nombre}</h1>{col.descripcion && <p className="mt-3 max-w-2xl text-lg opacity-75">{col.descripcion}</p>}<p className="mt-2 text-sm opacity-60">{items.length} productos</p></div>
+            {col.imagen_url && <div className="relative aspect-[16/9] overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius)" }}><SmartImage src={col.imagen_url} width={1200} loading="eager" /></div>}
+          </div>
+        </section>
+        <section className={cn("mx-auto px-4 sm:px-6", width, space)}>{items.length ? grid(items, 4) : <p className="py-10 text-center opacity-70">Esta colección todavía no tiene productos disponibles.</p>}</section>
+      </>
+    );
+  };
+  // Página informativa (texto con formato) o landing de campaña (secciones como la portada).
+  const renderPaginaPropia = (slug: string) => {
+    const pagina = paginas.find((p) => p.slug === slug);
+    if (!pagina) return noEncontrado("No encontramos esta página", "Puede que el comercio la haya quitado.");
+    const secciones = (Array.isArray(pagina.bloques) ? pagina.bloques : []).map((raw, i) => normalizeBloque(raw, i)).filter((x): x is Bloque => x !== null && x.visible);
+    return (
+      <>
+        {pagina.tipo === "informativa" || secciones.length === 0 ? (
+          <article className={cn("mx-auto px-4 pt-8 sm:px-6", "max-w-3xl", space)}>
+            {migas(pagina.titulo)}
+            <h1 className="text-3xl font-black leading-tight sm:text-5xl" style={headingStyle}>{pagina.titulo}</h1>
+            {pagina.imagen_url && <div className="relative mt-6 aspect-[16/9] overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius)" }}><SmartImage src={pagina.imagen_url} width={1200} loading="eager" /></div>}
+            <RichText texto={pagina.contenido} className="mt-6 text-lg opacity-90" headingStyle={headingStyle} />
+          </article>
+        ) : null}
+        {pagina.tipo === "landing" && secciones.map((b) => <div key={b.id}>{renderBloque(b)}</div>)}
+      </>
+    );
+  };
   const renderPagina = () => {
+    if (vistaActual.tipo === "curada") return renderCurada(vistaActual.slug);
+    if (vistaActual.tipo === "pagina") return renderPaginaPropia(vistaActual.slug);
     const base = bloques.find((b): b is BloqueCatalogo => b.tipo === "catalogo");
     const titulo = vistaActual.tipo === "coleccion" ? vistaActual.categoria : vistaActual.tipo === "ofertas" ? "Ofertas" : vistaActual.tipo === "buscar" ? (vistaActual.q ? `Resultados para “${vistaActual.q}”` : "Todos los productos") : "";
     const descripcion = vistaActual.tipo === "ofertas" ? "Productos con precio rebajado." : vistaActual.tipo === "coleccion" ? "Todo lo que tenemos en esta colección." : vistaActual.tipo === "buscar" ? "Buscá por nombre y filtrá por categoría o precio." : "";
@@ -816,8 +1002,11 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
           { label: "Todos los productos", onClick: () => (esInicio ? go("catalogo") : navigate(searchPath(store.slug, ""))) },
           ...(hayAcerca ? [{ label: "Nosotros", onClick: () => (esInicio ? go("acerca") : navigate(aSeccion("acerca"))) }] : []),
           ...(hayContacto ? [{ label: "Contacto", onClick: () => (esInicio ? go("contacto") : navigate(aSeccion("contacto"))) }] : []),
-          ...(bloques.some((b) => b.tipo === "politicas") ? [{ label: "Envíos y cambios", onClick: () => (esInicio ? go("politicas") : navigate(aSeccion("politicas"))) }] : []),
+          ...(bloques.some((b) => b.tipo === "politicas") && !paginas.some((p) => p.clase === "envios" || p.clase === "cambios") ? [{ label: "Envíos y cambios", onClick: () => (esInicio ? go("politicas") : navigate(aSeccion("politicas"))) }] : []),
+          ...colecciones.slice(0, 4).map((c) => ({ label: c.nombre, onClick: () => navigate(curatedPath(store.slug, c.slug)) })),
+          ...paginas.map((p) => ({ label: p.titulo, onClick: () => navigate(pagePath(store.slug, p.slug)) })),
         ]}
+        pie={theme.pie}
         redes={social.map((x) => ({ href: x.href, label: x.label, icon: <x.icon className="h-4 w-4" /> }))}
       />
 
