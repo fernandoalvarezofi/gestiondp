@@ -2,7 +2,7 @@ import { DragEvent, ReactNode, useCallback, useEffect, useMemo, useState } from 
 import { Link } from "react-router-dom";
 import {
   ArrowDown, ArrowLeft, ArrowUp, Bookmark, ChevronDown, ClipboardPaste, CloudOff, Copy, CopyPlus, ExternalLink, Eye, EyeOff, FileText, GripVertical, Home, LayoutPanelTop,
-  Layers, Loader2, Monitor, MoreHorizontal, Palette, PanelBottom, Plus, Redo2, Search, Smartphone, Trash2, Undo2, X,
+  Layers, Loader2, Package, Monitor, MoreHorizontal, Palette, PanelBottom, Plus, Redo2, Search, Smartphone, Trash2, Undo2, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import { confirmar, pedirTexto } from "@/components/ui/dialogos";
 import type { DeliveryProduct, DeliverySection, DeliveryStore } from "@/lib/delivery";
 import { errorMessage } from "@/lib/delivery";
 import type { VendedorResumen } from "@/lib/marketplace";
-import { Bloque, BloqueTipo, Diseno, grupoDe, GRUPOS_BLOQUE, MAX_BLOQUES, normalizeBloque, nuevoId, bloqueNuevo, storefrontPath, TemaNormalizado, TIPOS_BLOQUE } from "@/lib/storefront";
+import { Bloque, BloqueTipo, Diseno, grupoDe, GRUPOS_BLOQUE, MAX_BLOQUES, MAX_BLOQUES_PRODUCTO, normalizeBloque, nuevoId, bloqueNuevo, storefrontPath, TemaNormalizado, TIPOS_BLOQUE } from "@/lib/storefront";
 import type { EstiloSeccion } from "@/lib/storefrontSecciones";
 import { PATRONES } from "@/lib/storefrontPatrones";
 import type { Vista } from "@/lib/storeRoutes";
@@ -29,6 +29,8 @@ import type { PaginaEd, useSitio } from "./useSitio";
 type Api = ReturnType<typeof useSitio>;
 type Seleccion = { tipo: "global" } | { tipo: "pagina" } | { tipo: "cabecera" } | { tipo: "pie" } | { tipo: "seccion"; id: string } | null;
 const INICIO = "inicio";
+/** Plantilla de la ficha de producto: secciones debajo de la ficha en todos los productos. */
+const PRODUCTO = "producto";
 const PORTAPAPELES = "woref-seccion-copiada";
 
 const nombreTipo = (tipo: BloqueTipo) => TIPOS_BLOQUE.find((t) => t.tipo === tipo)?.nombre ?? tipo;
@@ -66,9 +68,10 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
   const [dropOn, setDropOn] = useState<string | null>(null);
   const ancho = useAncho();
 
-  const pagina = paginaClave === INICIO ? null : sitio.paginas.find((p) => p.clave === paginaClave) ?? null;
-  useEffect(() => { if (paginaClave !== INICIO && !pagina) setPaginaClave(INICIO); }, [paginaClave, pagina]);
-  const bloques = pagina ? pagina.bloques : sitio.tema.bloques;
+  const esProducto = paginaClave === PRODUCTO;
+  const pagina = paginaClave === INICIO || esProducto ? null : sitio.paginas.find((p) => p.clave === paginaClave) ?? null;
+  useEffect(() => { if (paginaClave !== INICIO && !esProducto && !pagina) setPaginaClave(INICIO); }, [paginaClave, pagina, esProducto]);
+  const bloques = pagina ? pagina.bloques : esProducto ? sitio.tema.producto_bloques ?? [] : sitio.tema.bloques;
   const seleccionada = sel?.tipo === "seccion" ? bloques.find((b) => b.id === sel.id) ?? null : null;
 
   // ---- cambios
@@ -80,11 +83,12 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
   const setPagina = useCallback((clave: string, c: Partial<PaginaEd>) => cambiar((s) => ({ ...s, paginas: s.paginas.map((p) => (p.clave === clave ? { ...p, ...c } : p)) })), [cambiar]);
   const setBloques = useCallback((fn: (l: Bloque[]) => Bloque[]) => cambiar((s) => (paginaClave === INICIO
     ? { ...s, tema: { ...s.tema, bloques: fn(s.tema.bloques) } }
+    : paginaClave === PRODUCTO ? { ...s, tema: { ...s.tema, producto_bloques: fn(s.tema.producto_bloques ?? []) } }
     : { ...s, paginas: s.paginas.map((p) => (p.clave === paginaClave ? { ...p, bloques: fn(p.bloques) } : p)) })), [cambiar, paginaClave]);
   const actualizar = (id: string, c: Record<string, unknown>) => setBloques((l) => l.map((b) => (b.id === id ? ({ ...b, ...c } as Bloque) : b)));
   const setEstilo = (id: string, est: EstiloSeccion | undefined) => setBloques((l) => l.map((b) => { if (b.id !== id) return b; const { est: _viejo, ...resto } = b; void _viejo; return (est ? { ...resto, est } : resto) as Bloque; }));
 
-  const limite = paginaClave === INICIO ? MAX_BLOQUES + 10 : 40;
+  const limite = paginaClave === INICIO ? MAX_BLOQUES + 10 : esProducto ? MAX_BLOQUES_PRODUCTO : 40;
   const insertar = (nuevo: Bloque) => {
     if (bloques.length >= limite) { toast.error(`Llegaste al máximo de ${limite} secciones en esta página`); return; }
     setBloques((l) => {
@@ -159,7 +163,7 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
       toast.success("Página eliminada");
     } catch (error) { toast.error(errorMessage(error)); }
   };
-  const irAPagina = (clave: string) => { setPaginaClave(clave); setSel(clave === INICIO ? null : { tipo: "pagina" }); };
+  const irAPagina = (clave: string) => { setPaginaClave(clave); setSel(clave === INICIO || clave === PRODUCTO ? null : { tipo: "pagina" }); };
 
   // ---- datos para destinos y para la vista previa
   const anclas = useMemo(() => bloques.filter((b) => b.est?.ancla).map((b) => ({ id: b.est!.ancla!, nombre: `${nombreSeccion(b)} (#${b.est!.ancla})` })), [bloques]);
@@ -168,14 +172,15 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
     paginas: sitio.paginas.filter((p) => p.estado === "publicada" && p.slug).map((p) => ({ slug: p.slug, titulo: p.titulo })),
   }), [datos.categorias, datos.colecciones, datos.servicios.length, anclas, sitio.paginas, sitio.tema.whatsapp]);
   const productosVisibles = useMemo(() => datos.products.filter((p) => (p.estado ?? "publicado") === "publicado"), [datos.products]);
-  const vista: Vista = pagina ? { tipo: "pagina", slug: pagina.slug || "vista-previa" } : { tipo: "inicio" };
+  const vista: Vista = pagina ? { tipo: "pagina", slug: pagina.slug || "vista-previa" } : esProducto ? { tipo: "producto" } : { tipo: "inicio" };
   const paginasVista: PaginaTienda[] = useMemo(() => sitio.paginas.filter((p) => p.estado === "publicada" || p.clave === paginaClave).map((p) => ({
     id: p.clave, slug: p.clave === paginaClave ? p.slug || "vista-previa" : p.slug, titulo: p.titulo, tipo: p.tipo, clase: p.clase, contenido: p.contenido || null, bloques: p.bloques, imagen_url: p.imagen_url || null,
   })), [sitio.paginas, paginaClave]);
   const preview = useMemo(() => ({
     store, tema: sitio.tema, products: productosVisibles, sections: datos.sections, reviews: datos.reviews, vendedor: datos.vendedor, servicios: datos.servicios,
     colecciones: datos.colecciones, paginas: paginasVista, reservaHref: datos.servicios.length ? `/t/${store.slug}/reservar` : null, vista,
-  }), [store, sitio.tema, productosVisibles, datos, paginasVista, vista.tipo === "pagina" ? vista.slug : ""]); // eslint-disable-line react-hooks/exhaustive-deps
+    productoId: productosVisibles.find((p) => p.en_tienda !== false)?.id ?? null,
+  }), [store, sitio.tema, productosVisibles, datos, paginasVista, vista.tipo === "pagina" ? vista.slug : vista.tipo]); // eslint-disable-line react-hooks/exhaustive-deps
   const seleccionarDesdeVista = useCallback((id: string) => { setSel({ tipo: "seccion", id }); setPestana("contenido"); if (window.innerWidth < 1024) setMovil("ajustes"); window.setTimeout(() => document.getElementById(`arbol-${id}`)?.scrollIntoView({ block: "nearest" }), 60); }, []);
 
   // ---- atajos de teclado
@@ -255,21 +260,23 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
             <li key={p.clave}>{nodo(paginaClave === p.clave, <FileText className="h-4 w-4 shrink-0" />, p.titulo || "Sin título", () => irAPagina(p.clave),
               <span className="flex items-center gap-1.5">{p.estado !== "publicada" && <span className="rounded bg-muted px-1.5 text-[10px] font-bold uppercase text-muted-foreground">Oculta</span>}{api.paginasSinPublicar.includes(p.clave) && <Punto />}</span>)}</li>
           ))}
+          <li>{nodo(esProducto, <Package className="h-4 w-4 shrink-0" />, "Ficha de producto", () => irAPagina(PRODUCTO), <span className="rounded bg-muted px-1.5 text-[10px] font-bold uppercase text-muted-foreground">Plantilla</span>)}</li>
         </ul>
         <button type="button" onClick={() => setNuevaPagina(true)} className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"><Plus className="h-4 w-4" />Nueva página</button>
       </div>
       <div>
         <div className="mb-1 flex items-center justify-between px-2">
-          <p className="truncate text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{pagina ? pagina.titulo || "Página" : "Inicio"}</p>
+          <p className="truncate text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{pagina ? pagina.titulo || "Página" : esProducto ? "Ficha de producto" : "Inicio"}</p>
           {pagina && <button type="button" onClick={() => setSel({ tipo: "pagina" })} className="text-[11px] font-bold text-muted-foreground underline-offset-2 hover:underline">Ajustes de la página</button>}
         </div>
         <ul className="space-y-0.5">
           <li>{nodo(sel?.tipo === "cabecera", <LayoutPanelTop className="h-4 w-4 shrink-0" />, "Encabezado", () => { setSel({ tipo: "cabecera" }); if (ancho < 1024) setMovil("ajustes"); })}</li>
+          {esProducto && <li className="flex items-center gap-2 rounded-lg bg-muted/60 px-2 py-1.5 text-[13px] text-muted-foreground"><Package className="h-4 w-4 shrink-0" />Ficha: fotos, precio, compra, descripción, opiniones y relacionados</li>}
           {pagina?.contenido.trim() && <li className="flex items-center gap-2 px-2 py-1.5 text-[13px] text-muted-foreground"><FileText className="h-4 w-4" />Texto principal <button type="button" className="ml-auto text-xs underline" onClick={() => setSel({ tipo: "pagina" })}>Editar</button></li>}
         </ul>
         <ul className="my-0.5 space-y-0.5 border-l-2 border-muted pl-1.5">
           {bloques.map((b, i) => fila(b, i))}
-          {bloques.length === 0 && <li className="px-2 py-2 text-xs text-muted-foreground">Esta página no tiene secciones todavía.</li>}
+          {bloques.length === 0 && <li className="px-2 py-2 text-xs text-muted-foreground">{esProducto ? "Sumá secciones que se vean debajo de cada producto: envíos, garantía, testimonios, una banda de marca…" : "Esta página no tiene secciones todavía."}</li>}
         </ul>
         <button type="button" onClick={() => setIzq("agregar")} className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-semibold text-primary hover:bg-muted"><Plus className="h-4 w-4" />Agregar sección</button>
         <ul className="space-y-0.5"><li>{nodo(sel?.tipo === "pie", <PanelBottom className="h-4 w-4 shrink-0" />, "Pie de página", () => { setSel({ tipo: "pie" }); if (ancho < 1024) setMovil("ajustes"); })}</li></ul>
@@ -399,12 +406,15 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
       <span className="sr-only">Página que estás editando</span>
       <select value={paginaClave} onChange={(e) => irAPagina(e.target.value)} className="h-9 min-w-0 max-w-[14rem] appearance-none truncate rounded-lg border bg-background pl-3 pr-8 text-sm font-bold">
         <option value={INICIO}>Inicio</option>
+        <option value={PRODUCTO}>Ficha de producto (plantilla)</option>
         {sitio.paginas.map((p) => <option key={p.clave} value={p.clave}>{p.titulo || "Sin título"}{p.estado !== "publicada" ? " (oculta)" : ""}</option>)}
       </select>
       <ChevronDown className="pointer-events-none absolute right-2 h-4 w-4 text-muted-foreground" />
     </label>
   );
-  const enLinea = pagina ? (pagina.estado === "publicada" && api.esPublicada(pagina.clave) ? `${storefrontPath(store.slug)}/pagina/${pagina.slug}` : null) : storefrontPath(store.slug);
+  const primerProducto = productosVisibles.find((p) => p.en_tienda !== false);
+  const enLinea = pagina ? (pagina.estado === "publicada" && api.esPublicada(pagina.clave) ? `${storefrontPath(store.slug)}/pagina/${pagina.slug}` : null)
+    : esProducto ? (primerProducto ? `${storefrontPath(store.slug)}/p/${primerProducto.slug || primerProducto.id}` : null) : storefrontPath(store.slug);
 
   const barra = (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card px-2 sm:px-3">

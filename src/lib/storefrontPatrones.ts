@@ -16,7 +16,7 @@ export const PATRONES: Patron[] = [
   },
   {
     id: "banda-marca", nombre: "Banda con el color de la marca", detalle: "Mensaje centrado con botón sobre el color principal.",
-    crear: (p) => con("contenido", p, { titulo: "Envío gratis en compras grandes", texto: "Aprovechá esta semana.", nivel: "h2", imagen_pos: "ninguna", botones: [{ texto: "Comprar ahora", destino: { tipo: "catalogo" }, estilo: "secundario" }], est: { fondo: "acento", alinear: "centro", arriba: 4, abajo: 4 } }),
+    crear: (p) => con("contenido", p, { antetitulo: undefined, titulo: "Envío gratis en compras grandes", texto: "Aprovechá esta semana.", nivel: "h2", imagen_pos: "ninguna", botones: [{ texto: "Comprar ahora", destino: { tipo: "catalogo" }, estilo: "secundario" }], est: { fondo: "acento", alinear: "centro", arriba: 4, abajo: 4 } }),
   },
   {
     id: "historia", nombre: "Historia con foto", detalle: "Foto a la izquierda y el relato a la derecha.",
@@ -25,7 +25,7 @@ export const PATRONES: Patron[] = [
   },
   {
     id: "mensaje-oscuro", nombre: "Mensaje sobre fondo oscuro", detalle: "Una frase fuerte, centrada, sobre negro.",
-    crear: (p) => con("contenido", p, { titulo: "Hecho para durar", texto: "Una idea, dos líneas como máximo.", nivel: "h2", tamano: "grande", imagen_pos: "ninguna", botones: [], est: { fondo: "oscuro", alinear: "centro", arriba: 6, abajo: 6, ancho: "estrecho" } }),
+    crear: (p) => con("contenido", p, { antetitulo: undefined, titulo: "Hecho para durar", texto: "Una idea, dos líneas como máximo.", nivel: "h2", tamano: "grande", imagen_pos: "ninguna", botones: [], est: { fondo: "oscuro", alinear: "centro", arriba: 6, abajo: 6, ancho: "estrecho" } }),
   },
   {
     id: "beneficios-suave", nombre: "Beneficios sobre fondo suave", detalle: "Tres o cuatro ventajas en una franja de color suave.",

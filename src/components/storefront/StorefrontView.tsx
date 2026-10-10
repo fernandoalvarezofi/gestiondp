@@ -52,6 +52,8 @@ type Props = {
   colecciones?: ColeccionTienda[];
   /** Páginas publicadas (pie, menú y página /pagina/<slug>). */
   paginas?: PaginaTienda[];
+  /** Contenido principal propio (ficha de producto): se dibuja con el encabezado, el pie y las secciones de la plantilla de producto. */
+  principal?: ReactNode;
 };
 export type ServicioTienda = { id: string; nombre: string; descripcion: string | null; duracion_min: number; precio: number; imagen_url: string | null; capacidad?: number };
 export type ColeccionTienda = { id: string; nombre: string; slug: string; descripcion: string | null; imagen_url: string | null; productos: string[] };
@@ -85,7 +87,7 @@ const ALTO_SEP = { chico: "h-4", medio: "h-10", grande: "h-20" } as const;
 const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 
 /** Tienda online de un comercio: arma la página con los bloques y el diseño elegidos. Es la misma pantalla para el sitio público y la vista previa del editor. */
-export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista, reservaHref = null, servicios = [], colecciones = [], paginas = [] }: Props) {
+export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista, reservaHref = null, servicios = [], colecciones = [], paginas = [], principal }: Props) {
   // Solo se muestra en la tienda lo que el comercio publicó en este canal.
   const products = useMemo(() => allProducts.filter((product) => product.en_tienda !== false), [allProducts]);
   const theme = useMemo(() => tema ?? normalizeTheme(store.tienda_tema), [tema, store.tienda_tema]);
@@ -1178,6 +1180,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     );
   };
   const renderPagina = () => {
+    if (vistaActual.tipo === "producto") return <>{principal}{renderLista((theme.producto_bloques ?? []).filter((b) => b.visible))}</>;
     if (vistaActual.tipo === "curada") return renderCurada(vistaActual.slug);
     if (vistaActual.tipo === "pagina") return renderPaginaPropia(vistaActual.slug);
     const base = bloques.find((b): b is BloqueCatalogo => b.tipo === "catalogo");
@@ -1257,7 +1260,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         </a>
       )}
 
-      {!preview && itemCount > 0 && (
+      {!preview && itemCount > 0 && vistaActual.tipo !== "producto" && (
         <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={
           <button type="button" className="fixed inset-x-4 bottom-4 z-40 mx-auto flex w-[calc(100%-2rem)] max-w-md items-center justify-between px-5 py-3.5 font-bold shadow-pop md:hidden" style={{ ...accent, ...radiusButton }}>
             <span className="inline-flex items-center gap-2"><ShoppingBag className="h-5 w-5" />Ver mi pedido ({itemCount})</span>

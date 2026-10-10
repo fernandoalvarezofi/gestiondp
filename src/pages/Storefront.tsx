@@ -1,15 +1,13 @@
 import { consiente } from "@/lib/cookies";
-import { useEffect, useMemo, useState } from "react";
-import { marcarOrigenTienda } from "@/lib/canal";
+import { useEffect, useMemo } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { Loader2, Store as StoreIcon } from "lucide-react";
-import { ColeccionTienda, PaginaTienda, ServicioTienda, StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
+import { StorefrontView } from "@/components/storefront/StorefrontView";
+import { useTiendaPublica } from "@/hooks/useTiendaPublica";
 import { normalizeTheme } from "@/lib/storefront";
 import { aplicarHead, cargarPixeles } from "@/lib/storeHead";
-import { fetchColeccionesPublicas } from "@/services/catalogPro";
 import { Button } from "@/components/ui/button";
-import { COMERCIO_COLS, db, DeliveryProduct, DeliverySection, DeliveryStore, img, productSelect } from "@/lib/delivery";
-import type { VendedorResumen } from "@/lib/marketplace";
+import { db, img } from "@/lib/delivery";
 import { storefrontUrl } from "@/lib/storefront";
 import { parseVista } from "@/lib/storeRoutes";
 import { ErrorState } from "@/components/delivery/Common";
@@ -20,50 +18,11 @@ export default function Storefront() {
   const location = useLocation();
   // Página de la tienda según la dirección: inicio, /c/<categoría>, /ofertas o /buscar?q=
   const vista = useMemo(() => parseVista(location.pathname, location.search, categoria), [location.pathname, location.search, categoria]);
-  const [store, setStore] = useState<DeliveryStore | null>(null);
-  const [products, setProducts] = useState<DeliveryProduct[]>([]);
-  const [sections, setSections] = useState<DeliverySection[]>([]);
-  const [reviews, setReviews] = useState<StorefrontReview[]>([]);
-  const [vendedor, setVendedor] = useState<VendedorResumen | null>(null);
-  const [conTurnos, setConTurnos] = useState(false);
-  const [servicios, setServicios] = useState<ServicioTienda[]>([]);
-  const [paginas, setPaginas] = useState<PaginaTienda[]>([]);
-  const [colecciones, setColecciones] = useState<ColeccionTienda[]>([]);
-  const [state, setState] = useState<"loading" | "ready" | "missing" | "error">("loading");
-
-  useEffect(() => {
-    let alive = true;
-    setState("loading");
-    (async () => {
-      const { data: found, error: falla } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
-      if (falla) { if (alive) setState("error"); return; }
-      if (!alive) return;
-      if (!found) { setState("missing"); return; }
-      // Solo lo publicado: aunque quien mira sea del equipo (que por permisos ve borradores), la tienda muestra lo mismo que ve un cliente.
-      const [{ data: catalog }, { data: configured }, { data: opinions }, { data: resumen }, { data: servs }, { data: pags }, cols] = await Promise.all([
-        db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("estado", "publicado").order("orden").order("nombre"),
-        db.from("delivery_secciones").select("*").eq("comercio_id", found.id),
-        db.from("delivery_resenas").select("id,puntaje,comentario,created_at,cliente:perfiles(nombre)").eq("comercio_id", found.id).order("created_at", { ascending: false }).limit(12),
-        db.rpc("delivery_vendedor_resumen", { p_slug: found.slug }),
-        db.from("servicios").select("id,nombre,descripcion,duracion_min,precio,imagen_url,capacidad").eq("comercio_id", found.id).eq("activo", true).order("orden").order("nombre"),
-        db.from("delivery_tienda_paginas").select("id,slug,titulo,tipo,clase,contenido,bloques,imagen_url,seo_titulo,seo_descripcion").eq("comercio_id", found.id).eq("estado", "publicada").order("orden").order("titulo"),
-        fetchColeccionesPublicas(found.id).catch(() => []),
-      ]);
-      if (!alive) return;
-      setStore(found);
-      marcarOrigenTienda(found.id);
-      setProducts(catalog || []);
-      setSections(configured || []);
-      setReviews(opinions || []);
-      setVendedor((resumen as VendedorResumen | null) ?? null);
-      setServicios((servs ?? []) as ServicioTienda[]);
-      setPaginas((pags ?? []) as PaginaTienda[]);
-      setColecciones(cols as ColeccionTienda[]);
-      setConTurnos((servs ?? []).length > 0);
-      setState("ready");
-    })();
-    return () => { alive = false; };
-  }, [slug]);
+  const tienda = useTiendaPublica(slug);
+  const datos = tienda.estado === "ready" ? tienda.datos : null;
+  const store = datos?.store ?? null;
+  const paginas = useMemo(() => datos?.paginas ?? [], [datos]);
+  const colecciones = useMemo(() => datos?.colecciones ?? [], [datos]);
 
   // Cuenta una visita por sesión del navegador (anónima: solo suma un número al día, no guarda quién entra).
   useEffect(() => {
@@ -102,9 +61,9 @@ export default function Storefront() {
   // Píxeles del comercio (solo con consentimiento de medición).
   useEffect(() => { if (store) { const t = normalizeTheme(store.tienda_tema); cargarPixeles({ pixel_meta: t.pixel_meta, ga4: t.ga4 }); } }, [store, vista]);
 
-  if (state === "loading") return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
-  if (state === "error") return <div className="mx-auto flex min-h-screen max-w-md items-center px-6"><ErrorState className="w-full" title="No pudimos abrir esta tienda" onRetry={() => window.location.reload()} /></div>;
-  if (state === "missing" || !store) {
+  if (tienda.estado === "loading") return <div className="flex min-h-screen items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  if (tienda.estado === "error") return <div className="mx-auto flex min-h-screen max-w-md items-center px-6"><ErrorState className="w-full" title="No pudimos abrir esta tienda" onRetry={() => window.location.reload()} /></div>;
+  if (!datos || !store) {
     return (
       <div className="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-6 text-center">
         <StoreIcon className="h-10 w-10 text-muted-foreground" />
@@ -114,5 +73,5 @@ export default function Storefront() {
       </div>
     );
   }
-  return <StorefrontView store={store} products={products} sections={sections} reviews={reviews} vendedor={vendedor} vista={vista} reservaHref={conTurnos ? `/t/${store.slug}/reservar` : null} servicios={servicios} colecciones={colecciones} paginas={paginas} />;
+  return <StorefrontView store={store} products={datos.products} sections={datos.sections} reviews={datos.reviews} vendedor={datos.vendedor} vista={vista} reservaHref={datos.servicios.length ? `/t/${store.slug}/reservar` : null} servicios={datos.servicios} colecciones={colecciones} paginas={paginas} />;
 }

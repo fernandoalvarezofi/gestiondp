@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ProductoDetalle } from "@/components/storefront/ProductoDetalle";
 import { ColeccionTienda, PaginaTienda, ServicioTienda, StorefrontReview, StorefrontView } from "@/components/storefront/StorefrontView";
 import type { DeliveryProduct, DeliverySection, DeliveryStore } from "@/lib/delivery";
 import type { VendedorResumen } from "@/lib/marketplace";
@@ -10,6 +11,8 @@ export type PreviewData = {
   servicios?: ServicioTienda[]; colecciones?: ColeccionTienda[]; paginas?: PaginaTienda[]; reservaHref?: string | null;
   /** Qué página de la tienda se previsualiza (inicio, una página propia, una colección…). */
   vista?: Vista;
+  /** Producto de ejemplo para previsualizar la plantilla de la ficha. */
+  productoId?: string | null;
 };
 
 /**
@@ -38,6 +41,10 @@ export default function StorefrontPreviewFrame() {
   }, []);
 
   if (!data) return <div className="flex min-h-screen items-center justify-center text-sm text-muted-foreground">Cargando vista previa…</div>;
+  const producto = data.vista?.tipo === "producto" ? data.products.find((x) => x.id === data.productoId) ?? data.products[0] : undefined;
+  const principal = data.vista?.tipo !== "producto" ? undefined : producto
+    ? <ProductoDetalle store={data.store} product={producto} others={data.products.filter((x) => x.id !== producto.id)} vendedor={data.vendedor ?? null} theme={data.tema} preview />
+    : <p className="mx-auto max-w-xl px-6 py-16 text-center text-muted-foreground">Cargá y publicá un producto para ver cómo queda la ficha.</p>;
   return (
     <StorefrontView
       store={data.store}
@@ -51,6 +58,7 @@ export default function StorefrontPreviewFrame() {
       paginas={data.paginas ?? []}
       reservaHref={data.reservaHref ?? null}
       vista={data.vista}
+      principal={principal}
       preview
       selectedBlock={selected}
       onSelectBlock={(id) => { setSelected(id); window.parent.postMessage({ tipo: "woref-bloque", id }, window.location.origin); }}

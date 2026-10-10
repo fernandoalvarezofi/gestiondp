@@ -9,7 +9,9 @@ export type Vista =
   /** Colección armada a mano por el comercio (/coleccion/<slug>). */
   | { tipo: "curada"; slug: string }
   /** Página informativa o landing de campaña (/pagina/<slug>). */
-  | { tipo: "pagina"; slug: string };
+  | { tipo: "pagina"; slug: string }
+  /** Ficha de producto: la parte fija la arma la página y debajo van las secciones de la plantilla. */
+  | { tipo: "producto" };
 
 export const curatedPath = (slug: string, coleccion: string) => `/t/${slug}/coleccion/${coleccion}`;
 export const pagePath = (slug: string, pagina: string) => `/t/${slug}/pagina/${pagina}`;

@@ -272,7 +272,10 @@ export type TiendaTema = {
   /** Analítica propia del comercio (se cargan solo con consentimiento de medición). */
   pixel_meta?: string;
   ga4?: string;
+  /** Plantilla de la ficha de producto: secciones que se muestran debajo de la ficha en TODOS los productos (hasta 12). */
+  producto_bloques?: Bloque[];
 };
+export const MAX_BLOQUES_PRODUCTO = 12;
 
 export const PLANTILLAS: { id: Plantilla; nombre: string; ideal: string; detalle: string; color: string }[] = [
   { id: "boutique", nombre: "Boutique", ideal: "Moda, regalos, decoración", detalle: "Portada a pantalla completa, colecciones con foto y catálogo en grilla amplia.", color: "#1F2A44" },
@@ -712,7 +715,8 @@ export function normalizeTheme(raw: unknown): TemaNormalizado {
   const guardados = Array.isArray(source.bloques) ? source.bloques.slice(0, MAX_BLOQUES).map((item, index) => normalizeBloque(item, index)).filter((item): item is Bloque => item !== null) : null;
   // Sin bloques guardados (tiendas anteriores o recién creadas) la página se arma a partir de la plantilla y las secciones.
   const bloques = guardados && guardados.length ? guardados : bloquesDePlantilla(plantilla, tema).map((item, index) => normalizeBloque(item, index)!).filter(Boolean);
-  const salida = { ...tema, diseno: normalizeDiseno(source.diseno, plantilla, tipografia), bloques };
+  const producto_bloques = (Array.isArray(source.producto_bloques) ? source.producto_bloques.slice(0, MAX_BLOQUES_PRODUCTO) : []).map((item, index) => normalizeBloque(item, index)).filter((item): item is Bloque => item !== null && item.tipo !== "catalogo");
+  const salida = { ...tema, diseno: normalizeDiseno(source.diseno, plantilla, tipografia), bloques, producto_bloques };
   // Si hay bloques guardados, el catálogo sigue siendo obligatorio.
   if (!salida.bloques.some((item) => item.tipo === "catalogo")) salida.bloques = [...salida.bloques, normalizeBloque({ ...bloqueNuevo("catalogo", plantilla), id: "catalogo" }, salida.bloques.length)!];
   return salida;
