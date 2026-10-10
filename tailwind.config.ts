@@ -88,6 +88,7 @@ export default {
         "brand-deep": "hsl(var(--brand-deep))",
         "brand-cream": "hsl(var(--brand-cream))",
         "brand-yellow": { DEFAULT: "hsl(var(--brand-yellow))", foreground: "hsl(var(--brand-yellow-foreground))" },
+        ink: { DEFAULT: "hsl(var(--ink))", foreground: "hsl(var(--ink-foreground))" },
         "surface-mint": {
           DEFAULT: "hsl(var(--surface-mint))",
           strong: "hsl(var(--surface-mint-strong))",

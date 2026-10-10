@@ -27,7 +27,7 @@ export function PageIntro({ title, description, actions, className }: { title?: 
 
 /** Superficie base. `flush` quita el relleno (para tablas y listas que llegan al borde). */
 export function Surface({ className, flush, children }: { className?: string; flush?: boolean; children: ReactNode }) {
-  return <div className={cn("rounded-2xl border bg-card", !flush && "p-4 sm:p-5", className)}>{children}</div>;
+  return <div className={cn("rounded-2xl border bg-card shadow-soft", !flush && "p-4 sm:p-5", className)}>{children}</div>;
 }
 
 /** Sección: el título vive fuera de la superficie, con una acción opcional a la derecha. */
@@ -36,7 +36,7 @@ export function Section({ title, description, action, children, className }: { t
     <section className={cn("min-w-0", className)}>
       <div className="mb-2.5 flex items-end justify-between gap-3 px-0.5">
         <div className="min-w-0">
-          <h3 className="text-[15px] font-extrabold leading-tight">{title}</h3>
+          <h3 className="flex items-center gap-2 text-[15px] font-extrabold leading-tight"><span aria-hidden className="h-3.5 w-1 shrink-0 rounded-full bg-brand-yellow" />{title}</h3>
           {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
         </div>
         {action && <div className="shrink-0 text-[13px] font-bold">{action}</div>}
@@ -70,19 +70,32 @@ export function MetricStrip({ children, className, cols }: { children: ReactNode
   const n = cols ?? Math.min(6, Math.max(2, count));
   const lg = { 2: "lg:grid-cols-2", 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6" }[n];
   return (
-    <div className={cn("overflow-hidden rounded-2xl border bg-card", className)}>
+    <div className={cn("overflow-hidden rounded-2xl border bg-card shadow-soft", className)}>
       <div className={cn("-m-px grid grid-cols-2", lg)}>{children}</div>
     </div>
   );
 }
 
-export function Metric({ label, value, hint, delta, spark, featured, className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; delta?: ReactNode; spark?: number[]; featured?: boolean; className?: string }) {
+const metricTones = {
+  brand: "bg-primary/10 text-primary ring-primary/15",
+  accent: "bg-brand-yellow/20 text-[hsl(40_80%_30%)] ring-brand-yellow/35",
+  ink: "bg-ink/[0.07] text-ink ring-ink/10 dark:bg-white/10 dark:text-white",
+  info: "bg-info/10 text-info ring-info/15",
+  danger: "bg-destructive/10 text-destructive ring-destructive/15",
+} as const;
+
+/** Métrica. `icon` agrega un ícono en un cuadro de color (`tone`); `featured` la destaca con el amarillo de marca. */
+export function Metric({ label, value, hint, delta, spark, featured, icon, tone = "brand", className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; delta?: ReactNode; spark?: number[]; featured?: boolean; icon?: ReactNode; tone?: keyof typeof metricTones; className?: string }) {
   return (
-    <div className={cn("relative border-l border-t p-4 sm:p-5", featured && "col-span-2", className)}>
-      <p className="text-[12.5px] font-semibold text-muted-foreground">{label}</p>
-      <p className={cn("mt-1 font-display font-extrabold leading-none tracking-tight tabular-nums", featured ? "text-[34px] sm:text-[40px]" : "text-[26px] sm:text-[28px]")}>{value}</p>
+    <div className={cn("group/metric relative border-l border-t p-4 transition-colors hover:bg-muted/40 sm:p-5", featured && "col-span-2 bg-[linear-gradient(135deg,hsl(46_100%_47%/0.12),transparent_55%)]", className)}>
+      {featured && <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,hsl(var(--brand-yellow)),hsl(var(--primary)))]" />}
+      <div className="flex items-center gap-2">
+        {icon && <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg ring-1 ring-inset [&_svg]:h-4 [&_svg]:w-4", metricTones[featured ? "accent" : tone])}>{icon}</span>}
+        <p className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted-foreground">{label}</p>
+      </div>
+      <p className={cn("mt-2 font-display font-extrabold leading-none tracking-tight text-ink tabular-nums dark:text-foreground", featured ? "text-[34px] sm:text-[40px]" : "text-[26px] sm:text-[28px]")}>{value}</p>
       {(delta || hint) && <p className="mt-2 flex flex-wrap items-center gap-x-1.5 text-[12.5px] text-muted-foreground">{delta}{delta && hint && <span aria-hidden>·</span>}{hint}</p>}
-      {spark && spark.length > 1 && <Sparkline values={spark} className="absolute right-5 top-1/2 hidden h-14 w-36 -translate-y-1/2 text-foreground/60 sm:block" />}
+      {spark && spark.length > 1 && <Sparkline values={spark} className="absolute right-5 top-1/2 hidden h-14 w-36 -translate-y-1/2 text-primary/70 sm:block" />}
     </div>
   );
 }
@@ -113,7 +126,7 @@ export function BarSeries({ data, label, format, height = 168 }: { data: { key: 
       <div className="flex items-end gap-[3px]" style={{ height }}>
         {data.map((d) => (
           <div key={d.key} className="group relative flex h-full min-w-0 flex-1 items-end justify-center" title={`${d.label}${format ? ` · ${format(d.value)}` : ` · ${d.value}`}${d.hint ? ` · ${d.hint}` : ""}`}>
-            <div className={cn("w-full max-w-[44px] rounded-t-[3px] transition-colors", d.value === 0 ? "bg-muted" : d.key === top.key ? "bg-brand-yellow" : "bg-foreground/15 group-hover:bg-foreground/35")} style={{ height: `${Math.max(d.value ? 4 : 1.5, (d.value / max) * 100)}%` }} />
+            <div className={cn("w-full max-w-[44px] rounded-t-[3px] transition-colors", d.value === 0 ? "bg-muted" : d.key === top.key ? "bg-brand-yellow" : "bg-ink/15 group-hover:bg-ink/35 dark:bg-foreground/15")} style={{ height: `${Math.max(d.value ? 4 : 1.5, (d.value / max) * 100)}%` }} />
           </div>
         ))}
       </div>
@@ -125,19 +138,19 @@ export function BarSeries({ data, label, format, height = 168 }: { data: { key: 
 }
 
 const tones = {
-  neutral: "bg-muted text-muted-foreground",
-  info: "bg-info/10 text-info",
-  success: "bg-success/10 text-success",
-  warning: "bg-warning/15 text-warning-foreground dark:text-warning",
-  danger: "bg-destructive/10 text-destructive",
-  brand: "bg-brand-yellow/25 text-brand-yellow-foreground",
+  neutral: "bg-muted text-muted-foreground ring-foreground/10",
+  info: "bg-info/10 text-info ring-info/20",
+  success: "bg-success/10 text-success ring-success/20",
+  warning: "bg-warning/15 text-warning-foreground ring-warning/30 dark:text-warning",
+  danger: "bg-destructive/10 text-destructive ring-destructive/20",
+  brand: "bg-brand-yellow/25 text-brand-yellow-foreground ring-brand-yellow/40",
 } as const;
 export type Tone = keyof typeof tones;
 
 /** Estado en una píldora compacta, con punto de color opcional. */
 export function StatusPill({ tone = "neutral", dot, children, className }: { tone?: Tone; dot?: boolean; children: ReactNode; className?: string }) {
   return (
-    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 text-[11.5px] font-bold leading-5", tones[tone], className)}>
+    <span className={cn("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[11.5px] font-bold leading-5 ring-1 ring-inset", tones[tone], className)}>
       {dot && <span className="h-1.5 w-1.5 rounded-full bg-current" />}{children}
     </span>
   );
@@ -158,7 +171,7 @@ export function ListRow({ lead, title, meta, trailing, to, className }: { lead?:
 
 /** Contenedor de filas con divisores finos (lista de una superficie). */
 export function RowList({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("divide-y overflow-hidden rounded-2xl border bg-card", className)}>{children}</div>;
+  return <div className={cn("divide-y overflow-hidden rounded-2xl border bg-card shadow-soft", className)}>{children}</div>;
 }
 
 /** Anillo de progreso (completar el local, cumplimiento, etc.). */
@@ -169,7 +182,7 @@ export function ProgressRing({ value, size = 44, children }: { value: number; si
     <span className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }} role="img" aria-label={`${value}% completado`}>
       <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth="4" className="stroke-muted" />
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth="4" strokeLinecap="round" className="stroke-foreground transition-all" strokeDasharray={c} strokeDashoffset={c - (Math.min(100, Math.max(0, value)) / 100) * c} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth="4" strokeLinecap="round" className="stroke-primary transition-all" strokeDasharray={c} strokeDashoffset={c - (Math.min(100, Math.max(0, value)) / 100) * c} />
       </svg>
       <span className="absolute text-[11px] font-extrabold tabular-nums">{children ?? `${value}%`}</span>
     </span>

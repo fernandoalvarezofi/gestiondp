@@ -1,3 +1,4 @@
+import { Banknote, Percent, XCircle, Timer } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BarSeries, ListRow, Metric, MetricStrip, PageIntro, RowList, Section, Surface } from "@/components/panel/kit";
 import { db, errorMessage, money } from "@/lib/delivery";
@@ -61,10 +62,10 @@ export function AnalyticsPanel() {
       {data && (
         <>
           <MetricStrip cols={5}>
-            <Metric featured label="Facturado en pedidos" value={money(data.gmv)} hint={`${data.pedidos} pedidos · ticket ${money(data.ticket_promedio)}`} spark={data.por_dia.map((d) => d.gmv)} />
-            <Metric label="Tarifa de servicio" value={money(data.tarifa_servicio)} hint="Cobrada a clientes" />
-            <Metric label="Cancelados" value={`${data.tasa_cancelacion}%`} hint={`${data.cancelados} pedidos`} />
-            <Metric label="Entrega promedio" value={data.entrega_min != null ? `${data.entrega_min} min` : "—"} hint="Desde que se pide" />
+            <Metric featured icon={<Banknote />} label="Facturado en pedidos" value={money(data.gmv)} hint={`${data.pedidos} pedidos · ticket ${money(data.ticket_promedio)}`} spark={data.por_dia.map((d) => d.gmv)} />
+            <Metric icon={<Percent />} tone="ink" label="Tarifa de servicio" value={money(data.tarifa_servicio)} hint="Cobrada a clientes" />
+            <Metric icon={<XCircle />} tone="danger" label="Cancelados" value={`${data.tasa_cancelacion}%`} hint={`${data.cancelados} pedidos`} />
+            <Metric icon={<Timer />} tone="info" label="Entrega promedio" value={data.entrega_min != null ? `${data.entrega_min} min` : "—"} hint="Desde que se pide" />
           </MetricStrip>
           <MetricStrip cols={4}>
             <Metric label="Clientes que compraron" value={data.clientes_activos} hint={`${data.clientes_nuevos} nuevos`} />

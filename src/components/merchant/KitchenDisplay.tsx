@@ -96,7 +96,7 @@ export function KitchenDisplay({ storeId, orders, onChange }: { storeId: string;
             return (
               <Ticket key={order.id} order={order} tone={waiting || left < 0 ? "late" : left <= 3 ? "now" : "ok"}
                 badge={waiting ? `${order.repartidor || "Repartidor"} esperando` : left >= 0 ? `Listo en ${left} min` : `Pasado ${-left} min`}
-                action={<Button className="h-12 w-full rounded-2xl bg-emerald-500 text-base font-extrabold text-white hover:bg-emerald-600" disabled={busy === order.id} onClick={() => ready(order)}>Listo</Button>} />
+                action={<Button className="h-12 w-full rounded-2xl bg-none bg-emerald-500 text-base font-extrabold text-white hover:bg-emerald-600" disabled={busy === order.id} onClick={() => ready(order)}>Listo</Button>} />
             );
           })}
         </Column>

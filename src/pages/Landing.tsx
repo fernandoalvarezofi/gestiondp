@@ -50,7 +50,7 @@ export default function Landing() {
           </nav>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <Button asChild variant="ghost" size="sm" className="rounded-full font-bold text-white hover:bg-white/15 hover:text-white sm:h-10 sm:px-4"><Link to="/auth">Ingresar</Link></Button>
-            <Button asChild size="sm" className="rounded-full bg-white font-bold text-primary hover:bg-white/90 sm:h-10 sm:px-5"><Link to="/auth?registro=1">Crear cuenta</Link></Button>
+            <Button asChild size="sm" className="rounded-full bg-none bg-white font-bold text-primary hover:bg-white/90 sm:h-10 sm:px-5"><Link to="/auth?registro=1">Crear cuenta</Link></Button>
           </div>
         </div>
       </header>
@@ -170,7 +170,7 @@ export default function Landing() {
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Menú y stock al instante</li>
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Liquidaciones claras</li>
             </ul>
-            <Button asChild className="mt-6 rounded-full bg-white font-bold text-foreground hover:bg-white/90"><Link to="/auth?registro=1">Sumar mi comercio</Link></Button>
+            <Button asChild className="mt-6 rounded-full bg-none bg-white font-bold text-foreground hover:bg-white/90"><Link to="/auth?registro=1">Sumar mi comercio</Link></Button>
           </div>
         </div>
         <div id="repartir" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-b-4 border-brand-yellow bg-primary p-8 text-white lg:p-10">
@@ -183,7 +183,7 @@ export default function Landing() {
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Cobrás por viaje, con billetera</li>
               <li className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 shrink-0" />Bonos y turnos con cupo</li>
             </ul>
-            <Button asChild className="mt-6 rounded-full bg-brand-yellow font-bold text-brand-yellow-foreground hover:bg-brand-yellow/90"><Link to="/auth?registro=1">Quiero repartir</Link></Button>
+            <Button asChild variant="accent" className="mt-6 rounded-full font-bold"><Link to="/auth?registro=1">Quiero repartir</Link></Button>
           </div>
         </div>
       </section>

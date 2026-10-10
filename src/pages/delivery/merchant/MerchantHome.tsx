@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, HelpCircle, MessageSquareReply, PackageX, Plus, Star } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, HelpCircle, MessageSquareReply, PackageX, Plus, Star, Banknote, Clock, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Delta, ListRow, Metric, MetricStrip, PageIntro, ProgressRing, RowList, Section, SectionLink, StatusPill, type Tone } from "@/components/panel/kit";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
@@ -89,10 +89,10 @@ export default function MerchantHome() {
       )}
 
       <MetricStrip cols={5}>
-        {can("estadisticas") && <Metric featured label="Ventas de hoy" value={money(sales.today.total)} delta={<Delta current={sales.today.total} previous={sales.yesterday.total} suffix="vs. ayer a esta hora" />} hint={`${sales.today.count} ${sales.today.count === 1 ? "pedido" : "pedidos"}`} spark={sales.last7} />}
-        <Metric label="En curso" value={live.length} hint={pendingCount ? `${pendingCount} por responder` : "Nada por responder"} />
-        {can("estadisticas") && <Metric label="Ticket promedio" value={sales.today.count ? money(sales.today.total / sales.today.count) : "—"} hint="Hoy, sin envío" />}
-        <Metric label="Calificación" value={store.total_resenas ? Number(store.rating).toFixed(1) : "—"} hint={`${store.total_resenas} ${store.total_resenas === 1 ? "opinión" : "opiniones"}`} />
+        {can("estadisticas") && <Metric featured icon={<Banknote />} label="Ventas de hoy" value={money(sales.today.total)} delta={<Delta current={sales.today.total} previous={sales.yesterday.total} suffix="vs. ayer a esta hora" />} hint={`${sales.today.count} ${sales.today.count === 1 ? "pedido" : "pedidos"}`} spark={sales.last7} />}
+        <Metric icon={<Clock />} tone="ink" label="En curso" value={live.length} hint={pendingCount ? `${pendingCount} por responder` : "Nada por responder"} />
+        {can("estadisticas") && <Metric icon={<Receipt />} tone="info" label="Ticket promedio" value={sales.today.count ? money(sales.today.total / sales.today.count) : "—"} hint="Hoy, sin envío" />}
+        <Metric icon={<Star />} tone="accent" label="Calificación" value={store.total_resenas ? Number(store.rating).toFixed(1) : "—"} hint={`${store.total_resenas} ${store.total_resenas === 1 ? "opinión" : "opiniones"}`} />
       </MetricStrip>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">

@@ -31,6 +31,9 @@
     /* Amarillo Woref #F0B900 (acentos). Sobre amarillo siempre va texto oscuro: el blanco no se lee. */
     --brand-yellow: 46 100% 47%;
     --brand-yellow-foreground: 40 60% 10%;
+    /* Azul tinta: tercer color de la marca (acciones secundarias fuertes, cifras y gráficos). */
+    --ink: 222 47% 16%;
+    --ink-foreground: 0 0% 100%;
     --border: 240 8% 90%;
     --input: 240 8% 86%;
     --ring: 163 56% 38%;
@@ -75,6 +78,9 @@
     --brand-cream: 164 20% 13%;
     --brand-yellow: 46 100% 50%;
     --brand-yellow-foreground: 40 60% 10%;
+    /* Azul tinta: tercer color de la marca (acciones secundarias fuertes, cifras y gráficos). */
+    --ink: 222 35% 30%;
+    --ink-foreground: 0 0% 100%;
     --border: 220 13% 20%;
     --input: 220 13% 24%;
     --ring: 163 52% 50%;
@@ -229,8 +235,8 @@ html.woref-glass [data-sidebar="menu-button"][data-active="true"] {
 
 /* Pastillas de filtro y pestañas sobre el vidrio (fuera de tarjetas): la activa es verde y las demás, vidrio. */
 html.woref-glass:not(.dark) .bg-foreground.text-background:not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
-  background-color: hsl(var(--primary)); color: hsl(0 0% 100%); border-color: transparent;
-  box-shadow: 0 8px 20px -8px hsl(163 56% 38% / 0.55);
+  background-image: linear-gradient(180deg, hsl(222 40% 24%), hsl(222 47% 15%)); color: hsl(0 0% 100%); border-color: transparent;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 6px 16px -8px hsl(222 47% 12% / 0.55);
 }
 html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
   background-color: hsl(0 0% 100% / 0.55); border-color: hsl(0 0% 100% / 0.85); box-shadow: none;
@@ -284,3 +290,24 @@ html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] { background
 html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] > svg:first-child { background: hsl(var(--primary)); color: #fff; }
 /* Velo detrás de menús y ventanas: claro y difuminado en lugar de negro. */
 html.woref-glass:not(.dark) .bg-black\/80 { background-color: hsl(222 15% 30% / 0.18); -webkit-backdrop-filter: blur(8px) saturate(140%); backdrop-filter: blur(8px) saturate(140%); }
+
+/* ---- Sistema de componentes: tarjetas, pastillas y estados ------------------------------------------------------------ */
+/* Pastillas y botones oscuros (bg-foreground) dentro de tarjetas: azul tinta con relieve, en vez de negro plano. */
+html.woref-glass:not(.dark) :is(.bg-card, .bg-white) .bg-foreground.text-background {
+  background-image: linear-gradient(180deg, hsl(222 40% 24%), hsl(222 47% 15%)); border-color: transparent;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 4px 12px -6px hsl(222 47% 12% / 0.5);
+}
+/* Tarjetas que se pueden tocar: se elevan y marcan el borde al pasar el mouse. */
+html.woref-glass:not(.dark) :is(a, button).bg-card.border, html.woref-glass:not(.dark) :is(a, button)[class*="rounded-2xl"].border.bg-card {
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+html.woref-glass:not(.dark) :is(a, button).bg-card.border:hover:not(:disabled) {
+  transform: translateY(-2px); border-color: hsl(var(--primary) / 0.35);
+  box-shadow: 0 2px 4px hsl(222 30% 20% / 0.05), 0 16px 32px -14px hsl(222 30% 20% / 0.22);
+}
+/* Opciones elegibles (radio en tarjeta) marcadas: borde verde, halo suave y check visible. */
+html.woref-glass:not(.dark) [role="radio"][aria-checked="true"].border { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.14), 0 6px 16px -10px hsl(var(--primary) / 0.5); }
+/* Tablas: encabezado prolijo y filas con resaltado al pasar. */
+html.woref-glass:not(.dark) .bg-card table thead { background: linear-gradient(180deg, hsl(220 16% 98%), hsl(220 14% 96%)); }
+html.woref-glass:not(.dark) .bg-card table thead th { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(220 9% 46%); }
+html.woref-glass:not(.dark) .bg-card table tbody tr { transition: background-color .15s; }

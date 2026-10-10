@@ -402,7 +402,7 @@ export default function ProductoEditor() {
           <div className="flex items-center gap-3 px-4 py-3">
             <p className="min-w-0 flex-1 truncate text-sm font-semibold">{nuevo ? "Producto nuevo sin guardar" : "Cambios sin guardar"}{intentado && Object.keys(errores).length > 0 && <span className="ml-2 text-destructive-foreground/80">· {Object.keys(errores).length} {Object.keys(errores).length === 1 ? "campo para revisar" : "campos para revisar"}</span>}</p>
             <Button type="button" variant="ghost" className="text-background hover:bg-background/10 hover:text-background" disabled={guardando} onClick={() => (nuevo ? void ir(BASE) : setValores(guardado))}>{nuevo ? "Cancelar" : "Descartar"}</Button>
-            <Button type="button" className="bg-background font-bold text-foreground hover:bg-background/90" disabled={guardando} onClick={() => void guardar()}>{guardando && <Loader2 className="h-4 w-4 animate-spin" />}{nuevo ? "Crear producto" : "Guardar"}</Button>
+            <Button type="button" className="bg-none bg-background font-bold text-foreground hover:bg-background/90" disabled={guardando} onClick={() => void guardar()}>{guardando && <Loader2 className="h-4 w-4 animate-spin" />}{nuevo ? "Crear producto" : "Guardar"}</Button>
           </div>
         </div>
       )}

@@ -1,6 +1,6 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { AlarmClock, ChevronLeft, ChevronRight, Download, Loader2, MessageCircle, Plus, Search, Send, UserRound, Users } from "lucide-react";
+import { AlarmClock, ChevronLeft, ChevronRight, Download, Loader2, MessageCircle, Plus, Search, Send, UserRound, Users, Crown, MailCheck } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { Metric, MetricStrip, PageIntro } from "@/components/panel/kit";
@@ -102,11 +102,11 @@ export default function CrmClientes() {
         </>} />
 
       <MetricStrip cols={5}>
-        <Metric label="Clientes" value={resumen ? resumen.total : "…"} hint={resumen ? `${resumen.nuevos_30d} nuevos en 30 días` : undefined} />
-        <Metric label="Recurrentes y VIP" value={resumen ? (resumen.segmentos.recurrente ?? 0) + (resumen.segmentos.vip ?? 0) : "…"} hint="Vuelven a comprar o reservar" />
-        <Metric label="Seguimientos vencidos" value={resumen ? resumen.tareas_vencidas : "…"} hint={resumen ? `${resumen.tareas_hoy} para hoy` : undefined} />
-        <Metric label="Consultas sin responder" value={resumen ? resumen.consultas_sin_responder : "…"} hint={<Link to="/app/comercio/mensajes" className="font-bold text-primary hover:underline">Ir a mensajes</Link>} />
-        <Metric label="Aceptan novedades" value={resumen ? resumen.con_marketing : "…"} hint="Con consentimiento" />
+        <Metric icon={<Users />} tone="brand" label="Clientes" value={resumen ? resumen.total : "…"} hint={resumen ? `${resumen.nuevos_30d} nuevos en 30 días` : undefined} />
+        <Metric icon={<Crown />} tone="accent" label="Recurrentes y VIP" value={resumen ? (resumen.segmentos.recurrente ?? 0) + (resumen.segmentos.vip ?? 0) : "…"} hint="Vuelven a comprar o reservar" />
+        <Metric icon={<AlarmClock />} tone="danger" label="Seguimientos vencidos" value={resumen ? resumen.tareas_vencidas : "…"} hint={resumen ? `${resumen.tareas_hoy} para hoy` : undefined} />
+        <Metric icon={<MessageCircle />} tone="info" label="Consultas sin responder" value={resumen ? resumen.consultas_sin_responder : "…"} hint={<Link to="/app/comercio/mensajes" className="font-bold text-primary hover:underline">Ir a mensajes</Link>} />
+        <Metric icon={<MailCheck />} tone="ink" label="Aceptan novedades" value={resumen ? resumen.con_marketing : "…"} hint="Con consentimiento" />
       </MetricStrip>
 
       <div className="space-y-3 rounded-2xl border bg-card p-3">

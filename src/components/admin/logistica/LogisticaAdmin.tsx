@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { AlertTriangle, CheckCircle2, ClipboardList, Loader2, Package, Printer, ScanLine, Search, Truck, X, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardList, Loader2, Package, Printer, ScanLine, Search, Truck, X, XCircle, PackagePlus, PackageCheck, CalendarDays, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { Metric, MetricStrip, PageIntro } from "@/components/panel/kit";
 import { EmptyState, ErrorState } from "@/components/delivery/Common";
@@ -76,11 +76,11 @@ function Tablero({ ir }: { ir: (t: Tab) => void }) {
   return (
     <div className="space-y-5">
       <MetricStrip cols={5}>
-        <Metric label="Creados hoy" value={d.creados_hoy} />
-        <Metric label="Entregados hoy" value={d.entregados_hoy} />
-        <Metric label="Retiros de hoy" value={d.retiros_hoy} hint={`${d.hojas_abiertas} hojas de ruta abiertas`} />
-        <Metric label="Envíos del mes" value={d.envios_mes} hint={money(d.facturado_mes)} />
-        <Metric label="Contra reembolso sin rendir" value={money(d.reembolsos_sin_rendir)} />
+        <Metric icon={<PackagePlus />} tone="ink" label="Creados hoy" value={d.creados_hoy} />
+        <Metric icon={<PackageCheck />} tone="brand" label="Entregados hoy" value={d.entregados_hoy} />
+        <Metric icon={<Truck />} tone="info" label="Retiros de hoy" value={d.retiros_hoy} hint={`${d.hojas_abiertas} hojas de ruta abiertas`} />
+        <Metric icon={<CalendarDays />} tone="ink" label="Envíos del mes" value={d.envios_mes} hint={money(d.facturado_mes)} />
+        <Metric icon={<Banknote />} tone="accent" label="Contra reembolso sin rendir" value={money(d.reembolsos_sin_rendir)} />
       </MetricStrip>
       {alertas.length > 0 && (
         <ul className="grid gap-2 sm:grid-cols-2">{alertas.map((a) => (

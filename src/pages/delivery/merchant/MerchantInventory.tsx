@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
-import { AlertTriangle, Loader2, PackageSearch, Search } from "lucide-react";
+import { AlertTriangle, Loader2, PackageSearch, Search, Banknote, Eye, ImageOff } from "lucide-react";
 import { Metric, MetricStrip, PageIntro } from "@/components/panel/kit";
 import { toast } from "sonner";
 import { MOTIVO_STOCK } from "@/components/merchant/StockHistory";
@@ -42,10 +42,10 @@ export default function MerchantInventory() {
     <div className="space-y-5">
       <PageIntro description="Stock de productos y variantes, alertas y cada movimiento con su motivo. Las ventas descuentan y las cancelaciones devuelven solas." />
       <MetricStrip cols={4}>
-        <Metric label="Stock bajo o agotado" value={resumen ? filas.filter(bajo).length : "…"} hint="productos o variantes" />
-        <Metric label="Valor del inventario" value={resumen ? money(resumen.valor_inventario) : "…"} hint="a costo (si lo cargaste)" />
-        <Metric label="Publicados" value={resumen ? resumen.publicados : "…"} hint={`${resumen?.agotados ?? 0} agotados`} />
-        <Metric label="Sin foto" value={resumen ? resumen.sin_foto : "…"} hint="se venden menos" />
+        <Metric icon={<AlertTriangle />} tone="danger" label="Stock bajo o agotado" value={resumen ? filas.filter(bajo).length : "…"} hint="productos o variantes" />
+        <Metric icon={<Banknote />} tone="brand" label="Valor del inventario" value={resumen ? money(resumen.valor_inventario) : "…"} hint="a costo (si lo cargaste)" />
+        <Metric icon={<Eye />} tone="ink" label="Publicados" value={resumen ? resumen.publicados : "…"} hint={`${resumen?.agotados ?? 0} agotados`} />
+        <Metric icon={<ImageOff />} tone="accent" label="Sin foto" value={resumen ? resumen.sin_foto : "…"} hint="se venden menos" />
       </MetricStrip>
       <div className="flex flex-wrap items-center gap-2">
         <div role="tablist" aria-label="Vista" className="flex rounded-full border bg-card p-1">

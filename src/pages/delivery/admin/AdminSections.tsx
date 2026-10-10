@@ -1,6 +1,6 @@
 import { ReactNode, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { ArrowRight, Bike, Check, Pencil, Radio, Search, Trash2, X } from "lucide-react";
+import { ArrowRight, Bike, Check, Pencil, Radio, Search, Trash2, X, Banknote, Clock, Store } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DeleteStorePanel } from "@/components/merchant/DeleteStorePanel";
 import { toast } from "sonner";
@@ -102,10 +102,10 @@ function Overview() {
       <AdminMfaNotice />
       {loadErrors.length > 0 && <ErrorState title="Parte del resumen no se pudo cargar" error={new Error(loadErrors.join(" · "))} onRetry={reloadAll} />}
       <MetricStrip cols={5}>
-        <Metric featured label="Facturado hoy" value={ready ? money(stats.gmv) : "…"} hint={ready ? `${stats.count} ${stats.count === 1 ? "pedido" : "pedidos"} hoy` : "Cargando…"} spark={ready ? days.map((d) => d.facturado) : undefined} />
-        <Metric label="En curso" value={ready ? stats.active : "…"} hint="Pedidos activos" />
-        <Metric label="Comercios activos" value={ready ? stats.stores : "…"} hint={!ready ? "Cargando…" : counts.pendingStores ? `${counts.pendingStores} por aprobar` : "Todos aprobados"} />
-        <Metric label="Repartidores" value={ready ? stats.online : "…"} hint="Conectados ahora" />
+        <Metric featured icon={<Banknote />} label="Facturado hoy" value={ready ? money(stats.gmv) : "…"} hint={ready ? `${stats.count} ${stats.count === 1 ? "pedido" : "pedidos"} hoy` : "Cargando…"} spark={ready ? days.map((d) => d.facturado) : undefined} />
+        <Metric icon={<Clock />} tone="ink" label="En curso" value={ready ? stats.active : "…"} hint="Pedidos activos" />
+        <Metric icon={<Store />} tone="brand" label="Comercios activos" value={ready ? stats.stores : "…"} hint={!ready ? "Cargando…" : counts.pendingStores ? `${counts.pendingStores} por aprobar` : "Todos aprobados"} />
+        <Metric icon={<Bike />} tone="info" label="Repartidores" value={ready ? stats.online : "…"} hint="Conectados ahora" />
       </MetricStrip>
       <PendingStores />
       <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">

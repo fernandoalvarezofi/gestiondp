@@ -39,7 +39,7 @@ export function Rail({ title, subtitle, to, children }: { title: string; subtitl
 export function EmptyState({ icon, title, text, action, className }: { icon?: ReactNode; title: string; text?: string; action?: ReactNode; className?: string }) {
   return (
     <div className={cn("flex flex-col items-center rounded-3xl border border-dashed bg-card px-6 py-14 text-center", className)}>
-      {icon && <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</span>}
+      {icon && <span className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[linear-gradient(145deg,hsl(var(--primary)/0.14),hsl(var(--brand-yellow)/0.18))] text-primary shadow-[inset_0_1px_0_hsl(0_0%_100%/0.8),0_8px_20px_-10px_hsl(var(--primary)/0.5)] ring-1 ring-inset ring-primary/15">{icon}</span>}
       <p className="font-display text-lg font-bold">{title}</p>
       {text && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{text}</p>}
       {action && <div className="mt-5">{action}</div>}

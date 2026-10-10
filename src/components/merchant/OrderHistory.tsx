@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Loader2, Printer, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Loader2, Printer, Search, ShoppingBag, PackageCheck, XCircle, Banknote } from "lucide-react";
 import { toast } from "sonner";
 import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { StatusBadge } from "@/components/delivery/OrderStatus";
@@ -159,10 +159,10 @@ export function OrderHistory({ store }: { store: DeliveryStore }) {
 
       {resumen && !error && (
         <MetricStrip cols={4}>
-          <Metric label="Pedidos" value={resumen.total} />
-          <Metric label="Entregados" value={resumen.entregados} />
-          <Metric label="Cancelados" value={resumen.cancelados} hint={resumen.total ? `${Math.round((resumen.cancelados / resumen.total) * 100)}% del total` : undefined} />
-          <Metric label="Ventas entregadas" value={money(resumen.ventas)} hint="Productos, sin envío" />
+          <Metric icon={<ShoppingBag />} tone="ink" label="Pedidos" value={resumen.total} />
+          <Metric icon={<PackageCheck />} tone="brand" label="Entregados" value={resumen.entregados} />
+          <Metric icon={<XCircle />} tone="danger" label="Cancelados" value={resumen.cancelados} hint={resumen.total ? `${Math.round((resumen.cancelados / resumen.total) * 100)}% del total` : undefined} />
+          <Metric icon={<Banknote />} tone="accent" label="Ventas entregadas" value={money(resumen.ventas)} hint="Productos, sin envío" />
         </MetricStrip>
       )}
 

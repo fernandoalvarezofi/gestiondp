@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, CalendarClock, Copy, ExternalLink, Loader2, MessageSquareWarning, Package, Plus, Printer, Search, Truck, X } from "lucide-react";
+import { ArrowLeft, CalendarClock, Copy, ExternalLink, Loader2, MessageSquareWarning, Package, Plus, Printer, Search, Truck, X, Wallet, Banknote, Landmark } from "lucide-react";
 import { toast } from "sonner";
 import { PageIntro, Metric, MetricStrip } from "@/components/panel/kit";
 import { EmptyState, ErrorState } from "@/components/delivery/Common";
@@ -294,10 +294,10 @@ function MiCuenta({ comercio, cuenta, onGuardado }: { comercio: string; cuenta: 
       </div>
       {verFinanzas && ec && (
         <MetricStrip cols={4}>
-          <Metric label="Saldo a pagar" value={money(ec.saldo)} hint={cuenta.condicion_pago === "cuenta_corriente" && ec.limite_credito > 0 ? `Límite ${money(ec.limite_credito)}` : undefined} />
-          <Metric label="Envíos este mes" value={ec.mes_envios} hint={money(ec.mes_monto)} />
-          <Metric label="Cobrado contra reembolso" value={money(ec.reembolsos_sin_rendir)} hint="Pendiente de rendir" />
-          <Metric label="Rendiciones por cobrar" value={money(ec.rendiciones_pendientes)} hint="Te las transferimos" />
+          <Metric icon={<Wallet />} tone="ink" label="Saldo a pagar" value={money(ec.saldo)} hint={cuenta.condicion_pago === "cuenta_corriente" && ec.limite_credito > 0 ? `Límite ${money(ec.limite_credito)}` : undefined} />
+          <Metric icon={<Package />} tone="brand" label="Envíos este mes" value={ec.mes_envios} hint={money(ec.mes_monto)} />
+          <Metric icon={<Banknote />} tone="accent" label="Cobrado contra reembolso" value={money(ec.reembolsos_sin_rendir)} hint="Pendiente de rendir" />
+          <Metric icon={<Landmark />} tone="info" label="Rendiciones por cobrar" value={money(ec.rendiciones_pendientes)} hint="Te las transferimos" />
         </MetricStrip>
       )}
       {verFinanzas && rend.length > 0 && (

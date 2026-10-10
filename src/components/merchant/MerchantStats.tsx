@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Globe, Loader2 } from "lucide-react";
+import { Globe, Loader2, Banknote, ShoppingBag, Receipt, Star } from "lucide-react";
 import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { BarSeries, Delta, Metric, MetricStrip, PageIntro, Section, Surface } from "@/components/panel/kit";
 import { db, errorMessage, metodoPagoLabel, money } from "@/lib/delivery";
@@ -76,10 +76,10 @@ export function MerchantStats({ storeId, rating, reviews }: { storeId: string; r
       {intro}
 
       <MetricStrip cols={5}>
-        <Metric featured label="Ventas" value={money(stats.ventas)} delta={<Delta current={stats.ventas} previous={stats.ventas_previo} suffix="vs. período anterior" />} spark={stats.por_dia.map((d) => d.ventas)} />
-        <Metric label="Pedidos" value={stats.pedidos} delta={<Delta current={stats.pedidos} previous={stats.pedidos_previo} />} />
-        <Metric label="Ticket promedio" value={money(stats.ticket_promedio)} hint={stats.descuentos > 0 ? `Descuentos: ${money(stats.descuentos)}` : "Sin envío ni propinas"} />
-        <Metric label="Calificación" value={ratingTotal ? Number(stats.calificacion.promedio).toFixed(1) : reviews ? Number(rating).toFixed(1) : "—"} hint={ratingTotal ? `${ratingTotal} en el período` : `${reviews} en total`} />
+        <Metric featured icon={<Banknote />} label="Ventas" value={money(stats.ventas)} delta={<Delta current={stats.ventas} previous={stats.ventas_previo} suffix="vs. período anterior" />} spark={stats.por_dia.map((d) => d.ventas)} />
+        <Metric icon={<ShoppingBag />} tone="ink" label="Pedidos" value={stats.pedidos} delta={<Delta current={stats.pedidos} previous={stats.pedidos_previo} />} />
+        <Metric icon={<Receipt />} tone="info" label="Ticket promedio" value={money(stats.ticket_promedio)} hint={stats.descuentos > 0 ? `Descuentos: ${money(stats.descuentos)}` : "Sin envío ni propinas"} />
+        <Metric icon={<Star />} tone="accent" label="Calificación" value={ratingTotal ? Number(stats.calificacion.promedio).toFixed(1) : reviews ? Number(rating).toFixed(1) : "—"} hint={ratingTotal ? `${ratingTotal} en el período` : `${reviews} en total`} />
       </MetricStrip>
 
       {tienda && tienda.pedidos > 0 && (
