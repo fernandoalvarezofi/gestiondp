@@ -1,7 +1,7 @@
 import {
   Banknote, BarChart3, Bike, Bug, Building2, CalendarCheck, Calculator, Car, CarTaxiFront, ClipboardList, Fingerprint, Flag, Globe, History,
   Landmark, LayoutDashboard, LifeBuoy, Map, MapPinOff, Megaphone, MessageCircle, MessageCircleQuestion, Network, Package, PackageOpen,
-  Radio, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, UtensilsCrossed, Wallet, BookUser, ShieldCheck, TrendingUp, type LucideIcon,
+  Radio, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, ShoppingBag, Wallet, BookUser, ShieldCheck, TrendingUp, type LucideIcon,
 } from "lucide-react";
 import type { PanelNavGroup } from "@/components/panel/PanelShell";
 import type { Permission } from "@/pages/delivery/merchant/context";
@@ -31,7 +31,7 @@ export const MERCHANT_SECTIONS: MerchantSection[] = [
   { path: "turnos", label: "Agenda y turnos", short: "Agenda", icon: CalendarCheck, group: "Operación diaria", permission: "pedidos", badge: "turnos" },
   { path: "mensajes", label: "Mensajes", icon: MessageCircle, group: "Operación diaria", badge: "mensajes" },
   { path: "clientes", label: "Clientes (CRM)", short: "Clientes", icon: Users, group: "Clientes", permission: "estadisticas", badge: "clientes" },
-  { path: "menu", label: "Productos", short: "Catálogo", icon: UtensilsCrossed, group: "Catálogo", permission: "catalogo" },
+  { path: "productos", label: "Productos", short: "Productos", icon: ShoppingBag, group: "Catálogo", permission: "catalogo" },
   { path: "inventario", label: "Inventario", icon: Package, group: "Catálogo", permission: "catalogo" },
   { path: "colecciones", label: "Colecciones", icon: Tags, group: "Catálogo", permission: "catalogo" },
   { path: "tienda", label: "Mi tienda online", short: "Tienda", icon: Globe, group: "Tienda online", permission: "ajustes" },
@@ -63,7 +63,7 @@ export function merchantNav(can: (permission: Permission) => boolean, badges: { 
 
 /** Barra de abajo del comercio en el celular: lo más usado que el rol permite. */
 export const merchantTabs = (can: (permission: Permission) => boolean) =>
-  ["", "pedidos", "clientes", "menu", "configuracion"].filter((path) => { const need = merchantSectionPermission(path); return !need || can(need); }).map(merchantTo);
+  ["", "pedidos", "clientes", "productos", "configuracion"].filter((path) => { const need = merchantSectionPermission(path); return !need || can(need); }).map(merchantTo);
 
 // ───────────────────────── Repartidor ─────────────────────────
 

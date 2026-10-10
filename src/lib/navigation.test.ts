@@ -15,7 +15,7 @@ describe("navegación", () => {
     expect(parentPath("/app/tienda/pizzeria")).toBe("/app");
     expect(parentPath("/app/buscar")).toBe("/app/explorar");
     expect(parentPath("/app/remis")).toBe("/app/explorar");
-    expect(parentPath("/app/comercio/menu")).toBe("/app/comercio");
+    expect(parentPath("/app/comercio/productos")).toBe("/app/comercio");
     expect(parentPath("/app/comercio/configuracion/horarios")).toBe("/app/comercio");
     expect(parentPath("/app/conductor/perfil")).toBe("/app/conductor");
     expect(parentPath("/app/admin/pagos")).toBe("/app/admin");

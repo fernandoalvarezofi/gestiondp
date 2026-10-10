@@ -1,6 +1,6 @@
 import { CampaignManager } from "@/components/merchant/CampaignManager";
 import { CouponManager } from "@/components/merchant/CouponManager";
-import { MerchantMenu } from "@/components/merchant/MerchantMenu";
+import { ProductosLista } from "@/components/merchant/productos/ProductosLista";
 import { MerchantOrders } from "@/components/merchant/MerchantOrders";
 import { MerchantReviews } from "@/components/merchant/MerchantReviews";
 import { MerchantProductReviews } from "@/components/merchant/MerchantProductReviews";
@@ -15,7 +15,7 @@ export function MerchantOrdersPage() {
 
 export function MerchantMenuPage() {
   const { store, products, loadProducts } = useMerchant();
-  return <MerchantMenu storeId={store.id} products={products} onChange={loadProducts} />;
+  return <ProductosLista storeId={store.id} products={products} onChange={loadProducts} />;
 }
 
 export function MerchantPromosPage() {

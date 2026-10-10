@@ -9,7 +9,7 @@ import { SiteEditor } from "@/components/storefront/builder/SiteEditor";
 import { avisosDelTema, PublishDialog, SeoPanel, VersionsPanel } from "@/components/storefront/builder/StorePanels";
 import { useSitio, type Sitio } from "@/components/storefront/builder/useSitio";
 import { QrPoster } from "@/components/storefront/QrPoster";
-import { MerchantMenu } from "@/components/merchant/MerchantMenu";
+import { ProductosLista } from "@/components/merchant/productos/ProductosLista";
 import { SubscribersPanel } from "@/components/storefront/SubscribersPanel";
 import { StorefrontStats } from "@/components/storefront/StorefrontStats";
 import type { ColeccionTienda, ServicioTienda } from "@/components/storefront/StorefrontView";
@@ -256,7 +256,7 @@ export default function MerchantStorefront() {
     contenido = (
       <div className="space-y-3">
         <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">Solo los productos publicados aparecen en tu tienda. Las colecciones (grupos para promociones o temporadas) se arman en <Link to="/app/comercio/colecciones" className="font-bold text-primary hover:underline">Colecciones</Link>.</p>
-        <MerchantMenu storeId={store.id} products={products} onChange={loadProducts} />
+        <ProductosLista storeId={store.id} products={products} onChange={loadProducts} />
       </div>
     );
   } else if (seccion === "seo") {

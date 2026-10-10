@@ -66,6 +66,7 @@ const Console = lazy(() => import("./pages/Console"));
 const MerchantPages = {
   Orders: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantOrdersPage }))),
   Menu: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantMenuPage }))),
+  Producto: lazy(() => import("./components/merchant/productos/ProductoEditor")),
   Promos: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantPromosPage }))),
   Branches: lazy(() => import("./pages/delivery/merchant/MerchantBranches")),
   Campaigns: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantCampaignsPage }))),
@@ -179,7 +180,10 @@ const App = () => (
                       <Route path="comercio" element={<MerchantLayout />}>
                         <Route index element={<MerchantHome />} />
                         <Route path="pedidos" element={<MerchantPages.Orders />} />
-                        <Route path="menu" element={<MerchantPages.Menu />} />
+                        <Route path="productos" element={<MerchantPages.Menu />} />
+                        <Route path="productos/nuevo" element={<MerchantPages.Producto />} />
+                        <Route path="productos/:id" element={<MerchantPages.Producto />} />
+                        <Route path="menu" element={<Navigate to="/app/comercio/productos" replace />} />
                         <Route path="inventario" element={<MerchantInventory />} />
                         <Route path="colecciones" element={<MerchantCollections />} />
                         <Route path="promociones" element={<MerchantPages.Promos />} />

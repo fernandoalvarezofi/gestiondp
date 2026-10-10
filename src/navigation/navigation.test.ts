@@ -10,7 +10,7 @@ describe("contextos", () => {
   it("cada ruta pertenece a un solo contexto", () => {
     expect(contextFromPath("/app")).toBe("cliente");
     expect(contextFromPath("/app/pedidos/abc")).toBe("cliente");
-    expect(contextFromPath("/app/comercio/menu")).toBe("comercio");
+    expect(contextFromPath("/app/comercio/productos")).toBe("comercio");
     expect(contextFromPath("/app/repartidor")).toBe("repartidor");
     expect(contextFromPath("/app/conductor/historial")).toBe("conductor");
     expect(contextFromPath("/app/admin/pagos")).toBe("admin");
@@ -49,7 +49,7 @@ describe("menús", () => {
     const items = merchantNav(operador, { pedidos: 2, preguntas: 0 }).flatMap((g) => g.items.map((i) => i.to));
     expect(items).toContain("/app/comercio/pedidos");
     expect(items).not.toContain("/app/comercio/finanzas");
-    expect(items).not.toContain("/app/comercio/menu");
+    expect(items).not.toContain("/app/comercio/productos");
     expect(merchantTabs(operador)).toEqual(["/app/comercio", "/app/comercio/pedidos"]);
     expect(merchantSectionPermission("finanzas")).toBe("finanzas");
     expect(merchantSectionPermission("nuevo")).toBe("equipo");

@@ -211,7 +211,11 @@ export type DeliveryProduct = {
   promo_hasta?: string | null;
   promo_activa?: boolean;
   promo_respaldo?: { precio?: number; precio_anterior?: number | null } | null;
+  /** Opciones de variante con nombre (Talle, Color…): hasta 3, cada una con sus valores. */
+  variantes_ejes?: EjeVariante[];
+  updated_at?: string;
 };
+export type EjeVariante = { nombre: string; valores: string[] };
 export type TipoProducto = "fisico" | "digital" | "servicio";
 export type EstadoProducto = "borrador" | "publicado" | "programado" | "archivado";
 export const TIPO_PRODUCTO: Record<TipoProducto, string> = { fisico: "Físico", digital: "Digital", servicio: "Servicio" };

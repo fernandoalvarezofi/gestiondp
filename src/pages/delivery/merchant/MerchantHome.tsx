@@ -42,8 +42,8 @@ export default function MerchantHome() {
     { label: "Contá qué vendés en la descripción", done: Boolean(store.descripcion?.trim()), to: "/app/comercio/configuracion/general" },
     { label: "Cargá el teléfono del local", done: Boolean(store.telefono?.trim()), to: "/app/comercio/configuracion/general" },
     { label: "Marcá tu local en el mapa", done: store.latitud != null && store.longitud != null, to: "/app/comercio/configuracion/entrega" },
-    { label: "Cargá al menos 5 productos", done: products.length >= 5, to: "/app/comercio/menu" },
-    { label: "Poné foto a todos tus productos", done: products.length > 0 && products.every((product) => Boolean(product.imagen_url)), to: "/app/comercio/menu" },
+    { label: "Cargá al menos 5 productos", done: products.length >= 5, to: "/app/comercio/productos" },
+    { label: "Poné foto a todos tus productos", done: products.length > 0 && products.every((product) => Boolean(product.imagen_url)), to: "/app/comercio/productos" },
     { label: "Personalizá tu tienda online y compartí el enlace", done: Boolean(store.tienda_tema && typeof store.tienda_tema === "object" && Object.keys(store.tienda_tema as object).length > 0), to: "/app/comercio/tienda" },
   ], [store, products]);
   const doneCount = steps.filter((step) => step.done).length;
@@ -60,8 +60,8 @@ export default function MerchantHome() {
   const sinResponder = reviews.filter((review) => !review.respuesta).length;
 
   const attention = [
-    can("catalogo") && soldOut.length > 0 && { key: "agotados", icon: <PackageX className="h-4 w-4" />, tone: "danger" as Tone, title: `${soldOut.length} ${soldOut.length === 1 ? "producto agotado o pausado" : "productos agotados o pausados"}`, meta: soldOut.slice(0, 2).map((p) => p.nombre).join(", ") + (soldOut.length > 2 ? "…" : ""), to: "/app/comercio/menu" },
-    can("catalogo") && lowStock.length > 0 && { key: "stock", icon: <AlertTriangle className="h-4 w-4" />, tone: "warning" as Tone, title: `${lowStock.length} con poco stock`, meta: lowStock.slice(0, 2).map((p) => p.label).join(", ") + (lowStock.length > 2 ? "…" : ""), to: "/app/comercio/menu" },
+    can("catalogo") && soldOut.length > 0 && { key: "agotados", icon: <PackageX className="h-4 w-4" />, tone: "danger" as Tone, title: `${soldOut.length} ${soldOut.length === 1 ? "producto agotado o pausado" : "productos agotados o pausados"}`, meta: soldOut.slice(0, 2).map((p) => p.nombre).join(", ") + (soldOut.length > 2 ? "…" : ""), to: "/app/comercio/productos" },
+    can("catalogo") && lowStock.length > 0 && { key: "stock", icon: <AlertTriangle className="h-4 w-4" />, tone: "warning" as Tone, title: `${lowStock.length} con poco stock`, meta: lowStock.slice(0, 2).map((p) => p.label).join(", ") + (lowStock.length > 2 ? "…" : ""), to: "/app/comercio/productos" },
     can("opiniones") && sinResponder > 0 && { key: "opiniones", icon: <MessageSquareReply className="h-4 w-4" />, tone: "info" as Tone, title: `${sinResponder} ${sinResponder === 1 ? "opinión" : "opiniones"} sin responder`, meta: "Responder mejora tu reputación", to: "/app/comercio/opiniones" },
     can("opiniones") && preguntasPendientes > 0 && { key: "preguntas", icon: <HelpCircle className="h-4 w-4" />, tone: "info" as Tone, title: `${preguntasPendientes} ${preguntasPendientes === 1 ? "pregunta" : "preguntas"} de clientes`, meta: "Respondé antes de que compren en otro lado", to: "/app/comercio/preguntas" },
   ].filter(Boolean) as { key: string; icon: React.ReactNode; tone: Tone; title: string; meta: string; to: string }[];
@@ -76,7 +76,7 @@ export default function MerchantHome() {
         description={<span className="first-letter:capitalize">{dateText} · {estadoOperativo(store).detalle}</span>}
         actions={<>
           <Button asChild variant="outline" size="sm" className="rounded-full"><Link to={`/app/tienda/${store.slug}`}>Ver como cliente<ExternalLink className="h-3.5 w-3.5" /></Link></Button>
-          {can("catalogo") && <Button asChild size="sm" className="rounded-full"><Link to="/app/comercio/menu"><Plus className="h-4 w-4" />Nuevo producto</Link></Button>}
+          {can("catalogo") && <Button asChild size="sm" className="rounded-full"><Link to="/app/comercio/productos/nuevo"><Plus className="h-4 w-4" />Nuevo producto</Link></Button>}
         </>}
       />
 
