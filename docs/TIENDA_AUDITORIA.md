@@ -1,66 +1,65 @@
-# Mi tienda: auditoría y arquitectura objetivo
+# Mi tienda: auditoría, arquitectura y estado
 
-Fecha: 2026-10-09. Referentes usados como criterio: WordPress/Gutenberg (edición y contenido), constructores visuales (estilos por sección),
-Shopify y Tiendanube (temas, secciones, administración) y WooCommerce (relación catálogo ↔ contenido).
+Actualizado: 2026-10-10. Referentes usados como criterio: WordPress/Gutenberg (edición y contenido), constructores visuales (estilos por
+sección), Shopify y Tiendanube (temas, secciones, plantillas, administración) y WooCommerce (relación catálogo ↔ contenido).
 
 ## 1. Problemas estructurales encontrados
 
-| # | Problema | Dónde | Consecuencia |
-|---|----------|-------|--------------|
-| E1 | El esquema de cada bloque está escrito cuatro veces: tipo TS, `normalizeBloque`, `_ts_bloque_v1` (SQL) y el `switch` del render. El validador SQL descarta toda propiedad que no conoce. | `lib/storefront.ts`, `_ts_bloque*`, `StorefrontView.tsx` | Cualquier propiedad común (fondo, márgenes, visibilidad) había que agregarla tipo por tipo. Por eso cada bloque tenía controles distintos y casi ninguno de diseño. |
-| E2 | No existe un estilo de sección. Fondo, espaciado, ancho y alineación están fijos en el código de cada bloque (solo `texto` y `cta` tienen “fondo”). | render | No se pueden armar sitios distintos: solo se cambian textos y colores de la plantilla. |
-| E3 | Inicio y páginas son dos sistemas: el inicio vive en `tienda_tema` con borrador, publicación y versiones; las páginas se guardan directo en línea (sin borrador ni versiones), en otra pantalla, con otro editor y con un límite distinto. | `PagesPanel`, `tienda_pagina_guardar` | Editar una página publicada cambia la web en el acto; restaurar una versión no restaura páginas; la experiencia no es un sitio. |
-| E4 | “Usar este tema” reemplaza todos los bloques de la página de inicio. | `aplicarPlantilla` | Cambiar de tema borra el contenido. Los temas son generadores de bloques, no sistemas de diseño. |
-| E5 | Encabezado y pie no son componentes editables: el pie se arma solo; el encabezado tiene dos opciones. | `StoreFooter`, header en `StorefrontView` | No hay control sobre navegación secundaria, columnas del pie ni el comportamiento del encabezado. |
-| E6 | Cada bloque define su propio enlace (`enlace_tipo` con 3 o 4 valores). No se puede enlazar a una página, una colección o una sección. | tipos | Botones inconsistentes y sin destinos reales de la tienda. |
-| E7 | No hay secciones reutilizables ni patrones. | — | Rehacer lo mismo en cada página. |
-| E8 | No hay controles por dispositivo (ocultar en celular, columnas en celular). | — | Las páginas no se pueden ajustar al celular. |
-| E9 | Historial de edición solo del inicio; los cambios en páginas no tienen deshacer. | `MerchantStorefront` | Pérdida de cambios. |
-| E10 | Tokens de diseño limitados (color de acento, fondo, texto, radio, fuentes) y aplicados a mano en cada bloque. No hay superficie, borde, escala ni estilo de tarjeta. | `estiloTienda` | Los temas solo difieren en la portada. |
+| # | Problema | Consecuencia | Estado |
+|---|----------|--------------|--------|
+| E1 | El esquema de cada bloque estaba escrito cuatro veces (tipo TS, `normalizeBloque`, `_ts_bloque_v1` en SQL, `switch` del render) y el validador SQL descartaba toda propiedad que no conocía. | Ninguna propiedad común (fondo, márgenes, visibilidad) era posible sin tocar cada tipo. | Resuelto: contrato común `est` validado una vez en TS (`storefrontSecciones.ts`) y en SQL (`_ts_estilo`), aplicado por un único marco en el render. |
+| E2 | No existía estilo de sección: fondo, espaciado, ancho y alineación estaban fijos en el código de cada bloque. | Solo se podían cambiar textos y colores. | Resuelto. |
+| E3 | Inicio y páginas eran dos sistemas: las páginas se guardaban directo en línea, sin borrador ni versiones, con otro editor. | Editar una página publicada cambiaba la web en el acto; restaurar no reponía páginas. | Resuelto: borrador por página, publicación y versiones del sitio completo. |
+| E4 | "Usar este tema" reemplazaba todos los bloques del inicio. | Cambiar de tema borraba contenido. | Resuelto: el tema cambia el sistema de diseño; reemplazar el inicio es opcional. |
+| E5 | Encabezado y pie no eran editables. | Sin control de navegación secundaria ni comportamiento del encabezado. | Resuelto: encabezado fijo/transparente, menú, anuncio, buscador; pie con 3 columnas de enlaces. |
+| E6 | Cada bloque tenía su propio tipo de enlace (3 o 4 destinos). | Botones inconsistentes, sin enlazar páginas, colecciones ni secciones. | Resuelto en el bloque nuevo `contenido` (destinos unificados). Los bloques viejos conservan su enlace propio. |
+| E7 | Sin secciones reutilizables ni patrones. | Rehacer lo mismo en cada página. | Resuelto. |
+| E8 | Sin controles por dispositivo. | No se podía ajustar el celular. | Resuelto: visibilidad por dispositivo en toda sección; columnas en celular en productos y galería. |
+| E9 | Historial de edición solo del inicio. | Pérdida de cambios en páginas. | Resuelto: un solo historial para todo el sitio. |
+| E10 | Tokens de diseño mínimos y aplicados a mano en cada bloque. | Los temas solo diferían en la portada. | Resuelto: superficie, estilo de tarjeta, escala/peso/mayúsculas de títulos, volcados a las variables de color de la app. |
+| E11 | La ficha de producto tenía su propio encabezado simplificado, sin menú, buscador ni pie, y una estructura fija. | Navegación inconsistente; sin plantilla de producto. | Resuelto: la ficha usa el encabezado y pie del sitio y una plantilla de secciones editable. |
+| E12 | El carrito validaba cupones sin mandar los productos. | En cupones por sección/producto el total mostrado podía diferir del cobrado. | Resuelto. |
 
-## 2. Matriz de brechas (constructor)
+## 2. Matriz de capacidades del constructor (estado verificado)
 
-| Capacidad (criterio verificable) | Antes | Solución | Estado |
-|---|---|---|---|
-| Estilo común por sección: fondo (color, oscuro, imagen), márgenes, ancho, alineación, visibilidad por dispositivo, ancla | No | Contrato `est` validado una vez (TS + `_ts_estilo` en SQL) y aplicado por un único marco en el render | En curso |
-| Árbol del sitio: páginas → encabezado / secciones / pie, con selección desde el árbol o la vista previa | Lista plana del inicio | Editor nuevo con árbol, lienzo e inspector (Contenido / Estilo) | En curso |
-| Editar cualquier página con el mismo editor | Dos editores | Las páginas usan el mismo árbol, inspector e historial | En curso |
-| Borrador y publicación de todo el sitio (inicio + páginas) | Solo inicio | `borrador` por página; `tienda_publicar` publica tema y páginas en una transacción | En curso |
-| Versiones de todo el sitio | Solo inicio | Las versiones guardan también las páginas; restaurar las vuelve a borrador | En curso |
-| Destinos de enlace unificados (página, colección, categoría, sección, reservar, WhatsApp, URL) | No | Tipo `Destino` y bloque de contenido flexible | En curso |
-| Bloque de contenido flexible (título con nivel, texto con formato, imagen en 4 posiciones, 2 botones) | No | Bloque `contenido` | En curso |
-| Secciones guardadas y patrones | No | Tabla `delivery_tienda_secciones` + patrones de fábrica | En curso |
-| Encabezado y pie editables | No | `cabecera` y `pie_config` en el tema | En curso |
-| Temas que no borran contenido | No | Aplicar tema cambia diseño y estructura global; reemplazar el inicio es opcional | En curso |
-| Tokens globales (superficie, borde, escala y peso de títulos, mayúsculas, estilo de tarjeta) | Parcial | Nuevos tokens en `diseno`, variables CSS `--sf-*` | En curso |
-| Copiar / pegar secciones entre páginas | No | Portapapeles del editor | En curso |
-| Edición de texto directamente sobre el lienzo | No | — | Pendiente |
-| Contenedores anidados libres (filas/columnas arbitrarias) | No | Se decidió no hacerlo en esta etapa: el bloque `columnas` y `contenido` cubren los casos comunes sin romper el render en celular | Pendiente |
-| Plantillas por tipo de contenido (plantilla de ficha de producto, de colección) | No | — | Pendiente |
-
-## 3. Arquitectura objetivo
-
-```
-Editor (MerchantStorefront + builder/*)
-  └─ estado único del sitio: { tema, paginas[id] } con historial (deshacer/rehacer) y autoguardado
-       ├─ tema  → tienda_borrador_guardar (borrador del inicio y del diseño global)
-       └─ página → tienda_pagina_borrador_guardar (borrador por página)
-Publicar → tienda_publicar: valida (delivery_guardar_tienda_tema + _tp_aplicar), aplica tema y páginas, guarda versión (tema + páginas)
-Esquema → lib/storefront.ts (tipos + normalizeBloque + normalizeEstilo) ≡ SQL (_ts_bloque + _ts_estilo)
-Render  → StorefrontView: un marco (SeccionMarco) por sección aplica `est`; cada bloque solo dibuja su contenido
-```
-
-Reglas: todo lo que se guarda se valida en el servidor; el navegador vuelve a normalizar antes de usarlo en estilos o enlaces;
-las tiendas existentes siguen funcionando sin migrar datos (los campos nuevos son opcionales).
-
-## 4. Back office (resumen de la auditoría)
-
-| Módulo | Hay | Falta para un flujo completo |
+| Capacidad | Estado | Cómo se verifica |
 |---|---|---|
-| Productos | Variantes, opciones, estados (publicado/borrador/archivado), acciones masivas, colecciones, historial, importación, stock | Atributos filtrables por la tienda, precio de comparación por variante, edición en tabla |
-| Pedidos | Tablero por estado, historial con búsqueda en el servidor, devoluciones, idempotencia | Incidencias por pedido, etiqueta de envío |
-| Clientes | CRM con ficha, actividad, seguimientos, segmentos, consultas desde la tienda | Etiquetas libres y exportación |
-| Marketing | Cupones con restricciones, campañas, suscriptores | Descuentos automáticos (sin cupón) |
-| Contenido y SEO | SEO global y por página, canónica, JSON-LD de la tienda, dominio | Datos estructurados de producto en la ficha, sitemap con páginas |
-| Analítica | Visitas, ventas por canal | Comparación entre períodos |
-| Configuración | Datos, horarios, zonas, pagos, equipo | Impuestos (no aplica a monotributo; pendiente de decisión) |
+| Estilo común por sección (fondo color/oscuro/marca/foto, márgenes 0–6, ancho, alineación, dispositivo, ancla) | Operativo | `storefrontSecciones.test.ts`, SQL `026`, E2E editor |
+| Editor a pantalla completa: estructura (estilos globales, páginas, encabezado, secciones, pie), lienzo real por dispositivo, propiedades Contenido/Estilo | Operativo | E2E escritorio y celular |
+| Selección desde la vista previa, arrastrar para ordenar, duplicar, copiar/pegar entre páginas, atajos de teclado, deshacer/rehacer | Operativo | E2E (deshacer/rehacer) |
+| Páginas con borrador, visibles/ocultas, publicación del sitio completo en una transacción | Operativo | SQL `026`, E2E |
+| Versiones del sitio completo (tema + páginas); restaurar como borrador | Operativo | SQL `026` |
+| El público no puede leer borradores | Operativo | SQL `026` (permiso de columna) |
+| Bloque de contenido flexible (antetítulo, título h1/h2/h3, texto con formato, imagen en 3 posiciones y 4 formas, 2 botones con destino) | Operativo | tests, E2E |
+| Patrones de fábrica (12) y Mis secciones (guardadas por tienda) | Operativo | tests, SQL `026` |
+| Temas como sistemas de diseño sin borrar contenido | Operativo | E2E |
+| Encabezado fijo/transparente y columnas de pie | Operativo | SQL `026`, E2E |
+| Plantilla de ficha de producto (secciones bajo cada producto, hasta 12) | Operativo | E2E ficha |
+| Edición de texto directamente sobre el lienzo | Pendiente | — |
+| Contenedores anidados libres (filas/columnas arbitrarias) | Pendiente (decisión: `columnas` + `contenido` cubren lo común sin romper el celular) | — |
+| Plantillas por colección / por página de búsqueda | Pendiente | — |
+| Destinos unificados en los bloques viejos (banner, oferta, imagen con texto) | Pendiente | — |
+
+## 3. Arquitectura
+
+```
+Editor (MerchantStorefront + builder/SiteEditor)
+  └─ estado único del sitio (useSitio): { tema, paginas[] } con historial y autoguardado por partes
+       ├─ tema   → tienda_borrador_guardar (diseño, inicio, encabezado, pie, plantilla de producto)
+       └─ página → tienda_pagina_borrador_guardar (borrador por página; las nuevas nacen ocultas)
+Publicar → tienda_publicar: valida (delivery_guardar_tienda_tema + _tp_validar), aplica tema y páginas, versiona ambos
+Esquema → lib/storefront.ts + lib/storefrontSecciones.ts  ≡  SQL _ts_bloque + _ts_estilo + _ts_destino + _ts_botones
+Render  → StorefrontView: un marco por sección aplica `est`; la ficha de producto entra como `principal`
+Datos públicos → hooks/useTiendaPublica (una sola carga para inicio, páginas y ficha)
+```
+
+## 4. Back office (auditoría y cambios)
+
+| Módulo | Había | Cambiado ahora | Brecha que queda |
+|---|---|---|---|
+| Productos | Variantes, opciones, estados, acciones masivas, colecciones, historial, importación/exportación, stock | Edición rápida en tabla (precio, precio anterior, stock, disponibilidad, estado; productos y variantes) con validación por celda y guardado transaccional; stock con historial (SQL `027`) | Atributos filtrables en la tienda |
+| Marketing | Cupones con mínimo, tope, vigencia, usos, alcance | Descuentos automáticos (sin código, el mejor vigente, alcance por secciones, fecha de inicio); la liquidación los carga al comercio (SQL `028`) | Combinación de descuentos, “lleve 2 pague 1” |
+| Pedidos | Tablero por estado, historial con búsqueda en el servidor, devoluciones, idempotencia | — | Incidencias por pedido, etiqueta de envío |
+| Clientes | CRM con ficha, actividad, seguimientos, segmentos, etiquetas, consultas desde la tienda | — | Exportación |
+| Analítica | Comparación con el período anterior, ventas por canal, horas pico, productos | — | Embudo de la tienda online (visitas → carrito → compra) |
+| Contenido y SEO | SEO global y por página, canónica, JSON-LD de tienda y producto, dominio | — | Sitemap con páginas propias |
