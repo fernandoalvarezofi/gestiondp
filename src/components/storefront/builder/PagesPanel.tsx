@@ -17,7 +17,7 @@ import { BlockSettings } from "./BlockSettings";
 import { confirmar } from "@/components/ui/dialogos";
 
 type Draft = { id: string | null; tipo: Pagina["tipo"]; clase: ClasePagina; slug: string; titulo: string; contenido: string; bloques: Bloque[]; estado: Pagina["estado"]; seo_titulo: string; seo_descripcion: string; imagen_url: string };
-const TIPOS_LANDING: BloqueTipo[] = ["portada", "banner", "oferta", "productos", "imagen_texto", "texto", "galeria", "confianza", "faq", "video", "cinta", "newsletter", "servicios", "separador"];
+const TIPOS_LANDING: BloqueTipo[] = ["portada", "banner", "oferta", "cta", "productos", "colecciones", "servicios", "imagen_texto", "texto", "columnas", "galeria", "testimonios", "confianza", "faq", "video", "cinta", "newsletter", "formulario", "ubicacion", "politicas", "separador"];
 
 /** Páginas de la tienda: informativas (Nosotros, Envíos, Cambios…) con texto con formato, y landings de campaña armadas con secciones. */
 export function PagesPanel({ storeId, storeSlug, categorias, colecciones, previewDe, onChanged }: {

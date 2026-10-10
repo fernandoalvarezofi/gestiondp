@@ -239,6 +239,76 @@ export function BlockSettings({ bloque, categorias, colecciones = [], onChange }
           <Texto label="Texto debajo" value={bloque.texto} max={200} onChange={(texto) => onChange({ texto })} />
         </div>
       );
+    case "testimonios":
+      return (
+        <div className="space-y-3">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Opciones label="Estilo" value={bloque.estilo} options={[{ id: "tarjetas", label: "Tarjetas" }, { id: "destacado", label: "Cita grande" }]} onChange={(estilo) => onChange({ estilo })} />
+          {bloque.items.map((item, index) => (
+            <div key={index} className="space-y-2 rounded-xl border p-3">
+              <div className="flex items-center gap-2">
+                <Input aria-label={`Nombre ${index + 1}`} value={item.nombre} maxLength={60} placeholder="Nombre" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, nombre: event.target.value } : row)) })} />
+                <Button type="button" variant="ghost" size="icon" aria-label={`Quitar testimonio ${index + 1}`} onClick={() => onChange({ items: bloque.items.filter((_, i) => i !== index) })}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+              <textarea aria-label={`Testimonio ${index + 1}`} value={item.texto} maxLength={300} rows={3} placeholder="Lo que dijo" className="w-full rounded-md border bg-background px-3 py-2 text-sm" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, texto: event.target.value } : row)) })} />
+              <Input aria-label={`Detalle ${index + 1}`} value={item.detalle ?? ""} maxLength={60} placeholder="Detalle (opcional): Clienta desde 2020" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, detalle: event.target.value } : row)) })} />
+              <ImageUpload label="Foto (opcional)" folder="comercios" shape="square" value={item.foto_url} onChange={(foto_url) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, foto_url } : row)) })} className="max-w-[140px]" />
+            </div>
+          ))}
+          {bloque.items.length < 6 && <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => onChange({ items: [...bloque.items, { nombre: "", texto: "" }] })}><Plus className="h-4 w-4" />Agregar testimonio</Button>}
+          <p className="text-xs text-muted-foreground">Usá frases reales y con permiso de cada persona. Las opiniones verificadas de compras van en el bloque “Opiniones de clientes”.</p>
+        </div>
+      );
+    case "cta":
+      return (
+        <div className="space-y-4">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Texto label="Texto" value={bloque.texto} max={200} multiline onChange={(texto) => onChange({ texto })} />
+          <Texto label="Texto del botón" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
+          <Opciones label="El botón lleva a" value={bloque.enlace_tipo} onChange={(enlace_tipo) => onChange({ enlace_tipo })} options={[{ id: "catalogo", label: "Mis productos" }, { id: "reservar", label: "Reservar turno" }, { id: "whatsapp", label: "WhatsApp" }, { id: "url", label: "Otra web" }]} hint={bloque.enlace_tipo === "reservar" ? "Se ve solo si tenés servicios con turnos." : undefined} />
+          {bloque.enlace_tipo === "url" && <Input aria-label="Dirección de la web" value={bloque.enlace_url ?? ""} maxLength={300} placeholder="https://…" onChange={(event) => onChange({ enlace_url: event.target.value })} />}
+          <Opciones label="Fondo" value={bloque.fondo} options={[{ id: "color", label: "Color de marca" }, { id: "oscuro", label: "Oscuro" }, { id: "suave", label: "Suave" }]} onChange={(fondo) => onChange({ fondo })} />
+        </div>
+      );
+    case "columnas":
+      return (
+        <div className="space-y-3">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          {bloque.items.map((item, index) => (
+            <div key={index} className="space-y-2 rounded-xl border p-3">
+              <div className="flex items-center gap-2">
+                <Input aria-label={`Título de la columna ${index + 1}`} value={item.titulo} maxLength={60} placeholder="Título" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, titulo: event.target.value } : row)) })} />
+                <Button type="button" variant="ghost" size="icon" aria-label={`Quitar columna ${index + 1}`} disabled={bloque.items.length <= 2} onClick={() => onChange({ items: bloque.items.filter((_, i) => i !== index) })}><Trash2 className="h-4 w-4" /></Button>
+              </div>
+              <textarea aria-label={`Texto de la columna ${index + 1}`} value={item.texto ?? ""} maxLength={300} rows={3} placeholder="Texto" className="w-full rounded-md border bg-background px-3 py-2 text-sm" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, texto: event.target.value } : row)) })} />
+              <ImageUpload label="Imagen (opcional)" folder="comercios" shape="wide" value={item.imagen_url} onChange={(imagen_url) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, imagen_url } : row)) })} className="max-w-xs" />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <Input aria-label={`Texto del enlace ${index + 1}`} value={item.boton ?? ""} maxLength={24} placeholder="Texto del enlace (opcional)" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, boton: event.target.value } : row)) })} />
+                <Input aria-label={`Dirección del enlace ${index + 1}`} value={item.enlace_url ?? ""} maxLength={300} placeholder="https://…" onChange={(event) => onChange({ items: bloque.items.map((row, i) => (i === index ? { ...row, enlace_url: event.target.value } : row)) })} />
+              </div>
+            </div>
+          ))}
+          {bloque.items.length < 4 && <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => onChange({ items: [...bloque.items, { titulo: "Nueva columna", texto: "" }] })}><Plus className="h-4 w-4" />Agregar columna</Button>}
+        </div>
+      );
+    case "ubicacion":
+      return (
+        <div className="space-y-4">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Interruptor label="Mostrar el mapa" hint="Usa la ubicación de tu local cargada en Configuración." value={bloque.mapa} onChange={(mapa) => onChange({ mapa })} />
+          <p className="text-xs text-muted-foreground">La dirección y los horarios de cada día salen de Configuración del local: si los cambiás ahí, se actualizan solos acá.</p>
+        </div>
+      );
+    case "formulario":
+      return (
+        <div className="space-y-4">
+          <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
+          <Texto label="Texto" value={bloque.texto} max={200} multiline onChange={(texto) => onChange({ texto })} />
+          <Texto label="Texto del botón" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
+          <Interruptor label="Pedir teléfono (opcional para quien escribe)" value={bloque.pedir_telefono} onChange={(pedir_telefono) => onChange({ pedir_telefono })} />
+          <p className="rounded-xl bg-muted p-3 text-xs text-muted-foreground">Cada consulta entra a Clientes (CRM) como una tarea “Consulta desde la tienda” para responder en 24 h, y te llega un aviso. Hay límites para evitar spam.</p>
+        </div>
+      );
     case "separador":
       return (
         <div className="space-y-4">

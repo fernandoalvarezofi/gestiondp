@@ -191,7 +191,8 @@ const App = () => (
                         <Route path="clientes/seguimientos" element={<CrmSeguimientos />} />
                         <Route path="clientes/:id" element={<CrmFicha />} />
                         <Route path="finanzas" element={<MerchantPages.Finance />} />
-                        <Route path="tienda" element={<MerchantStorefront />} />
+                        <Route path="tienda" element={<Navigate to="resumen" replace />} />
+                        <Route path="tienda/:seccion" element={<MerchantStorefront />} />
                         <Route path="nuevo" element={<MerchantNewStore />} />
                         <Route path="preguntas" element={<MerchantQuestions />} />
                         <Route path="devoluciones" element={<MerchantReturns />} />

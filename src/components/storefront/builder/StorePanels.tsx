@@ -209,6 +209,9 @@ export function avisosDelTema(t: TemaNormalizado): string[] {
     if (b.tipo === "productos" && b.fuente === "categoria" && !b.categoria) out.push("Un bloque de productos no tiene sección elegida.");
     if (b.tipo === "oferta" && b.hasta && Date.parse(b.hasta) < Date.now()) out.push(`La oferta “${b.titulo || "con cuenta regresiva"}” ya venció.`);
     if (b.tipo === "video" && !b.url) out.push("El bloque de video no tiene enlace.");
+    if (b.tipo === "testimonios" && b.items.some((x) => x.nombre === "Nombre del cliente")) out.push("Los testimonios tienen el texto de ejemplo: cargá frases reales o quitá el bloque.");
+    if (b.tipo === "columnas" && b.items.some((x) => /^(Primera|Segunda|Tercera) columna$/.test(x.titulo))) out.push("Las columnas tienen el texto de ejemplo.");
+    if (b.tipo === "cta" && b.enlace_tipo === "url" && !b.enlace_url) out.push(`El botón de “${b.titulo || "Llamado a la acción"}” no tiene dirección web.`);
   });
   if ((t.menu ?? []).some((m) => m.tipo === "url" && !/^https:\/\//.test(m.destino ?? ""))) out.push("Hay un enlace del menú inválido (se va a descartar al publicar).");
   return [...new Set(out)];

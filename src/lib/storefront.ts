@@ -85,8 +85,20 @@ export type PoliticaItem = { t: string; x: string };
 export type BloquePoliticas = Base & { tipo: "politicas"; titulo?: string; items: PoliticaItem[] };
 export type BloqueOferta = Base & { tipo: "oferta"; titulo?: string; texto?: string; boton?: string; hasta?: string; enlace_tipo: EnlaceTipo; enlace_url?: string };
 export type BloqueVideo = Base & { tipo: "video"; titulo?: string; texto?: string; url?: string };
+export type Testimonio = { nombre: string; texto: string; detalle?: string; foto_url?: string };
+/** Testimonios escritos por el comercio (distintos de las opiniones verificadas de compras). */
+export type BloqueTestimonios = Base & { tipo: "testimonios"; titulo?: string; items: Testimonio[]; estilo: "tarjetas" | "destacado" };
+export type EnlaceCta = EnlaceTipo | "reservar";
+export type BloqueCta = Base & { tipo: "cta"; titulo?: string; texto?: string; boton?: string; enlace_tipo: EnlaceCta; enlace_url?: string; fondo: "color" | "oscuro" | "suave" };
+export type Columna = { titulo: string; texto?: string; imagen_url?: string; boton?: string; enlace_url?: string };
+export type BloqueColumnas = Base & { tipo: "columnas"; titulo?: string; items: Columna[] };
+/** Horarios, dirección y mapa del local (con los datos de Configuración). */
+export type BloqueUbicacion = Base & { tipo: "ubicacion"; titulo?: string; mapa: boolean };
+/** Formulario de consulta: lo que se envía entra al CRM del local como cliente con una tarea para responder. */
+export type BloqueFormulario = Base & { tipo: "formulario"; titulo?: string; texto?: string; boton?: string; pedir_telefono: boolean };
 
-export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueCinta | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador | BloqueServicios;
+export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueCinta | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador | BloqueServicios
+  | BloqueTestimonios | BloqueCta | BloqueColumnas | BloqueUbicacion | BloqueFormulario;
 export type BloqueTipo = Bloque["tipo"];
 
 export const MAX_BLOQUES = 30;
@@ -156,6 +168,11 @@ export const TIPOS_BLOQUE: { tipo: BloqueTipo; nombre: string; detalle: string; 
   { tipo: "newsletter", nombre: "Suscripción por email", detalle: "Juntá los emails de tus clientes y avisales de novedades" },
   { tipo: "politicas", nombre: "Envíos, cambios y garantía", detalle: "Tus políticas en desplegables, también en cada producto" },
   { tipo: "video", nombre: "Video", detalle: "Un video de YouTube o Vimeo" },
+  { tipo: "testimonios", nombre: "Testimonios", detalle: "Frases de clientes con nombre y foto, escritas por vos" },
+  { tipo: "cta", nombre: "Llamado a la acción", detalle: "Una franja con un mensaje y un botón (comprar, reservar, escribir)" },
+  { tipo: "columnas", nombre: "Columnas", detalle: "De 2 a 4 columnas con foto, título, texto y botón" },
+  { tipo: "ubicacion", nombre: "Horarios y mapa", detalle: "Dirección, horarios de la semana y mapa para llegar", unico: true },
+  { tipo: "formulario", nombre: "Formulario de consulta", detalle: "Te escriben desde la tienda y queda en tus Clientes (CRM)", unico: true },
   { tipo: "separador", nombre: "Espacio", detalle: "Un respiro entre bloques, con línea opcional" },
 ];
 
@@ -328,6 +345,11 @@ export function bloqueNuevo(tipo: BloqueTipo, plantilla: Plantilla = "boutique")
     case "oferta": return { ...base, tipo, titulo: "Oferta por tiempo limitado", texto: "Aprovechá antes de que termine.", boton: "Ver productos", hasta: finDeSemana(), enlace_tipo: "catalogo" };
     case "video": return { ...base, tipo, titulo: "Conocenos" };
     case "servicios": return { ...base, tipo, titulo: "Reservá tu turno", texto: "Elegí el servicio, el día y la hora. Te confirmamos al instante.", cantidad: 6, estilo: "tarjetas" };
+    case "testimonios": return { ...base, tipo, titulo: "Lo que cuentan quienes nos eligen", estilo: "tarjetas", items: [{ nombre: "Nombre del cliente", texto: "Contá con sus palabras qué le gustó de tu negocio.", detalle: "Cliente desde 2024" }] };
+    case "cta": return { ...base, tipo, titulo: "¿Listo para empezar?", texto: "Hacé tu pedido en dos minutos y recibilo hoy.", boton: "Ver productos", enlace_tipo: "catalogo", fondo: "color" };
+    case "columnas": return { ...base, tipo, titulo: "Por qué elegirnos", items: [{ titulo: "Primera columna", texto: "Un texto corto que explique esta idea." }, { titulo: "Segunda columna", texto: "Otro punto fuerte de tu negocio." }, { titulo: "Tercera columna", texto: "Y uno más para cerrar." }] };
+    case "ubicacion": return { ...base, tipo, titulo: "Dónde encontrarnos", mapa: true };
+    case "formulario": return { ...base, tipo, titulo: "¿Tenés una consulta?", texto: "Escribinos y te respondemos a la brevedad.", boton: "Enviar consulta", pedir_telefono: true };
   }
 }
 
@@ -389,6 +411,25 @@ export function normalizeBloque(raw: unknown, index: number): Bloque | null {
     }
     case "oferta": return { ...base, tipo: "oferta", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), hasta: fechaIso(s.hasta), ...enlace };
     case "video": return { ...base, tipo: "video", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), url: videoUrl(s.url) };
+    case "testimonios": {
+      const items = (Array.isArray(s.items) ? s.items : []).slice(0, 6).map((item): Testimonio | null => {
+        const e = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+        const nombre = text(e.nombre, 60), texto = text(e.texto, 300);
+        return nombre && texto ? { nombre, texto, detalle: opt(e.detalle, 60), foto_url: httpsUrl(e.foto_url) || undefined } : null;
+      }).filter((item): item is Testimonio => item !== null);
+      return { ...base, tipo: "testimonios", titulo: opt(s.titulo, 80), items, estilo: pick(s.estilo, ["tarjetas", "destacado"] as const, "tarjetas") };
+    }
+    case "cta": return { ...base, tipo: "cta", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), enlace_tipo: pick(s.enlace_tipo, ["catalogo", "whatsapp", "url", "reservar"] as const, "catalogo"), enlace_url: httpsUrl(s.enlace_url, 300) || undefined, fondo: pick(s.fondo, ["color", "oscuro", "suave"] as const, "color") };
+    case "columnas": {
+      const items = (Array.isArray(s.items) ? s.items : []).slice(0, 4).map((item): Columna | null => {
+        const e = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+        const titulo = text(e.titulo, 60);
+        return titulo ? { titulo, texto: opt(e.texto, 300), imagen_url: httpsUrl(e.imagen_url) || undefined, boton: opt(e.boton, 24), enlace_url: httpsUrl(e.enlace_url, 300) || undefined } : null;
+      }).filter((item): item is Columna => item !== null);
+      return { ...base, tipo: "columnas", titulo: opt(s.titulo, 80), items };
+    }
+    case "ubicacion": return { ...base, tipo: "ubicacion", titulo: opt(s.titulo, 80), mapa: s.mapa !== false };
+    case "formulario": return { ...base, tipo: "formulario", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), pedir_telefono: s.pedir_telefono !== false };
     default: return null;
   }
 }

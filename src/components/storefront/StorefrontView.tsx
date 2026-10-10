@@ -15,7 +15,7 @@ import { RichText } from "@/components/storefront/RichText";
 import { CalendarCheck } from "lucide-react";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
-import { NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
+import { ConsultaForm, NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
 import { StoreFooter } from "@/components/storefront/StoreFooter";
 import { CategoriesMenu, StoreMobileMenu, StoreSearch } from "@/components/storefront/StoreNav";
 import { collectionPath, curatedPath, offersPath, pagePath, searchPath, storePath, tieneDescuento, Vista, VISTA_INICIO, vistaKey } from "@/lib/storeRoutes";
@@ -801,6 +801,128 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
           </div>
         );
       }
+      case "testimonios":
+        if (!b.items.length) return null;
+        return (
+          <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+            {b.titulo && <Titulo>{b.titulo}</Titulo>}
+            {b.estilo === "destacado" ? (
+              <div className="mx-auto max-w-3xl space-y-10 text-center">
+                {b.items.map((t) => (
+                  <figure key={t.nombre + t.texto}>
+                    <blockquote className="text-2xl font-semibold leading-snug sm:text-3xl" style={headingStyle}>“{t.texto}”</blockquote>
+                    <figcaption className="mt-4 flex items-center justify-center gap-3">
+                      {t.foto_url && <img src={t.foto_url} alt="" loading="lazy" className="h-11 w-11 rounded-full object-cover" />}
+                      <span className="text-left"><span className="block font-extrabold">{t.nombre}</span>{t.detalle && <span className="block text-sm opacity-70">{t.detalle}</span>}</span>
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            ) : (
+              <ul className={cn("grid gap-4", b.items.length === 1 ? "mx-auto max-w-xl" : b.items.length === 2 ? "md:grid-cols-2" : "md:grid-cols-3")}>
+                {b.items.map((t) => (
+                  <li key={t.nombre + t.texto} className="flex flex-col border bg-card p-6 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
+                    <span aria-hidden className="text-4xl font-black leading-none" style={{ color: "var(--sf-accent)" }}>“</span>
+                    <p className="mt-1 flex-1 text-muted-foreground">{t.texto}</p>
+                    <p className="mt-4 flex items-center gap-3">
+                      {t.foto_url && <img src={t.foto_url} alt="" loading="lazy" className="h-10 w-10 rounded-full object-cover" />}
+                      <span><span className="block font-bold">{t.nombre}</span>{t.detalle && <span className="block text-xs text-muted-foreground">{t.detalle}</span>}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        );
+      case "cta": {
+        if (b.enlace_tipo === "reservar" && !reservaHref) return null;
+        const fondoCta: CSSProperties = b.fondo === "oscuro" ? { background: "#0A0A0B", color: "#FFFFFF" } : b.fondo === "suave" ? { background: "color-mix(in srgb, var(--sf-accent) 9%, transparent)" } : accent;
+        const irCta = () => {
+          if (b.enlace_tipo === "reservar") { if (!preview && reservaHref) navigate(reservaHref); return; }
+          follow(b.enlace_tipo, b.enlace_url);
+        };
+        return (
+          <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+            <div className="flex flex-col items-start gap-5 px-6 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-12" style={{ borderRadius: "var(--sf-radius)", ...fondoCta }}>
+              <div className="max-w-2xl">
+                {b.titulo && <h2 className="text-2xl font-black leading-tight sm:text-4xl" style={headingStyle}>{b.titulo}</h2>}
+                {b.texto && <p className="mt-2 text-base opacity-85 sm:text-lg">{b.texto}</p>}
+              </div>
+              {b.boton && <Boton tone={b.fondo === "suave" ? "accent" : "light"} onClick={irCta}>{b.boton}<ArrowRight className="h-4 w-4" /></Boton>}
+            </div>
+          </section>
+        );
+      }
+      case "columnas":
+        if (!b.items.length) return null;
+        return (
+          <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+            {b.titulo && <Titulo>{b.titulo}</Titulo>}
+            <div className={cn("grid gap-6", b.items.length === 2 ? "md:grid-cols-2" : b.items.length === 3 ? "md:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4")}>
+              {b.items.map((col) => (
+                <article key={col.titulo} className="flex flex-col">
+                  {col.imagen_url && <div className="mb-4 aspect-[4/3] overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius)" }}><SmartImage src={col.imagen_url} width={700} /></div>}
+                  <h3 className="text-xl font-extrabold" style={headingStyle}>{col.titulo}</h3>
+                  {col.texto && <p className="mt-2 flex-1 whitespace-pre-line leading-relaxed opacity-75">{col.texto}</p>}
+                  {col.boton && col.enlace_url && <a href={preview ? undefined : col.enlace_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 font-bold underline-offset-4 hover:underline" style={{ color: "var(--sf-accent)" }}>{col.boton}<ArrowRight className="h-4 w-4" /></a>}
+                </article>
+              ))}
+            </div>
+          </section>
+        );
+      case "ubicacion": {
+        const lat = Number(store.latitud), lng = Number(store.longitud);
+        const conMapa = b.mapa && store.latitud != null && store.longitud != null && Number.isFinite(lat) && Number.isFinite(lng);
+        const dias = [1, 2, 3, 4, 5, 6, 0];
+        const nombres = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        const hoyDia = new Date().getDay();
+        const mapaUrl = `https://www.openstreetmap.org/export/embed.html?bbox=${lng - 0.006},${lat - 0.004},${lng + 0.006},${lat + 0.004}&layer=mapnik&marker=${lat},${lng}`;
+        const comoLlegar = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${store.nombre} ${store.direccion}`)}`;
+        return (
+          <section id="ubicacion" className={cn("mx-auto scroll-mt-24 px-4 sm:px-6", width, space)}>
+            <Titulo>{b.titulo || "Dónde encontrarnos"}</Titulo>
+            <div className={cn("grid gap-6", conMapa && "lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]")}>
+              <div className="border bg-card p-6 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
+                <p className="flex items-center gap-2 font-extrabold"><MapPin className="h-5 w-5 shrink-0" style={{ color: "var(--sf-accent)" }} />{store.direccion}</p>
+                {!preview && <a href={comoLlegar} target="_blank" rel="noopener noreferrer" className="mt-2 inline-flex items-center gap-1 text-sm font-bold underline-offset-4 hover:underline">Cómo llegar<ArrowRight className="h-4 w-4" /></a>}
+                <p className="mt-5 flex items-center gap-2 font-extrabold"><Clock3 className="h-5 w-5" style={{ color: "var(--sf-accent)" }} />Horarios</p>
+                {store.horarios ? (
+                  <dl className="mt-2 divide-y text-sm">
+                    {dias.map((dia) => {
+                      const tramos = store.horarios?.[String(dia)] ?? [];
+                      return (
+                        <div key={dia} className={cn("flex justify-between gap-4 py-1.5", dia === hoyDia && "font-bold")}>
+                          <dt>{nombres[dia]}</dt>
+                          <dd className="text-right tabular-nums">{tramos.length ? tramos.map((t) => (t.abre === t.cierra ? "24 horas" : `${t.abre}–${t.cierra}`)).join(", ") : "Cerrado"}</dd>
+                        </div>
+                      );
+                    })}
+                  </dl>
+                ) : <p className="mt-2 text-sm text-muted-foreground">Consultanos los horarios.</p>}
+              </div>
+              {conMapa && (
+                <div className="min-h-[280px] overflow-hidden border bg-muted" style={{ borderRadius: "var(--sf-radius)" }}>
+                  {preview
+                    ? <div className="flex h-full min-h-[280px] items-center justify-center text-sm text-muted-foreground"><MapPin className="mr-2 h-5 w-5" />Mapa de tu local</div>
+                    : <iframe title={`Mapa de ${store.nombre}`} loading="lazy" className="h-full min-h-[280px] w-full" referrerPolicy="no-referrer" src={mapaUrl} />}
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      }
+      case "formulario":
+        return (
+          <section id="consulta" className={cn("mx-auto scroll-mt-24 px-4 sm:px-6", width, space)}>
+            <div className="mx-auto max-w-2xl border bg-card p-6 text-card-foreground sm:p-10" style={{ borderRadius: "var(--sf-radius)" }}>
+              <h2 className="text-2xl font-extrabold sm:text-3xl" style={headingStyle}>{b.titulo || "¿Tenés una consulta?"}</h2>
+              {b.texto && <p className="mb-6 mt-2 text-muted-foreground">{b.texto}</p>}
+              <div className={b.texto ? "" : "mt-6"}>
+                <ConsultaForm comercioId={store.id} boton={b.boton || "Enviar consulta"} pedirTelefono={b.pedir_telefono} preview={preview} buttonStyle={{ ...accent, ...radiusButton }} inputStyle={radiusButton} />
+              </div>
+            </div>
+          </section>
+        );
       case "separador":
         return <div className={cn("mx-auto px-4 sm:px-6", width)}><div className={cn(ALTO_SEP[b.alto], "flex items-center")}>{b.linea && <hr className="w-full border-current opacity-15" />}</div></div>;
       default:

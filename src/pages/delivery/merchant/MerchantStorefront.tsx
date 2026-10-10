@@ -1,5 +1,6 @@
-import { DragEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUp, Check, ChevronDown, CloudOff, Copy, ExternalLink, Eye, EyeOff, GripVertical, LayoutTemplate, Loader2, Monitor, Plus, Redo2, Trash2, Undo2 } from "lucide-react";
+import { DragEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link, Navigate, NavLink, useNavigate, useParams } from "react-router-dom";
+import { ArrowDown, ArrowLeft, ArrowUp, Check, CheckCircle2, ChevronDown, CircleAlert, CloudOff, Copy, ExternalLink, Eye, EyeOff, FileText, GripVertical, History, LayoutDashboard, LayoutTemplate, Loader2, LucideIcon, Menu, Monitor, MousePointerClick, Package, Palette, Pencil, Plus, QrCode, Redo2, Search, Store, Trash2, Undo2, X } from "lucide-react";
 import { toast } from "sonner";
 import { BlockSettings } from "@/components/storefront/builder/BlockSettings";
 import { DesignPanel, serializarTema } from "@/components/storefront/builder/DesignPanel";
@@ -16,14 +17,13 @@ import { TemplateGrid } from "@/components/storefront/TemplatePicker";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { db, DeliverySection, errorMessage, orderSections } from "@/lib/delivery";
 import { Bloque, bloqueNuevo, Diseno, MAX_BLOQUES, nuevoId, normalizeDiseno, normalizeTheme, paginaDePlantilla, Plantilla, PLANTILLAS, TEMA_BASE, storefrontPath, storefrontUrl, temaParaGuardar, TemaNormalizado, TIPOS_BLOQUE } from "@/lib/storefront";
 import type { Vista } from "@/lib/storeRoutes";
 import type { VendedorResumen } from "@/lib/marketplace";
 import { cn } from "@/lib/utils";
 import { fetchColecciones } from "@/services/catalogPro";
-import { descartarBorrador, fetchBorrador, fetchPaginas, guardarBorrador, Pagina, publicarTienda, restaurarVersion } from "@/services/storeBuilder";
+import { descartarBorrador, fetchBorrador, fetchPaginas, fetchPreparacion, guardarBorrador, ItemPreparacion, Pagina, publicarTienda, restaurarVersion } from "@/services/storeBuilder";
 import { useMerchant } from "./context";
 import { confirmar } from "@/components/ui/dialogos";
 
@@ -34,15 +34,47 @@ const resumenDe = (bloque: Bloque) => {
   return texto || (bloque.tipo === "galeria" ? `${bloque.imagenes.length} fotos` : bloque.tipo === "confianza" ? `${bloque.items.length} ventajas` : bloque.tipo === "faq" ? `${bloque.items.length} preguntas` : "");
 };
 const HISTORIA_MAX = 60;
+const BASE_TIENDA = "/app/comercio/tienda";
+type SeccionTienda = "resumen" | "editor" | "paginas" | "temas" | "menu" | "productos" | "seo" | "compartir" | "datos" | "versiones";
+const SECCIONES_TIENDA: { id: SeccionTienda; texto: string; icono: LucideIcon; grupo: number }[] = [
+  { id: "resumen", texto: "Resumen", icono: LayoutDashboard, grupo: 0 },
+  { id: "editor", texto: "Editor", icono: Pencil, grupo: 1 }, { id: "paginas", texto: "Páginas", icono: FileText, grupo: 1 },
+  { id: "temas", texto: "Temas y diseño", icono: Palette, grupo: 1 }, { id: "menu", texto: "Menú y pie", icono: Menu, grupo: 1 },
+  { id: "productos", texto: "Productos", icono: Package, grupo: 2 }, { id: "seo", texto: "SEO y dominio", icono: Search, grupo: 2 }, { id: "compartir", texto: "QR y suscriptores", icono: QrCode, grupo: 2 },
+  { id: "datos", texto: "Datos y redes", icono: Store, grupo: 3 }, { id: "versiones", texto: "Versiones", icono: History, grupo: 3 },
+];
 
-function useWide() {
-  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia("(min-width: 1280px)").matches);
+/** Lista de lo que conviene tener listo antes de compartir la tienda (la arma el servidor). */
+function PreparacionTienda({ storeId }: { storeId: string }) {
+  const [items, setItems] = useState<ItemPreparacion[] | null>(null);
+  useEffect(() => { fetchPreparacion(storeId).then(setItems).catch(() => setItems([])); }, [storeId]);
+  if (!items) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
+  if (!items.length) return null;
+  const listos = items.filter((i) => i.ok).length;
+  return (
+    <section className="rounded-3xl border bg-card p-5">
+      <div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="font-extrabold">Tu tienda, lista para vender</h3><span className="text-sm font-bold text-muted-foreground">{listos} de {items.length}</span></div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.round((listos / items.length) * 100)}%` }} /></div>
+      <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+        {items.map((i) => (
+          <li key={i.clave} className="flex items-start gap-2.5 rounded-2xl border p-3">
+            {i.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" /> : <CircleAlert className={cn("mt-0.5 h-4 w-4 shrink-0", i.grave ? "text-destructive" : "text-warning")} />}
+            <span><span className="block text-sm font-bold">{i.titulo}</span>{!i.ok && <span className="block text-xs text-muted-foreground">{i.detalle}</span>}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function useWide(media = "(min-width: 1280px)") {
+  const [wide, setWide] = useState(() => typeof window !== "undefined" && window.matchMedia(media).matches);
   useEffect(() => {
-    const query = window.matchMedia("(min-width: 1280px)");
+    const query = window.matchMedia(media);
     const on = () => setWide(query.matches);
     query.addEventListener("change", on);
     return () => query.removeEventListener("change", on);
-  }, []);
+  }, [media]);
   return wide;
 }
 
@@ -55,6 +87,7 @@ export default function MerchantStorefront() {
   const { store, products, reviews, loadStore, loadProducts, access } = useMerchant();
   const puedeCatalogo = access.permisos.includes("catalogo");
   const wide = useWide();
+  const muyAncho = useWide("(min-width: 1536px)");
 
   const [draft, setDraftRaw] = useState<TemaNormalizado>(() => normalizeTheme(store.tienda_tema));
   const [pasado, setPasado] = useState<TemaNormalizado[]>([]);
@@ -64,14 +97,14 @@ export default function MerchantStorefront() {
   const [servicios, setServicios] = useState<ServicioTienda[]>([]);
   const [colecciones, setColecciones] = useState<ColeccionTienda[]>([]);
   const [paginas, setPaginas] = useState<Pagina[]>([]);
-  const [tab, setTab] = useState("constructor");
-  const sinVista = tab === "compartir" || tab === "productos" || tab === "versiones";
+  const { seccion = "resumen" } = useParams<{ seccion?: SeccionTienda }>();
+  const navigate = useNavigate();
+  const irA = useCallback((x: SeccionTienda) => navigate(`${BASE_TIENDA}/${x}`), [navigate]);
   const [openId, setOpenId] = useState<string | null>(null);
   const [dragId, setDragId] = useState<string | null>(null);
   const [dropOn, setDropOn] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const [templates, setTemplates] = useState(false);
-  const [plantillaElegida, setPlantillaElegida] = useState<Plantilla>("boutique");
+  const [plantillaElegida, setPlantillaElegida] = useState<Plantilla>(() => normalizeTheme(store.tienda_tema).plantilla);
   const [phonePreview, setPhonePreview] = useState(false);
   const [publicando, setPublicando] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -242,10 +275,10 @@ export default function MerchantStorefront() {
     setDropOn(null);
   };
   const seleccionar = useCallback((id: string) => {
-    setTab("constructor");
+    if (seccion !== "editor") irA("editor");
     setOpenId(id);
     window.setTimeout(() => document.getElementById(`editar-${id}`)?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 60);
-  }, []);
+  }, [seccion, irA]);
 
   // Cambiar de plantilla: se rearma la página y el diseño; productos, páginas, menú, SEO y datos de contacto no se tocan.
   const aplicarPlantilla = () => {
@@ -262,8 +295,7 @@ export default function MerchantStorefront() {
       };
     });
     setOpenId(null);
-    setTemplates(false);
-    toast.success("Plantilla aplicada en el borrador. Si no te convence, tocá Deshacer.", { action: { label: "Deshacer", onClick: deshacer } });
+    toast.success("Tema aplicado en el borrador. Si no te convence, tocá Deshacer.", { action: { label: "Deshacer", onClick: deshacer } });
   };
 
   const publicar = async (nota: string) => {
@@ -291,12 +323,208 @@ export default function MerchantStorefront() {
   const avisos = useMemo(() => avisosDelTema(draft), [draft]);
   const estadoGuardado = guardando === "guardando" ? "Guardando borrador…" : guardando === "error" ? "No pudimos guardar el borrador (reintentamos al próximo cambio)" : dirty ? `Borrador guardado${borradorAt ? ` ${new Date(borradorAt).toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}` : ""} · sin publicar` : "Todo publicado";
 
+  const listaBloques = (compacta: boolean) => (
+    <ul className="space-y-2">
+      {draft.bloques.map((bloque, index) => {
+        const open = openId === bloque.id;
+        const obligatorio = bloque.tipo === "catalogo";
+        return (
+          <li key={bloque.id} id={`editar-${bloque.id}`} draggable onDragStart={() => setDragId(bloque.id)} onDragEnd={() => { setDragId(null); setDropOn(null); }} onDragOver={(event) => { event.preventDefault(); setDropOn(bloque.id); }} onDrop={(event) => soltar(event, bloque.id)}
+            className={cn("rounded-2xl border bg-card transition-shadow", open && "border-brand-yellow shadow-soft", dropOn === bloque.id && dragId !== bloque.id && "ring-2 ring-brand-yellow", dragId === bloque.id && "opacity-50", !bloque.visible && "opacity-70")}>
+            <div className="flex items-center gap-1 p-1.5">
+              <span className="cursor-grab px-1 text-muted-foreground" aria-hidden><GripVertical className="h-4 w-4" /></span>
+              <button type="button" onClick={() => setOpenId(open && !compacta ? null : bloque.id)} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-muted/50">
+                <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{nombreDe(bloque.tipo)}</span><span className="block truncate text-xs text-muted-foreground">{resumenDe(bloque) || "Sin título"}</span></span>
+                {!compacta && <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />}
+              </button>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={bloque.visible ? "Ocultar bloque" : "Mostrar bloque"} onClick={() => updateBloque(bloque.id, { visible: !bloque.visible })}>{bloque.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</Button>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Subir" disabled={index === 0} onClick={() => mover(bloque.id, -1)}><ArrowUp className="h-4 w-4" /></Button>
+              <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Bajar" disabled={index === draft.bloques.length - 1} onClick={() => mover(bloque.id, 1)}><ArrowDown className="h-4 w-4" /></Button>
+            </div>
+            {open && !compacta && <div className="space-y-5 border-t p-4">{ajustesDe(bloque, obligatorio)}</div>}
+          </li>
+        );
+      })}
+    </ul>
+  );
+  const ajustesDe = (bloque: Bloque, obligatorio = bloque.tipo === "catalogo") => (
+    <>
+      <BlockSettings bloque={bloque} categorias={categorias} colecciones={colecciones} onChange={(cambios) => updateBloque(bloque.id, cambios)} />
+      <div className="flex flex-wrap items-center gap-2 border-t pt-4">
+        {!TIPOS_BLOQUE.find((item) => item.tipo === bloque.tipo)?.unico && draft.bloques.length < MAX_BLOQUES && <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => duplicar(bloque.id)}><Copy className="h-4 w-4" />Duplicar</Button>}
+        {!obligatorio && <Button type="button" variant="outline" size="sm" className="rounded-full text-destructive hover:text-destructive" onClick={() => eliminar(bloque.id)}><Trash2 className="h-4 w-4" />Eliminar bloque</Button>}
+        {obligatorio && <p className="text-xs text-muted-foreground">El catálogo no se puede eliminar, pero sí ocultar o mover.</p>}
+      </div>
+    </>
+  );
+  const barraEditor = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button type="button" className="rounded-full font-bold" onClick={() => setAdding(true)} disabled={draft.bloques.length >= MAX_BLOQUES}><Plus className="h-4 w-4" />Agregar bloque</Button>
+      <Button type="button" variant="outline" className="rounded-full font-bold" onClick={() => irA("temas")}><LayoutTemplate className="h-4 w-4" />Cambiar tema</Button>
+      <span className="ml-auto text-xs text-muted-foreground">{draft.bloques.length}/{MAX_BLOQUES} bloques</span>
+    </div>
+  );
+  const seleccionado = draft.bloques.find((b) => b.id === openId) ?? null;
+  if (!SECCIONES_TIENDA.some((x) => x.id === seccion) || (seccion === "productos" && !puedeCatalogo)) return <Navigate to={`${BASE_TIENDA}/resumen`} replace />;
+
+  let contenido: ReactNode = null;
+  if (seccion === "resumen") {
+    contenido = (
+      <div className="space-y-5">
+        <div className="grid gap-4 lg:grid-cols-3">
+          <section className="rounded-3xl border bg-card p-5 lg:col-span-2">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Estado</p>
+            <p className="mt-1 text-xl font-black">{dirty ? "Tenés cambios sin publicar" : "Todo lo que ves está publicado"}</p>
+            <p className="text-sm text-muted-foreground">{dirty ? `Borrador guardado${borradorAt ? ` el ${new Date(borradorAt).toLocaleString("es-AR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}` : ""}. Nada cambia en tu tienda hasta que publiques.` : "Cuando edites, se guarda un borrador automático."}</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button className="rounded-full" onClick={() => irA("editor")}><Pencil className="h-4 w-4" />Editar la página de inicio</Button>
+              <Button variant="outline" className="rounded-full" onClick={() => irA("paginas")}><FileText className="h-4 w-4" />Páginas ({paginas.length})</Button>
+              <Button variant="outline" className="rounded-full" onClick={() => irA("temas")}><Palette className="h-4 w-4" />Tema y diseño</Button>
+              {dirty && <Button variant="outline" className="rounded-full" onClick={() => setPublicando(true)}>Publicar cambios</Button>}
+            </div>
+            <dl className="mt-5 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+              {[["Tema", PLANTILLAS.find((p) => p.id === draft.plantilla)?.nombre ?? draft.plantilla], ["Bloques en inicio", String(draft.bloques.filter((b) => b.visible).length)], ["Páginas publicadas", String(paginasPublicadas.length)], ["Productos visibles", String(productosVisibles.length)]].map(([k, v]) => (
+                <div key={k} className="rounded-2xl bg-muted/60 p-3"><dt className="text-xs text-muted-foreground">{k}</dt><dd className="truncate font-extrabold">{v}</dd></div>
+              ))}
+            </dl>
+          </section>
+          <section className="rounded-3xl border bg-card p-5">
+            <h3 className="font-extrabold">Visitas</h3>
+            <p className="mb-3 text-xs text-muted-foreground">De quienes aceptan cookies de medición.</p>
+            <StorefrontStats storeId={store.id} />
+          </section>
+        </div>
+        {avisos.length > 0 && <section className="rounded-3xl border border-warning/40 bg-warning/10 p-5"><h3 className="font-extrabold">Para revisar antes de publicar</h3><ul className="mt-2 space-y-1 text-sm">{avisos.map((a) => <li key={a}>• {a}</li>)}</ul></section>}
+        <PreparacionTienda storeId={store.id} />
+      </div>
+    );
+  } else if (seccion === "editor") {
+    contenido = wide ? (
+      <div className={cn("grid gap-4", muyAncho ? "grid-cols-[280px_minmax(0,1fr)_340px]" : "grid-cols-[330px_minmax(0,1fr)]")}>
+        <aside className="sticky top-20 max-h-[calc(100vh-7rem)] min-w-0 space-y-3 self-start overflow-y-auto pr-1" aria-label={!muyAncho && seleccionado ? "Ajustes del bloque" : "Bloques de la página"}>
+          {!muyAncho && seleccionado ? (
+            <>
+              <Button type="button" variant="ghost" size="sm" className="rounded-full" onClick={() => setOpenId(null)}><ArrowLeft className="h-4 w-4" />Todos los bloques</Button>
+              <div className="space-y-5 rounded-3xl border bg-card p-4">
+                <div className="flex items-start justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Bloque</p><h3 className="text-lg font-extrabold">{nombreDe(seleccionado.tipo)}</h3></div><Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Cerrar ajustes" onClick={() => setOpenId(null)}><X className="h-4 w-4" /></Button></div>
+                {ajustesDe(seleccionado)}
+              </div>
+            </>
+          ) : (
+            <>
+              {barraEditor}
+              {avisos.length > 0 && <ul className="space-y-1 rounded-2xl bg-warning/10 p-3 text-xs font-semibold">{avisos.map((a) => <li key={a}>• {a}</li>)}</ul>}
+              {listaBloques(true)}
+            </>
+          )}
+        </aside>
+        <div className="min-w-0"><PreviewPane data={previewBase} selected={openId} onSelect={seleccionar} /></div>
+        {muyAncho && <aside className="sticky top-20 max-h-[calc(100vh-7rem)] min-w-0 self-start overflow-y-auto" aria-label="Ajustes del bloque">
+          {seleccionado ? (
+            <div className="space-y-5 rounded-3xl border bg-card p-4">
+              <div className="flex items-start justify-between gap-2"><div><p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Bloque</p><h3 className="text-lg font-extrabold">{nombreDe(seleccionado.tipo)}</h3></div><Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" aria-label="Cerrar ajustes" onClick={() => setOpenId(null)}><X className="h-4 w-4" /></Button></div>
+              {ajustesDe(seleccionado)}
+            </div>
+          ) : (
+            <div className="rounded-3xl border border-dashed bg-card p-6 text-center text-sm text-muted-foreground">
+              <MousePointerClick className="mx-auto mb-2 h-6 w-6" />Elegí un bloque en la lista o tocalo en la vista previa para editarlo.
+              <p className="mt-3 text-xs">Arrastrá para ordenar · Ctrl+Z deshace</p>
+            </div>
+          )}
+        </aside>}
+      </div>
+    ) : (
+      <div className="space-y-3">
+        {barraEditor}
+        <p className="text-xs text-muted-foreground">Arrastrá los bloques para ordenarlos, o usá las flechas. Tocá un bloque para editarlo. Ctrl+Z deshace.</p>
+        {avisos.length > 0 && <ul className="space-y-1 rounded-2xl bg-warning/10 p-3 text-xs font-semibold">{avisos.map((a) => <li key={a}>• {a}</li>)}</ul>}
+        {listaBloques(false)}
+        <Button type="button" variant="outline" className="w-full rounded-full font-bold" onClick={() => setPhonePreview(true)}><Monitor className="h-4 w-4" />Ver vista previa</Button>
+      </div>
+    );
+  } else if (seccion === "temas") {
+    contenido = (
+      <div className={cn("grid gap-6", wide && "xl:grid-cols-[minmax(0,520px)_1fr]")}>
+        <div className="min-w-0 space-y-4">
+          <section className="rounded-3xl border bg-card p-4 sm:p-5">
+            <h3 className="font-extrabold">Temas</h3>
+            <p className="mb-3 text-sm text-muted-foreground">Cada tema cambia la estructura de la página (composición, portada, tarjetas y secciones), no solo los colores. Tus productos, páginas, menú, SEO y datos no se tocan, y podés deshacer.</p>
+            <TemplateGrid value={plantillaElegida} color={draft.color} onChange={setPlantillaElegida} />
+            <div className="mt-3 flex justify-end"><Button type="button" className="rounded-full font-bold" disabled={plantillaElegida === draft.plantilla} onClick={aplicarPlantilla}>{plantillaElegida === draft.plantilla ? "Es tu tema actual" : "Usar este tema"}</Button></div>
+          </section>
+          <section className="rounded-3xl border bg-card p-4 sm:p-5"><h3 className="mb-3 font-extrabold">Diseño</h3><DesignPanel tema={draft} onChange={setDiseno} /></section>
+        </div>
+        {wide ? <aside className="min-w-0 xl:sticky xl:top-20 xl:self-start"><PreviewPane data={previewBase} selected={openId} onSelect={seleccionar} /></aside>
+          : <Button type="button" variant="outline" className="w-full rounded-full font-bold" onClick={() => setPhonePreview(true)}><Monitor className="h-4 w-4" />Ver vista previa</Button>}
+      </div>
+    );
+  } else if (seccion === "paginas") {
+    contenido = <PagesPanel storeId={store.id} storeSlug={store.slug} categorias={categorias} colecciones={colecciones} previewDe={previewPagina} onChanged={cargarExtras} />;
+  } else if (seccion === "menu") {
+    contenido = <div className="max-w-3xl"><NavigationPanel tema={draft} onChange={setTema} categorias={categorias} colecciones={colecciones} paginas={paginasPublicadas} conTurnos={servicios.length > 0} /></div>;
+  } else if (seccion === "productos") {
+    contenido = (
+      <div className="space-y-3">
+        <p className="rounded-2xl bg-muted p-3 text-sm text-muted-foreground">Solo los productos publicados aparecen en tu tienda. Las colecciones (grupos para promociones o temporadas) se arman en <Link to="/app/comercio/colecciones" className="font-bold text-primary hover:underline">Colecciones</Link>.</p>
+        <MerchantMenu storeId={store.id} products={products} onChange={loadProducts} />
+      </div>
+    );
+  } else if (seccion === "seo") {
+    contenido = <div className="max-w-3xl"><SeoPanel storeId={store.id} storeNombre={store.nombre} storeSlug={store.slug} tema={draft} onChange={setTema} /></div>;
+  } else if (seccion === "datos") {
+    contenido = (
+      <div className="max-w-3xl space-y-4">
+        <section className="space-y-4 rounded-3xl border bg-card p-4 sm:p-5">
+          <h3 className="font-extrabold">Mensajes generales</h3>
+          <Texto label="Barra de anuncio (arriba de todo)" value={draft.anuncio} max={160} placeholder="Ej.: Envío gratis en compras de más de $20.000" onChange={(anuncio) => setTema({ anuncio })} />
+          <Interruptor label="Mostrar calificaciones y opiniones" value={draft.mostrar_opiniones} onChange={(mostrar_opiniones) => setTema({ mostrar_opiniones })} />
+        </section>
+        <section className="space-y-4 rounded-3xl border bg-card p-4 sm:p-5">
+          <h3 className="font-extrabold">Contacto y redes</h3>
+          <Campo label="WhatsApp (con código de país, solo números)"><Input inputMode="numeric" maxLength={15} value={draft.whatsapp ?? ""} placeholder="5492355123456" onChange={(event) => setTema({ whatsapp: event.target.value.replace(/\D/g, "") })} aria-label="WhatsApp" /></Campo>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo label="Instagram (usuario)"><Input maxLength={60} value={draft.instagram ?? ""} placeholder="mi.tienda" onChange={(event) => setTema({ instagram: event.target.value.replace(/[^A-Za-z0-9._-]/g, "") })} aria-label="Instagram" /></Campo>
+            <Campo label="Facebook (usuario)"><Input maxLength={60} value={draft.facebook ?? ""} placeholder="mi.tienda" onChange={(event) => setTema({ facebook: event.target.value.replace(/[^A-Za-z0-9._-]/g, "") })} aria-label="Facebook" /></Campo>
+          </div>
+          <Campo label="Sitio web (https://…)"><Input maxLength={200} value={draft.web ?? ""} placeholder="https://mitienda.com" onChange={(event) => setTema({ web: event.target.value })} aria-label="Sitio web" /></Campo>
+          <p className="text-xs text-muted-foreground">Logo, horarios, dirección y sucursales se cargan en Configuración del local y se ven solos en la tienda.</p>
+        </section>
+      </div>
+    );
+  } else if (seccion === "versiones") {
+    contenido = (
+      <div className="max-w-3xl">
+        <VersionsPanel storeId={store.id} refresco={versionesRef} onRestaurar={async (v) => {
+          try { const tema = await restaurarVersion(v.id); setDraft(normalizeTheme(tema)); ultimoGuardado.current = serializarTema(normalizeTheme(tema)); irA("editor"); toast.success("Versión cargada como borrador. Revisala y publicá si querés volver a ella."); }
+          catch (error) { toast.error(errorMessage(error)); }
+        }} />
+      </div>
+    );
+  } else if (seccion === "compartir") {
+    contenido = (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-3xl border bg-card p-4 sm:p-5">
+          <h3 className="font-extrabold">Cartel con QR</h3>
+          <p className="mb-4 mt-1 text-sm text-muted-foreground">Llevá a tus clientes del local a tu tienda online.</p>
+          <QrPoster store={store} url={url} color={draft.color} title={draft.titulo || store.nombre} />
+        </section>
+        <SubscribersPanel storeId={store.id} storeSlug={store.slug} />
+      </div>
+    );
+  }
+
+  const enlace = (x: (typeof SECCIONES_TIENDA)[number]) => (
+    <NavLink key={x.id} to={`${BASE_TIENDA}/${x.id}`} className={({ isActive }) => cn("flex h-9 shrink-0 items-center gap-1.5 rounded-full px-3.5 text-sm font-bold transition-colors", isActive ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>
+      <x.icono className="h-4 w-4" />{x.texto}
+    </NavLink>
+  );
+
   return (
     <div className="space-y-4">
       <section className="flex flex-col gap-3 rounded-3xl border bg-card p-4 sm:flex-row sm:items-center sm:p-5">
         <div className="min-w-0 flex-1">
           <h2 className="text-lg font-extrabold">Tu tienda online</h2>
-          <p className="text-sm text-muted-foreground">Armala a tu modo con bloques, páginas y menú. Todo se guarda como borrador; nada cambia en tu tienda hasta que publiques.</p>
+          <p className="text-sm text-muted-foreground">Armala con bloques, páginas, temas y menú. Todo se guarda como borrador; nada cambia en tu tienda hasta que publiques.</p>
         </div>
         <div className="flex min-w-0 items-center gap-2 rounded-2xl border bg-muted/40 p-2 pl-3 text-sm">
           <span className="min-w-0 flex-1 truncate font-semibold">{url.replace(/^https?:\/\//, "")}</span>
@@ -305,137 +533,16 @@ export default function MerchantStorefront() {
         </div>
       </section>
 
-      {!cargado ? <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div> : (
-      <div className={cn("grid gap-6", !sinVista && "xl:grid-cols-[minmax(0,480px)_1fr]")}>
-        <Tabs value={tab} onValueChange={setTab} className="min-w-0">
-          <TabsList className="scrollbar-none flex h-auto w-full justify-start gap-1 overflow-x-auto rounded-2xl p-1">
-            <TabsTrigger value="constructor" className="shrink-0 rounded-xl px-3 py-2 font-bold">Bloques</TabsTrigger>
-            <TabsTrigger value="diseno" className="shrink-0 rounded-xl px-3 py-2 font-bold">Diseño</TabsTrigger>
-            <TabsTrigger value="paginas" className="shrink-0 rounded-xl px-3 py-2 font-bold">Páginas</TabsTrigger>
-            <TabsTrigger value="menu" className="shrink-0 rounded-xl px-3 py-2 font-bold">Menú</TabsTrigger>
-            <TabsTrigger value="seo" className="shrink-0 rounded-xl px-3 py-2 font-bold">SEO y dominio</TabsTrigger>
-            <TabsTrigger value="datos" className="shrink-0 rounded-xl px-3 py-2 font-bold">Datos</TabsTrigger>
-            {puedeCatalogo && <TabsTrigger value="productos" className="shrink-0 rounded-xl px-3 py-2 font-bold">Productos</TabsTrigger>}
-            <TabsTrigger value="versiones" className="shrink-0 rounded-xl px-3 py-2 font-bold">Versiones</TabsTrigger>
-            <TabsTrigger value="compartir" className="shrink-0 rounded-xl px-3 py-2 font-bold">Compartir</TabsTrigger>
-          </TabsList>
+      <nav aria-label="Secciones de la tienda" className="scrollbar-none -mx-1 flex items-center gap-1 overflow-x-auto rounded-full border bg-card p-1 px-1">
+        {SECCIONES_TIENDA.filter((x) => x.id !== "productos" || puedeCatalogo).map((x, i, lista) => (
+          <span key={x.id} className="flex shrink-0 items-center">
+            {i > 0 && lista[i - 1].grupo !== x.grupo && <span aria-hidden className="mx-1 h-5 w-px bg-border" />}
+            {enlace(x)}
+          </span>
+        ))}
+      </nav>
 
-          {/* ---------- BLOQUES ---------- */}
-          <TabsContent value="constructor" className="mt-4 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button type="button" className="rounded-full font-bold" onClick={() => setAdding(true)} disabled={draft.bloques.length >= MAX_BLOQUES}><Plus className="h-4 w-4" />Agregar bloque</Button>
-              <Button type="button" variant="outline" className="rounded-full font-bold" onClick={() => { setPlantillaElegida(draft.plantilla); setTemplates(true); }}><LayoutTemplate className="h-4 w-4" />Plantillas</Button>
-              <span className="ml-auto text-xs text-muted-foreground">{draft.bloques.length}/{MAX_BLOQUES} bloques</span>
-            </div>
-            <p className="text-xs text-muted-foreground">Arrastrá los bloques para ordenarlos, o usá las flechas. Tocá un bloque para editarlo, o tocalo directo en la vista previa. Ctrl+Z deshace.</p>
-            {avisos.length > 0 && <ul className="space-y-1 rounded-2xl bg-warning/10 p-3 text-xs font-semibold">{avisos.map((a) => <li key={a}>• {a}</li>)}</ul>}
-            <ul className="space-y-2">
-              {draft.bloques.map((bloque, index) => {
-                const open = openId === bloque.id;
-                const obligatorio = bloque.tipo === "catalogo";
-                return (
-                  <li key={bloque.id} id={`editar-${bloque.id}`} draggable onDragStart={() => setDragId(bloque.id)} onDragEnd={() => { setDragId(null); setDropOn(null); }} onDragOver={(event) => { event.preventDefault(); setDropOn(bloque.id); }} onDrop={(event) => soltar(event, bloque.id)}
-                    className={cn("rounded-2xl border bg-card transition-shadow", open && "border-brand-yellow shadow-soft", dropOn === bloque.id && dragId !== bloque.id && "ring-2 ring-brand-yellow", dragId === bloque.id && "opacity-50", !bloque.visible && "opacity-70")}>
-                    <div className="flex items-center gap-1 p-2">
-                      <span className="cursor-grab px-1 text-muted-foreground" aria-hidden><GripVertical className="h-4 w-4" /></span>
-                      <button type="button" onClick={() => setOpenId(open ? null : bloque.id)} aria-expanded={open} className="flex min-w-0 flex-1 items-center gap-2 rounded-xl px-2 py-1.5 text-left hover:bg-muted/50">
-                        <span className="min-w-0 flex-1"><span className="block text-sm font-bold">{nombreDe(bloque.tipo)}</span><span className="block truncate text-xs text-muted-foreground">{resumenDe(bloque) || "Sin título"}</span></span>
-                        <ChevronDown className={cn("h-4 w-4 shrink-0 text-muted-foreground transition-transform", open && "rotate-180")} />
-                      </button>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label={bloque.visible ? "Ocultar bloque" : "Mostrar bloque"} onClick={() => updateBloque(bloque.id, { visible: !bloque.visible })}>{bloque.visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}</Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Subir" disabled={index === 0} onClick={() => mover(bloque.id, -1)}><ArrowUp className="h-4 w-4" /></Button>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8" aria-label="Bajar" disabled={index === draft.bloques.length - 1} onClick={() => mover(bloque.id, 1)}><ArrowDown className="h-4 w-4" /></Button>
-                    </div>
-                    {open && (
-                      <div className="space-y-5 border-t p-4">
-                        <BlockSettings bloque={bloque} categorias={categorias} colecciones={colecciones} onChange={(cambios) => updateBloque(bloque.id, cambios)} />
-                        <div className="flex flex-wrap items-center gap-2 border-t pt-4">
-                          {!TIPOS_BLOQUE.find((item) => item.tipo === bloque.tipo)?.unico && draft.bloques.length < MAX_BLOQUES && <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => duplicar(bloque.id)}><Copy className="h-4 w-4" />Duplicar</Button>}
-                          {!obligatorio && <Button type="button" variant="outline" size="sm" className="rounded-full text-destructive hover:text-destructive" onClick={() => eliminar(bloque.id)}><Trash2 className="h-4 w-4" />Eliminar bloque</Button>}
-                          {obligatorio && <p className="text-xs text-muted-foreground">El catálogo no se puede eliminar, pero sí ocultar o mover.</p>}
-                        </div>
-                      </div>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </TabsContent>
-
-          <TabsContent value="productos" className="mt-4">
-            <p className="mb-4 rounded-2xl bg-muted p-3 text-sm text-muted-foreground">Solo los productos publicados aparecen en tu tienda. Los borradores y programados los ves solo vos.</p>
-            <MerchantMenu storeId={store.id} products={products} onChange={loadProducts} />
-          </TabsContent>
-
-          <TabsContent value="diseno" className="mt-4">
-            <div className="rounded-3xl border bg-card p-4 sm:p-5"><DesignPanel tema={draft} onChange={setDiseno} /></div>
-          </TabsContent>
-
-          <TabsContent value="paginas" className="mt-4">
-            <PagesPanel storeId={store.id} storeSlug={store.slug} categorias={categorias} colecciones={colecciones} previewDe={previewPagina} onChanged={cargarExtras} />
-          </TabsContent>
-
-          <TabsContent value="menu" className="mt-4">
-            <NavigationPanel tema={draft} onChange={setTema} categorias={categorias} colecciones={colecciones} paginas={paginasPublicadas} conTurnos={servicios.length > 0} />
-          </TabsContent>
-
-          <TabsContent value="seo" className="mt-4">
-            <SeoPanel storeId={store.id} storeNombre={store.nombre} storeSlug={store.slug} tema={draft} onChange={setTema} />
-          </TabsContent>
-
-          {/* ---------- DATOS ---------- */}
-          <TabsContent value="datos" className="mt-4 space-y-4">
-            <section className="space-y-4 rounded-3xl border bg-card p-4 sm:p-5">
-              <h3 className="font-extrabold">Mensajes generales</h3>
-              <Texto label="Barra de anuncio (arriba de todo)" value={draft.anuncio} max={160} placeholder="Ej.: Envío gratis en compras de más de $20.000" onChange={(anuncio) => setTema({ anuncio })} />
-              <Interruptor label="Mostrar calificaciones y opiniones" value={draft.mostrar_opiniones} onChange={(mostrar_opiniones) => setTema({ mostrar_opiniones })} />
-            </section>
-            <section className="space-y-4 rounded-3xl border bg-card p-4 sm:p-5">
-              <h3 className="font-extrabold">Contacto y redes</h3>
-              <Campo label="WhatsApp (con código de país, solo números)"><Input inputMode="numeric" maxLength={15} value={draft.whatsapp ?? ""} placeholder="5492355123456" onChange={(event) => setTema({ whatsapp: event.target.value.replace(/\D/g, "") })} aria-label="WhatsApp" /></Campo>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Campo label="Instagram (usuario)"><Input maxLength={60} value={draft.instagram ?? ""} placeholder="mi.tienda" onChange={(event) => setTema({ instagram: event.target.value.replace(/[^A-Za-z0-9._-]/g, "") })} aria-label="Instagram" /></Campo>
-                <Campo label="Facebook (usuario)"><Input maxLength={60} value={draft.facebook ?? ""} placeholder="mi.tienda" onChange={(event) => setTema({ facebook: event.target.value.replace(/[^A-Za-z0-9._-]/g, "") })} aria-label="Facebook" /></Campo>
-              </div>
-              <Campo label="Sitio web (https://…)"><Input maxLength={200} value={draft.web ?? ""} placeholder="https://mitienda.com" onChange={(event) => setTema({ web: event.target.value })} aria-label="Sitio web" /></Campo>
-              <p className="text-xs text-muted-foreground">Logo, horarios, dirección y sucursales se cargan en Configuración del local y se ven solos en la tienda.</p>
-            </section>
-          </TabsContent>
-
-          <TabsContent value="versiones" className="mt-4">
-            <VersionsPanel storeId={store.id} refresco={versionesRef} onRestaurar={async (v) => {
-              try { const tema = await restaurarVersion(v.id); setDraft(normalizeTheme(tema)); ultimoGuardado.current = serializarTema(normalizeTheme(tema)); setTab("constructor"); toast.success("Versión cargada como borrador. Revisala y publicá si querés volver a ella."); }
-              catch (error) { toast.error(errorMessage(error)); }
-            }} />
-          </TabsContent>
-
-          {/* ---------- COMPARTIR ---------- */}
-          <TabsContent value="compartir" className="mt-4 grid gap-4 lg:grid-cols-2">
-            <section className="rounded-3xl border bg-card p-4 sm:p-5">
-              <h3 className="font-extrabold">Visitas a tu tienda</h3>
-              <p className="mb-3 mt-1 text-sm text-muted-foreground">Cuántas personas entraron (de quienes aceptan cookies de medición). No guardamos quién es cada una.</p>
-              <StorefrontStats storeId={store.id} />
-            </section>
-            <section className="rounded-3xl border bg-card p-4 sm:p-5">
-              <h3 className="font-extrabold">Cartel con QR</h3>
-              <p className="mb-4 mt-1 text-sm text-muted-foreground">Llevá a tus clientes del local a tu tienda online.</p>
-              <QrPoster store={store} url={url} color={draft.color} title={draft.titulo || store.nombre} />
-            </section>
-            <SubscribersPanel storeId={store.id} storeSlug={store.slug} />
-          </TabsContent>
-        </Tabs>
-
-        {!sinVista && wide && (
-          <aside className="min-w-0 xl:sticky xl:top-20 xl:self-start">
-            <PreviewPane data={previewBase} selected={openId} onSelect={seleccionar} />
-          </aside>
-        )}
-      </div>
-      )}
-
-      {!sinVista && !wide && (
-        <Button type="button" variant="outline" className="w-full rounded-full font-bold" onClick={() => setPhonePreview(true)}><Monitor className="h-4 w-4" />Ver vista previa</Button>
-      )}
+      {!cargado ? <div className="flex justify-center py-16"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div> : contenido}
 
       <div className="sticky bottom-3 z-20 flex flex-wrap items-center justify-between gap-2 rounded-3xl border bg-card/95 p-2 pl-4 shadow-pop backdrop-blur sm:rounded-full">
         <span className="flex min-w-0 items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -470,14 +577,6 @@ export default function MerchantStorefront() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={templates} onOpenChange={setTemplates}>
-        <DialogContent className="max-h-[88vh] max-w-3xl overflow-y-auto">
-          <DialogTitle className="text-xl font-black">Plantillas</DialogTitle>
-          <DialogDescription>Cada plantilla arma una página distinta (composición, letras, tarjetas y secciones) que después cambiás a gusto. <strong>Reemplaza los bloques y el diseño del borrador</strong>; tus productos, páginas, menú, SEO y datos no se tocan, y podés deshacer.</DialogDescription>
-          <TemplateGrid value={plantillaElegida} color={draft.color} onChange={setPlantillaElegida} />
-          <div className="flex justify-end gap-2"><Button type="button" variant="ghost" className="rounded-full" onClick={() => setTemplates(false)}>Cancelar</Button><Button type="button" className="rounded-full font-bold" onClick={aplicarPlantilla}>Usar esta plantilla</Button></div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={phonePreview} onOpenChange={setPhonePreview}>
         <DialogContent className="max-h-[92vh] max-w-3xl overflow-y-auto">

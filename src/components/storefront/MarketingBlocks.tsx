@@ -96,3 +96,37 @@ export function OfertaSeccion({ hasta, radius, children }: { hasta?: string; rad
   const reloj = hasta && !Number.isNaN(fin) ? <Cuenta hasta={hasta} style={{ borderRadius: radius }} onTermino={() => setTerminada(true)} /> : null;
   return <>{children(reloj)}</>;
 }
+
+/** Formulario de consulta de la tienda: lo enviado llega al CRM del local como una tarea para responder. */
+export function ConsultaForm({ comercioId, boton, pedirTelefono, preview, buttonStyle, inputStyle }: { comercioId: string; boton: string; pedirTelefono: boolean; preview?: boolean; buttonStyle: CSSProperties; inputStyle?: CSSProperties }) {
+  const [datos, setDatos] = useState({ nombre: "", email: "", telefono: "", mensaje: "" });
+  const [estado, setEstado] = useState<"libre" | "enviando" | "listo">("libre");
+  const [error, setError] = useState<string | null>(null);
+  const campo = "h-12 w-full border bg-background px-4 text-base text-foreground outline-none focus-visible:ring-2";
+
+  const enviar = async (event: FormEvent) => {
+    event.preventDefault();
+    if (preview || estado === "enviando") return;
+    setError(null);
+    if (datos.nombre.trim().length < 2 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(datos.email.trim()) || datos.mensaje.trim().length < 5) { setError("Completá tu nombre, un email válido y tu consulta."); return; }
+    setEstado("enviando");
+    const { error: failure } = await db.rpc("tienda_consulta_enviar", { p_comercio: comercioId, p_nombre: datos.nombre, p_email: datos.email, p_telefono: datos.telefono || null, p_mensaje: datos.mensaje });
+    if (failure) { setEstado("libre"); setError(errorMessage(failure, "No pudimos enviar tu consulta")); return; }
+    setEstado("listo");
+  };
+
+  if (estado === "listo") return <p className="flex items-center justify-center gap-2 py-6 text-lg font-bold" role="status"><Check className="h-5 w-5" />¡Gracias! Recibimos tu consulta y te respondemos pronto.</p>;
+  return (
+    <form onSubmit={enviar} className="grid gap-3 text-left sm:grid-cols-2" noValidate>
+      <label className="space-y-1 text-sm font-semibold"><span>Nombre</span><input autoComplete="name" maxLength={80} value={datos.nombre} onChange={(e) => setDatos({ ...datos, nombre: e.target.value })} className={campo} style={inputStyle} /></label>
+      <label className="space-y-1 text-sm font-semibold"><span>Email</span><input type="email" autoComplete="email" inputMode="email" maxLength={160} value={datos.email} onChange={(e) => setDatos({ ...datos, email: e.target.value })} className={campo} style={inputStyle} /></label>
+      {pedirTelefono && <label className="space-y-1 text-sm font-semibold sm:col-span-2"><span>Teléfono (opcional)</span><input type="tel" autoComplete="tel" inputMode="tel" maxLength={30} value={datos.telefono} onChange={(e) => setDatos({ ...datos, telefono: e.target.value })} className={campo} style={inputStyle} /></label>}
+      <label className="space-y-1 text-sm font-semibold sm:col-span-2"><span>Tu consulta</span><textarea maxLength={2000} rows={4} value={datos.mensaje} onChange={(e) => setDatos({ ...datos, mensaje: e.target.value })} className="w-full border bg-background px-4 py-3 text-base text-foreground outline-none focus-visible:ring-2" style={inputStyle} /></label>
+      <p className="text-xs opacity-70 sm:col-span-2">Usamos tus datos solo para responderte. No te suscribimos a nada.</p>
+      {error && <p className="text-sm font-semibold text-destructive sm:col-span-2" role="alert">{error}</p>}
+      <button type="submit" disabled={estado === "enviando"} className="inline-flex h-12 items-center justify-center gap-2 px-6 text-base font-bold transition-opacity hover:opacity-90 disabled:opacity-60 sm:col-span-2 sm:justify-self-start" style={buttonStyle}>
+        {estado === "enviando" && <Loader2 className="h-4 w-4 animate-spin" />}{boton}
+      </button>
+    </form>
+  );
+}
