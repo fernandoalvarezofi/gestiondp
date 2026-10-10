@@ -160,7 +160,7 @@ export function ClientLayout() {
 
       <AddressDialog open={gateOpen} onOpenChange={setGateOpen} title="¿Dónde estás?" />
 
-      <main className="min-h-[calc(100vh-4rem)]"><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense></main>
+      <main className="min-h-[calc(100vh-4rem)] md:glass md:mx-3 md:mt-3 md:rounded-[1.75rem] md:pb-6"><Suspense fallback={<div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}><Outlet /></Suspense></main>
       <AppFooter />
 
       {showCartBar && (
@@ -176,7 +176,7 @@ export function ClientLayout() {
       {!hideNav && (
         <nav className="glass glass-strong fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 grid rounded-full p-1 md:hidden" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }} aria-label="Secciones">
           {tabs.map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={label} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
+            <NavLink key={label} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-foreground" : "text-muted-foreground")}>
               {({ isActive }) => (<>
                 <span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary text-primary-foreground shadow-[0_8px_22px_-8px_hsl(163_56%_42%/0.8)]")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} />
                   {to === "/app/mensajes" && unreadMessages > 0 && <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-yellow px-1 text-[10px] font-black text-brand-yellow-foreground" aria-label={`${unreadMessages} sin leer`}>{unreadMessages}</span>}</span>
