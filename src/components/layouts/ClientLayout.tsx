@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { ContextMenuItems } from "@/navigation/ContextSwitcher";
 import { CLIENT_TABS, GUEST_TABS, type ClientTab } from "@/navigation/clientMenu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
+import { useCookiesDecididas } from "@/hooks/useCookiesDecididas";
 
 /** Atajos de Explorar en la cabecera de escritorio. */
 const exploreLinks = [
@@ -60,12 +61,14 @@ export function ClientLayout() {
   }, [address, addresses, setAddress]);
   // Primera vez sin ninguna dirección: pedimos la ubicación (una sola vez por sesión), pero solo en las pantallas donde
   // la dirección cambia lo que se ve (qué locales llegan, costo de envío). En Ayuda, Perfil o Mensajes no interrumpimos.
+  // Primero el aviso de cookies; "¿Dónde estás?" espera a que se responda (si no, se superponen en el celular).
+  const cookiesListas = useCookiesDecididas();
   const needsAddress = /^\/app(\/(explorar|buscar|categoria|tienda|carrito|promociones)(\/|$)|\/?$)/.test(location.pathname);
   useEffect(() => {
-    if (loading || addressesLoading || address || addresses.length || gateAsked || !needsAddress) return;
+    if (loading || addressesLoading || address || addresses.length || gateAsked || !needsAddress || !cookiesListas) return;
     setGateAsked(true);
     setGateOpen(true);
-  }, [loading, addressesLoading, address, addresses.length, gateAsked, needsAddress]);
+  }, [loading, addressesLoading, address, addresses.length, gateAsked, needsAddress, cookiesListas]);
 
   const guest = !session;
   const unreadMessages = useUnreadMessages({ rol: "cliente", enabled: !guest });

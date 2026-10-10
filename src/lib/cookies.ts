@@ -13,6 +13,8 @@ const CLAVE = "woref-cookies";
 /** Si cambian las categorías, se sube la versión y se vuelve a preguntar. */
 export const VERSION_COOKIES = 1;
 export const EVENTO_ABRIR = "woref-cookies-abrir";
+/** Se emite cuando la persona elige en el aviso (para que otras ventanas, como "¿Dónde estás?", esperen su turno). */
+export const EVENTO_DECIDIDO = "woref-cookies-decidido";
 
 export function leerConsentimiento(): Consentimiento | null {
   try {
@@ -27,6 +29,7 @@ export function guardarConsentimiento(eleccion: { preferencias: boolean; medicio
   // Si se rechaza una categoría, se borra lo que ya estaba guardado de ella.
   if (!valor.medicion) borrar(["woref-origen-tienda"], /^woref-visita-/);
   if (!valor.preferencias) borrar(["woref-fav-productos", "woref-contexto", "woref-apariencia"], null);
+  try { window.dispatchEvent(new Event(EVENTO_DECIDIDO)); } catch { /* fuera del navegador */ }
   return valor;
 }
 
@@ -49,3 +52,6 @@ export function consiente(categoria: CategoriaCookie): boolean {
 
 /** Vuelve a mostrar el aviso (por ejemplo, desde el pie "Preferencias de cookies"). */
 export const abrirPreferenciasCookies = () => window.dispatchEvent(new Event(EVENTO_ABRIR));
+
+/** ¿Ya no hay aviso de cookies pendiente? (En la app instalada nunca lo hay.) */
+export const cookiesDecididas = () => isNativeApp() || leerConsentimiento() !== null;
