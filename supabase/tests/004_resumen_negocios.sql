@@ -24,6 +24,7 @@ begin
   v := delivery_mis_comercios();
   if jsonb_array_length(v) <> 3 then fallos := fallos || format(E'- mis_comercios de A debería traer 3 tiendas, trae %s\n', jsonb_array_length(v)); end if;
   if (select count(distinct t->>'negocio_id') from jsonb_array_elements(v) t) <> 2 then fallos := fallos || E'- mis_comercios debería distinguir 2 negocios\n'; end if;
+  if (select count(*) from jsonb_array_elements(v) t where t->>'tipo_sitio' = 'tienda' and t->>'slug' is not null) <> 3 then fallos := fallos || E'- mis_comercios no trae tipo y dirección\n'; end if;
 
   perform set_config('request.jwt.claims', json_build_object('sub', b, 'role', 'authenticated')::text, true);
   v := delivery_resumen_negocios();

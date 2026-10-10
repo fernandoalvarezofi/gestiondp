@@ -13,7 +13,7 @@ export const FullPageLoader = () => (
 );
 
 /** Pantallas del cliente que se pueden ver sin cuenta (como en las apps de delivery: se explora y se pide ingresar al confirmar). */
-const PUBLIC_CLIENT = /^\/app(\/(buscar|explorar|servicios|promociones|directorio|carrito|categoria\/[^/]+|tienda\/[^/]+))?\/?$/;
+const PUBLIC_CLIENT = /^\/app(\/(buscar|explorar|servicios|promociones|directorio|sitio-web|carrito|categoria\/[^/]+|tienda\/[^/]+))?\/?$/;
 export const isPublicClientPath = (pathname: string) => PUBLIC_CLIENT.test(pathname);
 
 /**

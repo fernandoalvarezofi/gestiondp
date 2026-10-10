@@ -49,6 +49,8 @@ export default function StoreDetail() {
       const { data: found, error: falla } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
       if (falla) { setLoadError(new Error(errorMessage(falla))); return; }
       if (!found) { setNotFound(true); return; }
+      // Un sitio web no tiene menú ni carrito: su lugar es la página pública del negocio.
+      if (found.tipo_sitio === "sitio") { navigate(`/t/${found.slug}`, { replace: true }); return; }
       setStore(found);
       const [{ data: catalog }, { data: opinions }, { data: storeCoupons }, { data: configured }] = await Promise.all([
         db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("en_market", true).order("orden").order("nombre"),
@@ -62,7 +64,7 @@ export default function StoreDetail() {
       setReviews(opinions || []);
       setCoupons((storeCoupons || []).filter((coupon: Coupon) => !coupon.vence_at || new Date(coupon.vence_at) > new Date()));
     })();
-  }, [slug]);
+  }, [slug, navigate]);
 
   // Solo se ofrecen los filtros dietarios que algún producto del menú realmente tiene.
   const dietOptions = useMemo(() => dietTags.filter((tag) => products.some((product) => product.etiquetas?.includes(tag))), [products]);

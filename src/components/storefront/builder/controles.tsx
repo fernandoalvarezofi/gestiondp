@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { MENU_TIPOS, MenuItem, MenuTipo } from "@/lib/storefront";
 import { Boton, Destino, DESTINO_NECESITA, DestinoTipo, DESTINOS, EstiloSeccion, NOMBRE_DESTINO } from "@/lib/storefrontSecciones";
 import { cn } from "@/lib/utils";
+import { MENU_SOLO_TIENDA } from "@/lib/sitioWeb";
 import { Campo, Numero, Opciones } from "./fields";
 
 /** Lo que el editor sabe de la tienda para ofrecer destinos reales (categorías, colecciones, páginas, secciones de la página). */
@@ -15,7 +16,10 @@ export type OpcionesSitio = {
   anclas: { id: string; nombre: string }[];
   conTurnos: boolean;
   conWhatsapp: boolean;
+  /** Sitio web sin venta en línea: no se ofrecen destinos del catálogo. */
+  soloSitio?: boolean;
 };
+const SOLO_TIENDA: DestinoTipo[] = ["catalogo", "ofertas", "categoria", "coleccion"];
 
 const select = "h-9 w-full rounded-md border bg-background px-2.5 text-sm";
 
@@ -35,7 +39,7 @@ export function DestinoPicker({ value, onChange, sitio, label = "Lleva a" }: { v
     <div className="grid gap-2 sm:grid-cols-2">
       <Campo label={label}>
         <select aria-label={label} value={value.tipo} onChange={(e) => cambiarTipo(e.target.value as DestinoTipo)} className={select}>
-          {DESTINOS.map((t) => <option key={t} value={t} disabled={!disponible(t) && t !== value.tipo}>{NOMBRE_DESTINO[t]}{!disponible(t) ? " (no disponible)" : ""}</option>)}
+          {DESTINOS.filter((t) => !sitio.soloSitio || !SOLO_TIENDA.includes(t) || t === value.tipo).map((t) => <option key={t} value={t} disabled={!disponible(t) && t !== value.tipo}>{NOMBRE_DESTINO[t]}{!disponible(t) ? " (no disponible)" : ""}</option>)}
         </select>
       </Campo>
       {necesita === "url" ? (
@@ -115,7 +119,7 @@ export function MenuEditor({ value, onChange, sitio, max = 12, label = "Enlaces"
       {value.length < max && (
         <select value="" aria-label={`Agregar a ${label}`} onChange={(e) => e.target.value && agregar(e.target.value as MenuTipo)} className="h-9 w-full rounded-full border bg-background px-3 text-sm font-semibold">
           <option value="">+ Agregar enlace…</option>
-          {MENU_TIPOS.filter((m) => m.tipo !== "reservar" || sitio.conTurnos).map((m) => <option key={m.tipo} value={m.tipo} disabled={(m.necesita === "pagina" && sitio.paginas.length === 0) || (m.necesita === "coleccion" && sitio.colecciones.length === 0)}>{m.nombre}</option>)}
+          {MENU_TIPOS.filter((m) => (m.tipo !== "reservar" || sitio.conTurnos) && !(sitio.soloSitio && MENU_SOLO_TIENDA.includes(m.tipo))).map((m) => <option key={m.tipo} value={m.tipo} disabled={(m.necesita === "pagina" && sitio.paginas.length === 0) || (m.necesita === "coleccion" && sitio.colecciones.length === 0)}>{m.nombre}</option>)}
         </select>
       )}
       {value.some((m) => m.tipo === "url" && !/^https:\/\/[^\s<>"]+$/.test(m.destino ?? "")) && <p className="text-xs font-semibold text-destructive">Un enlace externo tiene que empezar con https:// (si no, se descarta al publicar).</p>}

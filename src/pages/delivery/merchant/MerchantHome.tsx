@@ -6,6 +6,8 @@ import { Delta, ListRow, Metric, MetricStrip, PageIntro, ProgressRing, RowList, 
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { estadoCorto, img, money, shortId, estadoOperativo } from "@/lib/delivery";
 import { Permission, useMerchant } from "./context";
+import SitioHome from "./SitioHome";
+import { esSitio } from "@/lib/sitioWeb";
 
 const TZ = "America/Argentina/Buenos_Aires";
 const dayKey = (value: string | number | Date) => new Date(value).toLocaleDateString("en-CA", { timeZone: TZ });
@@ -15,8 +17,14 @@ const minutesAgo = (value: string) => Math.max(0, Math.round((Date.now() - new D
 const ago = (value: string) => { const m = minutesAgo(value); return m < 1 ? "recién" : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.floor(m / 60)} h` : `hace ${Math.floor(m / 1440)} d`; };
 const ESTADO_TONE: Record<string, Tone> = { pendiente: "warning", confirmado: "info", preparando: "info", listo: "success", en_camino: "brand" };
 
-/** Inicio del comercio: cómo va el día, qué pedidos están en juego y qué necesita atención, en ese orden. */
+/** Inicio del panel: un sitio web (sin venta en línea) tiene su propio resumen; una tienda, el de pedidos y ventas. */
 export default function MerchantHome() {
+  const { store } = useMerchant();
+  return esSitio(store) ? <SitioHome /> : <TiendaHome />;
+}
+
+/** Inicio del comercio: cómo va el día, qué pedidos están en juego y qué necesita atención, en ese orden. */
+function TiendaHome() {
   const { store, orders, products, reviews, pendingCount, preguntasPendientes, access } = useMerchant();
   const roles = useDeliveryRoles();
   const can = (permission: Permission) => access.permisos.includes(permission);

@@ -6,6 +6,7 @@ import { StoreVerification } from "@/components/merchant/StoreVerification";
 import { PrintAlertsPanel } from "@/components/merchant/PrintAlertsPanel";
 import { SettingsSection, StoreSettingsForm, storeToFormValues } from "@/components/merchant/StoreSettingsForm";
 import { cn } from "@/lib/utils";
+import { esSitio } from "@/lib/sitioWeb";
 import { useMerchant } from "./context";
 
 const SECTIONS = [
@@ -25,7 +26,9 @@ export default function MerchantSettings() {
   const { seccion } = useParams();
   // Los datos legales y documentos son solo del dueño.
   // Eliminar la tienda: solo el dueño (el servidor también lo exige).
-  const sections = SECTIONS.filter((item) => (item.id === "eliminar" ? access.rol === "dueno" : (item.id !== "verificacion" && item.id !== "cobros") || access.permisos.includes("finanzas")));
+  // Un sitio web no entrega, no imprime comandas ni cobra ventas: esas secciones no aplican.
+  const sitio = esSitio(store);
+  const sections = SECTIONS.filter((item) => !(sitio && (item.id === "entrega" || item.id === "operacion" || item.id === "impresion" || item.id === "cobros"))).map((item) => (sitio && item.id === "general" ? { ...item, label: "Datos del negocio" } : sitio && item.id === "eliminar" ? { ...item, label: "Eliminar sitio", hint: "Dar de baja o borrar este sitio" } : item)).filter((item) => (item.id === "eliminar" ? access.rol === "dueno" : (item.id !== "verificacion" && item.id !== "cobros") || access.permisos.includes("finanzas")));
   const current = sections.find((item) => item.id === seccion);
   if (!current) return <Navigate to="/app/comercio/configuracion/general" replace />;
 
@@ -56,7 +59,7 @@ export default function MerchantSettings() {
         ) : current.id === "verificacion" ? (
           <StoreVerification store={store} onSaved={loadStore} />
         ) : (
-          <StoreSettingsForm key={`${store.id}-${current.id}-${store.nombre}`} section={current.id as SettingsSection} initial={storeToFormValues(store)} submitLabel="Guardar cambios" onSubmit={saveSettings} />
+          <StoreSettingsForm key={`${store.id}-${current.id}-${store.nombre}`} section={current.id as SettingsSection} sitio={sitio} initial={storeToFormValues(store)} submitLabel="Guardar cambios" onSubmit={saveSettings} />
         )}
       </section>
     </div>

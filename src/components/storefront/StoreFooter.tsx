@@ -4,6 +4,7 @@ import { abrirPreferenciasCookies } from "@/lib/cookies";
 import { Banknote, CreditCard, Landmark, MapPin, Store as StoreIcon, Wallet } from "lucide-react";
 import { StoreLogo } from "@/components/delivery/StoreCard";
 import { DeliveryStore, db, scheduleSummary } from "@/lib/delivery";
+import { esSitio } from "@/lib/sitioWeb";
 
 type Enlace = { label: string; onClick: () => void };
 type Red = { href: string; label: string; icon: ReactNode };
@@ -25,6 +26,9 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie, c
     { label: "Transferencia", icon: <Landmark className="h-4 w-4" /> },
   ].filter(Boolean) as { label: string; icon: ReactNode }[];
   const horario = scheduleSummary(store.horarios);
+  // Un sitio web no vende: sin medios de pago ni retiro, y la columna de datos solo si hay dirección u horario.
+  const sitio = esSitio(store);
+  const hayDatos = Boolean(store.direccion?.trim() || horario || (!sitio && store.acepta_retiro));
 
   return (
     <footer className="mt-4 border-t bg-card text-card-foreground">
@@ -58,35 +62,35 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie, c
 
         {auto && enlaces.length > 0 && (
           <nav aria-label="Navegación de la tienda">
-            <h2 className="text-sm font-extrabold uppercase tracking-wide">Tienda</h2>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide">{sitio ? "Sitio" : "Tienda"}</h2>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               {enlaces.filter((e, i) => enlaces.findIndex((x) => x.label === e.label) === i).map((e, i) => <li key={`${e.label}-${i}`}><button type="button" onClick={e.onClick} className="text-left hover:text-foreground">{e.label}</button></li>)}
             </ul>
           </nav>
         )}
 
-        <div>
+        {hayDatos && <div>
           <h2 className="text-sm font-extrabold uppercase tracking-wide">Dónde y cuándo</h2>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
             {store.direccion && <li className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0" />{store.direccion}</li>}
             {horario && <li className="whitespace-pre-line">{horario}</li>}
-            {store.acepta_retiro && <li>Retiro en el local disponible</li>}
+            {!sitio && store.acepta_retiro && <li>Retiro en el local disponible</li>}
           </ul>
-        </div>
+        </div>}
 
-        <div>
+        {!sitio && <div>
           <h2 className="text-sm font-extrabold uppercase tracking-wide">Medios de pago</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
             {medios.map((m) => <li key={m.label} className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-bold text-muted-foreground">{m.icon}{m.label}</li>)}
           </ul>
-        </div>
+        </div>}
       </div>
 
       <div className="border-t">
         <div className={`mx-auto flex flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6 ${widthClass}`}>
           <p>© {new Date().getFullYear()} {store.nombre}</p>
-          <p className="inline-flex items-center gap-1.5"><StoreIcon className="h-3.5 w-3.5" />Tienda online creada en Woref</p>
-          {!preview && <Link to={`/app/tienda/${store.slug}`} className="font-semibold hover:text-foreground">Ver en la app de Woref</Link>}
+          <p className="inline-flex items-center gap-1.5"><StoreIcon className="h-3.5 w-3.5" />{sitio ? "Sitio web creado con Woref" : "Tienda online creada en Woref"}</p>
+          {!preview && !sitio && <Link to={`/app/tienda/${store.slug}`} className="font-semibold hover:text-foreground">Ver en la app de Woref</Link>}
           {!preview && <button type="button" onClick={abrirPreferenciasCookies} className="font-semibold hover:text-foreground">Cookies</button>}
         </div>
       </div>

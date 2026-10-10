@@ -13,13 +13,14 @@ import { storeReach } from "@/lib/geo";
 import { Bloque, BloqueBanner, BloqueCatalogo, BloqueContenido, Boton as BotonDato, CatalogoOrden, menuHref, normalizeBloque, readableOn, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
 import { destinoHref, ESCALA_ESPACIO, fondoOscuro } from "@/lib/storefrontSecciones";
 import { RichText } from "@/components/storefront/RichText";
-import { CalendarCheck } from "lucide-react";
+import { CalendarCheck, Phone } from "lucide-react";
 import { estiloTienda } from "@/lib/storefrontStyle";
 import { filtrarYOrdenar, FiltrosCatalogo, insignias, ORDENES, SIN_FILTROS, tramosDePrecio, type VendedorResumen } from "@/lib/marketplace";
 import { ConsultaForm, NewsletterForm, OfertaSeccion, Politicas } from "@/components/storefront/MarketingBlocks";
 import { StoreFooter } from "@/components/storefront/StoreFooter";
 import { CategoriesMenu, StoreMobileMenu, StoreSearch } from "@/components/storefront/StoreNav";
 import { collectionPath, curatedPath, offersPath, pagePath, searchPath, storePath, tieneDescuento, Vista, VISTA_INICIO, vistaKey } from "@/lib/storeRoutes";
+import { bloquePermitido, esSitio } from "@/lib/sitioWeb";
 import { duracionTexto } from "@/services/bookings";
 import { MiniCart } from "@/components/storefront/MiniCart";
 import { SellerCard } from "@/components/storefront/SellerCard";
@@ -88,8 +89,10 @@ const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({
 
 /** Tienda online de un comercio: arma la página con los bloques y el diseño elegidos. Es la misma pantalla para el sitio público y la vista previa del editor. */
 export function StorefrontView({ store, tema, products: allProducts, sections: sectionConfig, reviews = [], preview = false, onSelectBlock, selectedBlock, vendedor = null, vista, reservaHref = null, servicios = [], colecciones = [], paginas = [], principal }: Props) {
+  // Un sitio web (sin venta en línea) no muestra catálogo, carrito ni datos de envío.
+  const sitio = esSitio(store);
   // Solo se muestra en la tienda lo que el comercio publicó en este canal.
-  const products = useMemo(() => allProducts.filter((product) => product.en_tienda !== false), [allProducts]);
+  const products = useMemo(() => (sitio ? [] : allProducts.filter((product) => product.en_tienda !== false)), [allProducts, sitio]);
   const theme = useMemo(() => tema ?? normalizeTheme(store.tienda_tema), [tema, store.tienda_tema]);
   const d = theme.diseno;
   const { itemCount, subtotal } = useCart();
@@ -125,7 +128,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
 
   const open = isOpenNow(store);
   const reach = storeReach(store, point, undefined, tariff);
-  const unavailable = !open || !reach.inZone;
+  const unavailable = !sitio && (!open || !reach.inZone);
   const fee = deliveryFeeLabel(store, reach.fee);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
 
@@ -157,7 +160,14 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     theme.web && { href: theme.web, label: "Sitio web", icon: Globe },
   ].filter(Boolean) as { href: string; label: string; icon: typeof Globe }[];
 
-  const go = (id: string) => { if (!preview) scrollToId(id); };
+  // En un sitio, los botones que en una tienda llevan al catálogo llevan a escribir: el formulario de esta página, la
+  // página de contacto o la sección de contacto.
+  const irAConsulta = () => {
+    if (document.getElementById("consulta")) scrollToId("consulta");
+    else if (paginas.some((p) => p.slug === "contacto")) navigate(pagePath(store.slug, "contacto"));
+    else if (document.getElementById("contacto")) scrollToId("contacto");
+  };
+  const go = (id: string) => { if (preview) return; if (sitio && id === "catalogo") irAConsulta(); else scrollToId(id); };
   const pickCategory = (name: string | null) => {
     // Cada colección tiene su propia página; en la vista previa del editor solo se filtra.
     if (!preview && name) { navigate(collectionPath(store.slug, name)); return; }
@@ -177,7 +187,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   }, [esInicio, preview]);
   const follow = (tipo: "catalogo" | "whatsapp" | "url", url?: string) => {
     if (preview) return;
-    if (tipo === "catalogo") scrollToId("catalogo");
+    if (tipo === "catalogo") { if (sitio) irAConsulta(); else scrollToId("catalogo"); }
     else if (tipo === "whatsapp" && theme.whatsapp) window.open(whatsappLink(theme.whatsapp, store.nombre), "_blank", "noopener,noreferrer");
     else if (tipo === "url" && url) window.open(url, "_blank", "noopener,noreferrer");
   };
@@ -194,10 +204,10 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   const Titulo = ({ children, id }: { children: ReactNode; id?: string }) => (
     <h2 id={id} className={cn("mb-6 scroll-mt-24 font-extrabold", tituloClase, centered && "text-center")} style={headingStyle}>{children}</h2>
   );
-  const statusChip = (
+  const statusChip = sitio ? null : (
     <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><span className={cn("h-2 w-2 rounded-full", open ? "bg-emerald-400" : "bg-red-400")} />{open ? "Abierto ahora" : "Cerrado"}</span>
   );
-  const info = [
+  const info = sitio ? [] : [
     { icon: Clock3, label: "Entrega", value: `${store.tiempo_min}-${store.tiempo_max} min` },
     { icon: Bike, label: "Envío", value: fee.replace("Envío ", "") },
     { icon: ShoppingBag, label: "Pedido mínimo", value: Number(store.pedido_minimo) > 0 ? money(store.pedido_minimo) : "Sin mínimo" },
@@ -783,13 +793,13 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         return (
           <section id="contacto" className={cn("mx-auto scroll-mt-24 px-4 sm:px-6", width, space)}>
             <Titulo>{b.titulo || "Contacto y horarios"}</Titulo>
-            {vendedor && <SellerCard store={store} vendedor={vendedor} className="mb-4" />}
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="border bg-card p-5 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
+            {vendedor && !sitio && <SellerCard store={store} vendedor={vendedor} className="mb-4" />}
+            <div className={cn("grid gap-4", store.direccion?.trim() ? "md:grid-cols-3" : "md:grid-cols-2")}>
+              {store.direccion?.trim() && <div className="border bg-card p-5 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
                 <p className="flex items-center gap-2 font-extrabold"><MapPin className="h-5 w-5" style={{ color: "var(--sf-accent)" }} />Dónde estamos</p>
                 <p className="mt-2 text-muted-foreground">{store.direccion}</p>
                 {!preview && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${store.nombre} ${store.direccion}`)}`} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1 text-sm font-bold underline-offset-4 hover:underline">Cómo llegar<ArrowRight className="h-4 w-4" /></a>}
-              </div>
+              </div>}
               <div className="border bg-card p-5 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
                 <p className="flex items-center gap-2 font-extrabold"><Clock3 className="h-5 w-5" style={{ color: "var(--sf-accent)" }} />Horarios</p>
                 <p className="mt-2 text-muted-foreground">{scheduleSummary(store.horarios) || "Consultanos por WhatsApp"}</p>
@@ -798,7 +808,8 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
                 <p className="flex items-center gap-2 font-extrabold"><MessageCircle className="h-5 w-5" style={{ color: "var(--sf-accent)" }} />Hablemos</p>
                 <div className="mt-2 flex flex-col gap-1.5">
                   {!preview && <AskSeller storeId={store.id} storeName={store.nombre} label="Escribinos por Woref" className="inline-flex h-auto items-center justify-start gap-2 border-0 bg-transparent p-0 font-semibold text-foreground shadow-none hover:bg-transparent hover:underline" />}
-                  {social.length === 0 && preview && <span className="text-muted-foreground">Pedí directo desde la tienda.</span>}
+                  {sitio && store.telefono && <a href={preview ? undefined : `tel:${store.telefono.replace(/[^0-9+]/g, "")}`} className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"><Phone className="h-4 w-4" />{store.telefono}</a>}
+                  {social.length === 0 && preview && !sitio && <span className="text-muted-foreground">Pedí directo desde la tienda.</span>}
                   {social.map(({ href, label, icon: Icon }) => <a key={label} href={preview ? undefined : href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground"><Icon className="h-4 w-4" />{label}</a>)}
                 </div>
               </div>
@@ -1005,6 +1016,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
 
   // ---- marco de sección: aplica el estilo común (fondo, márgenes, ancho, alineación, dispositivo, ancla) a cualquier bloque
   const renderSeccion = (b: Bloque): ReactNode => {
+    if (!bloquePermitido(b.tipo, sitio)) return null;
     const est = b.est;
     const previo = { width, space, centered };
     width = est?.ancho ? ANCHO_SECCION[est.ancho] : estilos.width;
@@ -1087,7 +1099,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     <nav className="hidden items-center gap-1 lg:flex" aria-label="Secciones">
       {!esInicio && !preview && <Link to={storePath(store.slug)} className={linkClass}>Inicio</Link>}
       <CategoriesMenu slug={store.slug} categorias={categorias} preview={preview} />
-      {navItem("Productos", "catalogo", searchPath(store.slug, ""))}
+      {sitio ? paginas.slice(0, 4).map((p) => (preview ? <span key={p.slug} className={linkClass}>{p.titulo}</span> : <Link key={p.slug} to={pagePath(store.slug, p.slug)} className={linkClass}>{p.titulo}</Link>)) : navItem("Productos", "catalogo", searchPath(store.slug, ""))}
       {hayOfertas && (preview ? <span className={linkClass}>Ofertas</span> : <Link to={offersPath(store.slug)} className={linkClass}>Ofertas</Link>)}
       {hayAcerca && navItem("Nosotros", "acerca", aSeccion("acerca"))}
       {hayContacto && navItem("Contacto", "contacto", aSeccion("contacto"))}
@@ -1097,15 +1109,15 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     <StoreMobileMenu nombre={store.nombre} slug={store.slug} categorias={categorias} hayOfertas={hayOfertas} preview={preview} scope={pageStyle}
       enlaces={[
         ...menuPropio.filter((m) => m.tipo !== "url").map((m) => ({ label: m.texto, to: menuHref(store.slug, m) })),
-        { label: "Todos los productos", to: searchPath(store.slug, "") },
+        ...(sitio ? [] : [{ label: "Todos los productos", to: searchPath(store.slug, "") }]),
         ...paginas.slice(0, 6).map((p) => ({ label: p.titulo, to: pagePath(store.slug, p.slug) })),
         ...(hayAcerca ? [esInicio ? { label: "Nosotros", onClick: () => go("acerca") } : { label: "Nosotros", to: aSeccion("acerca") }] : []),
         ...(hayContacto ? [esInicio ? { label: "Contacto", onClick: () => go("contacto") } : { label: "Contacto", to: aSeccion("contacto") }] : []),
       ]} />
   );
-  const searchBox = theme.mostrar_busqueda === false ? null : <StoreSearch key={claveVista} slug={store.slug} products={available} categorias={categorias} preview={preview} radius={radiusButton} initial={vistaActual.tipo === "buscar" ? vistaActual.q : ""} className="hidden w-64 xl:block" />;
+  const searchBox = sitio || theme.mostrar_busqueda === false ? null : <StoreSearch key={claveVista} slug={store.slug} products={available} categorias={categorias} preview={preview} radius={radiusButton} initial={vistaActual.tipo === "buscar" ? vistaActual.q : ""} className="hidden w-64 xl:block" />;
   const cartClass = "inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-bold";
-  const cart = preview
+  const cart = sitio ? null : preview
     ? <span className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</span>
     : <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={<button type="button" className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</button>} />;
 
@@ -1180,6 +1192,8 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     );
   };
   const renderPagina = () => {
+    // Un sitio web solo tiene inicio y páginas propias: las direcciones de catálogo, ofertas, búsqueda o producto no existen.
+    if (sitio && vistaActual.tipo !== "pagina") return noEncontrado("Este negocio no vende en línea", "Mirá el inicio para conocerlo y escribile desde el formulario de contacto.");
     if (vistaActual.tipo === "producto") return <>{principal}{renderLista((theme.producto_bloques ?? []).filter((b) => b.visible))}</>;
     if (vistaActual.tipo === "curada") return renderCurada(vistaActual.slug);
     if (vistaActual.tipo === "pagina") return renderPaginaPropia(vistaActual.slug);
@@ -1240,7 +1254,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
           ...(esInicio ? [] : [{ label: "Inicio", onClick: () => navigate(storePath(store.slug)) }]),
           ...categorias.slice(0, 6).map((c) => ({ label: c, onClick: () => navigate(collectionPath(store.slug, c)) })),
           ...(hayOfertas ? [{ label: "Ofertas", onClick: () => navigate(offersPath(store.slug)) }] : []),
-          { label: "Todos los productos", onClick: () => (esInicio ? go("catalogo") : navigate(searchPath(store.slug, ""))) },
+          ...(sitio ? [] : [{ label: "Todos los productos", onClick: () => (esInicio ? go("catalogo") : navigate(searchPath(store.slug, ""))) }]),
           ...(hayAcerca ? [{ label: "Nosotros", onClick: () => (esInicio ? go("acerca") : navigate(aSeccion("acerca"))) }] : []),
           ...(hayContacto ? [{ label: "Contacto", onClick: () => (esInicio ? go("contacto") : navigate(aSeccion("contacto"))) }] : []),
           ...(bloques.some((b) => b.tipo === "politicas") && !paginas.some((p) => p.clase === "envios" || p.clase === "cambios") ? [{ label: "Envíos y cambios", onClick: () => (esInicio ? go("politicas") : navigate(aSeccion("politicas"))) }] : []),
@@ -1255,12 +1269,12 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
 
       {!preview && theme.whatsapp && (
         <a href={whatsappLink(theme.whatsapp, store.nombre)} target="_blank" rel="noopener noreferrer" aria-label="Escribinos por WhatsApp"
-          className={cn("fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-pop transition-transform hover:scale-105", itemCount > 0 ? "bottom-24 md:bottom-6" : "bottom-6")}>
+          className={cn("fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-pop transition-transform hover:scale-105", !sitio && itemCount > 0 ? "bottom-24 md:bottom-6" : "bottom-6")}>
           <MessageCircle className="h-7 w-7" />
         </a>
       )}
 
-      {!preview && itemCount > 0 && vistaActual.tipo !== "producto" && (
+      {!preview && !sitio && itemCount > 0 && vistaActual.tipo !== "producto" && (
         <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={
           <button type="button" className="fixed inset-x-4 bottom-4 z-40 mx-auto flex w-[calc(100%-2rem)] max-w-md items-center justify-between px-5 py-3.5 font-bold shadow-pop md:hidden" style={{ ...accent, ...radiusButton }}>
             <span className="inline-flex items-center gap-2"><ShoppingBag className="h-5 w-5" />Ver mi pedido ({itemCount})</span>

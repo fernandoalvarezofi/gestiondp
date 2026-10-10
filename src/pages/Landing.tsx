@@ -4,6 +4,7 @@ import { ArrowRight, Bike, CheckCircle2, Clock3, CreditCard, KeyRound, MapPin, N
 import { DeliveryBrand } from "@/components/delivery/DeliveryBrand";
 import { SmartImage } from "@/components/delivery/SmartImage";
 import { StoreLogo } from "@/components/delivery/StoreCard";
+import { SitioWebCluster } from "@/components/sitio/SitioWebCluster";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { COMERCIO_COLS, db, DeliveryStore, money, verticals } from "@/lib/delivery";
@@ -29,7 +30,7 @@ function useLandingStores() {
     queryKey: ["landing-stores"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false }).limit(8);
+      const { data } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").order("destacado", { ascending: false }).order("total_resenas", { ascending: false }).limit(8);
       return (data ?? []) as DeliveryStore[];
     },
   });
@@ -160,6 +161,8 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      <div id="sitio-web" className="mx-auto max-w-7xl scroll-mt-24 px-4 pt-14 sm:px-6 lg:px-8 lg:pt-20"><SitioWebCluster /></div>
 
       <section className="mx-auto grid max-w-7xl gap-4 px-4 py-14 sm:px-6 md:grid-cols-2 lg:px-8 lg:py-20">
         <div id="negocios" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-2 border-brand-yellow bg-brand-deep p-8 text-white lg:p-10">

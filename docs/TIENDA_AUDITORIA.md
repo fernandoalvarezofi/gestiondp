@@ -63,3 +63,31 @@ Datos públicos → hooks/useTiendaPublica (una sola carga para inicio, páginas
 | Clientes | CRM con ficha, actividad, seguimientos, segmentos, etiquetas, consultas desde la tienda | — | Exportación |
 | Analítica | Comparación con el período anterior, ventas por canal, horas pico, productos | — | Embudo de la tienda online (visitas → carrito → compra) |
 | Contenido y SEO | SEO global y por página, canónica, JSON-LD de tienda y producto, dominio | — | Sitemap con páginas propias |
+
+## 5. Creador de sitios web (2026-10-10)
+
+Un comercio ahora tiene tipo: `delivery_comercios.tipo_sitio` = `tienda` (vende, aparece en el Market) o `sitio` (página web del
+negocio, sin catálogo, carrito ni pedidos). Comparte todo lo demás: editor, temas, páginas, versiones, publicación, CRM, equipo y permisos.
+
+| Pieza | Dónde |
+|---|---|
+| Entrada en la Home y en la landing | `components/sitio/SitioWebCluster.tsx` (acciones según la sesión: crear / administrar mi sitio / elegir entre varios) |
+| Presentación pública, comparación sitio vs. tienda, modelos con vista previa real | `/app/sitio-web` → `pages/SitioWebInfo.tsx` |
+| Alta en 3 pasos (actividad, datos, dirección y estilo), con borrador e id idempotente | `/app/sitio-web/nuevo` → `pages/SitioWebNuevo.tsx`, RPC `sitio_crear` (una transacción, SECURITY INVOKER) |
+| Modelos por actividad (7) con secciones y páginas reales | `lib/sitioWeb.ts` (`sitioInicial`) |
+| Panel del sitio: inicio propio, menú sin venta, accesos al editor, temas, SEO, CRM y consultas | `merchant/SitioHome.tsx`, `navigation/menus.ts` (`solo`), `MerchantLayout` |
+| Web pública sin carrito, buscador ni catálogo; botones de catálogo llevan a la consulta | `StorefrontView` / `StoreFooter` (`esSitio`) |
+| Pasar a tienda online sin perder contenido | botón en el inicio del panel (solo dueño); actualiza `tipo_sitio` |
+
+Servidor (migración `20261201100000_sitio_web.sql`): columna con check y permiso de lectura por columna; disparador `a00_pedido_solo_tiendas`
+(un sitio no recibe pedidos); `delivery_guardar_tienda_tema` no fuerza el catálogo a un sitio; `tienda_preparacion` con lista propia para sitios;
+`delivery_mis_comercios` devuelve tipo y dirección. Los listados del Market filtran `tipo_sitio = 'tienda'`.
+
+Un sitio nace "en revisión" como todo comercio (regla existente): no es público hasta que Woref lo aprueba. La app lo muestra así en el alta,
+en el panel y al publicar.
+
+Pruebas: `src/lib/sitioWeb.test.ts`, `src/navigation/navigation.test.ts` (sitio), SQL `030_sitio_web.sql` y `004` ampliada, regresión `026`;
+E2E Playwright (visitante, alta con doble clic, editor, publicar, panel, web pública, formulario → CRM, activar tienda, celular).
+
+Pendiente: decidir si un sitio informativo debería poder publicarse sin la verificación con CUIT; plantillas con fotos propias del rubro;
+volver de tienda a sitio; sitios en el directorio de la ciudad.

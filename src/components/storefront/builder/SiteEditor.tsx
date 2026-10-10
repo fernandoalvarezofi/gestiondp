@@ -15,6 +15,7 @@ import type { VendedorResumen } from "@/lib/marketplace";
 import { Bloque, BloqueTipo, Diseno, grupoDe, GRUPOS_BLOQUE, MAX_BLOQUES, MAX_BLOQUES_PRODUCTO, normalizeBloque, nuevoId, bloqueNuevo, storefrontPath, TemaNormalizado, TIPOS_BLOQUE } from "@/lib/storefront";
 import type { EstiloSeccion } from "@/lib/storefrontSecciones";
 import { PATRONES } from "@/lib/storefrontPatrones";
+import { bloquePermitido, esSitio } from "@/lib/sitioWeb";
 import type { Vista } from "@/lib/storeRoutes";
 import { cn } from "@/lib/utils";
 import { borrarPagina, borrarSeccion, fetchSecciones, guardarSeccion, SeccionGuardada } from "@/services/storeBuilder";
@@ -54,6 +55,8 @@ export type EditorDatos = {
 export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; datos: EditorDatos; onPublicar: () => void; onSalir: () => void }) {
   const { sitio, cambiar } = api;
   const { store } = datos;
+  // Un sitio web no tiene productos: sin plantilla de ficha, sin secciones ni destinos del catálogo.
+  const soloSitio = esSitio(store);
   const [paginaClave, setPaginaClave] = useState(INICIO);
   const [sel, setSel] = useState<Seleccion>(null);
   const [izq, setIzq] = useState<"estructura" | "agregar">("estructura");
@@ -168,9 +171,9 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
   // ---- datos para destinos y para la vista previa
   const anclas = useMemo(() => bloques.filter((b) => b.est?.ancla).map((b) => ({ id: b.est!.ancla!, nombre: `${nombreSeccion(b)} (#${b.est!.ancla})` })), [bloques]);
   const opciones: OpcionesSitio = useMemo(() => ({
-    categorias: datos.categorias, colecciones: datos.colecciones, anclas, conTurnos: datos.servicios.length > 0, conWhatsapp: Boolean(sitio.tema.whatsapp),
+    categorias: soloSitio ? [] : datos.categorias, colecciones: soloSitio ? [] : datos.colecciones, anclas, conTurnos: datos.servicios.length > 0, conWhatsapp: Boolean(sitio.tema.whatsapp), soloSitio,
     paginas: sitio.paginas.filter((p) => p.estado === "publicada" && p.slug).map((p) => ({ slug: p.slug, titulo: p.titulo })),
-  }), [datos.categorias, datos.colecciones, datos.servicios.length, anclas, sitio.paginas, sitio.tema.whatsapp]);
+  }), [datos.categorias, datos.colecciones, datos.servicios.length, anclas, sitio.paginas, sitio.tema.whatsapp, soloSitio]);
   const productosVisibles = useMemo(() => datos.products.filter((p) => (p.estado ?? "publicado") === "publicado"), [datos.products]);
   const vista: Vista = pagina ? { tipo: "pagina", slug: pagina.slug || "vista-previa" } : esProducto ? { tipo: "producto" } : { tipo: "inicio" };
   const paginasVista: PaginaTienda[] = useMemo(() => sitio.paginas.filter((p) => p.estado === "publicada" || p.clave === paginaClave).map((p) => ({
@@ -260,7 +263,7 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
             <li key={p.clave}>{nodo(paginaClave === p.clave, <FileText className="h-4 w-4 shrink-0" />, p.titulo || "Sin título", () => irAPagina(p.clave),
               <span className="flex items-center gap-1.5">{p.estado !== "publicada" && <span className="rounded bg-muted px-1.5 text-[10px] font-bold uppercase text-muted-foreground">Oculta</span>}{api.paginasSinPublicar.includes(p.clave) && <Punto />}</span>)}</li>
           ))}
-          <li>{nodo(esProducto, <Package className="h-4 w-4 shrink-0" />, "Ficha de producto", () => irAPagina(PRODUCTO), <span className="rounded bg-muted px-1.5 text-[10px] font-bold uppercase text-muted-foreground">Plantilla</span>)}</li>
+          {!soloSitio && <li>{nodo(esProducto, <Package className="h-4 w-4 shrink-0" />, "Ficha de producto", () => irAPagina(PRODUCTO), <span className="rounded bg-muted px-1.5 text-[10px] font-bold uppercase text-muted-foreground">Plantilla</span>)}</li>}
         </ul>
         <button type="button" onClick={() => setNuevaPagina(true)} className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"><Plus className="h-4 w-4" />Nueva página</button>
       </div>
@@ -275,7 +278,8 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
           {pagina?.contenido.trim() && <li className="flex items-center gap-2 px-2 py-1.5 text-[13px] text-muted-foreground"><FileText className="h-4 w-4" />Texto principal <button type="button" className="ml-auto text-xs underline" onClick={() => setSel({ tipo: "pagina" })}>Editar</button></li>}
         </ul>
         <ul className="my-0.5 space-y-0.5 border-l-2 border-muted pl-1.5">
-          {bloques.map((b, i) => fila(b, i))}
+          {/* En un sitio, el catálogo que el sistema conserva por si después se activa la tienda no se muestra. */}
+          {bloques.map((b, i) => (bloquePermitido(b.tipo, soloSitio) ? fila(b, i) : null))}
           {bloques.length === 0 && <li className="px-2 py-2 text-xs text-muted-foreground">{esProducto ? "Sumá secciones que se vean debajo de cada producto: envíos, garantía, testimonios, una banda de marca…" : "Esta página no tiene secciones todavía."}</li>}
         </ul>
         <button type="button" onClick={() => setIzq("agregar")} className="mt-1 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] font-semibold text-primary hover:bg-muted"><Plus className="h-4 w-4" />Agregar sección</button>
@@ -286,8 +290,8 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
   );
 
   const q = buscar.trim().toLowerCase();
-  const tipos = TIPOS_BLOQUE.filter((t) => (paginaClave === INICIO || t.tipo !== "catalogo") && (!q || `${t.nombre} ${t.detalle}`.toLowerCase().includes(q)));
-  const patrones = PATRONES.filter((p) => !q || `${p.nombre} ${p.detalle}`.toLowerCase().includes(q));
+  const tipos = TIPOS_BLOQUE.filter((t) => bloquePermitido(t.tipo, soloSitio) && (paginaClave === INICIO || t.tipo !== "catalogo") && (!q || `${t.nombre} ${t.detalle}`.toLowerCase().includes(q)));
+  const patrones = PATRONES.filter((p) => bloquePermitido(p.crear(sitio.tema.plantilla).tipo, soloSitio)).filter((p) => !q || `${p.nombre} ${p.detalle}`.toLowerCase().includes(q));
   const agregar = (
     <div className="space-y-5 p-3">
       <div className="flex items-center gap-2">
@@ -406,7 +410,7 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
       <span className="sr-only">Página que estás editando</span>
       <select value={paginaClave} onChange={(e) => irAPagina(e.target.value)} className="h-9 min-w-0 max-w-[14rem] appearance-none truncate rounded-lg border bg-background pl-3 pr-8 text-sm font-bold">
         <option value={INICIO}>Inicio</option>
-        <option value={PRODUCTO}>Ficha de producto (plantilla)</option>
+        {!soloSitio && <option value={PRODUCTO}>Ficha de producto (plantilla)</option>}
         {sitio.paginas.map((p) => <option key={p.clave} value={p.clave}>{p.titulo || "Sin título"}{p.estado !== "publicada" ? " (oculta)" : ""}</option>)}
       </select>
       <ChevronDown className="pointer-events-none absolute right-2 h-4 w-4 text-muted-foreground" />
@@ -418,7 +422,7 @@ export function SiteEditor({ api, datos, onPublicar, onSalir }: { api: Api; dato
 
   const barra = (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card px-2 sm:px-3">
-      <Button type="button" variant="ghost" size="sm" className="shrink-0 rounded-full" onClick={onSalir}><ArrowLeft className="h-4 w-4" /><span className="hidden sm:inline">Mi tienda</span></Button>
+      <Button type="button" variant="ghost" size="sm" className="shrink-0 rounded-full" onClick={onSalir}><ArrowLeft className="h-4 w-4" /><span className="hidden sm:inline">{soloSitio ? "Mi sitio" : "Mi tienda"}</span></Button>
       <span className="hidden h-6 w-px bg-border sm:block" aria-hidden />
       {selectorPagina}
       <SelectorDispositivo value={device} onChange={setDevice} className="hidden md:flex" />

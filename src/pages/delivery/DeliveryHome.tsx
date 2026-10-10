@@ -13,6 +13,7 @@ import { useInZone } from "@/hooks/useAddressPoint";
 import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { tonoCategoria } from "@/lib/tonos";
+import { SitioWebCluster } from "@/components/sitio/SitioWebCluster";
 
 const banners = [
   { title: "30% OFF en tu primer pedido", text: "Con el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=760&q=62&auto=format&fit=crop", tone: "from-[#1F6F58] via-[#1F6F58]/85", to: "/app/promociones", cta: "Ver cupones" },
@@ -73,7 +74,7 @@ export default function DeliveryHome() {
   const [filters, setFilters] = useState<Filters>(() => ({ retiro: readPickupPreference(), gratis: false, promos: false, abiertos: false, top: false }));
 
   useEffect(() => {
-    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
+    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
       .then(({ data }: { data: DeliveryStore[] | null }) => { setStores(data || []); setLoading(false); });
   }, []);
 
@@ -190,6 +191,9 @@ export default function DeliveryHome() {
       </div>
 
       <BannerCarousel />
+
+      {/* Para negocios: el creador de sitios web, como función propia de Woref (entrada real al alta o al panel del sitio). */}
+      <SitioWebCluster className="mx-4 mt-8 sm:mx-0" />
 
       <Link to="/app/directorio" className="mx-4 mt-6 flex items-center gap-3 rounded-3xl border bg-card p-4 transition-colors hover:bg-muted sm:mx-0">
         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Store className="h-6 w-6" /></span>

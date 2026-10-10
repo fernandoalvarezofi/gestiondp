@@ -48,7 +48,7 @@ const toNumber = (value: string) => (value === "" ? 0 : Number(value));
 export type SettingsSection = "general" | "horarios" | "entrega" | "operacion";
 
 /** Sin `section` muestra todo (alta de un comercio nuevo); con `section` muestra solo esa parte de la configuración. */
-export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<boolean | void>; section?: SettingsSection }) {
+export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sitio = false }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<boolean | void>; section?: SettingsSection; /** Sitio web: la dirección es opcional (hay negocios que atienden a distancia). */ sitio?: boolean }) {
   const show = (name: SettingsSection) => !section || section === name;
   const [values, setValues] = useState<StoreFormValues>(initial);
   const [saving, setSaving] = useState(false);
@@ -90,7 +90,7 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: {
     <form onSubmit={submit} className="space-y-8">
       {show("general") && (<>
       <fieldset className="grid gap-4 sm:grid-cols-2">
-        <legend className="mb-3 text-base font-extrabold">Datos del comercio</legend>
+        <legend className="mb-3 text-base font-extrabold">{sitio ? "Datos del negocio" : "Datos del comercio"}</legend>
         <div className="space-y-1.5"><Label htmlFor="s-nombre">Nombre</Label><Input id="s-nombre" required maxLength={80} value={values.nombre} onChange={(event) => set("nombre", event.target.value)} /></div>
         <div className="space-y-1.5">
           <Label htmlFor="s-categoria">Categoría</Label>
@@ -100,7 +100,7 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section }: {
         </div>
         <div className="space-y-1.5"><Label htmlFor="s-rubro">Rubro</Label><Input id="s-rubro" list="rubros" maxLength={40} value={values.rubro || ""} onChange={(event) => set("rubro", event.target.value)} placeholder="Ej.: Hamburguesas" /><datalist id="rubros">{rubrosSugeridos.map((item) => <option key={item} value={item} />)}</datalist></div>
         <div className="space-y-1.5"><Label htmlFor="s-telefono">Teléfono del local</Label><Input id="s-telefono" type="tel" maxLength={40} value={values.telefono || ""} onChange={(event) => set("telefono", event.target.value)} placeholder="11 5555-5555" /></div>
-        <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="s-direccion">Dirección</Label><Input id="s-direccion" required maxLength={200} value={values.direccion} onChange={(event) => set("direccion", event.target.value)} /></div>
+        <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="s-direccion">{sitio ? "Dirección (opcional)" : "Dirección"}</Label><Input id="s-direccion" required={!sitio} maxLength={200} value={values.direccion} onChange={(event) => set("direccion", event.target.value)} /></div>
         <div className="space-y-1.5 sm:col-span-2"><Label htmlFor="s-descripcion">Descripción</Label><Textarea id="s-descripcion" maxLength={300} value={values.descripcion || ""} onChange={(event) => set("descripcion", event.target.value)} className="min-h-[72px]" placeholder="Qué vendés y qué te hace especial" /></div>
       </fieldset>
       <fieldset className="grid gap-6 sm:grid-cols-[1fr_auto]">

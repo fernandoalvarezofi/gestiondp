@@ -13,10 +13,13 @@ type Patch = (cambios: Record<string, unknown>) => void;
 const ALTOS = [{ id: "chico", label: "Bajo" }, { id: "medio", label: "Medio" }, { id: "grande", label: "Alto" }] as const;
 const ALINEACIONES = [{ id: "izquierda", label: "Izquierda" }, { id: "centro", label: "Centro" }] as const;
 
-function Enlace({ tipo, url, onChange }: { tipo: "catalogo" | "whatsapp" | "url"; url?: string; onChange: Patch }) {
+/** En un sitio web (sin productos) el destino "catálogo" lleva al formulario o a la página de contacto. */
+const etiquetaCatalogo = (soloSitio?: boolean) => (soloSitio ? "Formulario de contacto" : "Mis productos");
+
+function Enlace({ tipo, url, onChange, soloSitio }: { tipo: "catalogo" | "whatsapp" | "url"; url?: string; onChange: Patch; soloSitio?: boolean }) {
   return (
     <div className="space-y-2">
-      <Opciones label="El botón lleva a" value={tipo} onChange={(value) => onChange({ enlace_tipo: value })} options={[{ id: "catalogo", label: "Mis productos" }, { id: "whatsapp", label: "WhatsApp" }, { id: "url", label: "Otra web" }]} hint={tipo === "whatsapp" ? "Usa el WhatsApp que cargaste en Datos y redes." : undefined} />
+      <Opciones label="El botón lleva a" value={tipo} onChange={(value) => onChange({ enlace_tipo: value })} options={[{ id: "catalogo", label: etiquetaCatalogo(soloSitio) }, { id: "whatsapp", label: "WhatsApp" }, { id: "url", label: "Otra web" }]} hint={tipo === "whatsapp" ? "Usa el WhatsApp que cargaste en Datos y redes." : undefined} />
       {tipo === "url" && <Input aria-label="Dirección de la web" value={url ?? ""} maxLength={300} placeholder="https://…" onChange={(event) => onChange({ enlace_url: event.target.value })} />}
     </div>
   );
@@ -90,7 +93,7 @@ export function BlockSettings({ bloque, categorias, colecciones = [], onChange, 
           <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
           <Texto label="Texto" value={bloque.texto} max={600} multiline onChange={(texto) => onChange({ texto })} />
           <Texto label="Texto del botón (vacío = sin botón)" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
-          {bloque.boton && <Enlace tipo={bloque.enlace_tipo} url={bloque.enlace_url} onChange={onChange} />}
+          {bloque.boton && <Enlace tipo={bloque.enlace_tipo} url={bloque.enlace_url} onChange={onChange} soloSitio={sitio.soloSitio} />}
         </div>
       );
     case "banner":
@@ -100,7 +103,7 @@ export function BlockSettings({ bloque, categorias, colecciones = [], onChange, 
           <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
           <Texto label="Texto" value={bloque.texto} max={200} onChange={(texto) => onChange({ texto })} />
           <Texto label="Texto del botón (vacío = sin botón)" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
-          {bloque.boton && <Enlace tipo={bloque.enlace_tipo} url={bloque.enlace_url} onChange={onChange} />}
+          {bloque.boton && <Enlace tipo={bloque.enlace_tipo} url={bloque.enlace_url} onChange={onChange} soloSitio={sitio.soloSitio} />}
           <Opciones label="Altura" value={bloque.alto} options={[...ALTOS]} onChange={(alto) => onChange({ alto })} />
         </div>
       );
@@ -254,7 +257,7 @@ export function BlockSettings({ bloque, categorias, colecciones = [], onChange, 
             <Input type="datetime-local" aria-label="Fecha y hora de fin" value={(bloque.hasta ?? "").slice(0, 16)} onChange={(event) => onChange({ hasta: event.target.value || undefined })} />
           </Campo>
           <Texto label="Texto del botón" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
-          <Enlace tipo={bloque.enlace_tipo} url={bloque.enlace_url} onChange={onChange} />
+          <Enlace tipo={bloque.enlace_tipo} url={bloque.enlace_url} onChange={onChange} soloSitio={sitio.soloSitio} />
         </div>
       );
     case "video":
@@ -293,7 +296,7 @@ export function BlockSettings({ bloque, categorias, colecciones = [], onChange, 
           <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
           <Texto label="Texto" value={bloque.texto} max={200} multiline onChange={(texto) => onChange({ texto })} />
           <Texto label="Texto del botón" value={bloque.boton} max={24} onChange={(boton) => onChange({ boton })} />
-          <Opciones label="El botón lleva a" value={bloque.enlace_tipo} onChange={(enlace_tipo) => onChange({ enlace_tipo })} options={[{ id: "catalogo", label: "Mis productos" }, { id: "reservar", label: "Reservar turno" }, { id: "whatsapp", label: "WhatsApp" }, { id: "url", label: "Otra web" }]} hint={bloque.enlace_tipo === "reservar" ? "Se ve solo si tenés servicios con turnos." : undefined} />
+          <Opciones label="El botón lleva a" value={bloque.enlace_tipo} onChange={(enlace_tipo) => onChange({ enlace_tipo })} options={[{ id: "catalogo", label: etiquetaCatalogo(sitio.soloSitio) }, { id: "reservar", label: "Reservar turno" }, { id: "whatsapp", label: "WhatsApp" }, { id: "url", label: "Otra web" }]} hint={bloque.enlace_tipo === "reservar" ? "Se ve solo si tenés servicios con turnos." : undefined} />
           {bloque.enlace_tipo === "url" && <Input aria-label="Dirección de la web" value={bloque.enlace_url ?? ""} maxLength={300} placeholder="https://…" onChange={(event) => onChange({ enlace_url: event.target.value })} />}
           <Opciones label="Fondo" value={bloque.fondo} options={[{ id: "color", label: "Color de marca" }, { id: "oscuro", label: "Oscuro" }, { id: "suave", label: "Suave" }]} onChange={(fondo) => onChange({ fondo })} />
         </div>

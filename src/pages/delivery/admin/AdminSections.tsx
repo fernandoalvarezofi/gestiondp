@@ -65,7 +65,7 @@ function PendingStores() {
             <img src={img(store.imagen_url, 160)} alt="" className="h-12 w-16 rounded-xl object-cover" />
             <div className="min-w-0 flex-1">
               <Link to={`/app/tienda/${store.slug}`} className="font-bold hover:underline">{store.nombre}</Link>
-              <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion}{store.telefono && ` · ${store.telefono}`}</p>
+              <p className="truncate text-xs text-muted-foreground">{store.tipo_sitio === "sitio" ? <span className="font-bold text-foreground">Sitio web · </span> : null}{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion}{store.telefono && ` · ${store.telefono}`}</p>
               {store.motivo_rechazo && <p className="text-xs text-destructive">Rechazado: {store.motivo_rechazo}</p>}
             </div>
             <Button size="sm" variant="outline" className="rounded-full" onClick={() => reviewStore(store)}>Datos y documentos</Button>
@@ -235,6 +235,7 @@ function StoresSection() {
                 <Link to={`/app/tienda/${store.slug}`} className="font-bold hover:underline">{store.nombre}</Link>
                 <p className="truncate text-xs text-muted-foreground">{categoriaLabel[store.categoria]}{store.rubro && ` · ${store.rubro}`} · {store.direccion}</p>
                 <div className="mt-1 flex flex-wrap gap-1">
+                  {store.tipo_sitio === "sitio" && <StatusPill tone="info">Sitio web</StatusPill>}
                   {baja(store) ? <StatusPill tone="danger">Dada de baja · {formatDateTime(store.eliminado_at)}</StatusPill> : store.aprobado === false ? <StatusPill tone="warning">Por aprobar</StatusPill> : store.activo === false ? <StatusPill tone="danger">Oculto</StatusPill> : isOpenNow(store) ? <StatusPill tone="success" dot>Abierto</StatusPill> : <StatusPill>Cerrado</StatusPill>}
                 </div>
               </div>

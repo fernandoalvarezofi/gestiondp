@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { contextFromPath, contextsFor } from "./contexts";
 import { isPublicClientPath } from "./guards";
-import { ADMIN_SECTIONS, adminNav, CLIENT_TABS, COURIER_TABS, courierNav, driverNav, merchantNav, merchantSectionPermission, merchantTabs } from "./menus";
+import { ADMIN_SECTIONS, adminNav, CLIENT_TABS, COURIER_TABS, courierNav, driverNav, merchantNav, merchantSectionAvailable, merchantSectionPermission, merchantTabs } from "./menus";
 import type { Permission } from "@/pages/delivery/merchant/context";
 
 const cliente = { isAdmin: false, isCourier: false, isDriver: false, storeId: null };
@@ -69,5 +69,43 @@ describe("menús", () => {
     const tos = adminNav({}).flatMap((g) => g.items.map((i) => i.to));
     expect(tos).toHaveLength(ids.length);
     expect(tos[0]).toBe("/app/admin");
+  });
+});
+
+describe("sitio web (negocio sin venta en línea)", () => {
+  const todo = () => true;
+  const rutas = (tipo: "tienda" | "sitio") => merchantNav(todo, { pedidos: 0, preguntas: 0 }, tipo).flatMap((g) => g.items.map((i) => i.to));
+
+  it("el panel de un sitio no muestra pedidos, catálogo, ventas ni finanzas, y sí el sitio, el CRM y las consultas", () => {
+    const sitio = rutas("sitio");
+    for (const r of ["/app/comercio/pedidos", "/app/comercio/productos", "/app/comercio/inventario", "/app/comercio/finanzas", "/app/comercio/estadisticas", "/app/comercio/envios", "/app/comercio/tienda"]) expect(sitio).not.toContain(r);
+    for (const r of ["/app/comercio", "/app/comercio/tienda/resumen", "/app/comercio/tienda/editor", "/app/comercio/tienda/temas", "/app/comercio/tienda/seo", "/app/comercio/clientes", "/app/comercio/clientes/seguimientos", "/app/comercio/configuracion"]) expect(sitio).toContain(r);
+  });
+
+  it("el panel de una tienda queda igual que antes", () => {
+    const tienda = rutas("tienda");
+    for (const r of ["/app/comercio/pedidos", "/app/comercio/productos", "/app/comercio/tienda", "/app/comercio/finanzas"]) expect(tienda).toContain(r);
+    expect(tienda.some((r) => r.startsWith("/app/comercio/tienda/"))).toBe(false);
+    expect(merchantTabs(todo)).toEqual(merchantTabs(todo, "tienda"));
+  });
+
+  it("las direcciones de venta no existen para un sitio (el panel las devuelve al inicio)", () => {
+    expect(merchantSectionAvailable("pedidos", "sitio")).toBe(false);
+    expect(merchantSectionAvailable("productos", "sitio")).toBe(false);
+    expect(merchantSectionAvailable("tienda", "sitio")).toBe(true);
+    expect(merchantSectionAvailable("clientes", "sitio")).toBe(true);
+    expect(merchantSectionAvailable("turnos", "sitio")).toBe(true);
+    expect(merchantSectionAvailable("pedidos", "tienda")).toBe(true);
+  });
+
+  it("la barra de abajo de un sitio lleva al sitio y a los clientes, respetando los permisos del rol", () => {
+    expect(merchantTabs(todo, "sitio")).toEqual(["/app/comercio", "/app/comercio/clientes", "/app/comercio/tienda/resumen", "/app/comercio/mensajes", "/app/comercio/configuracion"]);
+    const operador = (p: Permission) => p === "pedidos";
+    expect(merchantTabs(operador, "sitio")).toEqual(["/app/comercio", "/app/comercio/mensajes"]);
+  });
+
+  it("la presentación del creador es pública; el alta pide iniciar sesión", () => {
+    expect(isPublicClientPath("/app/sitio-web")).toBe(true);
+    expect(isPublicClientPath("/app/sitio-web/nuevo")).toBe(false);
   });
 });

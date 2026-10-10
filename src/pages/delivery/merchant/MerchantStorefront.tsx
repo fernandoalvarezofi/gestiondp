@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { fetchColecciones } from "@/services/catalogPro";
 import { fetchPreparacion, ItemPreparacion, restaurarVersion } from "@/services/storeBuilder";
 import { useMerchant } from "./context";
+import { esSitio } from "@/lib/sitioWeb";
 
 const BASE_TIENDA = "/app/comercio/tienda";
 type SeccionTienda = "resumen" | "editor" | "temas" | "productos" | "seo" | "compartir" | "datos" | "versiones";
@@ -39,7 +40,7 @@ const SECCIONES_TIENDA: { id: SeccionTienda; texto: string; icono: LucideIcon; g
 const ANTERIORES: Record<string, SeccionTienda> = { paginas: "editor", menu: "editor" };
 
 /** Lista de lo que conviene tener listo antes de compartir la tienda (la arma el servidor). */
-function PreparacionTienda({ storeId }: { storeId: string }) {
+function PreparacionTienda({ storeId, sitio = false }: { storeId: string; sitio?: boolean }) {
   const [items, setItems] = useState<ItemPreparacion[] | null>(null);
   useEffect(() => { fetchPreparacion(storeId).then(setItems).catch(() => setItems([])); }, [storeId]);
   if (!items) return <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>;
@@ -48,7 +49,7 @@ function PreparacionTienda({ storeId }: { storeId: string }) {
   const listos = lista.filter((i) => i.ok).length;
   return (
     <section className="rounded-2xl border bg-card p-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="font-extrabold">Lista para vender</h3><span className="text-sm font-bold text-muted-foreground">{listos} de {lista.length}</span></div>
+      <div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="font-extrabold">{sitio ? "Lista para publicar" : "Lista para vender"}</h3><span className="text-sm font-bold text-muted-foreground">{listos} de {lista.length}</span></div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.round((listos / lista.length) * 100)}%` }} /></div>
       <ul className="mt-4 divide-y">
         {lista.map((i) => (
@@ -80,7 +81,9 @@ function avisosDelSitio(s: Sitio): string[] {
  */
 export default function MerchantStorefront() {
   const { store, products, reviews, loadStore, loadProducts, access } = useMerchant();
-  const puedeCatalogo = access.permisos.includes("catalogo");
+  // Un sitio web no tiene productos: sin pestaña de catálogo ni métricas de venta.
+  const sitioWeb = esSitio(store);
+  const puedeCatalogo = access.permisos.includes("catalogo") && !sitioWeb;
   const { seccion: seccionParam = "resumen" } = useParams<{ seccion?: string }>();
   const seccion = (ANTERIORES[seccionParam] ?? seccionParam) as SeccionTienda;
   const navigate = useNavigate();
@@ -143,7 +146,8 @@ export default function MerchantStorefront() {
   const publicar = async (nota: string) => {
     try {
       await api.publicar(nota, loadStore);
-      toast.success("¡Sitio publicado! Los cambios ya están en línea.");
+      // Publicar guarda la versión pública; si Woref todavía no aprobó el negocio, nadie la ve hasta la aprobación.
+      toast.success(store.aprobado && store.activo !== false ? "¡Sitio publicado! Los cambios ya están en línea." : "Cambios publicados. Se van a ver en línea cuando Woref apruebe tu negocio.");
       setPublicando(false);
       setVersionesRef((n) => n + 1);
     } catch (error) { toast.error(errorMessage(error)); }
@@ -199,7 +203,7 @@ export default function MerchantStorefront() {
               {api.sinPublicar && <Button variant="outline" className="rounded-full" onClick={() => setPublicando(true)}>Publicar cambios</Button>}
             </div>
             <dl className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border bg-border text-sm sm:grid-cols-4">
-              {[["Tema", PLANTILLAS.find((p) => p.id === sitio.tema.plantilla)?.nombre ?? sitio.tema.plantilla], ["Secciones en inicio", String(sitio.tema.bloques.filter((b) => b.visible).length)], ["Páginas visibles", `${paginasVisibles} de ${sitio.paginas.length}`], ["Productos visibles", String(productosVisibles.length)]].map(([k, v]) => (
+              {[["Tema", PLANTILLAS.find((p) => p.id === sitio.tema.plantilla)?.nombre ?? sitio.tema.plantilla], ["Secciones en inicio", String(sitio.tema.bloques.filter((b) => b.visible).length)], ["Páginas visibles", `${paginasVisibles} de ${sitio.paginas.length}`], sitioWeb ? ["Visibilidad", store.aprobado ? "Público" : "En revisión"] : ["Productos visibles", String(productosVisibles.length)]].map(([k, v]) => (
                 <div key={k} className="bg-card p-3"><dt className="text-xs text-muted-foreground">{k}</dt><dd className="truncate font-extrabold">{v}</dd></div>
               ))}
             </dl>
@@ -220,7 +224,7 @@ export default function MerchantStorefront() {
             </section>
           )}
           {avisos.length > 0 && <section className="rounded-2xl border border-warning/40 bg-warning/10 p-5"><h3 className="font-extrabold">Para revisar antes de publicar</h3><ul className="mt-2 space-y-1 text-sm">{avisos.map((a) => <li key={a}>• {a}</li>)}</ul></section>}
-          <PreparacionTienda storeId={store.id} />
+          <PreparacionTienda storeId={store.id} sitio={sitioWeb} />
         </div>
         <aside className="space-y-5">
           <section className="rounded-2xl border bg-card p-5">
@@ -308,8 +312,8 @@ export default function MerchantStorefront() {
     <div className="space-y-4">
       <section className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="min-w-0 flex-1">
-          <h2 className="text-lg font-extrabold">Tu tienda online</h2>
-          <p className="text-sm text-muted-foreground">Un sitio con páginas, secciones, temas y menú. Todo se guarda como borrador; nada cambia en línea hasta que publiques.</p>
+          <h2 className="text-lg font-extrabold">{sitioWeb ? "Tu sitio web" : "Tu tienda online"}</h2>
+          <p className="text-sm text-muted-foreground">{sitioWeb ? (store.aprobado ? "Páginas, secciones, temas y menú. Todo se guarda como borrador; nada cambia en línea hasta que publiques." : "Tu sitio está en revisión: lo que publiques se va a ver cuando Woref lo apruebe.") : "Un sitio con páginas, secciones, temas y menú. Todo se guarda como borrador; nada cambia en línea hasta que publiques."}</p>
         </div>
         <div className="flex min-w-0 items-center gap-2 rounded-xl border bg-card p-1.5 pl-3 text-sm">
           <span className="min-w-0 flex-1 truncate font-semibold">{url.replace(/^https?:\/\//, "")}</span>

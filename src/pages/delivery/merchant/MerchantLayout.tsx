@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, Outlet, useLocation } from "react-router-dom";
-import { Building2, ChevronsUpDown, Loader2, Plus } from "lucide-react";
+import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
+import { Building2, ChevronsUpDown, Globe, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
@@ -20,10 +20,12 @@ import { StoreOnboarding } from "@/components/merchant/StoreOnboarding";
 import type { StoreFormValues } from "@/components/merchant/StoreSettingsForm";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
-import { merchantNav, merchantSectionPermission, merchantTabs } from "@/navigation/menus";
+import { merchantNav, merchantSectionAvailable, merchantSectionPermission, merchantTabs } from "@/navigation/menus";
+import { esSitio } from "@/lib/sitioWeb";
+import { NEGOCIO_ACTIVO_KEY } from "@/hooks/useMisNegocios";
 import { roleLabel, type Branch, type MerchantContext, type Permission, type StoreAccess } from "./context";
 
-const ACTIVE_KEY = "woref-sucursal";
+const ACTIVE_KEY = NEGOCIO_ACTIVO_KEY;
 const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
 
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
@@ -215,14 +217,17 @@ export default function MerchantLayout() {
   const section = location.pathname.split("/")[3] ?? "";
   const needed = merchantSectionPermission(section);
   const blocked = needed ? !can(needed) : false;
+  // Un sitio web no tiene pedidos, catálogo, finanzas ni estadísticas de ventas: esas direcciones vuelven al inicio del panel.
+  const tipo = esSitio(store) ? "sitio" : "tienda";
+  const disponible = merchantSectionAvailable(section, tipo);
   const context: MerchantContext = { store, access, orders, products, coupons, reviews, pendingCount, preguntasPendientes, loadPreguntas, loadStore, loadOrders, loadProducts, loadCoupons, loadReviews, saveSettings, branches, switchStore, reloadBranches };
 
   return (
     <PanelShell
-      panel="Mi comercio"
+      panel={tipo === "sitio" ? "Mi sitio web" : "Mi comercio"}
       bottomTabs
-      tabs={merchantTabs(can)}
-      quickLink={{ to: `/app/tienda/${store.slug}`, label: "Ver como cliente" }}
+      tabs={merchantTabs(can, tipo)}
+      quickLink={tipo === "sitio" ? { to: `/t/${store.slug}`, label: "Ver mi sitio" } : { to: `/app/tienda/${store.slug}`, label: "Ver como cliente" }}
       identity={branches.length > 1 ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -248,6 +253,7 @@ export default function MerchantLayout() {
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link to="/app/comercio/sucursales">Ver todas las sucursales</Link></DropdownMenuItem>
             <DropdownMenuItem asChild><Link to="/app/comercio/nuevo" className="font-bold"><Plus className="h-4 w-4" />Crear otro comercio</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/app/sitio-web/nuevo" className="font-bold"><Globe className="h-4 w-4" />Crear un sitio web</Link></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
@@ -259,17 +265,19 @@ export default function MerchantLayout() {
           </div>
         </div>
       )}
-      groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes, mensajes: unreadMessages, clientes: avisos.clientes || undefined, turnos: avisos.turnos || undefined })}
-      actions={<StoreStatusControl store={store} onChange={loadStore} />}
+      groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes, mensajes: unreadMessages, clientes: avisos.clientes || undefined, turnos: avisos.turnos || undefined }, tipo)}
+      actions={tipo === "sitio" ? undefined : <StoreStatusControl store={store} onChange={loadStore} />}
     >
       {store.aprobado === false && !store.motivo_rechazo && (section === "" || section === "configuracion"
-        ? <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm"><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios. Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>
-        : <p className="mb-4 flex flex-wrap items-center gap-x-2 rounded-full border border-warning/40 bg-warning/10 px-4 py-2 text-[13px]"><span className="font-bold">En revisión: los clientes todavía no ven tu local.</span><Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Completar verificación</Link></p>)}
+        ? <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm">{tipo === "sitio" ? <><span className="font-bold">Tu sitio está en revisión y todavía no es público.</span> Mientras tanto podés editarlo, armar páginas y previsualizarlo.</> : <><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios.</>} Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>
+        : <p className="mb-4 flex flex-wrap items-center gap-x-2 rounded-full border border-warning/40 bg-warning/10 px-4 py-2 text-[13px]"><span className="font-bold">{tipo === "sitio" ? "En revisión: tu sitio todavía no es público." : "En revisión: los clientes todavía no ven tu local."}</span><Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Completar verificación</Link></p>)}
       {store.aprobado === false && store.motivo_rechazo && <p className="mb-4 rounded-2xl bg-destructive/10 p-4 text-sm text-destructive"><span className="font-bold">Tu comercio no fue aprobado:</span> {store.motivo_rechazo}. Corregilo en Configuración y escribinos para revisarlo de nuevo.</p>}
       {ordersError && <div role="alert" className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm"><span className="font-bold text-destructive">No pudimos actualizar tus pedidos.</span><span className="text-muted-foreground">Revisá la conexión; reintentamos solos cada 30 segundos.</span><Button size="sm" variant="outline" className="ml-auto rounded-full" onClick={() => loadOrders()}>Reintentar ahora</Button></div>}
       {store.activo === false && <p className="mb-4 rounded-2xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Tu comercio fue pausado por administración y no aparece para los clientes. Escribinos para revisarlo.</p>}
-      {(location.pathname === "/app/comercio" || location.pathname === "/app/comercio/pedidos") && <PushPrompt className="mb-4" title="No te pierdas ningún pedido" text="Activá los avisos y te llega una notificación apenas entra un pedido, aunque tengas la app cerrada." />}
-      {blocked
+      {(location.pathname === "/app/comercio" || location.pathname === "/app/comercio/pedidos") && <PushPrompt className="mb-4" title={tipo === "sitio" ? "No te pierdas ninguna consulta" : "No te pierdas ningún pedido"} text={tipo === "sitio" ? "Activá los avisos y te llega una notificación apenas alguien te escribe desde tu sitio." : "Activá los avisos y te llega una notificación apenas entra un pedido, aunque tengas la app cerrada."} />}
+      {!disponible
+        ? <Navigate to="/app/comercio" replace />
+        : blocked
         ? <EmptyState title="No tenés acceso a esta sección" text={`Tu rol (${roleLabel[access.rol]}) no incluye esta parte del panel. Pedile al dueño que te cambie el rol si lo necesitás.`} />
         : <Outlet context={context} />}
     </PanelShell>

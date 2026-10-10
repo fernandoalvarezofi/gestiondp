@@ -1,10 +1,11 @@
 import {
   Banknote, BarChart3, Bike, Bug, Building2, CalendarCheck, Calculator, Car, CarTaxiFront, ClipboardList, Fingerprint, Flag, Globe, History,
   Landmark, LayoutDashboard, LifeBuoy, Map, MapPinOff, Megaphone, MessageCircle, MessageCircleQuestion, Network, Package, PackageOpen,
-  Radio, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, ShoppingBag, Wallet, BookUser, ShieldCheck, TrendingUp, Truck, Warehouse, type LucideIcon,
+  Radio, Route, ScrollText, Send, Settings, Inbox, PencilRuler, Palette, Search, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, ShoppingBag, Wallet, BookUser, ShieldCheck, TrendingUp, Truck, Warehouse, type LucideIcon,
 } from "lucide-react";
 import type { PanelNavGroup } from "@/components/panel/PanelShell";
 import type { Permission } from "@/pages/delivery/merchant/context";
+import type { TipoSitio } from "@/lib/sitioWeb";
 
 /*
  * Menús de cada contexto, como datos. Los layouts solo los dibujan: así no hay componentes llenos de "si el rol es…"
@@ -16,9 +17,10 @@ export { CLIENT_TABS, GUEST_TABS, type ClientTab } from "./clientMenu";
 
 // ───────────────────────── Comercio ─────────────────────────
 
-type MerchantSection = { path: string; label: string; short?: string; icon: LucideIcon; group: string; permission?: Permission; end?: boolean; hidden?: boolean; badge?: "pedidos" | "preguntas" | "mensajes" | "clientes" | "turnos" };
+/** `solo`: la sección existe solo para una tienda online (vende) o solo para un sitio web (informativo). Sin `solo`, para los dos. */
+type MerchantSection = { path: string; label: string; short?: string; icon: LucideIcon; group: string; permission?: Permission; end?: boolean; hidden?: boolean; badge?: "pedidos" | "preguntas" | "mensajes" | "clientes" | "turnos"; solo?: TipoSitio };
 
-const MERCHANT_GROUPS = ["Operación diaria", "Clientes", "Catálogo", "Tienda online", "Marketing", "Ventas y análisis", "Mi negocio"] as const;
+const MERCHANT_GROUPS = ["Operación diaria", "Clientes", "Sitio web", "Catálogo", "Tienda online", "Marketing", "Ventas y análisis", "Mi negocio"] as const;
 
 /**
  * Secciones del panel del comercio (ruta relativa a /app/comercio). `permission` es lo que exige el rol del equipo.
@@ -27,22 +29,27 @@ const MERCHANT_GROUPS = ["Operación diaria", "Clientes", "Catálogo", "Tienda o
  */
 export const MERCHANT_SECTIONS: MerchantSection[] = [
   { path: "", label: "Inicio", icon: LayoutDashboard, group: "Operación diaria", end: true },
-  { path: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación diaria", badge: "pedidos" },
+  { path: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación diaria", badge: "pedidos", solo: "tienda" },
   { path: "turnos", label: "Agenda y turnos", short: "Agenda", icon: CalendarCheck, group: "Operación diaria", permission: "pedidos", badge: "turnos" },
   { path: "mensajes", label: "Mensajes", icon: MessageCircle, group: "Operación diaria", badge: "mensajes" },
-  { path: "envios", label: "Envíos", icon: Truck, group: "Operación diaria", permission: "pedidos" },
+  { path: "envios", label: "Envíos", icon: Truck, group: "Operación diaria", permission: "pedidos", solo: "tienda" },
   { path: "clientes", label: "Clientes (CRM)", short: "Clientes", icon: Users, group: "Clientes", permission: "estadisticas", badge: "clientes" },
-  { path: "productos", label: "Productos", short: "Productos", icon: ShoppingBag, group: "Catálogo", permission: "catalogo" },
-  { path: "inventario", label: "Inventario", icon: Package, group: "Catálogo", permission: "catalogo" },
-  { path: "colecciones", label: "Colecciones", icon: Tags, group: "Catálogo", permission: "catalogo" },
-  { path: "tienda", label: "Mi tienda online", short: "Tienda", icon: Globe, group: "Tienda online", permission: "ajustes" },
-  { path: "preguntas", label: "Preguntas", icon: MessageCircleQuestion, group: "Tienda online", permission: "opiniones", badge: "preguntas" },
-  { path: "opiniones", label: "Opiniones", icon: Star, group: "Tienda online", permission: "opiniones" },
-  { path: "promociones", label: "Promociones y cupones", short: "Promos", icon: Megaphone, group: "Marketing", permission: "promociones" },
+  { path: "clientes/seguimientos", label: "Consultas y seguimientos", short: "Consultas", icon: Inbox, group: "Clientes", permission: "estadisticas", solo: "sitio" },
+  { path: "tienda/resumen", label: "Mi sitio web", short: "Sitio", icon: Globe, group: "Sitio web", permission: "ajustes", solo: "sitio" },
+  { path: "tienda/editor", label: "Editor y páginas", icon: PencilRuler, group: "Sitio web", permission: "ajustes", solo: "sitio" },
+  { path: "tienda/temas", label: "Apariencia y temas", icon: Palette, group: "Sitio web", permission: "ajustes", solo: "sitio" },
+  { path: "tienda/seo", label: "SEO, dominio y publicación", icon: Search, group: "Sitio web", permission: "ajustes", solo: "sitio" },
+  { path: "productos", label: "Productos", short: "Productos", icon: ShoppingBag, group: "Catálogo", permission: "catalogo", solo: "tienda" },
+  { path: "inventario", label: "Inventario", icon: Package, group: "Catálogo", permission: "catalogo", solo: "tienda" },
+  { path: "colecciones", label: "Colecciones", icon: Tags, group: "Catálogo", permission: "catalogo", solo: "tienda" },
+  { path: "tienda", label: "Mi tienda online", short: "Tienda", icon: Globe, group: "Tienda online", permission: "ajustes", solo: "tienda" },
+  { path: "preguntas", label: "Preguntas", icon: MessageCircleQuestion, group: "Tienda online", permission: "opiniones", badge: "preguntas", solo: "tienda" },
+  { path: "opiniones", label: "Opiniones", icon: Star, group: "Tienda online", permission: "opiniones", solo: "tienda" },
+  { path: "promociones", label: "Promociones y cupones", short: "Promos", icon: Megaphone, group: "Marketing", permission: "promociones", solo: "tienda" },
   { path: "campanas", label: "Campañas", icon: Send, group: "Marketing", permission: "promociones" },
-  { path: "estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3, group: "Ventas y análisis", permission: "estadisticas" },
-  { path: "finanzas", label: "Finanzas y liquidaciones", short: "Finanzas", icon: Landmark, group: "Ventas y análisis", permission: "finanzas" },
-  { path: "devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen, group: "Ventas y análisis", permission: "pedidos" },
+  { path: "estadisticas", label: "Estadísticas", short: "Datos", icon: BarChart3, group: "Ventas y análisis", permission: "estadisticas", solo: "tienda" },
+  { path: "finanzas", label: "Finanzas y liquidaciones", short: "Finanzas", icon: Landmark, group: "Ventas y análisis", permission: "finanzas", solo: "tienda" },
+  { path: "devoluciones", label: "Devoluciones", short: "Devol.", icon: PackageOpen, group: "Ventas y análisis", permission: "pedidos", solo: "tienda" },
   { path: "equipo", label: "Equipo", icon: UsersRound, group: "Mi negocio", permission: "equipo" },
   { path: "sucursales", label: "Mis comercios", short: "Comercios", icon: Building2, group: "Mi negocio", permission: "equipo" },
   { path: "configuracion", label: "Configuración", short: "Ajustes", icon: Settings, group: "Mi negocio", permission: "ajustes" },
@@ -54,17 +61,24 @@ const merchantTo = (path: string) => (path ? `/app/comercio/${path}` : "/app/com
 /** Permiso que exige una ruta del panel del comercio (primer tramo después de /app/comercio). */
 export const merchantSectionPermission = (section: string) => MERCHANT_SECTIONS.find((item) => item.path === section)?.permission;
 
-export function merchantNav(can: (permission: Permission) => boolean, badges: { pedidos: number; preguntas: number; mensajes?: number; clientes?: number; turnos?: number }): PanelNavGroup[] {
-  const allowed = MERCHANT_SECTIONS.filter((item) => !item.hidden && (!item.permission || can(item.permission)));
+/** Si una sección (primer tramo de la ruta) existe para este tipo de negocio. Un sitio web no tiene pedidos, catálogo ni finanzas. */
+export const merchantSectionAvailable = (section: string, tipo: TipoSitio = "tienda") => {
+  const items = MERCHANT_SECTIONS.filter((item) => item.path.split("/")[0] === section);
+  return items.length === 0 || items.some((item) => !item.solo || item.solo === tipo);
+};
+
+export function merchantNav(can: (permission: Permission) => boolean, badges: { pedidos: number; preguntas: number; mensajes?: number; clientes?: number; turnos?: number }, tipo: TipoSitio = "tienda"): PanelNavGroup[] {
+  const allowed = MERCHANT_SECTIONS.filter((item) => !item.hidden && (!item.solo || item.solo === tipo) && (!item.permission || can(item.permission)));
   return MERCHANT_GROUPS.map((label) => ({
     label,
-    items: allowed.filter((item) => item.group === label).map((item) => ({ to: merchantTo(item.path), label: item.label, short: item.short, icon: item.icon, end: item.end, badge: item.badge ? badges[item.badge] : undefined })),
+    items: allowed.filter((item) => item.group === label).map((item) => ({ to: merchantTo(item.path), label: item.label, short: item.short, icon: item.icon, end: item.end || item.path.includes("/"), badge: item.badge ? badges[item.badge] : undefined })),
   })).filter((group) => group.items.length > 0);
 }
 
 /** Barra de abajo del comercio en el celular: lo más usado que el rol permite. */
-export const merchantTabs = (can: (permission: Permission) => boolean) =>
-  ["", "pedidos", "clientes", "productos", "configuracion"].filter((path) => { const need = merchantSectionPermission(path); return !need || can(need); }).map(merchantTo);
+export const merchantTabs = (can: (permission: Permission) => boolean, tipo: TipoSitio = "tienda") =>
+  (tipo === "sitio" ? ["", "clientes", "tienda/resumen", "mensajes", "configuracion"] : ["", "pedidos", "clientes", "productos", "configuracion"])
+    .filter((path) => { const need = merchantSectionPermission(path.split("/")[0]); return !need || can(need); }).map(merchantTo);
 
 // ───────────────────────── Repartidor ─────────────────────────
 

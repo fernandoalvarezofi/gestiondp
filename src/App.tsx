@@ -66,6 +66,8 @@ const Storefront = lazy(() => import("./pages/Storefront"));
 const StorefrontPreviewFrame = lazy(() => import("./pages/StorefrontPreviewFrame"));
 const StorefrontProduct = lazy(() => import("./pages/StorefrontProduct"));
 const Console = lazy(() => import("./pages/Console"));
+const SitioWebInfo = lazy(() => import("./pages/SitioWebInfo"));
+const SitioWebNuevo = lazy(() => import("./pages/SitioWebNuevo"));
 const MerchantPages = {
   Orders: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantOrdersPage }))),
   Menu: lazy(() => import("./pages/delivery/merchant/MerchantPages").then((m) => ({ default: m.MerchantMenuPage }))),
@@ -173,6 +175,8 @@ const App = () => (
                         <Route path="remis" element={<Remis />} />
                         <Route path="remis/:id" element={<RemisDetail />} />
                         <Route path="directorio" element={<Directorio />} />
+                        <Route path="sitio-web" element={<SitioWebInfo />} />
+                        <Route path="sitio-web/nuevo" element={<SitioWebNuevo />} />
                         <Route path="favoritos" element={<Favorites />} />
                         <Route path="turnos" element={<MyAppointments />} />
                         <Route path="turnos/locales" element={<ServiceLocals />} />
