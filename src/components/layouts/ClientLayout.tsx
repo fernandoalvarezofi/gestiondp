@@ -89,13 +89,13 @@ export function ClientLayout() {
 
           <AddressDialog
             trigger={
-              <button type="button" className={cn("-ml-2 flex min-w-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-left hover:bg-muted md:ml-0", isHome && "max-md:hover:bg-white/10")}>
-                <MapPin className={cn("h-5 w-5 shrink-0 text-primary", isHome && "max-md:text-white")} />
+              <button type="button" className={cn("-ml-2 flex min-w-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-left hover:bg-muted md:ml-0")}>
+                <MapPin className={cn("h-5 w-5 shrink-0 text-primary")} />
                 <span className="min-w-0">
-                  <span className={cn("block text-[11px] font-bold leading-none text-muted-foreground", isHome && "max-md:text-white/80")}>Entregar en</span>
-                  <span className={cn("block max-w-[200px] truncate text-[15px] font-extrabold sm:max-w-[240px]", isHome && "max-md:text-white")}>{address?.direccion || "Elegí tu dirección"}</span>
+                  <span className={cn("block text-[11px] font-bold leading-none text-muted-foreground")}>Entregar en</span>
+                  <span className={cn("block max-w-[200px] truncate text-[15px] font-extrabold sm:max-w-[240px]")}>{address?.direccion || "Elegí tu dirección"}</span>
                 </span>
-                <ChevronDown className={cn("h-4 w-4 shrink-0 text-primary", isHome && "max-md:text-white")} />
+                <ChevronDown className={cn("h-4 w-4 shrink-0 text-primary")} />
               </button>
             }
           />
@@ -148,8 +148,8 @@ export function ClientLayout() {
             </Button>
           </nav>
 
-          {!guest && <NotificationBell className={cn("ml-auto md:hidden", isHome && "max-md:text-white max-md:hover:bg-white/10")} />}
-          <NavLink to="/app/carrito" aria-label={itemCount ? `Carrito, ${itemCount} productos` : "Carrito"} className={cn(guest && "ml-auto", "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary md:hidden", isHome && "max-md:bg-white/20 max-md:text-white")}>
+          {!guest && <NotificationBell className={cn("ml-auto md:hidden")} />}
+          <NavLink to="/app/carrito" aria-label={itemCount ? `Carrito, ${itemCount} productos` : "Carrito"} className={cn(guest && "ml-auto", "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary md:hidden")}>
             <ShoppingBag className="h-5 w-5" />
             {itemCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 min-w-5 animate-pop-in items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{itemCount}</span>}
           </NavLink>

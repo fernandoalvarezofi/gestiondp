@@ -49,8 +49,8 @@ function SidebarNav({ groups }: { groups: PanelNavGroup[] }) {
                 <SidebarMenuItem key={item.to}>
                   <NavLink to={item.to} end={item.end} onClick={() => setOpenMobile(false)} className="block">
                     {({ isActive }) => (
-                      <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="h-10 font-semibold">
-                        <span><item.icon className="h-[18px] w-[18px]" /><span>{item.label}</span></span>
+                      <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="nav-item h-11 font-semibold">
+                        <span><span className="nav-tile"><item.icon className="h-[18px] w-[18px]" /></span><span className="truncate">{item.label}</span></span>
                       </SidebarMenuButton>
                     )}
                   </NavLink>
@@ -97,8 +97,8 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
         <SidebarFooter className="p-2">
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild tooltip="Comprar como cliente" className="h-10 font-semibold">
-                <Link to="/app"><Home className="h-[18px] w-[18px]" /><span>Comprar como cliente</span></Link>
+              <SidebarMenuButton asChild tooltip="Comprar como cliente" className="nav-item h-11 font-semibold">
+                <Link to="/app"><span className="nav-tile"><Home className="h-[18px] w-[18px]" /></span><span>Comprar como cliente</span></Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

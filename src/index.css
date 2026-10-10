@@ -167,107 +167,117 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after 
 .sf-carrusel::-webkit-scrollbar { display: none; }
 .sf-carrusel > * { scroll-snap-align: start; }
 
-/* ---- Tema "vidrio" de la app (estilo visionOS) -------------------------------------------------------------------------
-   Fondo oscuro difuminado con los colores de marca, paneles de vidrio ahumado translúcido y tarjetas blancas encima.
+/* ---- Tema "vidrio" de la app (estilo visionOS, versión clara) ----------------------------------------------------------
+   Fondo luminoso difuminado con las luces de la marca (verde #2B9778 y amarillo #F0B900), paneles de vidrio esmerilado
+   blanco translúcido, tarjetas blancas encima y texto oscuro (máxima legibilidad).
    Se activa con html.woref-glass en toda la app salvo las tiendas públicas (/t/…), que usan el tema de cada comercio. */
 html.woref-glass:not(.dark) {
-  --background: 175 18% 22%;
-  --foreground: 150 20% 97%;
-  --muted: 172 14% 24%;
-  --muted-foreground: 160 14% 80%;
-  --secondary: 168 16% 19%;
-  --secondary-foreground: 150 20% 95%;
-  --accent: 165 30% 20%;
-  --accent-foreground: 150 30% 92%;
-  --border: 170 12% 34%;
-  --input: 170 12% 38%;
-  --primary: 163 56% 42%;
-  --sidebar-background: 168 22% 10%;
-  --sidebar-foreground: 150 20% 95%;
-  --sidebar-accent: 168 18% 30%;
-  --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-border: 170 12% 32%;
-  --shadow-soft: 0 1px 2px hsl(170 40% 3% / 0.25), 0 10px 30px -12px hsl(170 40% 3% / 0.55);
-  --shadow-pop: 0 2px 8px hsl(170 40% 3% / 0.35), 0 24px 50px -16px hsl(170 40% 3% / 0.7);
-  color-scheme: dark;
+  --background: 160 30% 97%;
+  --muted: 160 22% 93%;
+  --border: 165 18% 86%;
+  --input: 165 16% 82%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-accent: 160 35% 92%;
+  --sidebar-border: 165 18% 88%;
+  --shadow-soft: 0 1px 2px hsl(165 40% 20% / 0.06), 0 12px 32px -14px hsl(165 40% 20% / 0.22);
+  --shadow-pop: 0 2px 8px hsl(165 40% 20% / 0.1), 0 24px 50px -18px hsl(165 40% 20% / 0.3);
 }
-html.woref-glass body { background-color: hsl(182 20% 20%); min-height: 100dvh; }
+html.woref-glass body { background-color: hsl(155 30% 95%); min-height: 100dvh; }
 /* Escena difuminada detrás del vidrio (luces de marca), fija: es lo que hace visible la transparencia de los paneles. */
 html.woref-glass body::before {
   content: ""; position: fixed; inset: -12%; z-index: -1; pointer-events: none;
   background:
-    radial-gradient(32rem 32rem at 10% 15%, hsl(163 70% 48% / 0.95), transparent 70%),
-    radial-gradient(26rem 26rem at 90% 10%, hsl(46 100% 52% / 0.75), transparent 70%),
-    radial-gradient(34rem 24rem at 72% 88%, hsl(176 70% 34% / 0.9), transparent 70%),
-    radial-gradient(24rem 24rem at 18% 92%, hsl(36 95% 52% / 0.55), transparent 70%),
-    radial-gradient(36rem 26rem at 50% 45%, hsl(160 35% 75% / 0.28), transparent 70%),
-    linear-gradient(135deg, hsl(168 32% 31%), hsl(188 24% 24%) 55%, hsl(162 34% 26%));
-  filter: blur(48px) saturate(125%);
+    radial-gradient(32rem 32rem at 8% 12%, hsl(163 62% 58% / 0.55), transparent 70%),
+    radial-gradient(28rem 28rem at 92% 8%, hsl(46 100% 60% / 0.45), transparent 70%),
+    radial-gradient(34rem 26rem at 75% 90%, hsl(176 55% 58% / 0.45), transparent 70%),
+    radial-gradient(26rem 26rem at 15% 92%, hsl(38 95% 68% / 0.35), transparent 70%),
+    radial-gradient(40rem 30rem at 50% 45%, hsl(0 0% 100% / 0.7), transparent 70%),
+    linear-gradient(135deg, hsl(160 42% 90%), hsl(180 30% 92%) 55%, hsl(150 38% 91%));
+  filter: blur(48px) saturate(120%);
 }
-/* Superficies claras sobre el vidrio: vuelven a los colores claros (texto oscuro adentro). */
-html.woref-glass:not(.dark) :is(.bg-card, .bg-white, .bg-popover, [class*="bg-card/9"], [class*="bg-card/8"], [role="dialog"]:not([data-sidebar]), [role="alertdialog"], .sf-claro) {
-  --background: 0 0% 100%; --foreground: 250 20% 11%; --card: 0 0% 100%; --card-foreground: 250 20% 11%;
-  --popover: 0 0% 100%; --popover-foreground: 250 20% 11%;
-  --muted: 240 7% 95%; --muted-foreground: 245 6% 42%; --secondary: 160 33% 95%; --secondary-foreground: 163 56% 22%;
-  --accent: 160 33% 94%; --accent-foreground: 163 56% 22%; --border: 240 8% 90%; --input: 240 8% 86%; --primary: 163 56% 38%;
-  color-scheme: light;
-  color: hsl(var(--foreground));
-}
-/* Tarjetas: bordes suaves, esquinas amplias y sombra que las despega del vidrio. */
-html.woref-glass:not(.dark) .bg-card.border:not([role="dialog"]) { border-color: hsl(0 0% 100% / 0.6); box-shadow: var(--shadow-soft); }
+html.dark.woref-glass body { background-color: hsl(220 18% 8%); }
+html.dark.woref-glass body::before { opacity: 0.25; }
 /* Las páginas a pantalla completa dejan ver el fondo. */
 html.woref-glass .min-h-screen.bg-background, html.woref-glass .min-h-dvh.bg-background, html.woref-glass .min-h-svh.bg-background { background-color: transparent; }
+/* Tarjetas: borde blanco suave y sombra que las despega del vidrio. */
+html.woref-glass:not(.dark) .bg-card.border:not([role="dialog"]) { border-color: hsl(0 0% 100% / 0.9); box-shadow: var(--shadow-soft); }
 
 @layer utilities {
-  /* Vidrio ahumado: paneles, barras y menús de la estructura. */
+  /* Vidrio esmerilado: paneles, barras y menús de la estructura. */
   .glass {
-    background-color: hsl(172 16% 30% / 0.36);
-    -webkit-backdrop-filter: blur(36px) saturate(160%);
-    backdrop-filter: blur(36px) saturate(160%);
-    border: 1px solid hsl(0 0% 100% / 0.16);
-    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 30px 60px -28px hsl(190 60% 2% / 0.85);
+    background-color: hsl(0 0% 100% / 0.42);
+    -webkit-backdrop-filter: blur(30px) saturate(180%);
+    backdrop-filter: blur(30px) saturate(180%);
+    border: 1px solid hsl(0 0% 100% / 0.75);
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.85), 0 24px 60px -30px hsl(165 40% 25% / 0.35);
   }
-  .glass-strong { background-color: hsl(175 20% 22% / 0.6); }
-  /* Ícono en cuadro redondeado (como la barra de íconos del ejemplo). */
-  .icon-tile { display: inline-grid; place-items: center; border-radius: 0.9rem; background: hsl(0 0% 100% / 0.07); border: 1px solid hsl(0 0% 100% / 0.08); }
+  .glass-strong { background-color: hsl(0 0% 100% / 0.62); }
+  .icon-tile { display: inline-grid; place-items: center; border-radius: 0.9rem; background: hsl(0 0% 100% / 0.6); border: 1px solid hsl(0 0% 100% / 0.8); }
 }
-html.dark.woref-glass .glass { background-color: hsl(220 18% 10% / 0.55); }
+html.dark.woref-glass .glass { background-color: hsl(220 18% 10% / 0.6); border-color: hsl(0 0% 100% / 0.08); box-shadow: none; }
 
-/* Barra lateral de vidrio: botón activo verde con brillo, ícono en cuadro. */
-html.woref-glass [data-sidebar="sidebar"] { background-color: hsl(175 20% 22% / 0.55); -webkit-backdrop-filter: blur(36px) saturate(160%); backdrop-filter: blur(36px) saturate(160%); }
-html.woref-glass [data-variant="floating"] [data-sidebar="sidebar"] { border-color: hsl(0 0% 100% / 0.09); border-radius: 1.5rem; box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 20px 50px -24px hsl(170 50% 2% / 0.8); }
+/* Barra lateral de vidrio: botón activo verde con brillo. */
+html.woref-glass:not(.dark) [data-sidebar="sidebar"] { background-color: hsl(0 0% 100% / 0.5); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); }
+html.woref-glass:not(.dark) [data-variant="floating"] [data-sidebar="sidebar"] { border-color: hsl(0 0% 100% / 0.75); border-radius: 1.5rem; box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.85), 0 24px 60px -30px hsl(165 40% 25% / 0.35); }
+html.woref-glass:not(.dark) [data-sidebar="sidebar"][data-mobile="true"] { background-color: hsl(0 0% 100% / 0.85); }
 html.woref-glass [data-sidebar="menu-button"] { border-radius: 0.85rem; }
 html.woref-glass [data-sidebar="menu-button"][data-active="true"] {
   background: hsl(var(--primary)); color: hsl(0 0% 100%);
-  box-shadow: 0 8px 24px -8px hsl(163 56% 42% / 0.75), inset 0 1px 0 hsl(0 0% 100% / 0.2);
+  box-shadow: 0 8px 22px -8px hsl(163 56% 38% / 0.6), inset 0 1px 0 hsl(0 0% 100% / 0.2);
 }
-html.woref-glass [data-sidebar="menu-button"]:not([data-active="true"]) > span > svg:first-child,
-html.woref-glass [data-sidebar="menu-button"]:not([data-active="true"]) > svg:first-child { opacity: 0.85; }
 
-/* Pastillas de filtro y pestañas sobre el vidrio (fuera de tarjetas): la activa es verde con brillo y las demás, vidrio. */
+/* Pastillas de filtro y pestañas sobre el vidrio (fuera de tarjetas): la activa es verde y las demás, vidrio. */
 html.woref-glass:not(.dark) .bg-foreground.text-background:not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
   background-color: hsl(var(--primary)); color: hsl(0 0% 100%); border-color: transparent;
-  box-shadow: 0 8px 22px -8px hsl(163 56% 42% / 0.75), inset 0 1px 0 hsl(0 0% 100% / 0.18);
+  box-shadow: 0 8px 20px -8px hsl(163 56% 38% / 0.55);
 }
 html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
-  --foreground: 150 20% 97%; --muted: 168 14% 22%; --muted-foreground: 160 12% 75%; --border: 168 12% 28%; --primary: 163 56% 42%;
-  background-color: hsl(0 0% 100% / 0.07); color: hsl(var(--foreground)); border-color: hsl(0 0% 100% / 0.12); box-shadow: none;
+  background-color: hsl(0 0% 100% / 0.55); border-color: hsl(0 0% 100% / 0.85); box-shadow: none;
   -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
 }
-html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *):hover { background-color: hsl(0 0% 100% / 0.13); }
+html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *):hover { background-color: hsl(0 0% 100% / 0.8); }
 
-/* Menús desplegables, listas de opciones y popovers: el mismo vidrio, con texto claro y buen contraste. */
+/* Menús desplegables, listas de opciones y popovers: vidrio esmerilado claro con texto oscuro. */
 html.woref-glass:not(.dark) :is([role="menu"], [role="listbox"], [data-radix-popper-content-wrapper] > .bg-popover) {
-  --popover: 175 22% 20%; --popover-foreground: 0 0% 100%; --foreground: 0 0% 100%; --muted-foreground: 160 14% 82%;
-  --accent: 168 30% 34%; --accent-foreground: 0 0% 100%; --border: 170 14% 40%; --muted: 172 14% 28%;
-  background-color: hsl(175 22% 20% / 0.8);
-  -webkit-backdrop-filter: blur(30px) saturate(160%); backdrop-filter: blur(30px) saturate(160%);
-  border-color: hsl(0 0% 100% / 0.16);
-  color: hsl(0 0% 100%);
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.12), 0 24px 50px -20px hsl(190 60% 3% / 0.75);
+  background-color: hsl(0 0% 100% / 0.78);
+  -webkit-backdrop-filter: blur(28px) saturate(180%); backdrop-filter: blur(28px) saturate(180%);
+  border-color: hsl(0 0% 100% / 0.9);
+  box-shadow: inset 0 1px 0 hsl(0 0% 100%), 0 24px 50px -20px hsl(165 40% 20% / 0.35);
 }
-/* Cajón del menú en el celular: vidrio más opaco para leer bien sobre cualquier fondo. */
-html.woref-glass [data-sidebar="sidebar"][data-mobile="true"] { background-color: hsl(175 22% 17% / 0.88); }
-html.woref-glass [data-sidebar="group-label"] { color: hsl(160 14% 80%); }
-/* Texto e íconos verdes sobre el vidrio (fuera de tarjetas): verde más claro para que se lean bien. */
-html.woref-glass:not(.dark) .text-primary:not(:is(.bg-card, .bg-white, [role="dialog"], [role="alertdialog"], .bg-primary) *):not(.bg-white) { color: hsl(156 62% 68%); }
+
+/* ---- Menú lateral con íconos en cuadros (como la barra del ejemplo) ---------------------------------------------------- */
+.nav-tile {
+  display: inline-grid; place-items: center; flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 0.7rem;
+  background: hsl(0 0% 100% / 0.7); border: 1px solid hsl(165 25% 88%); color: hsl(163 56% 30%);
+  box-shadow: 0 1px 2px hsl(165 40% 20% / 0.06);
+  transition: background-color .2s, color .2s, box-shadow .2s, transform .2s;
+}
+.dark .nav-tile { background: hsl(0 0% 100% / 0.06); border-color: hsl(0 0% 100% / 0.08); color: hsl(163 52% 60%); }
+.nav-item { gap: 0.7rem !important; padding-left: 0.4rem !important; border-radius: 0.95rem !important; transition: background-color .2s, box-shadow .2s; }
+.nav-item:hover .nav-tile { transform: translateY(-1px); box-shadow: 0 6px 14px -6px hsl(163 56% 30% / 0.35); }
+html.woref-glass .nav-item[data-active="true"] {
+  background: hsl(0 0% 100% / 0.85) !important; color: hsl(163 60% 22%) !important; font-weight: 800;
+  box-shadow: 0 10px 24px -14px hsl(165 40% 20% / 0.45), inset 0 1px 0 hsl(0 0% 100%);
+}
+.dark .nav-item[data-active="true"], html.dark.woref-glass .nav-item[data-active="true"] { background: hsl(0 0% 100% / 0.08) !important; color: hsl(0 0% 100%) !important; }
+.nav-item[data-active="true"] .nav-tile {
+  background: linear-gradient(145deg, hsl(163 58% 46%), hsl(163 60% 33%)); border-color: transparent; color: #fff;
+  box-shadow: 0 8px 18px -6px hsl(163 56% 38% / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.3);
+}
+/* Barra lateral colapsada: solo el cuadro del ícono, centrado. */
+[data-collapsible="icon"] .nav-item { padding: 0 !important; justify-content: center; background: transparent !important; box-shadow: none !important; }
+[data-collapsible="icon"] .nav-item .nav-tile { width: 2rem; height: 2rem; }
+html.woref-glass [data-sidebar="group-label"] { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* ---- Menús desplegables: ítems redondeados con el ícono en un cuadro de color ----------------------------------------- */
+html.woref-glass [role="menu"] { padding: 0.4rem; border-radius: 1.1rem; }
+html.woref-glass [role="menu"] [role="menuitem"], html.woref-glass [role="menu"] [role="menuitemradio"], html.woref-glass [role="menu"] [role="menuitemcheckbox"] {
+  border-radius: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-weight: 600; gap: 0.65rem;
+}
+html.woref-glass [role="menu"] [role^="menuitem"] > svg:first-child {
+  box-sizing: content-box; padding: 0.4rem; border-radius: 0.6rem; flex-shrink: 0;
+  background: hsl(160 40% 92%); color: hsl(163 56% 30%);
+}
+html.dark.woref-glass [role="menu"] [role^="menuitem"] > svg:first-child { background: hsl(0 0% 100% / 0.08); color: hsl(163 52% 60%); }
+html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] { background: hsl(160 40% 94%); }
+html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] > svg:first-child { background: hsl(var(--primary)); color: #fff; }
