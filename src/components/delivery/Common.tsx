@@ -11,9 +11,9 @@ export function BackBar({ className }: { className?: string }) {
   if (isRootPath(pathname)) return null;
   const title = pageTitle(pathname) || (/^\/app\/perfil\//.test(pathname) ? "Mi cuenta" : "");
   return (
-    <div className={cn("border-b bg-card/95 backdrop-blur-xl", className)}>
-      <div className="mx-auto flex h-12 max-w-7xl items-center gap-2 px-2 sm:px-5 lg:px-7">
-        <button type="button" onClick={goBack} aria-label="Volver" className="flex h-10 items-center gap-1 rounded-full pl-2 pr-3 text-sm font-extrabold hover:bg-muted">
+    <div className={cn("pointer-events-none", className)}>
+      <div className="mx-auto flex h-12 max-w-7xl items-center gap-2 px-3 sm:px-5 lg:px-7">
+        <button type="button" onClick={goBack} aria-label="Volver" className="glass glass-strong pointer-events-auto flex h-9 items-center gap-1 rounded-full pl-2 pr-3.5 text-sm font-extrabold transition-transform hover:-translate-x-0.5">
           <ArrowLeft className="h-5 w-5" />{title || "Volver"}
         </button>
       </div>

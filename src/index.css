@@ -311,3 +311,50 @@ html.woref-glass:not(.dark) [role="radio"][aria-checked="true"].border { box-sha
 html.woref-glass:not(.dark) .bg-card table thead { background: linear-gradient(180deg, hsl(220 16% 98%), hsl(220 14% 96%)); }
 html.woref-glass:not(.dark) .bg-card table thead th { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(220 9% 46%); }
 html.woref-glass:not(.dark) .bg-card table tbody tr { transition: background-color .15s; }
+
+/* ---- El sistema aplicado a toda la app (botones y opciones armados a mano) -------------------------------------------- */
+/* Cualquier botón/enlace verde de marca: degradé, brillo arriba, sombra de color y elevación al pasar. */
+html.woref-glass :is(button, a, label, [role="radio"], [role="tab"], [role="button"]).bg-primary {
+  background-image: linear-gradient(180deg, hsl(163 50% 45%), hsl(163 58% 35%));
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.22), 0 1px 2px hsl(163 60% 18% / 0.28), 0 6px 16px -8px hsl(163 56% 30% / 0.55);
+  border-color: transparent;
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+/* Botón amarillo de marca. */
+html.woref-glass :is(button, a, label, [role="radio"], [role="tab"], [role="button"]).bg-brand-yellow {
+  background-image: linear-gradient(180deg, hsl(46 100% 56%), hsl(43 100% 47%));
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.45), 0 1px 2px hsl(40 80% 25% / 0.22), 0 6px 16px -8px hsl(43 100% 40% / 0.5);
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+}
+/* Oscuro (bg-foreground) en cualquier lugar: azul tinta con relieve en vez de negro plano. */
+html.woref-glass:not(.dark) .bg-foreground.text-background {
+  background-image: linear-gradient(180deg, hsl(222 40% 24%), hsl(222 47% 15%)); border-color: transparent;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 6px 16px -8px hsl(222 47% 12% / 0.5);
+}
+html.woref-glass :is(button, a).bg-primary:not(:disabled):hover,
+html.woref-glass :is(button, a).bg-brand-yellow:not(:disabled):hover,
+html.woref-glass :is(button, a).bg-foreground.text-background:not(:disabled):hover { filter: brightness(1.06); transform: translateY(-1px); }
+html.woref-glass :is(button, a).bg-primary:not(:disabled):active,
+html.woref-glass :is(button, a).bg-brand-yellow:not(:disabled):active { transform: translateY(0) scale(0.985); }
+/* Opciones elegidas (radio, presionado, pestaña activa) con borde verde: halo suave. */
+html.woref-glass :is([aria-checked="true"], [aria-pressed="true"], [aria-selected="true"]):is(.border-primary, [class*="ring-primary"]) {
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.14), 0 6px 16px -10px hsl(var(--primary) / 0.5);
+}
+/* Opciones sin elegir (chips con borde): se marcan al pasar el mouse. */
+html.woref-glass :is(button, [role="radio"]).border.rounded-full:not(.bg-primary):not(.bg-foreground):not(:disabled):hover { border-color: hsl(var(--primary) / 0.45); }
+/* Campos nativos (desplegables y textos armados a mano): foco verde con halo, igual que los componentes. */
+html.woref-glass :is(select, input, textarea).border:focus-visible {
+  outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
+}
+html.woref-glass select.border { transition: border-color .15s, box-shadow .15s; }
+/* Casillas, radios y deslizadores nativos con el verde de marca. */
+html.woref-glass { accent-color: hsl(var(--primary)); }
+/* Barra de desplazamiento fina y discreta. */
+html.woref-glass * { scrollbar-width: thin; scrollbar-color: hsl(220 10% 75%) transparent; }
+html.woref-glass ::-webkit-scrollbar { width: 10px; height: 10px; }
+html.woref-glass ::-webkit-scrollbar-thumb { background: hsl(220 10% 78%); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+html.woref-glass ::-webkit-scrollbar-thumb:hover { background-color: hsl(220 10% 62%); }
+/* Selección de texto con el verde de marca. */
+html.woref-glass ::selection { background: hsl(var(--primary) / 0.22); }
+/* Dentro de tarjetas, ventanas y menús el "fondo" de los campos es blanco puro (campos nítidos sobre la tarjeta). */
+html.woref-glass:not(.dark) :is(.bg-card, .bg-white, [role="dialog"], [role="alertdialog"]) { --background: 0 0% 100%; }
