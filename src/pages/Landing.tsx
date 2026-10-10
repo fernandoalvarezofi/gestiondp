@@ -7,6 +7,8 @@ import { StoreLogo } from "@/components/delivery/StoreCard";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { COMERCIO_COLS, db, DeliveryStore, money, verticals } from "@/lib/delivery";
+import { tono, tonoDe } from "@/lib/tonos";
+import { cn } from "@/lib/utils";
 
 const photo = (id: string, width = 900) => `https://images.unsplash.com/photo-${id}?w=${width}&q=75&auto=format&fit=crop`;
 
@@ -90,7 +92,7 @@ export default function Landing() {
         <div className="grid gap-px overflow-hidden rounded-3xl border-2 border-brand-yellow bg-border shadow-pop sm:grid-cols-3">
           {trust.map(({ icon: Icon, title, text }) => (
             <div key={title} className="flex items-start gap-3 bg-card p-5">
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl brand-tile"><Icon className="h-5 w-5" /></span>
+              <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", tono(tonoDe(title)))}><Icon className="h-5 w-5" /></span>
               <div><p className="font-extrabold">{title}</p><p className="text-sm text-muted-foreground">{text}</p></div>
             </div>
           ))}

@@ -263,13 +263,13 @@ html.woref-glass:not(.dark) :is([role="menu"], [role="listbox"], [data-radix-pop
 .nav-item { gap: 0.7rem !important; padding-left: 0.4rem !important; border-radius: 0.95rem !important; transition: background-color .2s, box-shadow .2s; }
 .nav-item:hover .nav-tile { transform: translateY(-1px); box-shadow: 0 6px 14px -6px hsl(163 56% 30% / 0.35); }
 html.woref-glass .nav-item[data-active="true"] {
-  background: hsl(0 0% 100% / 0.85) !important; color: hsl(163 60% 22%) !important; font-weight: 800;
+  background: hsl(0 0% 100% / 0.85) !important; color: hsl(222 47% 16%) !important; font-weight: 800;
   box-shadow: 0 10px 24px -14px hsl(222 30% 20% / 0.3), inset 0 1px 0 hsl(0 0% 100%);
 }
 .dark .nav-item[data-active="true"], html.dark.woref-glass .nav-item[data-active="true"] { background: hsl(0 0% 100% / 0.08) !important; color: hsl(0 0% 100%) !important; }
 .nav-item[data-active="true"] .nav-tile {
-  background: linear-gradient(145deg, hsl(163 58% 46%), hsl(163 60% 33%)); border-color: transparent; color: #fff;
-  box-shadow: 0 8px 18px -6px hsl(163 56% 38% / 0.7), inset 0 1px 0 hsl(0 0% 100% / 0.3);
+  background: linear-gradient(145deg, hsl(var(--t1, 163 52% 48%)), hsl(var(--t2, 163 60% 32%))); border-color: transparent; color: #fff;
+  box-shadow: 0 8px 18px -6px hsl(var(--t2, 163 60% 32%) / 0.6), inset 0 1px 0 hsl(0 0% 100% / 0.3);
 }
 /* Barra lateral colapsada: solo el cuadro del ícono, centrado. */
 [data-collapsible="icon"] .nav-item { padding: 0 !important; justify-content: center; background: transparent !important; box-shadow: none !important; }
@@ -358,3 +358,24 @@ html.woref-glass ::-webkit-scrollbar-thumb:hover { background-color: hsl(220 10%
 html.woref-glass ::selection { background: hsl(var(--primary) / 0.22); }
 /* Dentro de tarjetas, ventanas y menús el "fondo" de los campos es blanco puro (campos nítidos sobre la tarjeta). */
 html.woref-glass:not(.dark) :is(.bg-card, .bg-white, [role="dialog"], [role="alertdialog"]) { --background: 0 0% 100%; }
+
+/* ---- Paleta de íconos por sección --------------------------------------------------------------------------------------
+   Cada tono define su degradé (--t1 → --t2) y su color de texto suave (--tc). `.tono` = cuadro fuerte (degradé + ícono
+   blanco + brillo); `.tono-suave` = cuadro claro teñido con el ícono del color. Verde y amarillo de marca + tonos armónicos. */
+.tono-verde    { --t1: 163 52% 48%; --t2: 163 60% 32%; --tc: 163 60% 30%; }
+.tono-amarillo { --t1: 46 100% 58%; --t2: 38 100% 46%; --tc: 36 90% 34%; }
+.tono-coral    { --t1: 12 88% 64%;  --t2: 4 72% 50%;   --tc: 6 70% 46%; }
+.tono-naranja  { --t1: 30 96% 60%;  --t2: 20 88% 48%;  --tc: 22 85% 42%; }
+.tono-violeta  { --t1: 262 70% 68%; --t2: 256 54% 50%; --tc: 258 52% 48%; }
+.tono-azul     { --t1: 212 88% 62%; --t2: 220 70% 46%; --tc: 218 70% 44%; }
+.tono-celeste  { --t1: 190 78% 52%; --t2: 197 76% 38%; --tc: 197 76% 34%; }
+.tono-rosa     { --t1: 330 76% 66%; --t2: 336 62% 50%; --tc: 336 60% 46%; }
+.tono-tinta    { --t1: 222 38% 34%; --t2: 222 47% 16%; --tc: 222 45% 26%; }
+.tono-menta    { --t1: 152 55% 52%; --t2: 158 58% 36%; --tc: 158 60% 30%; }
+.tono {
+  background-image: linear-gradient(145deg, hsl(var(--t1)), hsl(var(--t2))); color: #fff; border-color: transparent;
+  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.28), 0 8px 18px -8px hsl(var(--t2) / 0.6);
+}
+.tono.tono-amarillo { color: hsl(40 60% 12%); }
+.tono-suave { background: hsl(var(--t1) / 0.14); color: hsl(var(--tc)); border-color: hsl(var(--t1) / 0.28); }
+.dark .tono-suave { background: hsl(var(--t1) / 0.16); color: hsl(var(--t1)); }

@@ -13,6 +13,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { isRootPath, useGoBack } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
+import { tonoSeccion, tonoSuave } from "@/lib/tonos";
 import { ContextMenuItems } from "@/navigation/ContextSwitcher";
 import { contextById, contextFromPath, rememberContext } from "@/navigation/contexts";
 
@@ -50,7 +51,7 @@ function SidebarNav({ groups }: { groups: PanelNavGroup[] }) {
                   <NavLink to={item.to} end={item.end} onClick={() => setOpenMobile(false)} className="block">
                     {({ isActive }) => (
                       <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="nav-item h-11 font-semibold">
-                        <span><span className="nav-tile"><item.icon className="h-[18px] w-[18px]" /></span><span className="truncate">{item.label}</span></span>
+                        <span><span className={cn("nav-tile", tonoSuave(tonoSeccion(item.to)))}><item.icon className="h-[18px] w-[18px]" /></span><span className="truncate">{item.label}</span></span>
                       </SidebarMenuButton>
                     )}
                   </NavLink>
@@ -98,7 +99,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Comprar como cliente" className="nav-item h-11 font-semibold">
-                <Link to="/app"><span className="nav-tile"><Home className="h-[18px] w-[18px]" /></span><span>Comprar como cliente</span></Link>
+                <Link to="/app"><span className={cn("nav-tile", tonoSuave("menta"))}><Home className="h-[18px] w-[18px]" /></span><span>Comprar como cliente</span></Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>

@@ -12,6 +12,7 @@ import { SmartImage } from "@/components/delivery/SmartImage";
 import { useInZone } from "@/hooks/useAddressPoint";
 import { db, DeliveryOrder, DeliveryStore, estadoTitulo, img, isOpenNow, pasosDe, verticals } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { tonoCategoria } from "@/lib/tonos";
 
 const banners = [
   { title: "30% OFF en tu primer pedido", text: "Con el código BIENVENIDA", image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=760&q=62&auto=format&fit=crop", tone: "from-[#1F6F58] via-[#1F6F58]/85", to: "/app/promociones", cta: "Ver cupones" },
@@ -166,16 +167,16 @@ export default function DeliveryHome() {
         <section className="grid grid-cols-4 gap-x-2 gap-y-4 rounded-3xl bg-card p-4 shadow-pop md:grid-cols-9 md:gap-3 md:bg-transparent md:p-0 md:shadow-none" aria-label="Categorías">
           {tiles.map(({ id, label, image }, index) => (
             <Link key={id} to={`/app/categoria/${id}`} className={cn("group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4", index >= 6 && "max-md:hidden")}>
-              <span className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-transparent bg-muted shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px] md:border-white"><SmartImage src={image} width={200} /></span>
+              <span className="relative h-14 w-14 overflow-hidden rounded-full border-2 border-transparent bg-muted shadow-sm transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px] md:border-white"><SmartImage src={image} tono={tonoCategoria(id)} width={200} /></span>
               <span className="text-[12px] font-bold leading-tight md:text-sm">{label}</span>
             </Link>
           ))}
           <Link to="/app/enviar" className="group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent brand-tile transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px]"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent tono tono-amarillo transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px]"><Package className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Envíos</span>
           </Link>
           <Link to="/app/remis" className="group flex flex-col items-center gap-1.5 rounded-2xl text-center md:bg-muted md:px-2 md:pb-3 md:pt-4">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent brand-tile transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px]"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-transparent tono tono-tinta transition-all duration-200 group-hover:-translate-y-0.5 group-hover:border-brand-yellow group-active:scale-95 md:h-[72px] md:w-[72px]"><Car className="h-7 w-7 md:h-8 md:w-8" strokeWidth={1.8} /></span>
             <span className="text-[12px] font-bold leading-tight md:text-[13px]">Remís</span>
           </Link>
         </section>

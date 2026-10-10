@@ -8,6 +8,7 @@ import { couponLabel, PersonalCoupon } from "@/hooks/useMyCoupons";
 import { db, errorMessage, formatDateTime, money } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { confirmar } from "@/components/ui/dialogos";
+import { tono, tonoDe } from "@/lib/tonos";
 
 type Level = "bronce" | "plata" | "oro";
 type Reward = { id: string; nombre: string; descripcion: string | null; puntos: number };
@@ -97,7 +98,7 @@ export default function Club() {
           { icon: Gift, title: "Canjeás premios", text: "Cupones de descuento y envío gratis que se aplican en el carrito." },
           { icon: Trophy, title: "Subís de nivel", text: "Con más pedidos sumás más rápido: Plata +25% y Oro +50%." },
         ].map(({ icon: Icon, title, text }) => (
-          <div key={title} className="rounded-3xl border bg-card p-4"><span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span><p className="mt-2 font-extrabold">{title}</p><p className="text-sm text-muted-foreground">{text}</p></div>
+          <div key={title} className="rounded-3xl border bg-card p-4"><span className={cn("flex h-10 w-10 items-center justify-center rounded-2xl", tono(tonoDe(title)))}><Icon className="h-5 w-5" /></span><p className="mt-2 font-extrabold">{title}</p><p className="text-sm text-muted-foreground">{text}</p></div>
         ))}
       </section>
 
@@ -108,7 +109,7 @@ export default function Club() {
             const missing = reward.puntos - data.saldo;
             return (
               <li key={reward.id} className="flex items-center gap-3 rounded-3xl border bg-card p-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary"><Ticket className="h-6 w-6" /></span>
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl tono-suave tono-naranja"><Ticket className="h-6 w-6" /></span>
                 <div className="min-w-0 flex-1"><p className="font-extrabold">{reward.nombre}</p><p className="text-xs text-muted-foreground">{reward.descripcion}</p><p className="mt-0.5 text-sm font-bold text-primary">{reward.puntos.toLocaleString("es-AR")} puntos</p></div>
                 <Button size="sm" className="rounded-full" disabled={missing > 0 || busy === reward.id} onClick={() => redeem(reward)}>{busy === reward.id ? <Loader2 className="h-4 w-4 animate-spin" /> : missing > 0 ? `Faltan ${missing}` : "Canjear"}</Button>
               </li>

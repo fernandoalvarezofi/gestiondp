@@ -2,6 +2,8 @@ import { abrirPreferenciasCookies } from "@/lib/cookies";
 import { Link } from "react-router-dom";
 import { Bike, CarTaxiFront, Headset, KeyRound, MapPinned, ShieldCheck } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
+import { tonoDe, tonoSuave } from "@/lib/tonos";
+import { cn } from "@/lib/utils";
 
 const promises = [
   { icon: MapPinned, title: "Seguimiento en vivo", text: "Mirá en el mapa dónde está tu pedido." },
@@ -17,7 +19,7 @@ export function AppFooter() {
       <div className="mx-auto grid max-w-6xl grid-cols-4 gap-6 px-8 py-8">
         {promises.map(({ icon: Icon, title, text }) => (
           <div key={title} className="flex gap-3">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
+            <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", tonoSuave(tonoDe(title)))}><Icon className="h-5 w-5" /></span>
             <div><p className="text-sm font-extrabold">{title}</p><p className="text-[13px] text-muted-foreground">{text}</p></div>
           </div>
         ))}

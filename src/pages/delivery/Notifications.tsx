@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { errorMessage } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { CATEGORIAS_NOTIFICACION, CategoriaNotificacion, fetchNotificaciones, fetchPreferencias, guardarPreferencia, hace, marcarLeidas, Notificacion, rutaSegura } from "@/services/notifications";
+import { tonoSuave, TONO_NOTIFICACION } from "@/lib/tonos";
 
 const ICONO: Record<CategoriaNotificacion, typeof Bell> = { pedidos: Package, pagos: CreditCard, turnos: CalendarCheck, devoluciones: RotateCcw, opiniones: Star, mensajes: MessageCircle, sistema: Bell };
 const PAGINA = 30;
@@ -76,7 +77,7 @@ export default function Notifications() {
                 return (
                   <li key={n.id}>
                     <button type="button" onClick={() => abrir(n)} className={cn("flex w-full items-start gap-3 p-4 text-left transition-colors hover:bg-muted/60 focus-visible:bg-muted/60 focus-visible:outline-none", !n.leida_at && "bg-primary/[0.04]")}>
-                      <span className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", n.leida_at ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary")}><Icono className="h-[18px] w-[18px]" /></span>
+                      <span className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", n.leida_at ? "bg-muted text-muted-foreground" : tonoSuave(TONO_NOTIFICACION[n.categoria] ?? "verde"))}><Icono className="h-[18px] w-[18px]" /></span>
                       <span className="min-w-0 flex-1">
                         <span className="flex items-baseline justify-between gap-2"><span className={cn("truncate", n.leida_at ? "font-semibold" : "font-extrabold")}>{n.titulo}</span><span className="shrink-0 text-xs text-muted-foreground">{hace(n.created_at)}</span></span>
                         {n.cuerpo && <span className="mt-0.5 line-clamp-2 block text-sm text-muted-foreground">{n.cuerpo}</span>}

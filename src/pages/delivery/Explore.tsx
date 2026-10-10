@@ -3,30 +3,32 @@ import { BookUser, CalendarCheck, CarTaxiFront, ChevronRight, Heart, Package, Se
 import type { LucideIcon } from "lucide-react";
 import { SmartImage } from "@/components/delivery/SmartImage";
 import { verticals } from "@/lib/delivery";
+import { cn } from "@/lib/utils";
+import { tono, tonoCategoria, type Tono } from "@/lib/tonos";
 
-type Acceso = { to: string; titulo: string; texto: string; icon: LucideIcon };
+type Acceso = { to: string; titulo: string; texto: string; icon: LucideIcon; color: Tono };
 
 /** Lo que el cliente puede hacer en Woref: comprar, enviar, viajar y reservar. */
 const accesos: Acceso[] = [
-  { to: "/app/categoria/restaurantes", titulo: "Restaurantes", texto: "Comida y bebidas", icon: Utensils },
-  { to: "/app/categoria/tiendas", titulo: "Tiendas", texto: "Moda, hogar y más", icon: Store },
-  { to: "/app/buscar", titulo: "Productos", texto: "Buscá entre todos los comercios", icon: ShoppingBasket },
-  { to: "/app/turnos/locales", titulo: "Servicios y turnos", texto: "Peluquerías, consultorios, talleres", icon: CalendarCheck },
-  { to: "/app/enviar", titulo: "Envíos", texto: "Retiramos y entregamos tu paquete", icon: Package },
-  { to: "/app/remis", titulo: "Viajes", texto: "Remís con conductores de tu ciudad", icon: CarTaxiFront },
+  { to: "/app/categoria/restaurantes", titulo: "Restaurantes", texto: "Comida y bebidas", icon: Utensils, color: "coral" },
+  { to: "/app/categoria/tiendas", titulo: "Tiendas", texto: "Moda, hogar y más", icon: Store, color: "violeta" },
+  { to: "/app/buscar", titulo: "Productos", texto: "Buscá entre todos los comercios", icon: ShoppingBasket, color: "azul" },
+  { to: "/app/turnos/locales", titulo: "Servicios y turnos", texto: "Peluquerías, consultorios, talleres", icon: CalendarCheck, color: "rosa" },
+  { to: "/app/enviar", titulo: "Envíos", texto: "Retiramos y entregamos tu paquete", icon: Package, color: "amarillo" },
+  { to: "/app/remis", titulo: "Viajes", texto: "Remís con conductores de tu ciudad", icon: CarTaxiFront, color: "tinta" },
 ];
 
 const descubrir: Acceso[] = [
-  { to: "/app/promociones", titulo: "Cupones y promociones", texto: "Descuentos y envíos gratis", icon: Ticket },
-  { to: "/app/club", titulo: "Woref Club", texto: "Sumá puntos con cada pedido", icon: Trophy },
-  { to: "/app/favoritos", titulo: "Tus favoritos", texto: "Locales y productos guardados", icon: Heart },
-  { to: "/app/directorio", titulo: "Directorio de la ciudad", texto: "Comercios que todavía no están en Woref", icon: BookUser },
+  { to: "/app/promociones", titulo: "Cupones y promociones", texto: "Descuentos y envíos gratis", icon: Ticket, color: "naranja" },
+  { to: "/app/club", titulo: "Woref Club", texto: "Sumá puntos con cada pedido", icon: Trophy, color: "amarillo" },
+  { to: "/app/favoritos", titulo: "Tus favoritos", texto: "Locales y productos guardados", icon: Heart, color: "rosa" },
+  { to: "/app/directorio", titulo: "Directorio de la ciudad", texto: "Comercios que todavía no están en Woref", icon: BookUser, color: "celeste" },
 ];
 
-function AccesoCard({ to, titulo, texto, icon: Icon }: Acceso) {
+function AccesoCard({ to, titulo, texto, icon: Icon, color }: Acceso) {
   return (
     <Link to={to} className="group flex h-full items-center gap-3.5 rounded-2xl border bg-card p-3.5 transition-colors hover:border-foreground/40 hover:bg-muted/50">
-      <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl brand-tile transition-transform group-hover:scale-105"><Icon className="h-6 w-6" /></span>
+      <span className={cn("flex h-12 w-12 shrink-0 items-center justify-center rounded-xl transition-transform group-hover:scale-105", tono(color))}><Icon className="h-6 w-6" /></span>
       <span className="min-w-0 flex-1"><span className="block font-extrabold leading-tight">{titulo}</span><span className="mt-0.5 block text-sm leading-snug text-muted-foreground">{texto}</span></span>
       <ChevronRight className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
     </Link>
@@ -64,7 +66,7 @@ export default function Explore() {
             {verticals.map((v) => (
               <li key={v.id}>
                 <Link to={`/app/categoria/${v.id}`} className="group flex flex-col items-center gap-2 rounded-2xl p-1 text-center">
-                  <span className="relative block aspect-square w-full overflow-hidden rounded-2xl bg-muted"><SmartImage src={v.image} width={240} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" /></span>
+                  <span className="relative block aspect-square w-full overflow-hidden rounded-2xl bg-muted"><SmartImage src={v.image} tono={tonoCategoria(v.id)} width={240} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" /></span>
                   <span className="text-sm font-bold leading-tight">{v.label}</span>
                 </Link>
               </li>

@@ -2,17 +2,18 @@ import { useState } from "react";
 import { LogoMark } from "@/components/brand/Logo";
 import { img } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { tono, type Tono } from "@/lib/tonos";
 
 /**
  * Foto con respaldo de marca: mientras carga muestra un fondo con la marca y, si la foto falla o no existe,
  * se queda con ese fondo en vez de un hueco gris vacío.
  */
-export function SmartImage({ src, width = 640, alt = "", className, loading = "lazy" }: { src?: string | null; width?: number; alt?: string; className?: string; loading?: "lazy" | "eager" }) {
+export function SmartImage({ src, width = 640, alt = "", className, loading = "lazy", tono: color }: { src?: string | null; width?: number; alt?: string; className?: string; loading?: "lazy" | "eager"; /** Color del respaldo (por categoría); por defecto, verde de marca. */ tono?: Tono }) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const missing = !src || failed;
   return (
-    <span className="absolute inset-0 block overflow-hidden bg-gradient-to-br from-[hsl(163_50%_42%)] to-[hsl(164_52%_22%)]">
+    <span className={cn("absolute inset-0 block overflow-hidden", color ? tono(color) : "bg-gradient-to-br from-[hsl(163_50%_42%)] to-[hsl(164_52%_22%)]")}>
       <span aria-hidden className="absolute inset-0 flex items-center justify-center"><LogoMark className="h-1/3 w-auto max-h-16 opacity-25" /></span>
       {!missing && (
         <img

@@ -6,6 +6,7 @@ import { db } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { fetchBandeja, type HiloBandeja } from "@/services/messaging";
 import { ChatThread, estadoContexto } from "./ChatThread";
+import { tonoSuave } from "@/lib/tonos";
 
 const FILTROS = [["todas", "Todas"], ["sin_leer", "Sin leer"], ["archivadas", "Archivadas"]] as const;
 type Filtro = (typeof FILTROS)[number][0];
@@ -26,7 +27,8 @@ function Avatar({ hilo }: { hilo: HiloBandeja }) {
     : hilo.rol === "repartidor" ? (hilo.canal === "comercio_repartidor" ? "local" : "persona")
     : "persona";
   const Icon = { auto: CarTaxiFront, local: Store, paquete: Package, repartidor: Bike, persona: UserRound }[otro];
-  return <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>;
+  const color = ({ auto: "tinta", local: "violeta", paquete: "amarillo", repartidor: "naranja", persona: "azul" } as const)[otro];
+  return <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-full", tonoSuave(color))}><Icon className="h-5 w-5" /></span>;
 }
 
 /**

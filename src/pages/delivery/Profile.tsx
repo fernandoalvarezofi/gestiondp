@@ -16,6 +16,7 @@ import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { db, img } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { ContextSwitcherCard } from "@/navigation/ContextSwitcher";
+import { tonoSeccion, tonoSuave } from "@/lib/tonos";
 
 const SECTIONS = [
   { id: "general", label: "Datos personales", hint: "Foto, nombre, teléfono y email", icon: UserCircle },
@@ -80,14 +81,14 @@ export default function Profile() {
         <nav className={cn("space-y-3", current && "max-lg:hidden")} aria-label="Secciones de mi cuenta">
           <ul className="grid grid-cols-3 gap-2 sm:grid-cols-6 lg:hidden">
             {shortcuts.map(({ to, label, icon: Icon }) => (
-              <li key={to}><Link to={to} className="flex flex-col items-center gap-1 rounded-2xl border bg-card p-3 text-center text-xs font-bold hover:bg-muted"><Icon className="h-5 w-5 text-primary" />{label}</Link></li>
+              <li key={to}><Link to={to} className="flex flex-col items-center gap-1.5 rounded-2xl border bg-card p-3 text-center text-xs font-bold hover:bg-muted"><span className={cn("grid h-9 w-9 place-items-center rounded-xl", tonoSuave(tonoSeccion(to)))}><Icon className="h-5 w-5" /></span>{label}</Link></li>
             ))}
           </ul>
           <ul className="divide-y overflow-hidden rounded-3xl border bg-card lg:divide-y-0 lg:space-y-1 lg:border-0 lg:bg-transparent">
             {SECTIONS.map(({ id, label, hint, icon: Icon }) => (
               <li key={id}>
                 <Link to={`/app/perfil/${id}`} className={cn("flex items-center gap-3 p-4 hover:bg-muted/60 lg:rounded-2xl lg:border lg:border-transparent lg:p-3", current?.id === id && "lg:border-primary/30 lg:bg-primary/5 lg:text-primary")}>
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span>
+                  <span className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full", tonoSuave(tonoSeccion(`/app/perfil/${id}`)))}><Icon className="h-5 w-5" /></span>
                   <span className="min-w-0 flex-1"><span className="block font-bold">{label}</span><span className="block text-xs font-normal text-muted-foreground">{hint}</span></span>
                   <ChevronRight className="h-5 w-5 text-muted-foreground lg:hidden" />
                 </Link>
@@ -96,7 +97,7 @@ export default function Profile() {
           </ul>
           <ul className="hidden gap-1 lg:block">
             {shortcuts.map(({ to, label, icon: Icon }) => (
-              <li key={to}><Link to={to} className="flex items-center gap-3 rounded-2xl p-3 text-sm font-semibold text-muted-foreground hover:bg-muted"><Icon className="h-5 w-5" />{label}</Link></li>
+              <li key={to}><Link to={to} className="flex items-center gap-3 rounded-2xl p-3 text-sm font-semibold text-muted-foreground hover:bg-muted"><span className={cn("grid h-8 w-8 place-items-center rounded-lg", tonoSuave(tonoSeccion(to)))}><Icon className="h-[18px] w-[18px]" /></span>{label}</Link></li>
             ))}
           </ul>
         </nav>
