@@ -3,15 +3,38 @@ import { Monitor, Smartphone, Tablet } from "lucide-react";
 import type { PreviewData } from "@/pages/StorefrontPreviewFrame";
 import { cn } from "@/lib/utils";
 
-/** Marco con la tienda real adentro, en ancho de computadora o de celular, y escalada para entrar en el panel. */
-export function PreviewPane({ data, selected, onSelect, className }: { data: PreviewData; selected: string | null; onSelect: (id: string) => void; className?: string }) {
+export type Dispositivo = "escritorio" | "tableta" | "celular";
+export const ANCHO_DISPOSITIVO: Record<Dispositivo, number> = { escritorio: 1280, tableta: 820, celular: 390 };
+
+export function SelectorDispositivo({ value, onChange, className }: { value: Dispositivo; onChange: (d: Dispositivo) => void; className?: string }) {
+  return (
+    <div className={cn("flex rounded-full border bg-card p-0.5", className)} role="group" aria-label="Tamaño de pantalla">
+      {([["escritorio", Monitor, "Computadora"], ["tableta", Tablet, "Tableta"], ["celular", Smartphone, "Celular"]] as const).map(([id, Icon, label]) => (
+        <button key={id} type="button" aria-pressed={value === id} aria-label={label} title={label} onClick={() => onChange(id)}
+          className={cn("flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-bold transition-colors", value === id ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}>
+          <Icon className="h-4 w-4" />
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * Marco con la tienda real adentro (misma pantalla que el sitio público), al ancho del dispositivo y escalado para entrar.
+ * `llenar`: ocupa todo el alto disponible (lienzo del editor). Si no se controla el dispositivo desde afuera, muestra su propio selector.
+ */
+export function PreviewPane({ data, selected, onSelect, className, device: deviceProp, onDevice, llenar }: {
+  data: PreviewData; selected: string | null; onSelect: (id: string) => void; className?: string; device?: Dispositivo; onDevice?: (d: Dispositivo) => void; llenar?: boolean;
+}) {
   const iframe = useRef<HTMLIFrameElement>(null);
   const holder = useRef<HTMLDivElement>(null);
   const ready = useRef(false);
-  const [device, setDevice] = useState<"escritorio" | "tableta" | "celular">("escritorio");
-  const [scale, setScale] = useState(0.5);
-  const width = device === "celular" ? 390 : device === "tableta" ? 820 : 1280;
-  const height = device === "celular" ? 780 : device === "tableta" ? 1000 : 820;
+  const [deviceLocal, setDeviceLocal] = useState<Dispositivo>("escritorio");
+  const device = deviceProp ?? deviceLocal;
+  const [caja, setCaja] = useState({ w: 800, h: 600 });
+  const width = ANCHO_DISPOSITIVO[device];
+  const scale = Math.min(1, caja.w / width);
+  const height = llenar ? Math.max(400, Math.round(caja.h / scale)) : device === "celular" ? 780 : device === "tableta" ? 1000 : 820;
 
   const send = useCallback((message: unknown) => {
     if (ready.current) iframe.current?.contentWindow?.postMessage(message, window.location.origin);
@@ -21,12 +44,12 @@ export function PreviewPane({ data, selected, onSelect, className }: { data: Pre
     const onMessage = (event: MessageEvent) => {
       if (event.origin !== window.location.origin || event.source !== iframe.current?.contentWindow) return;
       const message = event.data as { tipo?: string; id?: string } | null;
-      if (message?.tipo === "woref-vista-previa-lista") { ready.current = true; send({ tipo: "woref-vista-previa", datos: data }); }
+      if (message?.tipo === "woref-vista-previa-lista") { ready.current = true; send({ tipo: "woref-vista-previa", datos: data }); send({ tipo: "woref-seleccion", id: selected }); }
       if (message?.tipo === "woref-bloque" && message.id) onSelect(message.id);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
-  }, [data, onSelect, send]);
+  }, [data, onSelect, send, selected]);
 
   // Cada cambio se manda al marco (con una pequeña espera mientras se escribe).
   useEffect(() => {
@@ -38,23 +61,21 @@ export function PreviewPane({ data, selected, onSelect, className }: { data: Pre
   useEffect(() => {
     const element = holder.current;
     if (!element) return;
-    const observer = new ResizeObserver(() => setScale(Math.min(1, element.clientWidth / width)));
+    const observer = new ResizeObserver(() => setCaja({ w: element.clientWidth, h: element.clientHeight }));
     observer.observe(element);
     return () => observer.disconnect();
-  }, [width]);
+  }, []);
 
   return (
-    <div className={className}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-sm font-bold text-muted-foreground">Vista previa en vivo <span className="font-normal">· tocá un bloque para editarlo</span></p>
-        <div className="flex rounded-full border bg-card p-0.5" role="group" aria-label="Tamaño de pantalla">
-          {([["escritorio", Monitor, "Computadora"], ["tableta", Tablet, "Tableta"], ["celular", Smartphone, "Celular"]] as const).map(([id, Icon, label]) => (
-            <button key={id} type="button" aria-pressed={device === id} aria-label={label} title={label} onClick={() => setDevice(id)} className={cn("flex h-8 items-center gap-1.5 rounded-full px-2.5 text-xs font-bold transition-colors", device === id ? "bg-primary text-white" : "text-muted-foreground hover:text-foreground")}><Icon className="h-4 w-4" /><span className="hidden 2xl:inline">{label}</span></button>
-          ))}
+    <div className={cn(llenar && "flex h-full min-h-0 flex-col", className)}>
+      {!deviceProp && (
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-sm font-bold text-muted-foreground">Vista previa en vivo <span className="font-normal">· tocá un bloque para editarlo</span></p>
+          <SelectorDispositivo value={device} onChange={(d) => (onDevice ? onDevice(d) : setDeviceLocal(d))} />
         </div>
-      </div>
-      <div ref={holder} className="overflow-hidden rounded-3xl border bg-muted/40 shadow-soft" style={{ height: Math.round(height * scale) }}>
-        <div className="mx-auto overflow-hidden" style={{ width: Math.round(width * scale), height: Math.round(height * scale) }}>
+      )}
+      <div ref={holder} className={cn("overflow-hidden", llenar ? "min-h-0 flex-1" : "rounded-3xl border bg-muted/40 shadow-soft")} style={llenar ? undefined : { height: Math.round(height * scale) }}>
+        <div className={cn("mx-auto overflow-hidden bg-background", llenar && device !== "escritorio" && "border-x shadow-soft")} style={{ width: Math.round(width * scale), height: Math.round(height * scale) }}>
           <iframe ref={iframe} title="Vista previa de tu tienda" src="/vista-previa-tienda" style={{ width, height, border: 0, transform: `scale(${scale})`, transformOrigin: "top left" }} />
         </div>
       </div>

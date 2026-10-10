@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Bloque, ICONOS } from "@/lib/storefront";
 import { Campo, Interruptor, Numero, Opciones, Texto } from "./fields";
+import { BotonesEditor, OpcionesSitio } from "./controles";
+
+const SITIO_VACIO: OpcionesSitio = { categorias: [], colecciones: [], paginas: [], anclas: [], conTurnos: false, conWhatsapp: false };
 
 type Patch = (cambios: Record<string, unknown>) => void;
 
@@ -20,8 +23,29 @@ function Enlace({ tipo, url, onChange }: { tipo: "catalogo" | "whatsapp" | "url"
 }
 
 /** Controles de cada tipo de bloque. Los cambios se mandan a `onChange` y la vista previa se actualiza al instante. */
-export function BlockSettings({ bloque, categorias, colecciones = [], onChange }: { bloque: Bloque; categorias: string[]; colecciones?: { slug: string; nombre: string }[]; onChange: Patch }) {
+export function BlockSettings({ bloque, categorias, colecciones = [], onChange, sitio = SITIO_VACIO }: { bloque: Bloque; categorias: string[]; colecciones?: { slug: string; nombre: string }[]; onChange: Patch; sitio?: OpcionesSitio }) {
   switch (bloque.tipo) {
+    case "contenido":
+      return (
+        <div className="space-y-4">
+          <Texto label="Antetítulo (opcional)" value={bloque.antetitulo} max={60} placeholder="Ej.: Nueva temporada" onChange={(antetitulo) => onChange({ antetitulo })} />
+          <Texto label="Título" value={bloque.titulo} max={120} onChange={(titulo) => onChange({ titulo })} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Opciones label="Tipo de título" value={bloque.nivel} options={[{ id: "h1", label: "Principal" }, { id: "h2", label: "Sección" }, { id: "h3", label: "Subtítulo" }]} onChange={(nivel) => onChange({ nivel })}
+              hint={bloque.nivel === "h1" ? "Usá un solo título principal por página (ayuda en Google)." : undefined} />
+            <Opciones label="Tamaño" value={bloque.tamano} options={[{ id: "normal", label: "Normal" }, { id: "grande", label: "Grande" }]} onChange={(tamano) => onChange({ tamano })} />
+          </div>
+          <Texto label="Texto" value={bloque.texto} max={3000} multiline onChange={(texto) => onChange({ texto })} hint="**negrita**, *cursiva*, listas con “- ”, subtítulos con “### ” y enlaces [texto](https://…)." />
+          <ImageUpload label="Imagen (opcional)" folder="comercios" shape="wide" value={bloque.imagen_url ?? ""} onChange={(imagen_url) => onChange({ imagen_url: imagen_url || undefined, ...(imagen_url && bloque.imagen_pos === "ninguna" ? { imagen_pos: "derecha" } : {}) })} className="max-w-sm" />
+          {bloque.imagen_url && (
+            <>
+              <Opciones label="Posición de la imagen" value={bloque.imagen_pos} options={[{ id: "izquierda", label: "Izquierda" }, { id: "derecha", label: "Derecha" }, { id: "arriba", label: "Arriba" }, { id: "ninguna", label: "No mostrar" }]} onChange={(imagen_pos) => onChange({ imagen_pos })} />
+              <Opciones label="Forma" value={bloque.imagen_forma} options={[{ id: "horizontal", label: "Horizontal" }, { id: "cuadrada", label: "Cuadrada" }, { id: "vertical", label: "Vertical" }, { id: "original", label: "Original" }]} onChange={(imagen_forma) => onChange({ imagen_forma })} />
+            </>
+          )}
+          <BotonesEditor value={bloque.botones} sitio={sitio} onChange={(botones) => onChange({ botones })} />
+        </div>
+      );
     case "servicios":
       return (
         <div className="space-y-4">
@@ -111,6 +135,8 @@ export function BlockSettings({ bloque, categorias, colecciones = [], onChange }
             </Campo>
           )}
           <Numero label="Cantidad de productos" value={bloque.cantidad} min={2} max={12} onChange={(cantidad) => onChange({ cantidad })} />
+          <Opciones label="Presentación" value={bloque.estilo} options={[{ id: "grilla", label: "Grilla" }, { id: "carrusel", label: "Carrusel" }]} onChange={(estilo) => onChange({ estilo })} hint={bloque.estilo === "carrusel" ? "Se desliza de costado; en celular se ve una tarjeta y media." : undefined} />
+          {bloque.estilo === "grilla" && <Opciones label="En celular" value={bloque.movil} options={[{ id: 2, label: "2 por fila" }, { id: 1, label: "1 por fila" }]} onChange={(movil) => onChange({ movil })} />}
           <Numero label="Columnas en pantalla grande" value={bloque.columnas} min={2} max={5} onChange={(columnas) => onChange({ columnas })} />
         </div>
       );
@@ -127,6 +153,8 @@ export function BlockSettings({ bloque, categorias, colecciones = [], onChange }
         <div className="space-y-4">
           <Texto label="Título" value={bloque.titulo} max={80} onChange={(titulo) => onChange({ titulo })} />
           <Opciones label="Columnas" value={bloque.columnas} options={[{ id: 2, label: "2" }, { id: 3, label: "3" }, { id: 4, label: "4" }]} onChange={(columnas) => onChange({ columnas })} />
+          <Opciones label="Forma de las fotos" value={bloque.forma} options={[{ id: "cuadrada", label: "Cuadradas" }, { id: "vertical", label: "Verticales" }, { id: "horizontal", label: "Horizontales" }, { id: "mosaico", label: "Mosaico" }]} onChange={(forma) => onChange({ forma })} hint={bloque.forma === "mosaico" ? "La primera foto ocupa el doble." : undefined} />
+          <Opciones label="En celular" value={bloque.movil} options={[{ id: 2, label: "2 por fila" }, { id: 1, label: "1 por fila" }]} onChange={(movil) => onChange({ movil })} />
           <ul className="space-y-3">
             {bloque.imagenes.map((imagen, index) => (
               <li key={`${imagen.url}-${index}`} className="flex items-start gap-3 rounded-xl border p-2">

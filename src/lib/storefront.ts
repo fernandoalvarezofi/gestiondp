@@ -6,6 +6,9 @@
  * Todo lo que viene de la base se vuelve a validar acá antes de usarse en estilos, enlaces o imágenes.
  */
 
+import { Boton, EstiloSeccion, normalizeBotones, normalizeEstilo } from "./storefrontSecciones";
+export type { Boton, Destino, EstiloSeccion } from "./storefrontSecciones";
+
 export type Plantilla = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado" | "estudio" | "taller";
 export type Seccion = "categorias" | "destacados" | "catalogo" | "acerca" | "opiniones" | "contacto";
 
@@ -25,6 +28,16 @@ export type Diseno = {
   aspecto: "1 / 1" | "4 / 5" | "3 / 4" | "16 / 10";
   descripcion: boolean;
   cabecera: "izquierda" | "centro";
+  /** Color de las superficies (tarjetas, cajas). Sin valor: blanco en páginas claras, gris muy oscuro en oscuras. */
+  superficie?: string;
+  /** Cómo se separan las tarjetas del fondo. */
+  tarjeta: "borde" | "sombra" | "plana";
+  /** Tamaño de los títulos de sección. */
+  escala: "chica" | "media" | "grande";
+  /** Grosor de los títulos. */
+  peso: "normal" | "negrita" | "black";
+  /** Títulos en mayúsculas espaciadas. */
+  mayusculas: boolean;
 };
 
 export const RADIOS: Record<Radio, { nombre: string; css: string }> = {
@@ -57,7 +70,8 @@ export const ASPECTOS: { id: Diseno["aspecto"]; nombre: string }[] = [
 // ---------------------------------------------------------------- bloques
 export type EstiloPortada = "boutique" | "galeria" | "impacto" | "gourmet" | "atelier" | "urbano" | "mercado" | "estudio" | "taller" | "simple";
 export type EnlaceTipo = "catalogo" | "whatsapp" | "url";
-type Base = { id: string; visible: boolean };
+/** Todas las secciones comparten id, visibilidad y estilo de sección (fondo, márgenes, ancho, dispositivo, ancla). */
+type Base = { id: string; visible: boolean; est?: EstiloSeccion };
 
 export type BloquePortada = Base & { tipo: "portada"; estilo: EstiloPortada; imagen_url?: string; titulo?: string; subtitulo?: string; boton?: string; alineacion: "izquierda" | "centro"; alto: "chico" | "medio" | "grande"; oscurecer: number };
 export type BloqueTexto = Base & { tipo: "texto"; titulo?: string; texto?: string; alineacion: "izquierda" | "centro"; fondo: "ninguno" | "suave" | "color" };
@@ -65,12 +79,12 @@ export type BloqueImagenTexto = Base & { tipo: "imagen_texto"; imagen_url?: stri
 export type BloqueBanner = Base & { tipo: "banner"; imagen_url?: string; titulo?: string; texto?: string; boton?: string; enlace_tipo: EnlaceTipo; enlace_url?: string; alto: "chico" | "medio" | "grande" };
 export type BloqueColecciones = Base & { tipo: "colecciones"; titulo?: string; estilo: "tarjetas" | "circulos" | "lista" };
 export type FuenteProductos = "destacados" | "categoria" | "todos" | "coleccion" | "nuevos" | "ofertas";
-export type BloqueProductos = Base & { tipo: "productos"; titulo?: string; fuente: FuenteProductos; categoria?: string; coleccion?: string; cantidad: number; columnas: number };
+export type BloqueProductos = Base & { tipo: "productos"; titulo?: string; fuente: FuenteProductos; categoria?: string; coleccion?: string; cantidad: number; columnas: number; movil: 1 | 2; estilo: "grilla" | "carrusel" };
 /** Servicios con reserva de turnos (solo se muestra si el local ofrece turnos). */
 export type BloqueServicios = Base & { tipo: "servicios"; titulo?: string; texto?: string; cantidad: number; estilo: "tarjetas" | "lista" };
 export type BloqueCatalogo = Base & { tipo: "catalogo"; titulo?: string; columnas: number; filtros: boolean };
 export type GaleriaItem = { url: string; texto?: string };
-export type BloqueGaleria = Base & { tipo: "galeria"; titulo?: string; imagenes: GaleriaItem[]; columnas: number };
+export type BloqueGaleria = Base & { tipo: "galeria"; titulo?: string; imagenes: GaleriaItem[]; columnas: number; movil: 1 | 2; forma: "cuadrada" | "vertical" | "horizontal" | "mosaico" };
 export type Icono = "envio" | "pago" | "calidad" | "tiempo" | "soporte" | "local";
 export type ConfianzaItem = { icono: Icono; titulo: string; texto?: string };
 export type BloqueConfianza = Base & { tipo: "confianza"; items: ConfianzaItem[] };
@@ -97,7 +111,17 @@ export type BloqueUbicacion = Base & { tipo: "ubicacion"; titulo?: string; mapa:
 /** Formulario de consulta: lo que se envía entra al CRM del local como cliente con una tarea para responder. */
 export type BloqueFormulario = Base & { tipo: "formulario"; titulo?: string; texto?: string; boton?: string; pedir_telefono: boolean };
 
-export type Bloque = BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueCinta | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador | BloqueServicios
+/**
+ * Contenido flexible: antetítulo, título con nivel, texto con formato (negrita, listas, enlaces), imagen en cuatro posiciones
+ * y hasta dos botones con cualquier destino de la tienda. Es la pieza con la que se arman secciones a medida.
+ */
+export type BloqueContenido = Base & {
+  tipo: "contenido"; antetitulo?: string; titulo?: string; nivel: "h1" | "h2" | "h3"; texto?: string;
+  imagen_url?: string; imagen_pos: "ninguna" | "arriba" | "izquierda" | "derecha"; imagen_forma: "original" | "cuadrada" | "horizontal" | "vertical";
+  botones: Boton[]; tamano: "normal" | "grande";
+};
+
+export type Bloque = BloqueContenido | BloquePortada | BloqueTexto | BloqueImagenTexto | BloqueBanner | BloqueColecciones | BloqueProductos | BloqueCatalogo | BloqueGaleria | BloqueConfianza | BloqueFaq | BloqueOpiniones | BloqueCinta | BloqueNewsletter | BloquePoliticas | BloqueOferta | BloqueVideo | BloqueContacto | BloqueSeparador | BloqueServicios
   | BloqueTestimonios | BloqueCta | BloqueColumnas | BloqueUbicacion | BloqueFormulario;
 export type BloqueTipo = Bloque["tipo"];
 
@@ -144,12 +168,39 @@ export function menuHref(slug: string, item: MenuItem): string {
     case "url": return item.destino ?? base;
   }
 }
+export type Cabecera = { fija: boolean; transparente: boolean };
+export type ColumnaPie = { titulo: string; enlaces: MenuItem[] };
+/** Columnas del pie (mismas reglas que el servidor). */
+export function normalizePie(raw: unknown): ColumnaPie[] {
+  if (!Array.isArray(raw)) return [];
+  return raw.slice(0, 3).map((el): ColumnaPie | null => {
+    const e = (el && typeof el === "object" ? el : {}) as Record<string, unknown>;
+    const titulo = text(e.titulo, 30);
+    const enlaces = normalizeMenu(e.enlaces).slice(0, 8);
+    return titulo || enlaces.length ? { titulo, enlaces } : null;
+  }).filter((c): c is ColumnaPie => c !== null);
+}
 export type CatalogoOrden = "relevancia" | "recientes" | "precio_asc" | "precio_desc" | "nombre";
 export const CATALOGO_ORDENES: { id: CatalogoOrden; nombre: string }[] = [
   { id: "relevancia", nombre: "Destacados primero" }, { id: "recientes", nombre: "Más nuevos" }, { id: "precio_asc", nombre: "Menor precio" }, { id: "precio_desc", nombre: "Mayor precio" }, { id: "nombre", nombre: "Nombre (A-Z)" },
 ];
 
+export type GrupoBloque = "inicio" | "contenido" | "comercio" | "confianza" | "contacto";
+export const GRUPOS_BLOQUE: { id: GrupoBloque; nombre: string }[] = [
+  { id: "inicio", nombre: "Portadas y anuncios" }, { id: "contenido", nombre: "Contenido" }, { id: "comercio", nombre: "Productos y servicios" },
+  { id: "confianza", nombre: "Confianza y conversión" }, { id: "contacto", nombre: "Contacto e información" },
+];
+const GRUPO_DE: Record<BloqueTipo, GrupoBloque> = {
+  portada: "inicio", banner: "inicio", cinta: "inicio", oferta: "inicio", cta: "inicio",
+  contenido: "contenido", texto: "contenido", imagen_texto: "contenido", columnas: "contenido", galeria: "contenido", video: "contenido", separador: "contenido",
+  productos: "comercio", catalogo: "comercio", colecciones: "comercio", servicios: "comercio",
+  confianza: "confianza", opiniones: "confianza", testimonios: "confianza", newsletter: "confianza", faq: "confianza",
+  contacto: "contacto", ubicacion: "contacto", formulario: "contacto", politicas: "contacto",
+};
+export const grupoDe = (tipo: BloqueTipo) => GRUPO_DE[tipo];
+
 export const TIPOS_BLOQUE: { tipo: BloqueTipo; nombre: string; detalle: string; unico?: boolean }[] = [
+  { tipo: "contenido", nombre: "Texto, imagen y botones", detalle: "Título, texto con formato, imagen y botones: la sección para armar lo que quieras" },
   { tipo: "portada", nombre: "Portada", detalle: "Lo primero que se ve: foto grande, título y botón", unico: true },
   { tipo: "banner", nombre: "Banner de oferta", detalle: "Una imagen ancha con mensaje y botón" },
   { tipo: "colecciones", nombre: "Colecciones", detalle: "Tus categorías como tarjetas con foto" },
@@ -213,6 +264,11 @@ export type TiendaTema = {
   mostrar_busqueda?: boolean;
   /** Texto libre del pie de página. */
   pie?: string;
+  /** Encabezado: fijo al bajar y transparente sobre una portada con foto. */
+  cabecera?: Cabecera;
+  /** Columnas de enlaces del pie (hasta 3). Si `pie_auto` es true, además se muestran los enlaces automáticos. */
+  pie_columnas?: ColumnaPie[];
+  pie_auto?: boolean;
   /** Analítica propia del comercio (se cargan solo con consentimiento de medición). */
   pixel_meta?: string;
   ga4?: string;
@@ -242,24 +298,24 @@ export const SECCIONES_BASE: Seccion[] = ["categorias", "destacados", "catalogo"
 
 export const COLORES = ["#1F2A44", "#F2402A", "#0F766E", "#7C3AED", "#BE185D", "#B45309", "#15803D", "#111827"];
 
-const DISENO_BASE: Diseno = { radio: "redondo", boton: "relleno", fuente_titulos: "sans", fuente_texto: "sans", ancho: "normal", espaciado: "normal", aspecto: "4 / 5", descripcion: false, cabecera: "izquierda" };
+const DISENO_BASE: Diseno = { radio: "redondo", boton: "relleno", fuente_titulos: "sans", fuente_texto: "sans", ancho: "normal", espaciado: "normal", aspecto: "4 / 5", descripcion: false, cabecera: "izquierda", tarjeta: "borde", escala: "media", peso: "black", mayusculas: false };
 
 /** Diseño inicial de cada plantilla (lo que antes estaba fijo en el código). */
 export const DISENO_PLANTILLA: Record<Plantilla, Diseno> = {
-  boutique: { ...DISENO_BASE, radio: "suave", aspecto: "4 / 5" },
-  galeria: { ...DISENO_BASE, radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "editorial", espaciado: "amplio", cabecera: "centro" },
-  impacto: { ...DISENO_BASE, radio: "pildora", aspecto: "1 / 1", fuente_titulos: "sans" },
-  gourmet: { ...DISENO_BASE, radio: "redondo", aspecto: "1 / 1", fuente_titulos: "serif", fuente_texto: "serif", descripcion: true },
+  boutique: { ...DISENO_BASE, radio: "suave", aspecto: "4 / 5", peso: "negrita" },
+  galeria: { ...DISENO_BASE, radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "editorial", espaciado: "amplio", cabecera: "centro", tarjeta: "plana", escala: "grande", peso: "normal" },
+  impacto: { ...DISENO_BASE, radio: "pildora", aspecto: "1 / 1", fuente_titulos: "sans", tarjeta: "sombra", escala: "grande" },
+  gourmet: { ...DISENO_BASE, radio: "redondo", aspecto: "1 / 1", fuente_titulos: "serif", fuente_texto: "serif", descripcion: true, peso: "negrita", tarjeta: "plana" },
   // Atelier: papel cálido, tipografía editorial, líneas finas y mucho aire. Pensada para moda, decoración y objetos de autor.
-  atelier: { ...DISENO_BASE, fondo: "#FAF7F2", texto: "#1C1917", radio: "cuadrado", boton: "contorno", aspecto: "3 / 4", fuente_titulos: "editorial", ancho: "amplio", espaciado: "amplio", cabecera: "centro" },
+  atelier: { ...DISENO_BASE, fondo: "#FAF7F2", texto: "#1C1917", superficie: "#FFFDF9", radio: "cuadrado", boton: "contorno", aspecto: "3 / 4", fuente_titulos: "editorial", ancho: "amplio", espaciado: "amplio", cabecera: "centro", tarjeta: "plana", escala: "grande", peso: "normal" },
   // Urbano: fondo negro, titulares condensados y color de acento fuerte. Pensada para streetwear, tecnología, bebidas y deportes.
-  urbano: { ...DISENO_BASE, fondo: "#0A0A0B", texto: "#F4F4F5", radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "display", ancho: "amplio" },
+  urbano: { ...DISENO_BASE, fondo: "#0A0A0B", texto: "#F4F4F5", superficie: "#17171A", radio: "cuadrado", aspecto: "3 / 4", fuente_titulos: "display", ancho: "amplio", tarjeta: "plana", escala: "grande", peso: "normal", mayusculas: true },
   // Mercado: denso y directo, con ofertas y categorías a la vista como en un marketplace. Pensada para súper, kioscos, ferretería y catálogos grandes.
-  mercado: { ...DISENO_BASE, radio: "suave", aspecto: "1 / 1", fuente_titulos: "sans", ancho: "amplio", espaciado: "compacto" },
+  mercado: { ...DISENO_BASE, fondo: "#F5F6F8", superficie: "#FFFFFF", radio: "suave", aspecto: "1 / 1", fuente_titulos: "sans", ancho: "amplio", espaciado: "compacto", tarjeta: "borde", escala: "chica", peso: "negrita" },
   // Estudio: fondo cálido muy claro, letras amistosas, mucho aire; pensada para belleza, bienestar y servicios con turnos.
-  estudio: { ...DISENO_BASE, fondo: "#FBF7F4", texto: "#2B2321", radio: "pildora", aspecto: "4 / 5", fuente_titulos: "redondeada", espaciado: "amplio", cabecera: "centro" },
+  estudio: { ...DISENO_BASE, fondo: "#FBF7F4", texto: "#2B2321", superficie: "#FFFFFF", radio: "pildora", aspecto: "4 / 5", fuente_titulos: "redondeada", espaciado: "amplio", cabecera: "centro", tarjeta: "sombra", peso: "negrita" },
   // Taller: papel kraft, tipografía editorial y tarjetas cuadradas tipo polaroid; artesanías, hogar y regalos.
-  taller: { ...DISENO_BASE, fondo: "#F3ECE0", texto: "#2F2A22", radio: "cuadrado", aspecto: "1 / 1", fuente_titulos: "editorial", fuente_texto: "serif", descripcion: false },
+  taller: { ...DISENO_BASE, fondo: "#F3ECE0", texto: "#2F2A22", superficie: "#FBF7EF", radio: "cuadrado", aspecto: "1 / 1", fuente_titulos: "editorial", fuente_texto: "serif", descripcion: false, tarjeta: "sombra", peso: "negrita" },
 };
 
 export const TEMA_BASE = {
@@ -326,14 +382,15 @@ const ICONOS_IDS = ICONOS.map((item) => item.id);
 export function bloqueNuevo(tipo: BloqueTipo, plantilla: Plantilla = "boutique"): Bloque {
   const base = { id: nuevoId(), visible: true };
   switch (tipo) {
+    case "contenido": return { ...base, tipo, antetitulo: "Nuestra historia", titulo: "Un título claro para esta sección", nivel: "h2", texto: "Contá en pocas líneas lo importante. Podés usar **negrita**, listas con guiones y enlaces.", imagen_pos: "derecha", imagen_forma: "horizontal", botones: [{ texto: "Ver productos", destino: { tipo: "catalogo" }, estilo: "primario" }], tamano: "normal" };
     case "portada": return { ...base, tipo, estilo: plantilla, alineacion: "izquierda", alto: "grande", oscurecer: 55 };
     case "texto": return { ...base, tipo, titulo: "Un título para tu mensaje", texto: "Escribí acá lo que quieras contarle a tus clientes.", alineacion: "centro", fondo: "ninguno" };
     case "imagen_texto": return { ...base, tipo, lado: "izquierda", titulo: "Hecho con dedicación", texto: "Contá qué te hace distinto y por qué tus clientes te eligen.", boton: "Ver productos", enlace_tipo: "catalogo" };
     case "banner": return { ...base, tipo, titulo: "Ofertas de la semana", texto: "Aprovechá precios especiales por tiempo limitado.", boton: "Ver ofertas", enlace_tipo: "catalogo", alto: "medio" };
     case "colecciones": return { ...base, tipo, titulo: "Colecciones", estilo: plantilla === "gourmet" ? "circulos" : "tarjetas" };
-    case "productos": return { ...base, tipo, titulo: "Destacados", fuente: "destacados", cantidad: 4, columnas: 4 };
+    case "productos": return { ...base, tipo, titulo: "Destacados", fuente: "destacados", cantidad: 4, columnas: 4, movil: 2, estilo: "grilla" };
     case "catalogo": return { ...base, tipo, titulo: "Todos los productos", columnas: 4, filtros: true };
-    case "galeria": return { ...base, tipo, titulo: "Galería", imagenes: [], columnas: 3 };
+    case "galeria": return { ...base, tipo, titulo: "Galería", imagenes: [], columnas: 3, movil: 2, forma: "cuadrada" };
     case "confianza": return { ...base, tipo, items: [{ icono: "envio", titulo: "Envío a domicilio", texto: "Te lo llevamos a tu puerta" }, { icono: "pago", titulo: "Pagá como quieras", texto: "Efectivo o tarjeta" }, { icono: "calidad", titulo: "Calidad asegurada", texto: "Productos frescos todos los días" }] };
     case "faq": return { ...base, tipo, titulo: "Preguntas frecuentes", items: [{ p: "¿Hacen envíos?", r: "Sí, llegamos a toda la zona cercana al local." }] };
     case "opiniones": return { ...base, tipo, titulo: "Lo que dicen nuestros clientes" };
@@ -357,16 +414,22 @@ export function bloqueNuevo(tipo: BloqueTipo, plantilla: Plantilla = "boutique")
 export function normalizeBloque(raw: unknown, index: number): Bloque | null {
   if (!raw || typeof raw !== "object") return null;
   const s = raw as Record<string, unknown>;
-  const base = { id: idOf(s.id, index), visible: s.visible !== false };
+  const est = normalizeEstilo(s.est);
+  const base = { id: idOf(s.id, index), visible: s.visible !== false, ...(est ? { est } : {}) };
   const opt = (value: unknown, max: number) => text(value, max) || undefined;
   const enlace = { enlace_tipo: pick(s.enlace_tipo, ENLACES, "catalogo"), enlace_url: httpsUrl(s.enlace_url, 300) || undefined };
   switch (s.tipo) {
+    case "contenido": return {
+      ...base, tipo: "contenido", antetitulo: opt(s.antetitulo, 60), titulo: opt(s.titulo, 120), nivel: pick(s.nivel, ["h1", "h2", "h3"] as const, "h2"), texto: opt(s.texto, 3000),
+      imagen_url: httpsUrl(s.imagen_url) || undefined, imagen_pos: httpsUrl(s.imagen_url) ? pick(s.imagen_pos, ["ninguna", "arriba", "izquierda", "derecha"] as const, "derecha") : "ninguna",
+      imagen_forma: pick(s.imagen_forma, ["original", "cuadrada", "horizontal", "vertical"] as const, "horizontal"), botones: normalizeBotones(s.botones), tamano: pick(s.tamano, ["normal", "grande"] as const, "normal"),
+    };
     case "portada": return { ...base, tipo: "portada", estilo: pick(s.estilo, ESTILOS_PORTADA, "simple"), imagen_url: httpsUrl(s.imagen_url) || undefined, titulo: opt(s.titulo, 80), subtitulo: opt(s.subtitulo, 200), boton: opt(s.boton, 24), alineacion: pick(s.alineacion, ALINEACIONES, "izquierda"), alto: pick(s.alto, ALTOS, "grande"), oscurecer: clampInt(s.oscurecer, 0, 80, 55) };
     case "texto": return { ...base, tipo: "texto", titulo: opt(s.titulo, 80), texto: opt(s.texto, 800), alineacion: pick(s.alineacion, ALINEACIONES, "centro"), fondo: pick(s.fondo, FONDOS_TEXTO, "ninguno") };
     case "imagen_texto": return { ...base, tipo: "imagen_texto", imagen_url: httpsUrl(s.imagen_url) || undefined, lado: pick(s.lado, ["izquierda", "derecha"] as const, "izquierda"), titulo: opt(s.titulo, 80), texto: opt(s.texto, 600), boton: opt(s.boton, 24), ...enlace };
     case "banner": return { ...base, tipo: "banner", imagen_url: httpsUrl(s.imagen_url) || undefined, titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), boton: opt(s.boton, 24), alto: pick(s.alto, ALTOS, "medio"), ...enlace };
     case "colecciones": return { ...base, tipo: "colecciones", titulo: opt(s.titulo, 80), estilo: pick(s.estilo, ["tarjetas", "circulos", "lista"] as const, "tarjetas") };
-    case "productos": return { ...base, tipo: "productos", titulo: opt(s.titulo, 80), fuente: pick(s.fuente, FUENTES_PRODUCTOS, "destacados"), categoria: opt(s.categoria, 60), coleccion: typeof s.coleccion === "string" && SLUG_RE.test(s.coleccion) ? s.coleccion.slice(0, 70) : undefined, cantidad: clampInt(s.cantidad, 2, 12, 4), columnas: clampInt(s.columnas, 2, 5, 4) };
+    case "productos": return { ...base, tipo: "productos", titulo: opt(s.titulo, 80), fuente: pick(s.fuente, FUENTES_PRODUCTOS, "destacados"), categoria: opt(s.categoria, 60), coleccion: typeof s.coleccion === "string" && SLUG_RE.test(s.coleccion) ? s.coleccion.slice(0, 70) : undefined, cantidad: clampInt(s.cantidad, 2, 12, 4), columnas: clampInt(s.columnas, 2, 5, 4), movil: s.movil === 1 ? 1 : 2, estilo: pick(s.estilo, ["grilla", "carrusel"] as const, "grilla") };
     case "servicios": return { ...base, tipo: "servicios", titulo: opt(s.titulo, 80), texto: opt(s.texto, 200), cantidad: clampInt(s.cantidad, 1, 12, 6), estilo: pick(s.estilo, ["tarjetas", "lista"] as const, "tarjetas") };
     case "catalogo": return { ...base, tipo: "catalogo", titulo: opt(s.titulo, 80), columnas: clampInt(s.columnas, 2, 5, 4), filtros: s.filtros !== false };
     case "galeria": {
@@ -375,7 +438,7 @@ export function normalizeBloque(raw: unknown, index: number): Bloque | null {
         const url = httpsUrl(entry.url);
         return url ? { url, texto: opt(entry.texto, 80) } : null;
       }).filter((item): item is GaleriaItem => item !== null);
-      return { ...base, tipo: "galeria", titulo: opt(s.titulo, 80), imagenes, columnas: clampInt(s.columnas, 2, 4, 3) };
+      return { ...base, tipo: "galeria", titulo: opt(s.titulo, 80), imagenes, columnas: clampInt(s.columnas, 2, 4, 3), movil: s.movil === 1 ? 1 : 2, forma: pick(s.forma, ["cuadrada", "vertical", "horizontal", "mosaico"] as const, "cuadrada") };
     }
     case "confianza": {
       const items = (Array.isArray(s.items) ? s.items : []).slice(0, 4).map((item): ConfianzaItem | null => {
@@ -598,6 +661,11 @@ export function normalizeDiseno(raw: unknown, plantilla: Plantilla, tipografia: 
     aspecto: pick(source.aspecto, ASPECTOS.map((item) => item.id), base.aspecto),
     descripcion: typeof source.descripcion === "boolean" ? source.descripcion : base.descripcion,
     cabecera: pick(source.cabecera, ["izquierda", "centro"] as const, base.cabecera),
+    superficie: color(source.superficie) ?? base.superficie,
+    tarjeta: pick(source.tarjeta, ["borde", "sombra", "plana"] as const, base.tarjeta),
+    escala: pick(source.escala, ["chica", "media", "grande"] as const, base.escala),
+    peso: pick(source.peso, ["normal", "negrita", "black"] as const, base.peso),
+    mayusculas: typeof source.mayusculas === "boolean" ? source.mayusculas : base.mayusculas,
   };
 }
 
@@ -635,6 +703,9 @@ export function normalizeTheme(raw: unknown): TemaNormalizado {
     catalogo_orden: pick(source.catalogo_orden, CATALOGO_ORDENES.map((o) => o.id), "relevancia"),
     mostrar_busqueda: source.mostrar_busqueda !== false,
     pie: text(source.pie, 300) || undefined,
+    cabecera: { fija: (source.cabecera as Record<string, unknown> | undefined)?.fija !== false, transparente: (source.cabecera as Record<string, unknown> | undefined)?.transparente === true },
+    pie_columnas: normalizePie(source.pie_columnas),
+    pie_auto: source.pie_auto !== false,
     pixel_meta: /^[0-9]{8,20}$/.test(text(source.pixel_meta, 20)) ? text(source.pixel_meta, 20) : undefined,
     ga4: /^G-[A-Z0-9]{4,14}$/.test(text(source.ga4, 16)) ? text(source.ga4, 16) : undefined,
   };

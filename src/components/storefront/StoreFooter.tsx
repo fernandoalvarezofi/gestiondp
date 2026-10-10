@@ -7,9 +7,11 @@ import { DeliveryStore, db, scheduleSummary } from "@/lib/delivery";
 
 type Enlace = { label: string; onClick: () => void };
 type Red = { href: string; label: string; icon: ReactNode };
+/** Columna de enlaces armada por el comercio (Menú y pie). */
+export type ColumnaPieVista = { titulo: string; enlaces: { label: string; href: string; externo: boolean }[] };
 
 /** Pie de página completo de la tienda: marca, navegación, datos del local, medios de pago y redes. */
-export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie }: { store: DeliveryStore; enlaces: Enlace[]; redes: Red[]; preview?: boolean; widthClass: string; pie?: string }) {
+export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie, columnas = [], auto = true }: { store: DeliveryStore; enlaces: Enlace[]; redes: Red[]; preview?: boolean; widthClass: string; pie?: string; columnas?: ColumnaPieVista[]; auto?: boolean }) {
   const [pagoOnline, setPagoOnline] = useState(false);
   useEffect(() => {
     if (preview) return;
@@ -26,7 +28,7 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie }:
 
   return (
     <footer className="mt-4 border-t bg-card text-card-foreground">
-      <div className={`mx-auto grid gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 lg:grid-cols-4 ${widthClass}`}>
+      <div className={`mx-auto grid gap-8 px-4 py-10 sm:px-6 md:grid-cols-2 ${columnas.length + (auto ? 1 : 0) + 3 > 4 ? "lg:grid-cols-5" : "lg:grid-cols-4"} ${widthClass}`}>
         <div className="space-y-3">
           <div className="flex items-center gap-3"><StoreLogo store={store} className="h-10 w-10" /><p className="text-lg font-extrabold">{store.nombre}</p></div>
           {(pie || store.descripcion) && <p className="line-clamp-4 whitespace-pre-line text-sm text-muted-foreground">{pie || store.descripcion}</p>}
@@ -39,11 +41,26 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie }:
           )}
         </div>
 
-        {enlaces.length > 0 && (
+        {columnas.map((col, i) => (
+          <nav key={i} aria-label={col.titulo || "Enlaces"}>
+            {col.titulo && <h2 className="text-sm font-extrabold uppercase tracking-wide">{col.titulo}</h2>}
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              {col.enlaces.map((e, j) => (
+                <li key={j}>
+                  {preview ? <span>{e.label}</span>
+                    : e.externo ? <a href={e.href} target="_blank" rel="noopener noreferrer" className="hover:text-foreground">{e.label}</a>
+                    : <Link to={e.href} className="hover:text-foreground">{e.label}</Link>}
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))}
+
+        {auto && enlaces.length > 0 && (
           <nav aria-label="Navegación de la tienda">
             <h2 className="text-sm font-extrabold uppercase tracking-wide">Tienda</h2>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              {enlaces.map((e, i) => <li key={`${e.label}-${i}`}><button type="button" onClick={e.onClick} className="text-left hover:text-foreground">{e.label}</button></li>)}
+              {enlaces.filter((e, i) => enlaces.findIndex((x) => x.label === e.label) === i).map((e, i) => <li key={`${e.label}-${i}`}><button type="button" onClick={e.onClick} className="text-left hover:text-foreground">{e.label}</button></li>)}
             </ul>
           </nav>
         )}

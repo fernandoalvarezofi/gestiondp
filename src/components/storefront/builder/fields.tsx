@@ -23,7 +23,7 @@ export function Texto({ label, value, onChange, max, placeholder, multiline, hin
       {multiline
         ? <Textarea id={id} value={value ?? ""} maxLength={max} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} className="min-h-[88px]" />
         : <Input id={id} value={value ?? ""} maxLength={max} placeholder={placeholder} onChange={(event) => onChange(event.target.value)} />}
-      <p className="flex justify-between text-xs text-muted-foreground"><span>{hint}</span>{multiline && <span>{(value ?? "").length}/{max}</span>}</p>
+      <p className="flex justify-between gap-3 text-xs text-muted-foreground"><span className="min-w-0">{hint}</span>{multiline && <span className="shrink-0 tabular-nums">{(value ?? "").length}/{max}</span>}</p>
     </div>
   );
 }

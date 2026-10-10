@@ -148,3 +148,21 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after 
   body.printing-poster > *:not(#poster-print) { display: none !important; }
   body.printing-poster > #poster-print { display: block !important; width: 210mm; height: 297mm; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+
+/* ---- Tienda online: tokens del tema aplicados por CSS ----------------------------------------------------------------
+   Estilo de tarjeta del tema: todas las cajas de la tienda (borde + superficie) siguen el mismo criterio. */
+[data-sf-tarjeta="sombra"] .border.bg-card { border-color: transparent; box-shadow: var(--shadow-soft); }
+[data-sf-tarjeta="plana"] .border.bg-card { border-color: transparent; }
+/* Una sección clara dentro de una página oscura vuelve a los colores claros (la oscura usa la clase .dark). */
+.sf-claro {
+  --background: 0 0% 100%; --foreground: 250 20% 11%; --card: 0 0% 100%; --card-foreground: 250 20% 11%;
+  --muted: 240 7% 94%; --muted-foreground: 245 6% 42%; --border: 240 8% 90%; --input: 240 8% 86%;
+  color: hsl(var(--foreground));
+}
+/* Visibilidad por dispositivo de cada sección (el editor la respeta en su vista previa por ancho real). */
+@media (max-width: 767px) { [data-sf-ver="escritorio"] { display: none !important; } }
+@media (min-width: 768px) { [data-sf-ver="movil"] { display: none !important; } }
+/* Carrusel horizontal de productos con desplazamiento por toque. */
+.sf-carrusel { display: grid; grid-auto-flow: column; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.sf-carrusel::-webkit-scrollbar { display: none; }
+.sf-carrusel > * { scroll-snap-align: start; }

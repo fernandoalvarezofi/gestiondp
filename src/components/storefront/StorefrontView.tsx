@@ -10,7 +10,8 @@ import { useAddressPoint } from "@/hooks/useAddressPoint";
 import { useTariff } from "@/hooks/useTariff";
 import { DeliveryProduct, DeliverySection, DeliveryStore, isOpenNow, money, nextOpening, orderSections, scheduleSummary } from "@/lib/delivery";
 import { storeReach } from "@/lib/geo";
-import { Bloque, BloqueBanner, BloqueCatalogo, CatalogoOrden, menuHref, normalizeBloque, readableOn, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { Bloque, BloqueBanner, BloqueCatalogo, BloqueContenido, Boton as BotonDato, CatalogoOrden, menuHref, normalizeBloque, readableOn, videoEmbed, BloqueImagenTexto, BloquePortada, Icono, normalizeTheme, TemaNormalizado, TIPOS_BLOQUE, whatsappLink } from "@/lib/storefront";
+import { destinoHref, ESCALA_ESPACIO, fondoOscuro } from "@/lib/storefrontSecciones";
 import { RichText } from "@/components/storefront/RichText";
 import { CalendarCheck } from "lucide-react";
 import { estiloTienda } from "@/lib/storefrontStyle";
@@ -66,6 +67,16 @@ const COLUMNAS: Record<number, string> = {
   4: "grid-cols-2 md:grid-cols-3 lg:grid-cols-4",
   5: "grid-cols-2 md:grid-cols-3 lg:grid-cols-5",
 };
+/** Carrusel: ancho de cada tarjeta según las columnas elegidas (en celular se ve una y media). */
+const CARRUSEL: Record<number, string> = {
+  2: "auto-cols-[70%] sm:auto-cols-[calc((100%-1rem)/2)]",
+  3: "auto-cols-[70%] sm:auto-cols-[45%] lg:auto-cols-[calc((100%-2rem)/3)]",
+  4: "auto-cols-[70%] sm:auto-cols-[40%] lg:auto-cols-[calc((100%-3rem)/4)]",
+  5: "auto-cols-[60%] sm:auto-cols-[35%] lg:auto-cols-[calc((100%-4rem)/5)]",
+};
+const ANCHO_SECCION = { estrecho: "max-w-3xl", normal: "max-w-6xl", amplio: "max-w-7xl", completo: "max-w-none" } as const;
+const FORMA_GALERIA = { cuadrada: "aspect-square", vertical: "aspect-[3/4]", horizontal: "aspect-[4/3]", mosaico: "aspect-square" } as const;
+const FORMA_IMAGEN = { original: "", cuadrada: "aspect-square", horizontal: "aspect-[4/3]", vertical: "aspect-[4/5]" } as const;
 const ICONOS: Record<Icono, typeof Bike> = { envio: Bike, pago: CreditCard, calidad: BadgeCheck, tiempo: Zap, soporte: Headphones, local: StoreIcon };
 const ALTO_PORTADA = { chico: "min-h-[240px] sm:min-h-[320px]", medio: "min-h-[340px] sm:min-h-[440px]", grande: "min-h-[420px] sm:min-h-[560px]" } as const;
 const ALTO_BANNER = { chico: "min-h-[140px] sm:min-h-[180px]", medio: "min-h-[200px] sm:min-h-[260px]", grande: "min-h-[280px] sm:min-h-[380px]" } as const;
@@ -100,6 +111,14 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   }, [claveVista, filtrosBase]);
   const [rango, setRango] = useState({ min: "", max: "" });
   const [drawer, setDrawer] = useState(false);
+  // Encabezado transparente sobre la portada: se vuelve sólido al bajar.
+  const [bajo, setBajo] = useState(false);
+  useEffect(() => {
+    const on = () => setBajo(window.scrollY > 40);
+    on();
+    window.addEventListener("scroll", on, { passive: true });
+    return () => window.removeEventListener("scroll", on);
+  }, []);
   const masVendidos = useMemo(() => (vendedor?.mas_vendidos ?? []).map((item) => item.producto_id), [vendedor]);
 
   const open = isOpenNow(store);
@@ -108,7 +127,12 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   const fee = deliveryFeeLabel(store, reach.fee);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
 
-  const { darkPage, pageStyle, accent, headingStyle, radiusButton, width, centered, space } = estiloTienda(theme);
+  const estilos = estiloTienda(theme);
+  const { darkPage, pageStyle, pageAttrs, accent, headingStyle, radiusButton, tituloClase } = estilos;
+  // Ancho, espacio superior y centrado se recalculan para cada sección según su estilo (ver renderSeccion); fuera de una sección valen los del tema.
+  let width = estilos.width;
+  let space = estilos.space;
+  let centered = estilos.centered;
 
   const visible = useMemo(() => {
     const value = term.trim().toLowerCase();
@@ -166,7 +190,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     return <button type="button" onClick={onClick} className="inline-flex items-center gap-2 px-6 py-3 text-base font-bold transition-opacity hover:opacity-90" style={style}>{children}</button>;
   };
   const Titulo = ({ children, id }: { children: ReactNode; id?: string }) => (
-    <h2 id={id} className={cn("mb-6 scroll-mt-24 text-2xl font-extrabold sm:text-3xl", centered && "text-center")} style={headingStyle}>{children}</h2>
+    <h2 id={id} className={cn("mb-6 scroll-mt-24 font-extrabold", tituloClase, centered && "text-center")} style={headingStyle}>{children}</h2>
   );
   const statusChip = (
     <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><span className={cn("h-2 w-2 rounded-full", open ? "bg-emerald-400" : "bg-red-400")} />{open ? "Abierto ahora" : "Cerrado"}</span>
@@ -177,8 +201,8 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     { icon: ShoppingBag, label: "Pedido mínimo", value: Number(store.pedido_minimo) > 0 ? money(store.pedido_minimo) : "Sin mínimo" },
     ...(rated ? [{ icon: Star, label: `${store.total_resenas} opiniones`, value: Number(store.rating).toFixed(1) }] : []),
   ];
-  const grid = (items: DeliveryProduct[], columnas: number) => (
-    <div className={cn("grid", d.descripcion ? "grid-cols-1 gap-x-8 md:grid-cols-2" : cn(COLUMNAS[columnas] ?? COLUMNAS[4], "gap-x-4 gap-y-8"))}>
+  const grid = (items: DeliveryProduct[], columnas: number, movil: 1 | 2 = 2, carrusel = false) => (
+    <div className={cn(carrusel ? cn("sf-carrusel gap-4 pb-2", CARRUSEL[columnas] ?? CARRUSEL[4]) : "grid", !carrusel && (d.descripcion ? "grid-cols-1 gap-x-8 md:grid-cols-2" : cn(COLUMNAS[columnas] ?? COLUMNAS[4], movil === 1 && "max-sm:grid-cols-1", "gap-x-4 gap-y-8")))}>
       {items.map((product) => <ProductCard key={product.id} product={product} store={cartStore} disabled={unavailable} variant={d.descripcion ? "row" : "shop"} badges={insignias(product, masVendidos)} href={preview ? undefined : `/t/${store.slug}/p/${product.slug || product.id}`} />)}
     </div>
   );
@@ -425,9 +449,56 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     </section>
   );
 
+  // ---- botones con destino (comunes a todas las secciones nuevas)
+  const BotonDestino = ({ boton }: { boton: BotonDato }) => {
+    const relleno = d.boton === "relleno";
+    const style: CSSProperties = boton.estilo === "enlace" ? {} : boton.estilo === "secundario" ? { border: "2px solid currentColor", ...radiusButton } : relleno ? { ...accent, ...radiusButton } : { border: "2px solid var(--sf-accent)", color: "var(--sf-accent)", ...radiusButton };
+    const clase = boton.estilo === "enlace" ? "inline-flex items-center gap-1.5 text-base font-bold underline-offset-4 hover:underline" : "inline-flex items-center gap-2 px-6 py-3 text-base font-bold transition-opacity hover:opacity-90";
+    const contenido = <>{boton.texto}{boton.estilo !== "secundario" && <ArrowRight className="h-4 w-4" />}</>;
+    const d0 = boton.destino;
+    if (d0.tipo === "reservar" && !reservaHref) return null;
+    if (d0.tipo === "whatsapp" && !theme.whatsapp) return null;
+    if (preview) return <span className={clase} style={style}>{contenido}</span>;
+    if (d0.tipo === "whatsapp") return <a href={whatsappLink(theme.whatsapp!, store.nombre)} target="_blank" rel="noopener noreferrer" className={clase} style={style}>{contenido}</a>;
+    if (d0.tipo === "ancla") return <button type="button" onClick={() => scrollToId(d0.valor ?? "")} className={clase} style={style}>{contenido}</button>;
+    if (d0.tipo === "catalogo" && esInicio && bloques.some((x) => x.tipo === "catalogo")) return <button type="button" onClick={() => go("catalogo")} className={clase} style={style}>{contenido}</button>;
+    const href = destinoHref(store.slug, d0);
+    if (!href) return null;
+    if (d0.tipo === "url") return <a href={href} target="_blank" rel="noopener noreferrer" className={clase} style={style}>{contenido}</a>;
+    return <Link to={href} className={clase} style={style}>{contenido}</Link>;
+  };
+
+  // ---- contenido flexible
+  const renderContenido = (b: BloqueContenido) => {
+    const conImagen = Boolean(b.imagen_url) && b.imagen_pos !== "ninguna";
+    const lateral = conImagen && (b.imagen_pos === "izquierda" || b.imagen_pos === "derecha");
+    const H = b.nivel;
+    const tamTitulo = H === "h1" ? (b.tamano === "grande" ? "text-5xl sm:text-7xl" : "text-4xl sm:text-6xl") : H === "h3" ? (b.tamano === "grande" ? "text-2xl sm:text-3xl" : "text-xl sm:text-2xl") : b.tamano === "grande" ? "text-3xl sm:text-5xl" : tituloClase;
+    const imagen = conImagen && (
+      <div className={cn("relative overflow-hidden bg-muted", FORMA_IMAGEN[b.imagen_forma], b.imagen_pos === "derecha" && "lg:order-2")} style={{ borderRadius: "var(--sf-radius)" }}>
+        {b.imagen_forma === "original" ? <img src={b.imagen_url} alt="" loading="lazy" className="block h-auto w-full" /> : <SmartImage src={b.imagen_url} width={1200} />}
+      </div>
+    );
+    const textos = (
+      <div className={cn(!lateral && "mx-auto max-w-3xl", centered && !lateral && "text-center")}>
+        {b.antetitulo && <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em]" style={{ color: "var(--sf-accent)" }}>{b.antetitulo}</p>}
+        {b.titulo && <H className={cn("leading-tight", tamTitulo)} style={headingStyle}>{b.titulo}</H>}
+        {b.texto && <RichText texto={b.texto} className={cn("mt-4 leading-relaxed opacity-80", b.tamano === "grande" ? "text-xl" : "text-lg")} headingStyle={headingStyle} />}
+        {b.botones.length > 0 && <div className={cn("mt-7 flex flex-wrap items-center gap-3", centered && !lateral && "justify-center")}>{b.botones.map((boton, i) => <BotonDestino key={i} boton={boton} />)}</div>}
+      </div>
+    );
+    return (
+      <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
+        {lateral ? <div className="grid items-center gap-8 lg:grid-cols-2 lg:gap-14">{imagen}{textos}</div>
+          : <div className="space-y-8">{b.imagen_pos === "arriba" && imagen}{textos}</div>}
+      </section>
+    );
+  };
+
   // ---- bloques
   const renderBloque = (b: Bloque): ReactNode => {
     switch (b.tipo) {
+      case "contenido": return renderContenido(b);
       case "portada": return renderPortada(b);
       case "banner": return renderBanner(b);
       case "imagen_texto": return renderImagenTexto(b);
@@ -486,7 +557,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         return (
           <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
             <div className="flex items-end justify-between gap-3"><Titulo>{b.titulo || tituloPorDefecto}</Titulo>{verTodo && !preview && list.length > b.cantidad && <Link to={verTodo} className="mb-6 shrink-0 text-sm font-bold underline-offset-4 hover:underline">Ver todo</Link>}</div>
-            {grid(list.slice(0, b.cantidad), b.columnas)}
+            {grid(list.slice(0, b.cantidad), b.columnas, b.movil, b.estilo === "carrusel")}
           </section>
         );
       }
@@ -644,10 +715,10 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         return (
           <section className={cn("mx-auto px-4 sm:px-6", width, space)}>
             {b.titulo && <Titulo>{b.titulo}</Titulo>}
-            <div className={cn("grid gap-3 sm:gap-4", b.columnas === 2 ? "grid-cols-2" : b.columnas === 4 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3")}>
-              {b.imagenes.map((image) => (
-                <figure key={image.url}>
-                  <div className="aspect-square overflow-hidden bg-muted" style={{ borderRadius: "var(--sf-radius)" }}><img src={image.url} alt={image.texto ?? ""} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" /></div>
+            <div className={cn("grid gap-3 sm:gap-4", b.columnas === 2 ? "grid-cols-2" : b.columnas === 4 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-2 md:grid-cols-3", b.movil === 1 && "max-sm:grid-cols-1")}>
+              {b.imagenes.map((image, i) => (
+                <figure key={image.url} className={cn(b.forma === "mosaico" && i === 0 && "col-span-2 row-span-2")}>
+                  <div className={cn(FORMA_GALERIA[b.forma] ?? "aspect-square", "overflow-hidden bg-muted", b.forma === "mosaico" && i === 0 && "h-full")} style={{ borderRadius: "var(--sf-radius)" }}><img src={image.url} alt={image.texto ?? ""} loading="lazy" className="h-full w-full object-cover transition-transform duration-500 hover:scale-105" /></div>
                   {image.texto && <figcaption className="mt-2 text-sm opacity-70">{image.texto}</figcaption>}
                 </figure>
               ))}
@@ -930,6 +1001,62 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     }
   };
 
+  // ---- marco de sección: aplica el estilo común (fondo, márgenes, ancho, alineación, dispositivo, ancla) a cualquier bloque
+  const renderSeccion = (b: Bloque): ReactNode => {
+    const est = b.est;
+    const previo = { width, space, centered };
+    width = est?.ancho ? ANCHO_SECCION[est.ancho] : estilos.width;
+    space = est?.arriba !== undefined ? "" : estilos.space;
+    centered = est?.alinear ? est.alinear === "centro" : estilos.centered;
+    const content = renderBloque(b);
+    ({ width, space, centered } = previo);
+    if (!content) return null;
+    if (!est) return content;
+    const oscuro = fondoOscuro(est, theme.color, readableOn);
+    // Sobre el color de marca, o sobre un fondo oscuro con una marca oscura, lo "de marca" (botones, antetítulos) pasa a blanco para leerse.
+    const acentoBlanco = est.fondo === "acento" || (oscuro === true && readableOn(theme.color) === "#FFFFFF");
+    const style: CSSProperties = {
+      ...(acentoBlanco ? { "--sf-accent": "#FFFFFF", "--sf-on-accent": est.fondo === "acento" ? theme.color : "#111111" } as CSSProperties : {}),
+      ...(est.arriba !== undefined ? { paddingTop: `${ESCALA_ESPACIO[est.arriba]}rem` } : {}),
+      ...(est.abajo !== undefined ? { paddingBottom: `${ESCALA_ESPACIO[est.abajo]}rem` } : {}),
+      ...(est.fondo === "suave" ? { background: "color-mix(in srgb, var(--sf-accent) 8%, hsl(var(--background)))" } : {}),
+      ...(est.fondo === "superficie" ? { background: "hsl(var(--card))" } : {}),
+      ...(est.fondo === "acento" ? { background: theme.color, color: readableOn(theme.color) } : {}),
+      ...(est.fondo === "oscuro" ? { background: "#0B0B0C" } : {}),
+      ...(est.fondo === "color" && est.color ? { background: est.color } : {}),
+    };
+    return (
+      <div id={est.ancla} className={cn("relative isolate", est.ancla && "scroll-mt-24", est.fondo && "overflow-hidden", est.fondo && est.abajo === undefined && estilos.spaceBottom,
+        oscuro === true && "dark text-foreground", oscuro === false && "sf-claro", est.alinear === "centro" && "text-center")} style={style}>
+        {est.fondo === "imagen" && est.imagen && (
+          <>
+            <img src={est.imagen} alt="" aria-hidden loading="lazy" className="absolute inset-0 -z-10 h-full w-full object-cover" />
+            <div aria-hidden className="absolute inset-0 -z-10" style={{ background: `rgba(0,0,0,${(est.capa ?? 40) / 100})` }} />
+          </>
+        )}
+        {content}
+      </div>
+    );
+  };
+  /** Lista de secciones de una página: cada una con su marco y, en el editor, con su capa para seleccionarla. */
+  const renderLista = (lista: Bloque[]) => lista.map((bloque) => {
+    const content = renderSeccion(bloque);
+    if (!content) return null;
+    const selected = selectedBlock === bloque.id;
+    return (
+      <div key={bloque.id} id={`bloque-${bloque.id}`} data-bloque={bloque.id} data-sf-ver={bloque.est?.ver} className="relative" {...(bloque.tipo === "colecciones" ? { "data-ancla": "colecciones" } : {})}>
+        {bloque.tipo === "colecciones" && <span id="colecciones" className="absolute -top-20" aria-hidden />}
+        {content}
+        {onSelectBlock && (
+          <button type="button" aria-label={`Editar ${bloque.est?.nombre || nombreDe(bloque.tipo)}`} onClick={() => onSelectBlock(bloque.id)}
+            className={cn("group absolute inset-0 z-20 cursor-pointer outline-none transition-colors", selected ? "bg-brand-yellow/5 ring-4 ring-inset ring-brand-yellow" : "hover:bg-brand-yellow/5 hover:ring-2 hover:ring-inset hover:ring-brand-yellow/70")}>
+            <span className={cn("absolute left-3 top-3 rounded-md bg-brand-yellow px-2 py-1 text-xs font-bold text-brand-yellow-foreground shadow", selected ? "opacity-100" : "opacity-0 transition-opacity group-hover:opacity-100")}>{bloque.est?.nombre || nombreDe(bloque.tipo)}</span>
+          </button>
+        )}
+      </div>
+    );
+  });
+
   // ---- encabezado y navegación
   const bloques = theme.bloques.filter((b) => b.visible);
   const brandContent = <span className="flex min-w-0 items-center gap-3"><StoreLogo store={store} className={cn("h-10 w-10 shrink-0 text-sm", d.radio === "cuadrado" && "!rounded-none")} /><span className={cn("truncate text-lg font-extrabold", centered && "uppercase tracking-[0.18em] text-sm font-semibold")} style={headingStyle}>{store.nombre}</span></span>;
@@ -981,8 +1108,13 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     : <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={<button type="button" className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</button>} />;
 
   const anuncio = theme.anuncio && <p className="px-4 py-2 text-center text-sm font-semibold" style={accent}>{theme.anuncio}</p>;
+  const cabecera = theme.cabecera ?? { fija: true, transparente: false };
+  const primera = bloques[0];
+  const sobreFoto = esInicio && cabecera.transparente && primera?.tipo === "portada" && (primera.estilo === "simple" || primera.estilo === "boutique" || primera.estilo === "urbano") && !primera.est?.fondo;
+  const transparente = sobreFoto && !bajo;
   const header = (
-    <header className={cn("z-30 border-b bg-card/95 text-card-foreground backdrop-blur", preview ? "relative" : "sticky top-0")}>
+    <header className={cn("z-30", transparente ? "border-b border-transparent bg-transparent text-white" : "border-b bg-card/95 text-card-foreground backdrop-blur",
+      sobreFoto ? (cabecera.fija ? "fixed inset-x-0 top-0" : "absolute inset-x-0 top-0") : cabecera.fija && !preview ? "sticky top-0" : "relative")}>
       <div className={cn("mx-auto flex h-16 items-center gap-4 px-4 sm:px-6", width, centered && "justify-between")}>
         {centered ? (
           <><div className="flex flex-1 items-center">{menuMovil}{navigation}</div>{brand}<div className="flex flex-1 items-center justify-end gap-3">{searchBox}{cart}</div></>
@@ -1033,7 +1165,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
     const secciones = (Array.isArray(pagina.bloques) ? pagina.bloques : []).map((raw, i) => normalizeBloque(raw, i)).filter((x): x is Bloque => x !== null && x.visible);
     return (
       <>
-        {pagina.tipo === "informativa" || secciones.length === 0 ? (
+        {(pagina.tipo === "informativa" && pagina.contenido) || secciones.length === 0 ? (
           <article className={cn("mx-auto px-4 pt-8 sm:px-6", "max-w-3xl", space)}>
             {migas(pagina.titulo)}
             <h1 className="text-3xl font-black leading-tight sm:text-5xl" style={headingStyle}>{pagina.titulo}</h1>
@@ -1041,7 +1173,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
             <RichText texto={pagina.contenido} className="mt-6 text-lg opacity-90" headingStyle={headingStyle} />
           </article>
         ) : null}
-        {pagina.tipo === "landing" && secciones.map((b) => <div key={b.id}>{renderBloque(b)}</div>)}
+        {renderLista(secciones)}
       </>
     );
   };
@@ -1072,7 +1204,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
             <Link to={searchPath(store.slug, "")} className="mt-5 inline-flex items-center gap-2 px-6 py-3 font-bold" style={{ ...accent, ...radiusButton }}>Ver todos los productos</Link>
           </section>
         )}
-        {extras.map((b) => <div key={b.id}>{renderBloque(b)}</div>)}
+        {extras.map((b) => <div key={b.id}>{renderSeccion(b)}</div>)}
       </>
     );
   };
@@ -1080,10 +1212,10 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   const nombreDe = (tipo: Bloque["tipo"]) =>TIPOS_BLOQUE.find((item) => item.tipo === tipo)?.nombre ?? tipo;
 
   return (
-    <div style={pageStyle} className={cn("min-h-screen bg-background text-foreground", darkPage && "dark")}>
-      {anuncio}
+    <div style={pageStyle} {...pageAttrs} className={cn("min-h-screen bg-background text-foreground", darkPage && "dark")}>
+      {sobreFoto ? <div className="relative z-30">{anuncio}</div> : anuncio}
       {header}
-      {reservaHref && !preview && (
+      {reservaHref && !preview && !sobreFoto && (
         <div className="border-b bg-card/80 text-card-foreground"><div className={cn("mx-auto flex items-center justify-between gap-3 px-4 py-2.5 text-sm sm:px-6", width)}><span className="font-semibold">¿Querés un turno? Reservá en línea.</span><Link to={reservaHref} className="shrink-0 px-4 py-1.5 font-bold" style={{ ...accent, ...radiusButton }}>Reservar turno</Link></div></div>
       )}
 
@@ -1094,23 +1226,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
       )}
 
       <main className="pb-28">
-        {!esInicio ? renderPagina() : bloques.map((bloque) => {
-          const content = renderBloque(bloque);
-          if (!content) return null;
-          const selected = selectedBlock === bloque.id;
-          return (
-            <div key={bloque.id} id={`bloque-${bloque.id}`} data-bloque={bloque.id} className="relative" {...(bloque.tipo === "colecciones" ? { "data-ancla": "colecciones" } : {})}>
-              {bloque.tipo === "colecciones" && <span id="colecciones" className="absolute -top-20" aria-hidden />}
-              {content}
-              {onSelectBlock && (
-                <button type="button" aria-label={`Editar ${nombreDe(bloque.tipo)}`} onClick={() => onSelectBlock(bloque.id)}
-                  className={cn("group absolute inset-0 z-20 cursor-pointer outline-none transition-colors", selected ? "bg-brand-yellow/5 ring-4 ring-inset ring-brand-yellow" : "hover:bg-brand-yellow/5 hover:ring-2 hover:ring-inset hover:ring-brand-yellow/70")}>
-                  <span className={cn("absolute left-3 top-3 rounded-md bg-brand-yellow px-2 py-1 text-xs font-bold text-brand-yellow-foreground shadow", selected ? "opacity-100" : "opacity-0 transition-opacity group-hover:opacity-100")}>{nombreDe(bloque.tipo)}</span>
-                </button>
-              )}
-            </div>
-          );
-        })}
+        {!esInicio ? renderPagina() : renderLista(bloques)}
       </main>
 
       <StoreFooter
@@ -1129,6 +1245,8 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
           ...paginas.map((p) => ({ label: p.titulo, onClick: () => navigate(pagePath(store.slug, p.slug)) })),
         ]}
         pie={theme.pie}
+        auto={theme.pie_auto !== false}
+        columnas={(theme.pie_columnas ?? []).map((c) => ({ titulo: c.titulo, enlaces: c.enlaces.filter((m) => m.tipo !== "reservar" || reservaHref).map((m) => ({ label: m.texto, href: menuHref(store.slug, m), externo: m.tipo === "url" })) }))}
         redes={social.map((x) => ({ href: x.href, label: x.label, icon: <x.icon className="h-4 w-4" /> }))}
       />
 

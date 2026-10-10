@@ -54,7 +54,24 @@ export function DesignPanel({ tema, onChange }: { tema: TemaNormalizado; onChang
             </button>
           ))}
         </div>
-        <div className="mt-4"><Opciones label="Letra de los textos" value={d.fuente_texto} options={[{ id: "sans", label: "Moderna" }, { id: "serif", label: "Elegante" }]} onChange={(fuente_texto) => onChange({ fuente_texto })} /></div>
+        <div className="mt-4 space-y-4">
+          <Opciones label="Letra de los textos" value={d.fuente_texto} options={[{ id: "sans", label: "Moderna" }, { id: "serif", label: "Elegante" }]} onChange={(fuente_texto) => onChange({ fuente_texto })} />
+          <Opciones label="Tamaño de los títulos" value={d.escala} options={[{ id: "chica", label: "Chicos" }, { id: "media", label: "Medianos" }, { id: "grande", label: "Grandes" }]} onChange={(escala) => onChange({ escala })} />
+          <Opciones label="Grosor de los títulos" value={d.peso} options={[{ id: "normal", label: "Fino" }, { id: "negrita", label: "Negrita" }, { id: "black", label: "Extra" }]} onChange={(peso) => onChange({ peso })} />
+          <Opciones label="Títulos en mayúsculas" value={d.mayusculas} options={[{ id: false, label: "No" }, { id: true, label: "Sí" }]} onChange={(mayusculas) => onChange({ mayusculas })} />
+        </div>
+      </section>
+
+      <section>
+        <h3 className="mb-2 font-extrabold">Superficies y tarjetas</h3>
+        <p className="mb-3 text-sm text-muted-foreground">Las cajas de la tienda (productos, preguntas, contacto, formularios) usan este color y este estilo.</p>
+        <div className="space-y-4">
+          <label className="flex items-center gap-3 text-sm font-semibold">
+            <input type="color" value={d.superficie ?? "#FFFFFF"} onChange={(event) => onChange({ superficie: event.target.value.toUpperCase() })} className="h-9 w-12 cursor-pointer rounded border bg-transparent p-0.5" aria-label="Color de las superficies" />
+            {d.superficie ? <>Superficie {d.superficie}<button type="button" className="text-xs font-semibold text-muted-foreground underline" onClick={() => onChange({ superficie: undefined })}>Automático</button></> : "Superficie automática (según el fondo)"}
+          </label>
+          <Opciones label="Estilo de las tarjetas" value={d.tarjeta} options={[{ id: "borde", label: "Con borde" }, { id: "sombra", label: "Con sombra" }, { id: "plana", label: "Planas" }]} onChange={(tarjeta) => onChange({ tarjeta })} />
+        </div>
       </section>
 
       <section className="space-y-5">

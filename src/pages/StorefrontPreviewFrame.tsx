@@ -28,7 +28,8 @@ export default function StorefrontPreviewFrame() {
       if (message?.tipo === "woref-vista-previa" && message.datos) setData(message.datos);
       if (message?.tipo === "woref-seleccion") {
         setSelected(message.id ?? null);
-        if (message.id) document.getElementById(`bloque-${message.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        // La sección puede llegar recién agregada: se espera a que se dibuje antes de bajar hasta ella.
+        if (message.id) window.setTimeout(() => document.getElementById(`bloque-${message.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 250);
       }
     };
     window.addEventListener("message", onMessage);

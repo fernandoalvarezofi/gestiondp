@@ -9,7 +9,15 @@ export type ClasePagina = "nosotros" | "contacto" | "faq" | "envios" | "cambios"
 export type Pagina = {
   id: string; comercio_id: string; tipo: "informativa" | "landing"; clase: ClasePagina; slug: string; titulo: string; contenido: string | null; bloques: unknown[];
   estado: "borrador" | "publicada"; seo_titulo: string | null; seo_descripcion: string | null; imagen_url: string | null; orden: number; updated_at: string;
+  /** Cambios sin publicar de la página (solo los ve el equipo; el editor los lee por RPC). */
+  borrador?: PaginaDatos | null; borrador_at?: string | null; publicada_at?: string | null;
 };
+/** Lo que se guarda de una página (borrador o publicación). */
+export type PaginaDatos = {
+  tipo: "informativa" | "landing"; clase: ClasePagina; slug: string; titulo: string; contenido: string | null; bloques: unknown[];
+  estado: "borrador" | "publicada"; seo_titulo: string | null; seo_descripcion: string | null; imagen_url: string | null; orden: number;
+};
+export type SeccionGuardada = { id: string; nombre: string; bloque: unknown; created_at: string };
 export type Dominio = { dominio: string; estado: "pendiente" | "activo" | "rechazado"; token: string; nota: string | null } | null;
 export type ItemPreparacion = { clave: string; ok: boolean; titulo: string; detalle: string; grave: boolean };
 
@@ -23,7 +31,8 @@ export async function guardarBorrador(comercio: string, tema: TiendaTema): Promi
   return data as string;
 }
 export async function descartarBorrador(comercio: string) { const { error } = await db.rpc("tienda_borrador_descartar", { p_comercio: comercio }); if (error) throw error; }
-export async function publicarTienda(comercio: string, tema: TiendaTema, nota?: string) {
+/** Publica el sitio: el tema que se pasa (o el borrador del tema, si no se pasa) y todas las páginas con borrador. */
+export async function publicarTienda(comercio: string, tema: TiendaTema | null, nota?: string) {
   const { error } = await db.rpc("tienda_publicar", { p_comercio: comercio, p_tema: tema, p_nota: nota?.trim() || null });
   if (error) throw error;
 }
@@ -36,10 +45,30 @@ export async function restaurarVersion(id: string): Promise<TiendaTema> {
   if (error) throw error;
   return data as TiendaTema;
 }
+/** Páginas con su borrador (solo para el equipo). */
 export async function fetchPaginas(comercio: string): Promise<Pagina[]> {
-  const { data } = await db.from("delivery_tienda_paginas").select("*").eq("comercio_id", comercio).order("orden").order("titulo");
+  const { data, error } = await db.rpc("tienda_paginas_editor", { p_comercio: comercio });
+  if (error) throw error;
   return (data ?? []) as Pagina[];
 }
+/** Guarda el borrador de una página (si es nueva la crea oculta). Devuelve su id y la hora. */
+export async function guardarBorradorPagina(comercio: string, id: string | null, pagina: PaginaDatos): Promise<{ id: string; at: string }> {
+  const { data, error } = await db.rpc("tienda_pagina_borrador_guardar", { p_comercio: comercio, p_id: id, p: pagina });
+  if (error) throw error;
+  return data as { id: string; at: string };
+}
+export async function descartarBorradorPagina(id: string) { const { error } = await db.rpc("tienda_pagina_borrador_descartar", { p_id: id }); if (error) throw error; }
+export async function fetchSecciones(comercio: string): Promise<SeccionGuardada[]> {
+  const { data, error } = await db.from("delivery_tienda_secciones").select("id, nombre, bloque, created_at").eq("comercio_id", comercio).order("created_at", { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as SeccionGuardada[];
+}
+export async function guardarSeccion(comercio: string, nombre: string, bloque: unknown): Promise<string> {
+  const { data, error } = await db.rpc("tienda_seccion_guardar", { p_comercio: comercio, p_nombre: nombre, p_bloque: bloque });
+  if (error) throw error;
+  return data as string;
+}
+export async function borrarSeccion(id: string) { const { error } = await db.rpc("tienda_seccion_borrar", { p_id: id }); if (error) throw error; }
 export async function guardarPagina(comercio: string, id: string | null, pagina: Partial<Pagina>): Promise<string> {
   const { data, error } = await db.rpc("tienda_pagina_guardar", { p_comercio: comercio, p_id: id, p: pagina });
   if (error) throw error;
