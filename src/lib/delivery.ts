@@ -345,6 +345,11 @@ export type Coupon = {
   usos_max?: number | null;
   activo: boolean;
   vence_at?: string | null;
+  inicia_at?: string | null;
+  /** Se aplica solo en el carrito, sin código (descuento automático del comercio). */
+  automatico?: boolean;
+  aplica_a?: "todo" | "secciones" | "productos";
+  secciones?: string[] | null;
 };
 
 const currency = new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 });

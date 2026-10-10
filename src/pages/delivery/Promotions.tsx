@@ -39,9 +39,11 @@ export default function Promotions() {
               <div className="min-w-0 flex-1 border-l-2 border-dashed p-4">
                 <p className="text-sm font-semibold">{coupon.descripcion}</p>
                 <p className="mt-1 text-xs text-muted-foreground">{coupon.comercio?.nombre ? `Solo en ${coupon.comercio.nombre}` : "Válido en todos los comercios"}{Number(coupon.minimo) > 0 && ` · Mínimo ${money(coupon.minimo)}`}</p>
-                <button type="button" onClick={() => copy(coupon.codigo)} className="mt-3 flex items-center gap-2 rounded-full border border-dashed border-primary px-3 py-1.5 font-mono text-sm font-bold text-primary hover:bg-primary/5">
-                  {coupon.codigo}<Copy className="h-3.5 w-3.5" />
-                </button>
+                {coupon.automatico ? <p className="mt-3 inline-flex rounded-full bg-primary/10 px-3 py-1.5 text-sm font-bold text-primary">Se aplica solo en el carrito</p> : (
+                  <button type="button" onClick={() => copy(coupon.codigo)} className="mt-3 flex items-center gap-2 rounded-full border border-dashed border-primary px-3 py-1.5 font-mono text-sm font-bold text-primary hover:bg-primary/5">
+                    {coupon.codigo}<Copy className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
             </article>
           ))}

@@ -56,6 +56,8 @@ export default function Cart() {
   const [couponInput, setCouponInput] = useState("");
   const myCoupons = useMyCoupons();
   const [coupon, setCoupon] = useState<CouponResult | null>(null);
+  // Descuento automático del comercio (sin código): lo calcula el servidor; si el cliente escribe un código, se usa ese.
+  const [auto, setAuto] = useState<CouponResult | null>(null);
   const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [addingAddress, setAddingAddress] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -144,13 +146,23 @@ export default function Cart() {
     }
   }, [address, addresses, setAddress]);
 
+  // Los productos del carrito tal como los recibe el servidor (los cupones por sección o producto se calculan sobre ellos).
+  const itemsCupon = useMemo(() => items.map((item) => ({ producto_id: item.id, variante_id: item.varianteId || null, cantidad: item.cantidad })), [items]);
   // Si cambia el carrito, el cupón aplicado puede dejar de ser válido: se vuelve a validar.
   useEffect(() => {
     if (!coupon?.valido || !store || !coupon.codigo) return;
-    db.rpc("delivery_validar_cupon", { p_codigo: coupon.codigo, p_comercio: store.id, p_subtotal: subtotal }).then(({ data }: { data: CouponResult | null }) => {
+    db.rpc("delivery_validar_cupon", { p_codigo: coupon.codigo, p_comercio: store.id, p_subtotal: subtotal, p_items: itemsCupon }).then(({ data }: { data: CouponResult | null }) => {
       if (data) setCoupon(data);
     });
-  }, [subtotal]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [subtotal, itemsCupon]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (!store?.id || !subtotal) { setAuto(null); return; }
+    let vivo = true;
+    db.rpc("delivery_cupon_automatico", { p_comercio: store.id, p_subtotal: subtotal, p_items: itemsCupon, p_retiro: mode === "retiro" })
+      .then(({ data }: { data: CouponResult | null }) => { if (vivo) setAuto(data?.valido ? data : null); }, () => { if (vivo) setAuto(null); });
+    return () => { vivo = false; };
+  }, [store?.id, subtotal, itemsCupon, mode]);
+  const aplicado = coupon?.valido ? coupon : auto;
 
   const pickup = mode === "retiro";
   const canPickup = storeInfo?.acepta_retiro !== false;
@@ -180,9 +192,9 @@ export default function Cart() {
     if (!store) return null;
     const freeByStore = store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && subtotal >= Number(store.envio_gratis_desde);
     const reach = storeReach(storeInfo || store, point, road?.km, tariff);
-    const shipping = pickup ? 0 : freeByStore || (coupon?.valido && coupon.envio_gratis) ? 0 : reach.fee;
+    const shipping = pickup ? 0 : freeByStore || (aplicado?.valido && aplicado.envio_gratis) ? 0 : reach.fee;
     const service = Math.round(subtotal * servicePct / 100);
-    const discount = coupon?.valido ? Number(coupon.descuento || 0) : 0;
+    const discount = aplicado?.valido ? Number(aplicado.descuento || 0) : 0;
     const tipValue = pickup ? 0 : tip;
     return {
       shipping, service, discount, tip: tipValue,
@@ -191,7 +203,7 @@ export default function Cart() {
       reach,
       needsPin: !pickup && Boolean(storeInfo?.latitud != null && !point),
     };
-  }, [store, storeInfo, point, subtotal, coupon, tip, pickup, servicePct, road?.km, tariff]);
+  }, [store, storeInfo, point, subtotal, aplicado, tip, pickup, servicePct, road?.km, tariff]);
   // El saldo de la billetera cubre parte del total (no aplica al pago online, que cobra Mercado Pago).
   const walletUsed = user && useWallet && payment !== "mercadopago" && summary ? walletApplied(walletBalance, summary.total) : 0;
   const payable = summary ? summary.total - walletUsed : 0;
@@ -221,7 +233,7 @@ export default function Cart() {
     const value = (code ?? couponInput).trim();
     if (!value) return;
     setCheckingCoupon(true);
-    const { data, error } = await db.rpc("delivery_validar_cupon", { p_codigo: value, p_comercio: store.id, p_subtotal: subtotal });
+    const { data, error } = await db.rpc("delivery_validar_cupon", { p_codigo: value, p_comercio: store.id, p_subtotal: subtotal, p_items: itemsCupon });
     setCheckingCoupon(false);
     if (error) return toast.error(errorMessage(error));
     if (pickup && data?.valido && data.envio_gratis) return toast.error("Ese cupón es solo para pedidos con envío");
@@ -514,6 +526,7 @@ export default function Cart() {
               </div>
             )}
             {coupon && !coupon.valido && <p className="mt-2 text-sm font-semibold text-destructive">{coupon.mensaje}</p>}
+            {!coupon?.valido && auto && <p className="mt-3 rounded-2xl bg-success/10 p-3 text-sm"><span className="font-bold text-success">Descuento aplicado solo</span><span className="block text-muted-foreground">{auto.mensaje}{Number(auto.descuento) > 0 ? ` · -${money(Number(auto.descuento))}` : ""}. Si cargás un código, se usa el código en lugar de este descuento (no se suman).</span></p>}
           </section>
 
           <section className="rounded-3xl border bg-card p-4 shadow-soft sm:p-5">
@@ -524,7 +537,7 @@ export default function Cart() {
               {!pickup && summary.reach.surge && summary.shipping > 0 && <p className="-mt-1 text-xs text-muted-foreground">Tarifa dinámica: {summary.reach.surge.join(" · ")}</p>}
               <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa de servicio</dt><dd>{money(summary.service)}</dd></div>
               {summary.tip > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Propina</dt><dd>{money(summary.tip)}</dd></div>}
-              {summary.discount > 0 && <div className="flex justify-between font-bold text-success"><dt>Descuento</dt><dd>-{money(summary.discount)}</dd></div>}
+              {summary.discount > 0 && <div className="flex justify-between font-bold text-success"><dt>{coupon?.valido ? "Descuento" : "Descuento automático"}</dt><dd>-{money(summary.discount)}</dd></div>}
               {walletUsed > 0 && <div className="flex justify-between font-bold text-success"><dt>Billetera Woref</dt><dd>-{money(walletUsed)}</dd></div>}
               <div className="flex justify-between border-t pt-3 font-display text-xl font-extrabold"><dt>Total a pagar</dt><dd>{money(payable)}</dd></div>
               {walletBalance > 0 && payment !== "mercadopago" && (
