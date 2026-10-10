@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { QuickEditTable } from "./QuickEditTable";
 import { ArrowDown, ArrowUp, Copy, Download, Eye, EyeOff, Loader2, MoreHorizontal, Pencil, Percent, Pause, Pencil as Rename, Play, Plus, Search, Star, Trash2, Upload, UtensilsCrossed } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
@@ -110,6 +111,9 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
   const [moveTo, setMoveTo] = useState("");
   const [colecciones, setColecciones] = useState<(Coleccion & { productos: string[] })[]>([]);
   const [historial, setHistorial] = useState<DeliveryProduct | null>(null);
+  // Vista: por secciones (ordenar, editar ficha) o tabla de edición rápida (precio, stock, estado de muchos a la vez).
+  const [vista, setVistaRaw] = useState<"secciones" | "tabla">(() => { try { return window.localStorage.getItem("woref-catalogo-vista") === "tabla" ? "tabla" : "secciones"; } catch { return "secciones"; } });
+  const setVista = (v: "secciones" | "tabla") => { setVistaRaw(v); try { window.localStorage.setItem("woref-catalogo-vista", v); } catch { /* sin almacenamiento */ } };
 
   const loadConfig = useCallback(async () => {
     const { data } = await db.from("delivery_secciones").select("*").eq("comercio_id", storeId);
@@ -254,14 +258,20 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
       </div>
 
       {products.length > 0 && (
-        <div className="scrollbar-none mt-3 flex gap-2 overflow-x-auto">
+        <div className="mt-3 flex items-center gap-2">
+          <div className="flex shrink-0 rounded-lg border bg-card p-0.5 text-sm font-bold" role="group" aria-label="Vista del catálogo">
+            {([["secciones", "Por secciones"], ["tabla", "Edición rápida"]] as const).map(([id, texto]) => <button key={id} type="button" aria-pressed={vista === id} onClick={() => setVista(id)} className={cn("rounded-md px-3 py-1.5", vista === id ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}>{texto}</button>)}
+          </div>
+        <div className="scrollbar-none flex min-w-0 flex-1 gap-2 overflow-x-auto">
           {([["todos", "Activos"], ["publicado", "Publicados"], ["borrador", "Borradores"], ["programado", "Programados"], ["oferta", "En oferta"], ["agotados", "Agotados o pausados"], ["stock_bajo", "Stock bajo"], ["sin_foto", "Sin foto"], ["archivado", "Archivados"]] as [Filter, string][])
             .map(([value, label]) => ({ value, label, n: contar(value) })).filter((c) => c.value === "todos" || c.value === filter || c.n > 0)
             .map(({ value, label, n }) => (
               <button key={value} type="button" aria-pressed={filter === value} onClick={() => setFilter(value)} className={cn("shrink-0 rounded-full border px-3.5 py-1.5 text-sm font-bold", filter === value ? "border-foreground bg-foreground text-background" : "bg-card", value === "stock_bajo" && filter !== value && "border-warning/60")}>{label} ({n})</button>
             ))}
         </div>
+        </div>
       )}
+      {vista === "tabla" && products.length > 0 && <QuickEditTable storeId={storeId} products={visibleProducts} onSaved={onChange} />}
 
       {selected.size > 0 && (
         <div className="sticky top-14 z-20 mt-3 flex flex-wrap items-center gap-2 rounded-2xl border bg-card p-2.5 shadow-pop" role="toolbar" aria-label="Acciones sobre la selección">
@@ -287,7 +297,7 @@ export function MerchantMenu({ storeId, products, onChange }: { storeId: string;
         </div>
       )}
 
-      {products.length === 0 && config.length === 0 ? (
+      {vista === "tabla" && products.length > 0 ? null : products.length === 0 && config.length === 0 ? (
         <EmptyState className="mt-4" icon={<UtensilsCrossed className="h-7 w-7" />} title="Tu menú está vacío" text="Cargá tus productos con foto y precio, o importá una planilla para empezar más rápido." action={<div className="flex flex-wrap justify-center gap-2"><Button className="rounded-full" onClick={() => setDraft({ ...emptyDraft, categoria: "Destacados" })}><Plus className="h-4 w-4" />Cargar el primero</Button><Button variant="outline" className="rounded-full" onClick={() => setImporting(true)}><Upload className="h-4 w-4" />Importar planilla</Button></div>} />
       ) : sections.map((section, sectionIndex) => {
         const items = visibleProducts.filter((product) => product.categoria === section.name).sort((a, b) => (a.orden ?? 0) - (b.orden ?? 0) || a.nombre.localeCompare(b.nombre, "es"));
