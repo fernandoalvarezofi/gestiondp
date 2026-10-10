@@ -172,7 +172,7 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after 
    blanco translúcido, tarjetas blancas encima y texto oscuro (máxima legibilidad).
    Se activa con html.woref-glass en toda la app salvo las tiendas públicas (/t/…), que usan el tema de cada comercio. */
 html.woref-glass:not(.dark) {
-  --background: 160 30% 97%;
+  --background: 160 35% 98%;
   --muted: 160 22% 93%;
   --border: 165 18% 86%;
   --input: 165 16% 82%;
@@ -182,17 +182,17 @@ html.woref-glass:not(.dark) {
   --shadow-soft: 0 1px 2px hsl(165 40% 20% / 0.06), 0 12px 32px -14px hsl(165 40% 20% / 0.22);
   --shadow-pop: 0 2px 8px hsl(165 40% 20% / 0.1), 0 24px 50px -18px hsl(165 40% 20% / 0.3);
 }
-html.woref-glass body { background-color: hsl(155 30% 95%); min-height: 100dvh; }
+html.woref-glass body { background-color: hsl(160 40% 98%); min-height: 100dvh; }
 /* Escena difuminada detrás del vidrio (luces de marca), fija: es lo que hace visible la transparencia de los paneles. */
 html.woref-glass body::before {
   content: ""; position: fixed; inset: -12%; z-index: -1; pointer-events: none;
   background:
-    radial-gradient(32rem 32rem at 8% 12%, hsl(163 62% 58% / 0.55), transparent 70%),
-    radial-gradient(28rem 28rem at 92% 8%, hsl(46 100% 60% / 0.45), transparent 70%),
-    radial-gradient(34rem 26rem at 75% 90%, hsl(176 55% 58% / 0.45), transparent 70%),
-    radial-gradient(26rem 26rem at 15% 92%, hsl(38 95% 68% / 0.35), transparent 70%),
-    radial-gradient(40rem 30rem at 50% 45%, hsl(0 0% 100% / 0.7), transparent 70%),
-    linear-gradient(135deg, hsl(160 42% 90%), hsl(180 30% 92%) 55%, hsl(150 38% 91%));
+    radial-gradient(32rem 32rem at 8% 12%, hsl(163 62% 66% / 0.42), transparent 70%),
+    radial-gradient(28rem 28rem at 92% 8%, hsl(46 100% 66% / 0.35), transparent 70%),
+    radial-gradient(34rem 26rem at 75% 90%, hsl(176 55% 70% / 0.35), transparent 70%),
+    radial-gradient(26rem 26rem at 15% 92%, hsl(38 95% 76% / 0.28), transparent 70%),
+    radial-gradient(44rem 34rem at 50% 45%, hsl(0 0% 100% / 0.9), transparent 70%),
+    linear-gradient(135deg, hsl(160 45% 95%), hsl(185 35% 96%) 55%, hsl(150 40% 95%));
   filter: blur(48px) saturate(120%);
 }
 html.dark.woref-glass body { background-color: hsl(220 18% 8%); }
@@ -205,21 +205,22 @@ html.woref-glass:not(.dark) .bg-card.border:not([role="dialog"]) { border-color:
 @layer utilities {
   /* Vidrio esmerilado: paneles, barras y menús de la estructura. */
   .glass {
-    background-color: hsl(0 0% 100% / 0.42);
-    -webkit-backdrop-filter: blur(30px) saturate(180%);
-    backdrop-filter: blur(30px) saturate(180%);
-    border: 1px solid hsl(0 0% 100% / 0.75);
-    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.85), 0 24px 60px -30px hsl(165 40% 25% / 0.35);
+    background-color: hsl(0 0% 100% / 0.3);
+    background-image: linear-gradient(160deg, hsl(0 0% 100% / 0.55), hsl(0 0% 100% / 0.12) 45%, hsl(0 0% 100% / 0.28));
+    -webkit-backdrop-filter: blur(40px) saturate(190%);
+    backdrop-filter: blur(40px) saturate(190%);
+    border: 1px solid hsl(0 0% 100% / 0.85);
+    box-shadow: inset 0 1px 0 hsl(0 0% 100%), inset 0 0 0 1px hsl(0 0% 100% / 0.25), 0 20px 50px -28px hsl(165 40% 25% / 0.25);
   }
-  .glass-strong { background-color: hsl(0 0% 100% / 0.62); }
+  .glass-strong { background-color: hsl(0 0% 100% / 0.45); }
   .icon-tile { display: inline-grid; place-items: center; border-radius: 0.9rem; background: hsl(0 0% 100% / 0.6); border: 1px solid hsl(0 0% 100% / 0.8); }
 }
-html.dark.woref-glass .glass { background-color: hsl(220 18% 10% / 0.6); border-color: hsl(0 0% 100% / 0.08); box-shadow: none; }
+html.dark.woref-glass .glass { background-image: none; background-color: hsl(220 18% 10% / 0.6); border-color: hsl(0 0% 100% / 0.08); box-shadow: none; }
 
 /* Barra lateral de vidrio: botón activo verde con brillo. */
-html.woref-glass:not(.dark) [data-sidebar="sidebar"] { background-color: hsl(0 0% 100% / 0.5); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); }
+html.woref-glass:not(.dark) [data-sidebar="sidebar"] { background-color: hsl(0 0% 100% / 0.32); background-image: linear-gradient(170deg, hsl(0 0% 100% / 0.5), hsl(0 0% 100% / 0.12) 50%, hsl(0 0% 100% / 0.25)); -webkit-backdrop-filter: blur(30px) saturate(180%); backdrop-filter: blur(30px) saturate(180%); }
 html.woref-glass:not(.dark) [data-variant="floating"] [data-sidebar="sidebar"] { border-color: hsl(0 0% 100% / 0.75); border-radius: 1.5rem; box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.85), 0 24px 60px -30px hsl(165 40% 25% / 0.35); }
-html.woref-glass:not(.dark) [data-sidebar="sidebar"][data-mobile="true"] { background-color: hsl(0 0% 100% / 0.85); }
+html.woref-glass:not(.dark) [data-sidebar="sidebar"][data-mobile="true"] { background-color: hsl(0 0% 100% / 0.78); }
 html.woref-glass [data-sidebar="menu-button"] { border-radius: 0.85rem; }
 html.woref-glass [data-sidebar="menu-button"][data-active="true"] {
   background: hsl(var(--primary)); color: hsl(0 0% 100%);
@@ -281,3 +282,5 @@ html.woref-glass [role="menu"] [role^="menuitem"] > svg:first-child {
 html.dark.woref-glass [role="menu"] [role^="menuitem"] > svg:first-child { background: hsl(0 0% 100% / 0.08); color: hsl(163 52% 60%); }
 html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] { background: hsl(160 40% 94%); }
 html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] > svg:first-child { background: hsl(var(--primary)); color: #fff; }
+/* Velo detrás de menús y ventanas: claro y difuminado en lugar de negro. */
+html.woref-glass:not(.dark) .bg-black\/80 { background-color: hsl(165 30% 25% / 0.22); -webkit-backdrop-filter: blur(8px) saturate(140%); backdrop-filter: blur(8px) saturate(140%); }
