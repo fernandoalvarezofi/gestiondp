@@ -83,7 +83,7 @@ export function ClientLayout() {
 
   return (
     <div className={cn("min-h-screen bg-background md:pb-0", showCartBar ? "pb-40" : "pb-24")}>
-      <header className={cn("sticky top-0 z-40 border-b border-t-[3px] border-t-brand-yellow bg-card shadow-[0_1px_0_rgba(0,0,0,0.02)]", isHome && "max-md:border-transparent max-md:bg-primary max-md:shadow-none max-md:backdrop-blur-none", immersive && "max-md:hidden")}>
+      <header className={cn("glass glass-strong sticky top-0 z-40 rounded-b-3xl border-t-0 md:mx-3 md:top-2 md:mt-2 md:rounded-2xl", immersive && "max-md:hidden")}>
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-6 lg:gap-6 lg:px-8">
           <NavLink to="/app" className="hidden shrink-0 md:block" aria-label="Inicio"><DeliveryBrand /></NavLink>
 
@@ -164,7 +164,7 @@ export function ClientLayout() {
       <AppFooter />
 
       {showCartBar && (
-        <div className="fixed inset-x-0 bottom-[72px] z-40 px-4 md:hidden">
+        <div className="fixed inset-x-0 bottom-[88px] z-40 px-4 md:hidden">
           <NavLink to="/app/carrito" className="flex h-14 items-center justify-between gap-3 rounded-2xl bg-primary px-4 text-primary-foreground shadow-pop">
             <span className="flex h-8 min-w-8 items-center justify-center rounded-full bg-white px-2 text-sm font-black text-primary">{itemCount}</span>
             <span className="min-w-0 flex-1 truncate text-center text-[15px] font-extrabold">Ver mi pedido{groups.length > 1 ? ` · ${groups.length} comercios` : groups[0] ? ` · ${groups[0].store.nombre}` : ""}</span>
@@ -174,11 +174,11 @@ export function ClientLayout() {
       )}
 
       {!hideNav && (
-        <nav className="pb-safe fixed inset-x-0 bottom-0 z-50 grid border-t bg-card/95 backdrop-blur-xl md:hidden" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }} aria-label="Secciones">
+        <nav className="glass glass-strong fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-50 grid rounded-full p-1 md:hidden" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }} aria-label="Secciones">
           {tabs.map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={label} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[62px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
+            <NavLink key={label} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
               {({ isActive }) => (<>
-                <span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary/10")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} />
+                <span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary text-primary-foreground shadow-[0_8px_22px_-8px_hsl(163_56%_42%/0.8)]")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} />
                   {to === "/app/mensajes" && unreadMessages > 0 && <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-yellow px-1 text-[10px] font-black text-brand-yellow-foreground" aria-label={`${unreadMessages} sin leer`}>{unreadMessages}</span>}</span>
                 {label}
               </>)}

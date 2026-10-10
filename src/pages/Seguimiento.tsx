@@ -33,7 +33,7 @@ export default function Seguimiento() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b bg-card/80 backdrop-blur"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3"><Link to="/" aria-label="Woref"><DeliveryBrand /></Link><span className="text-sm font-semibold text-muted-foreground">Seguimiento de envíos</span></div></header>
+      <header className="glass glass-strong mx-2 mt-2 rounded-2xl"><div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3"><Link to="/" aria-label="Woref"><DeliveryBrand /></Link><span className="text-sm font-semibold text-muted-foreground">Seguimiento de envíos</span></div></header>
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-6">
         <form onSubmit={buscar} className="flex gap-2" role="search">
           <label className="relative flex-1"><span className="sr-only">Número de envío</span><Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

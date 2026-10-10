@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useParams } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { NativeShell } from "@/components/NativeShell";
+import { GlassTheme } from "@/components/GlassTheme";
 import { CookieBanner } from "@/components/CookieBanner";
 import { ConnectionBanner } from "@/components/ConnectionBanner";
 import { isNativeApp } from "@/lib/native";
@@ -129,6 +130,7 @@ const App = () => (
             <FavoritesProvider>
               <BrowserRouter>
                 <NativeShell />
+                <GlassTheme />
                 <CookieBanner />
                 <Suspense fallback={<PageLoader />}>
                   <Routes>

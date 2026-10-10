@@ -166,3 +166,90 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after 
 .sf-carrusel { display: grid; grid-auto-flow: column; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
 .sf-carrusel::-webkit-scrollbar { display: none; }
 .sf-carrusel > * { scroll-snap-align: start; }
+
+/* ---- Tema "vidrio" de la app (estilo visionOS) -------------------------------------------------------------------------
+   Fondo oscuro difuminado con los colores de marca, paneles de vidrio ahumado translúcido y tarjetas blancas encima.
+   Se activa con html.woref-glass en toda la app salvo las tiendas públicas (/t/…), que usan el tema de cada comercio. */
+html.woref-glass:not(.dark) {
+  --background: 168 22% 10%;
+  --foreground: 150 20% 97%;
+  --muted: 168 14% 17%;
+  --muted-foreground: 160 12% 72%;
+  --secondary: 168 16% 19%;
+  --secondary-foreground: 150 20% 95%;
+  --accent: 165 30% 20%;
+  --accent-foreground: 150 30% 92%;
+  --border: 168 12% 24%;
+  --input: 168 12% 28%;
+  --primary: 163 56% 42%;
+  --sidebar-background: 168 22% 10%;
+  --sidebar-foreground: 150 20% 95%;
+  --sidebar-accent: 165 22% 20%;
+  --sidebar-accent-foreground: 0 0% 100%;
+  --sidebar-border: 168 12% 22%;
+  --shadow-soft: 0 1px 2px hsl(170 40% 3% / 0.25), 0 10px 30px -12px hsl(170 40% 3% / 0.55);
+  --shadow-pop: 0 2px 8px hsl(170 40% 3% / 0.35), 0 24px 50px -16px hsl(170 40% 3% / 0.7);
+  color-scheme: dark;
+}
+html.woref-glass body {
+  background-color: hsl(168 26% 7%);
+  background-image:
+    radial-gradient(60rem 40rem at 8% -10%, hsl(163 56% 38% / 0.55), transparent 60%),
+    radial-gradient(42rem 32rem at 100% 0%, hsl(46 100% 47% / 0.22), transparent 65%),
+    radial-gradient(50rem 40rem at 85% 100%, hsl(170 60% 22% / 0.6), transparent 60%),
+    radial-gradient(40rem 30rem at 0% 100%, hsl(36 70% 30% / 0.25), transparent 65%),
+    linear-gradient(160deg, hsl(170 30% 12%), hsl(168 26% 6%));
+  background-attachment: fixed;
+  min-height: 100dvh;
+}
+/* Superficies claras sobre el vidrio: vuelven a los colores claros (texto oscuro adentro). */
+html.woref-glass:not(.dark) :is(.bg-card, .bg-white, .bg-popover, [class*="bg-card/9"], [class*="bg-card/8"], [role="dialog"]:not([data-sidebar]), [role="alertdialog"], [role="menu"], [role="listbox"], .sf-claro) {
+  --background: 0 0% 100%; --foreground: 250 20% 11%; --card: 0 0% 100%; --card-foreground: 250 20% 11%;
+  --popover: 0 0% 100%; --popover-foreground: 250 20% 11%;
+  --muted: 240 7% 95%; --muted-foreground: 245 6% 42%; --secondary: 160 33% 95%; --secondary-foreground: 163 56% 22%;
+  --accent: 160 33% 94%; --accent-foreground: 163 56% 22%; --border: 240 8% 90%; --input: 240 8% 86%; --primary: 163 56% 38%;
+  color-scheme: light;
+  color: hsl(var(--foreground));
+}
+/* Tarjetas: bordes suaves, esquinas amplias y sombra que las despega del vidrio. */
+html.woref-glass:not(.dark) .bg-card.border:not([role="dialog"]) { border-color: hsl(0 0% 100% / 0.6); box-shadow: var(--shadow-soft); }
+/* Las páginas a pantalla completa dejan ver el fondo. */
+html.woref-glass .min-h-screen.bg-background, html.woref-glass .min-h-dvh.bg-background, html.woref-glass .min-h-svh.bg-background { background-color: transparent; }
+
+@layer utilities {
+  /* Vidrio ahumado: paneles, barras y menús de la estructura. */
+  .glass {
+    background-color: hsl(168 20% 14% / 0.5);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    backdrop-filter: blur(28px) saturate(150%);
+    border: 1px solid hsl(0 0% 100% / 0.09);
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 20px 50px -24px hsl(170 50% 2% / 0.8);
+  }
+  .glass-strong { background-color: hsl(168 22% 11% / 0.72); }
+  /* Ícono en cuadro redondeado (como la barra de íconos del ejemplo). */
+  .icon-tile { display: inline-grid; place-items: center; border-radius: 0.9rem; background: hsl(0 0% 100% / 0.07); border: 1px solid hsl(0 0% 100% / 0.08); }
+}
+html.dark.woref-glass .glass { background-color: hsl(220 18% 10% / 0.55); }
+
+/* Barra lateral de vidrio: botón activo verde con brillo, ícono en cuadro. */
+html.woref-glass [data-sidebar="sidebar"] { background-color: hsl(168 20% 12% / 0.55); -webkit-backdrop-filter: blur(28px) saturate(150%); backdrop-filter: blur(28px) saturate(150%); }
+html.woref-glass [data-variant="floating"] [data-sidebar="sidebar"] { border-color: hsl(0 0% 100% / 0.09); border-radius: 1.5rem; box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.06), 0 20px 50px -24px hsl(170 50% 2% / 0.8); }
+html.woref-glass [data-sidebar="menu-button"] { border-radius: 0.85rem; }
+html.woref-glass [data-sidebar="menu-button"][data-active="true"] {
+  background: hsl(var(--primary)); color: hsl(0 0% 100%);
+  box-shadow: 0 8px 24px -8px hsl(163 56% 42% / 0.75), inset 0 1px 0 hsl(0 0% 100% / 0.2);
+}
+html.woref-glass [data-sidebar="menu-button"]:not([data-active="true"]) > span > svg:first-child,
+html.woref-glass [data-sidebar="menu-button"]:not([data-active="true"]) > svg:first-child { opacity: 0.85; }
+
+/* Pastillas de filtro y pestañas sobre el vidrio (fuera de tarjetas): la activa es verde con brillo y las demás, vidrio. */
+html.woref-glass:not(.dark) .bg-foreground.text-background:not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
+  background-color: hsl(var(--primary)); color: hsl(0 0% 100%); border-color: transparent;
+  box-shadow: 0 8px 22px -8px hsl(163 56% 42% / 0.75), inset 0 1px 0 hsl(0 0% 100% / 0.18);
+}
+html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
+  --foreground: 150 20% 97%; --muted: 168 14% 22%; --muted-foreground: 160 12% 75%; --border: 168 12% 28%; --primary: 163 56% 42%;
+  background-color: hsl(0 0% 100% / 0.07); color: hsl(var(--foreground)); border-color: hsl(0 0% 100% / 0.12); box-shadow: none;
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+}
+html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *):hover { background-color: hsl(0 0% 100% / 0.13); }

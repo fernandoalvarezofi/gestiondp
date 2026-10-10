@@ -85,7 +85,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="icon" className="border-r">
+      <Sidebar collapsible="icon" variant="floating">
         <SidebarHeader className="gap-3 p-3">
           <Link to="/app" aria-label="Volver a Woref" className="flex items-center group-data-[collapsible=icon]:hidden"><DeliveryBrand /></Link>
           <p className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground group-data-[collapsible=icon]:hidden"><context.icon className="h-3.5 w-3.5 text-primary" aria-hidden />{panel}</p>
@@ -123,8 +123,8 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
         <SidebarRail />
       </Sidebar>
 
-      <SidebarInset className={cn("min-w-0", bottomTabs && "pb-16 md:pb-0")}>
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-t-[3px] border-t-brand-yellow bg-card/95 px-3 backdrop-blur-xl sm:px-5">
+      <SidebarInset className={cn("min-w-0 bg-transparent", bottomTabs && "pb-24 md:pb-0")}>
+        <header className="glass glass-strong sticky top-2 z-30 mx-2 mt-2 flex h-14 items-center gap-2 rounded-2xl px-3 sm:px-4 md:mr-3">
           <SidebarTrigger className="-ml-1" aria-label="Abrir o cerrar el menú" />
           {!isRootPath(location.pathname) && <button type="button" onClick={goBack} aria-label="Volver" className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-muted"><ArrowLeft className="h-5 w-5" /></button>}
           <Separator orientation="vertical" className="mr-1 h-5" />
@@ -135,12 +135,12 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
           {actions}
           <NotificationBell />
         </header>
-        <div className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 lg:px-8">{children}</div>
+        <div className="glass mx-2 mb-3 mt-3 min-h-[calc(100svh-6rem)] rounded-[1.75rem] md:mr-3"><div className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 lg:px-8">{children}</div></div>
 
         {bottomTabs && (
-          <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 grid border-t bg-card md:hidden" style={{ gridTemplateColumns: `repeat(${tabItems.length}, minmax(0, 1fr))` }} aria-label="Secciones">
+          <nav className="glass glass-strong fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 grid rounded-full p-1 md:hidden" style={{ gridTemplateColumns: `repeat(${tabItems.length}, minmax(0, 1fr))` }} aria-label="Secciones">
             {tabItems.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn("relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-primary" : "text-muted-foreground")}>
+              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn("relative flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-extrabold transition-colors", isActive ? "bg-primary text-primary-foreground shadow-[0_8px_22px_-8px_hsl(163_56%_42%/0.8)]" : "text-muted-foreground")}>
                 <item.icon className="h-5 w-5" />
                 <span className="max-w-full truncate px-1 text-[10.5px] leading-tight">{item.short ?? item.label}</span>
                 {item.badge !== undefined && item.badge !== 0 && <span className="absolute right-[22%] top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{item.badge}</span>}

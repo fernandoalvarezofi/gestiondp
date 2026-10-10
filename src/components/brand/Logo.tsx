@@ -40,7 +40,7 @@ export function Logo({ className, inverted = false, compact = false }: { classNa
     <span className={cn("inline-flex items-center gap-2", className)} aria-label="Woref">
       <LogoMark className="h-9 w-9 shrink-0" inverted={inverted} />
       {!compact && (
-        <span className={cn("font-brand text-[1.65rem] font-black leading-none tracking-[-0.04em]", inverted ? "text-white" : "text-[#111111] dark:text-white")}>
+        <span className={cn("font-brand text-[1.65rem] font-black leading-none tracking-[-0.04em]", inverted ? "text-white" : "text-foreground")}>
           woref
         </span>
       )}
