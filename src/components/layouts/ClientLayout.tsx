@@ -18,6 +18,7 @@ import { ContextMenuItems } from "@/navigation/ContextSwitcher";
 import { CLIENT_TABS, GUEST_TABS, type ClientTab } from "@/navigation/clientMenu";
 import { useUnreadMessages } from "@/hooks/useUnreadMessages";
 import { useCookiesDecididas } from "@/hooks/useCookiesDecididas";
+import { tonoSeccion, tonoSuave } from "@/lib/tonos";
 
 /** Atajos de Explorar en la cabecera de escritorio. */
 const exploreLinks = [
@@ -110,13 +111,13 @@ export function ClientLayout() {
           <nav className="ml-auto hidden items-center gap-1 md:flex" aria-label="Principal">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="rounded-full font-bold"><Compass className="h-4 w-4" />Explorar<ChevronDown className="h-4 w-4" /></Button>
+                <Button variant="ghost" className="rounded-full font-bold"><Compass className="h-4 w-4 text-[hsl(197_76%_38%)]" />Explorar<ChevronDown className="h-4 w-4" /></Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-60">
                 {exploreLinks.map(({ to, label, icon: Icon }, index) => (
                   <div key={to}>
                     {index === 1 && <DropdownMenuSeparator />}
-                    <DropdownMenuItem onClick={() => navigate(to)}><Icon className="h-4 w-4" />{label}</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate(to)}><span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg", tonoSuave(tonoSeccion(to)))}><Icon className="h-4 w-4" /></span>{label}</DropdownMenuItem>
                   </div>
                 ))}
               </DropdownMenuContent>
@@ -128,20 +129,20 @@ export function ClientLayout() {
               </>
             ) : (
               <>
-                <Button asChild variant="ghost" className="rounded-full font-bold"><NavLink to="/app/pedidos"><Receipt className="h-4 w-4" />Pedidos</NavLink></Button>
-                <Button asChild variant="ghost" size="icon" className="relative rounded-full" aria-label={unreadMessages ? `Mensajes, ${unreadMessages} sin leer` : "Mensajes"}><NavLink to="/app/mensajes"><MessageCircle className="h-5 w-5" />{unreadMessages > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-yellow px-1 text-[10px] font-black text-brand-yellow-foreground">{unreadMessages}</span>}</NavLink></Button>
+                <Button asChild variant="ghost" className="rounded-full font-bold"><NavLink to="/app/pedidos"><Receipt className="h-4 w-4 text-[hsl(22_85%_45%)]" />Pedidos</NavLink></Button>
+                <Button asChild variant="ghost" size="icon" className="relative rounded-full" aria-label={unreadMessages ? `Mensajes, ${unreadMessages} sin leer` : "Mensajes"}><NavLink to="/app/mensajes"><MessageCircle className="h-5 w-5 text-[hsl(218_70%_46%)]" />{unreadMessages > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-yellow px-1 text-[10px] font-black text-brand-yellow-foreground">{unreadMessages}</span>}</NavLink></Button>
                 <NotificationBell />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="rounded-full font-bold"><UserCircle className="h-5 w-5" /><span className="max-w-[120px] truncate">{roles.nombre.split(" ")[0] || "Mi cuenta"}</span><ChevronDown className="h-4 w-4" /></Button>
+                    <Button variant="ghost" className="rounded-full font-bold"><UserCircle className="h-5 w-5 text-[hsl(258_52%_50%)]" /><span className="max-w-[120px] truncate">{roles.nombre.split(" ")[0] || "Mi cuenta"}</span><ChevronDown className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64">
                     <DropdownMenuLabel>Mi cuenta</DropdownMenuLabel>
-                    {accountLinks.map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} onClick={() => navigate(to)}><Icon className="h-4 w-4" />{label}</DropdownMenuItem>)}
+                    {accountLinks.map(({ to, label, icon: Icon }) => <DropdownMenuItem key={to} onClick={() => navigate(to)}><span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg", tonoSuave(tonoSeccion(to)))}><Icon className="h-4 w-4" /></span>{label}</DropdownMenuItem>)}
                     <DropdownMenuSeparator />
                     <ContextMenuItems />
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => signOut()}><span className="tono-suave tono-coral grid h-7 w-7 shrink-0 place-items-center rounded-lg"><LogOut className="h-4 w-4" /></span>Cerrar sesión</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </>
@@ -181,7 +182,7 @@ export function ClientLayout() {
           {tabs.map(({ to, label, icon: Icon, end }) => (
             <NavLink key={label} to={to} end={end} className={({ isActive }) => cn("group flex min-h-[58px] flex-col items-center justify-center gap-0.5 text-[11px] font-extrabold", isActive ? "text-foreground" : "text-muted-foreground")}>
               {({ isActive }) => (<>
-                <span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", isActive && "bg-primary text-primary-foreground shadow-[0_8px_22px_-8px_hsl(163_56%_42%/0.8)]")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} />
+                <span className={cn("relative flex h-8 w-14 items-center justify-center rounded-full transition-colors", `tono-${tonoSeccion(typeof to === "string" ? to : to.pathname ?? "")}`, isActive ? "tono" : "text-[hsl(var(--tc))]")}><Icon className="h-[22px] w-[22px]" strokeWidth={isActive ? 2.5 : 2} />
                   {to === "/app/mensajes" && unreadMessages > 0 && <span className="absolute right-2 top-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-yellow px-1 text-[10px] font-black text-brand-yellow-foreground" aria-label={`${unreadMessages} sin leer`}>{unreadMessages}</span>}</span>
                 {label}
               </>)}

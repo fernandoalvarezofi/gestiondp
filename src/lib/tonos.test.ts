@@ -9,6 +9,8 @@ describe("tonos", () => {
     expect(tonoSeccion("/app/admin/logistica")).toBe("amarillo");
     expect(tonoSeccion("/app/repartidor/ganancias")).toBe("tinta");
     expect(tonoSeccion("/app/club")).toBe("amarillo");
+    const barra = ["/app", "/app/explorar", "/app/pedidos", "/app/mensajes", "/app/perfil"].map(tonoSeccion);
+    expect(new Set(barra).size).toBe(5);
     expect(tonoSeccion("/app/perfil/pedidos")).toBe("naranja");
     const menu = ["pedidos", "turnos", "mensajes", "envios", "clientes", "productos", "inventario", "colecciones"].map((s) => tonoSeccion(`/app/comercio/${s}`));
     expect(new Set(menu).size).toBeGreaterThanOrEqual(7);

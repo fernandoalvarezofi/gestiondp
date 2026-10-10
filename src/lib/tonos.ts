@@ -28,14 +28,16 @@ export const tonoCategoria = (clave: string | null | undefined): Tono => {
 /** Tono de cada sección de los paneles, por palabra clave de la ruta (lo no listado toma un tono estable por nombre). */
 const TONO_SECCION: [RegExp, Tono][] = [
   [/pedidos|viajes|trabajos/, "naranja"], [/turnos|agenda|incentivos/, "rosa"], [/mensajes|soporte/, "azul"],
-  [/envios|logistica|mensajeria|paquetes/, "amarillo"], [/clientes|crm|personas|identidades/, "violeta"], [/productos|menu|categorias/, "coral"],
+  [/envios|enviar|logistica|mensajeria|paquetes/, "amarillo"], [/clientes|crm|personas|identidades/, "violeta"], [/productos|menu|categorias/, "coral"],
   [/inventario|zonas|demanda/, "celeste"], [/colecciones|directorio/, "menta"], [/tienda|comercios|red/, "verde"], [/preguntas|opiniones|arrepentimientos/, "amarillo"],
   [/promociones|cupones|anuncios|campanas/, "naranja"], [/estadisticas|analytics|operaciones/, "azul"], [/finanzas|pagos|liquidaciones|contabilidad|ganancias/, "tinta"],
   [/devoluciones/, "coral"], [/equipo|repartidores|conductores/, "violeta"], [/sucursales/, "celeste"], [/configuracion|seguridad|auditoria|errores|perfil/, "tinta"],
-  [/mapa/, "menta"], [/historial/, "celeste"], [/club/, "amarillo"], [/favoritos/, "rosa"], [/notificaciones/, "azul"], [/privacidad/, "tinta"], [/ayuda/, "celeste"],
+  [/remis|conductor/, "tinta"], [/mapa/, "menta"], [/historial/, "celeste"], [/club/, "amarillo"], [/favoritos/, "rosa"], [/notificaciones/, "azul"], [/privacidad/, "tinta"], [/ayuda/, "celeste"],
 ];
 export function tonoSeccion(ruta: string): Tono {
   const partes = ruta.split("?")[0].split("/").filter(Boolean).slice(1);
+  if (partes.length === 1 && partes[0] === "perfil") return "violeta";
+  if (partes[0] === "explorar") return "celeste";
   if (["comercio", "repartidor", "conductor", "admin", "perfil"].includes(partes[0])) partes.shift();
   const ultima = partes.join("/");
   if (!ultima) return "verde";

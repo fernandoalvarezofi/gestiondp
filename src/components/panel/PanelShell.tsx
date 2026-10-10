@@ -114,8 +114,8 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
                 <DropdownMenuContent side="top" align="start" className="w-64">
                   <ContextMenuItems />
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/app/perfil")}><UserCircle className="h-4 w-4" />Mi cuenta y direcciones</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/app/perfil")}><span className="tono-suave tono-violeta grid h-7 w-7 shrink-0 place-items-center rounded-lg"><UserCircle className="h-4 w-4" /></span>Mi cuenta y direcciones</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}><span className="tono-suave tono-coral grid h-7 w-7 shrink-0 place-items-center rounded-lg"><LogOut className="h-4 w-4" /></span>Cerrar sesión</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>
@@ -141,7 +141,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
         {bottomTabs && (
           <nav className="glass glass-strong fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 grid rounded-full p-1 md:hidden" style={{ gridTemplateColumns: `repeat(${tabItems.length}, minmax(0, 1fr))` }} aria-label="Secciones">
             {tabItems.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn("relative flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-extrabold transition-colors", isActive ? "bg-primary text-primary-foreground shadow-[0_8px_22px_-8px_hsl(163_56%_42%/0.8)]" : "text-muted-foreground")}>
+              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn("relative flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-extrabold transition-colors", `tono-${tonoSeccion(item.to)}`, isActive ? "tono" : "text-muted-foreground [&>svg]:text-[hsl(var(--tc))]")}>
                 <item.icon className="h-5 w-5" />
                 <span className="max-w-full truncate px-1 text-[10.5px] leading-tight">{item.short ?? item.label}</span>
                 {item.badge !== undefined && item.badge !== 0 && <span className="absolute right-[22%] top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{item.badge}</span>}

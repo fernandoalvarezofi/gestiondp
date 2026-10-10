@@ -4,7 +4,7 @@ import { DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/co
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { cn } from "@/lib/utils";
 import { contextFromPath, contextsFor } from "./contexts";
-import { tono, tonoDe, TONO_CONTEXTO } from "@/lib/tonos";
+import { tono, tonoDe, tonoSuave, TONO_CONTEXTO } from "@/lib/tonos";
 
 /**
  * Opciones de "cambiar de contexto" para cualquier menú desplegable (cabecera del cliente y de los paneles).
@@ -22,7 +22,7 @@ export function ContextMenuItems() {
       <DropdownMenuLabel className="text-[11px] font-extrabold uppercase tracking-wide text-muted-foreground">Cambiar de contexto</DropdownMenuLabel>
       {available.map((ctx) => (
         <DropdownMenuItem key={ctx.id} onClick={() => ctx.id !== current && navigate(ctx.base)} className="gap-2.5">
-          <ctx.icon className="h-4 w-4" />
+          <span className={cn("grid h-8 w-8 shrink-0 place-items-center rounded-lg", tonoSuave(TONO_CONTEXTO[ctx.id] ?? tonoDe(ctx.id)))}><ctx.icon className="h-4 w-4" /></span>
           <span className="min-w-0 flex-1"><span className="block font-semibold">{ctx.label}</span><span className="block text-[11px] text-muted-foreground">{ctx.description}</span></span>
           {ctx.id === current && <Check className="h-4 w-4 text-primary" aria-label="Contexto actual" />}
         </DropdownMenuItem>
