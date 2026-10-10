@@ -53,6 +53,8 @@ const MerchantStorefront = lazy(() => import("./pages/delivery/merchant/Merchant
 const MerchantNewStore = lazy(() => import("./pages/delivery/merchant/MerchantNewStore"));
 const MerchantQuestions = lazy(() => import("./pages/delivery/merchant/MerchantQuestions"));
 const MerchantReturns = lazy(() => import("./pages/delivery/merchant/MerchantReturns"));
+const MerchantEnvios = lazy(() => import("./pages/delivery/merchant/MerchantEnvios"));
+const Seguimiento = lazy(() => import("./pages/Seguimiento"));
 const MerchantBookings = lazy(() => import("./pages/delivery/merchant/MerchantBookings"));
 const MerchantInventory = lazy(() => import("./pages/delivery/merchant/MerchantInventory"));
 const MerchantCollections = lazy(() => import("./pages/delivery/merchant/MerchantCollections"));
@@ -76,6 +78,7 @@ const MerchantPages = {
   Team: lazy(() => import("./pages/delivery/merchant/MerchantTeam")),
 };
 const CourierLayout = lazy(() => import("./pages/delivery/courier/CourierLayout"));
+const CourierPaquetes = lazy(() => import("./pages/delivery/courier/CourierPaquetes"));
 const CourierPages = {
   Orders: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierOrdersPage }))),
   Map: lazy(() => import("./pages/delivery/courier/CourierPages").then((m) => ({ default: m.CourierMapPage }))),
@@ -141,6 +144,8 @@ const App = () => (
                     <Route path="/t/:slug/p/:id" element={<StorefrontProduct />} />
                     <Route path="/t/:slug/reservar" element={<Booking />} />
                     <Route path="/vista-previa-tienda" element={<StorefrontPreviewFrame />} />
+                    <Route path="/seguimiento" element={<Seguimiento />} />
+                    <Route path="/seguimiento/:numero" element={<Seguimiento />} />
                     <Route path="/restablecer" element={<ResetPassword />} />
                     <Route path="/terminos" element={<Legal doc="terminos" />} />
                     <Route path="/arrepentimiento" element={<Arrepentimiento />} />
@@ -200,6 +205,8 @@ const App = () => (
                         <Route path="nuevo" element={<MerchantNewStore />} />
                         <Route path="preguntas" element={<MerchantQuestions />} />
                         <Route path="devoluciones" element={<MerchantReturns />} />
+                        <Route path="envios" element={<MerchantEnvios />} />
+                        <Route path="envios/:id" element={<MerchantEnvios />} />
                         <Route path="mensajes" element={<MerchantMessages />} />
                         <Route path="turnos" element={<MerchantBookings />} />
                         <Route path="turnos/:seccion" element={<MerchantBookings />} />
@@ -212,6 +219,7 @@ const App = () => (
                       <Route path="repartidor" element={<CourierLayout />}>
                         <Route index element={<CourierPages.Orders />} />
                         <Route path="mapa" element={<CourierPages.Map />} />
+                        <Route path="paquetes" element={<CourierPaquetes />} />
                         <Route path="mensajes" element={<CourierPages.Messages />} />
                         <Route path="ganancias" element={<CourierPages.Earnings />} />
                         <Route path="incentivos" element={<CourierPages.Incentives />} />

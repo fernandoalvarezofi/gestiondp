@@ -20,6 +20,7 @@ import { CouriersManager } from "@/components/admin/CouriersManager";
 import { CustomersManager } from "@/components/admin/CustomersManager";
 import { DirectorioManager } from "@/components/admin/DirectorioManager";
 import { EnviosManager } from "@/components/admin/EnviosManager";
+import { LogisticaAdmin } from "@/components/admin/logistica/LogisticaAdmin";
 import { ErrorsPanel } from "@/components/admin/ErrorsPanel";
 import { IdentityQueue } from "@/components/admin/IdentityReview";
 import { IncentivesManager } from "@/components/admin/IncentivesManager";
@@ -270,6 +271,7 @@ const SECTIONS: Record<string, () => ReactNode> = {
   analytics: () => <AnalyticsPanel />,
   pedidos: () => <OrdersSection />,
   viajes: () => <RemisManager view="viajes" />,
+  logistica: () => <LogisticaAdmin />,
   envios: () => <EnviosManager />,
   trabajos: () => <JobsBoard />,
   zonas: () => <ZonesManager />,

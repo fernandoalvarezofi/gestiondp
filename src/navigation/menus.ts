@@ -1,7 +1,7 @@
 import {
   Banknote, BarChart3, Bike, Bug, Building2, CalendarCheck, Calculator, Car, CarTaxiFront, ClipboardList, Fingerprint, Flag, Globe, History,
   Landmark, LayoutDashboard, LifeBuoy, Map, MapPinOff, Megaphone, MessageCircle, MessageCircleQuestion, Network, Package, PackageOpen,
-  Radio, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, ShoppingBag, Wallet, BookUser, ShieldCheck, TrendingUp, type LucideIcon,
+  Radio, Route, ScrollText, Send, Settings, Star, Store, Tags, Target, Undo2, UserCircle, Users, UsersRound, ShoppingBag, Wallet, BookUser, ShieldCheck, TrendingUp, Truck, Warehouse, type LucideIcon,
 } from "lucide-react";
 import type { PanelNavGroup } from "@/components/panel/PanelShell";
 import type { Permission } from "@/pages/delivery/merchant/context";
@@ -30,6 +30,7 @@ export const MERCHANT_SECTIONS: MerchantSection[] = [
   { path: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación diaria", badge: "pedidos" },
   { path: "turnos", label: "Agenda y turnos", short: "Agenda", icon: CalendarCheck, group: "Operación diaria", permission: "pedidos", badge: "turnos" },
   { path: "mensajes", label: "Mensajes", icon: MessageCircle, group: "Operación diaria", badge: "mensajes" },
+  { path: "envios", label: "Envíos", icon: Truck, group: "Operación diaria", permission: "pedidos" },
   { path: "clientes", label: "Clientes (CRM)", short: "Clientes", icon: Users, group: "Clientes", permission: "estadisticas", badge: "clientes" },
   { path: "productos", label: "Productos", short: "Productos", icon: ShoppingBag, group: "Catálogo", permission: "catalogo" },
   { path: "inventario", label: "Inventario", icon: Package, group: "Catálogo", permission: "catalogo" },
@@ -73,6 +74,7 @@ export const COURIER_TABS = ["/app/repartidor", "/app/repartidor/mapa", "/app/re
 export const courierNav = (offers: number | undefined, mensajes?: number): PanelNavGroup[] => [{ items: [
   { to: "/app/repartidor", label: "Trabajos", icon: ClipboardList, end: true, badge: offers },
   { to: "/app/repartidor/mapa", label: "Mapa", icon: Map },
+  { to: "/app/repartidor/paquetes", label: "Paquetes", icon: Package },
   { to: "/app/repartidor/mensajes", label: "Mensajes", icon: MessageCircle, badge: mensajes },
   { to: "/app/repartidor/ganancias", label: "Ganancias", icon: Wallet },
   { to: "/app/repartidor/incentivos", label: "Metas y turnos", short: "Metas", icon: Target },
@@ -105,6 +107,7 @@ export const ADMIN_SECTIONS: AdminSection[] = [
   { id: "analytics", label: "Analytics", icon: TrendingUp, group: "General" },
   { id: "pedidos", label: "Pedidos", icon: ClipboardList, group: "Operación", badge: "pedidos" },
   { id: "viajes", label: "Viajes de remís", icon: CarTaxiFront, group: "Operación" },
+  { id: "logistica", label: "Logística (paquetería)", icon: Warehouse, group: "Operación" },
   { id: "envios", label: "Mensajería", icon: Package, group: "Operación" },
   { id: "trabajos", label: "Trabajos de logística", icon: Route, group: "Operación" },
   { id: "zonas", label: "Zonas y tarifas", icon: Map, group: "Operación" },
