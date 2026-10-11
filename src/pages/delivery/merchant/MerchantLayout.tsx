@@ -275,7 +275,10 @@ export default function MerchantLayout() {
         </div>
       )}
       groups={merchantNav(can, { pedidos: pendingCount, preguntas: preguntasPendientes, mensajes: unreadMessages, clientes: avisos.clientes || undefined, turnos: avisos.turnos || undefined }, tipo)}
-      actions={tipo === "sitio" ? undefined : <StoreStatusControl store={store} onChange={loadStore} />}
+      actions={tipo === "sitio" ? undefined : store.pedidos_online === false
+        // Carta digital sin pedidos: no hay pedidos que abrir, pausar o cerrar; se muestra qué es y dónde cambiarlo.
+        ? <Link to="/app/comercio/configuracion/entrega" className="flex items-center gap-2 rounded-lg border bg-card px-3 py-1.5 text-sm font-bold hover:bg-muted sm:px-4 sm:py-2"><span className="h-2.5 w-2.5 rounded-full bg-primary" /><span className="max-sm:sr-only">Carta digital · sin pedidos</span></Link>
+        : <StoreStatusControl store={store} onChange={loadStore} />}
     >
       {store.aprobado === false && !store.motivo_rechazo && (section === "" || section === "configuracion"
         ? <p className="mb-4 rounded-2xl border border-warning/40 bg-warning/10 p-4 text-sm">{tipo === "sitio" ? <><span className="font-bold">Tu sitio está en revisión y todavía no es público.</span> Mientras tanto podés editarlo, armar páginas y previsualizarlo.</> : <><span className="font-bold">Tu comercio está en revisión.</span> Mientras tanto podés cargar el menú, las fotos y los horarios.</>} Para aprobarte necesitamos tu CUIT y razón social: cargalos en <Link to="/app/comercio/configuracion/verificacion" className="font-bold underline">Configuración → Verificación</Link>.</p>

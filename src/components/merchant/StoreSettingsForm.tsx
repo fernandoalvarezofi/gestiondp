@@ -52,7 +52,7 @@ const toNumber = (value: string) => (value === "" ? 0 : Number(value));
 export type SettingsSection = "general" | "horarios" | "entrega" | "operacion";
 
 /** Sin `section` muestra todo (alta de un comercio nuevo); con `section` muestra solo esa parte de la configuración. */
-export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sitio = false }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<boolean | void>; section?: SettingsSection; /** Sitio web: la dirección es opcional (hay negocios que atienden a distancia). */ sitio?: boolean }) {
+export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sitio = false, verificado = true }: { initial: StoreFormValues; submitLabel: string; onSubmit: (values: StoreFormValues) => Promise<boolean | void>; section?: SettingsSection; /** Sitio web: la dirección es opcional (hay negocios que atienden a distancia). */ sitio?: boolean; /** Si administración ya verificó al titular (CUIT). Sin verificar, vender lleva el negocio a revisión. */ verificado?: boolean }) {
   const show = (name: SettingsSection) => !section || section === name;
   const [values, setValues] = useState<StoreFormValues>(initial);
   const [saving, setSaving] = useState(false);
@@ -60,6 +60,9 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sit
   const [base, setBase] = useState<StoreFormValues>(initial);
   const sinGuardar = JSON.stringify(values) !== JSON.stringify(base);
   useAvisoSalida(sinGuardar);
+  // Un negocio que no cobra por Woref (sin pedidos en línea ni app de delivery) es público sin verificación; vender la requiere.
+  const informativo = (v: StoreFormValues) => sitio || (!v.pedidos_online && !v.en_market);
+  const pasaARevision = !verificado && informativo(base) && !informativo(values);
   const set = <K extends keyof StoreFormValues>(key: K, value: StoreFormValues[K]) => setValues((current) => ({ ...current, [key]: value }));
 
   const submit = async (event: FormEvent) => {
@@ -140,8 +143,8 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sit
         </label>
         {values.envio_propio && (
           <div className="grid gap-4 rounded-xl bg-muted/50 p-3 sm:grid-cols-3">
-            <div className="space-y-1.5"><Label htmlFor="s-envio-propio">Costo del envío (197609</Label><Input id="s-envio-propio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
-            <div className="space-y-1.5"><Label htmlFor="s-gratis-propio">Gratis desde (197609</Label><Input id="s-gratis-propio" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>
+            <div className="space-y-1.5"><Label htmlFor="s-envio-propio">Costo del envío ($)</Label><Input id="s-envio-propio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
+            <div className="space-y-1.5"><Label htmlFor="s-gratis-propio">Gratis desde ($)</Label><Input id="s-gratis-propio" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>
             <div className="space-y-1.5"><Label htmlFor="s-envio-detalle">Qué ve el cliente</Label><Input id="s-envio-detalle" maxLength={140} value={values.envio_detalle ?? ""} onChange={(event) => set("envio_detalle", event.target.value)} placeholder="Ej.: Correo Argentino, 3 a 5 días" /></div>
           </div>
         )}
@@ -149,28 +152,34 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sit
           <span><span className="block text-sm font-bold">Aparecer en la app de delivery de Woref</span><span className="block text-xs text-muted-foreground">Tu negocio se suma al listado de locales y los repartidores de Woref llevan tus pedidos dentro de tu zona. Necesita la ubicación del local.</span></span>
           <Switch checked={values.en_market} onCheckedChange={(checked) => set("en_market", checked)} />
         </label>
+        {pasaARevision && <p role="status" className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm"><span className="font-bold">Para vender necesitás verificar al titular.</span> Al guardar, tu negocio deja de ser público hasta que Woref lo apruebe. Cargá el CUIT en Configuración → Verificación.</p>}
       </fieldset>
       <fieldset id="store-location" className="space-y-3">
-        <legend className="mb-3 text-base font-extrabold">Ubicación y zona de entrega</legend>
+        <legend className="mb-3 text-base font-extrabold">{values.en_market ? "Ubicación y zona de entrega" : "Ubicación del local"}</legend>
         <AddressSearch placeholder="Buscá la dirección del local" onPick={(found) => setValues((current) => ({ ...current, latitud: found.lat, longitud: found.lng, direccion: current.direccion || found.label }))} />
         {values.latitud != null && values.longitud != null ? (
           <MapPicker value={{ lat: values.latitud, lng: values.longitud }} onChange={(point) => setValues((current) => ({ ...current, latitud: point.lat, longitud: point.lng }))} className="h-60" />
         ) : <p className="rounded-xl bg-warning/15 p-3 text-sm font-semibold">Todavía no marcaste dónde está el local. Buscá la dirección arriba para ubicarlo en el mapa.</p>}
+        {/* Radio y costo por km solo los usa el reparto de la app de delivery. */}
+        {values.en_market && <>
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-1.5"><Label htmlFor="s-radio">Entregás hasta (km)</Label><Input id="s-radio" type="number" min={0.5} max={50} step={0.5} value={values.radio_entrega_km} onChange={(event) => set("radio_entrega_km", toNumber(event.target.value))} /></div>
           <div className="space-y-1.5"><Label htmlFor="s-km">Costo extra por km ($)</Label><Input id="s-km" type="number" min={0} value={values.costo_por_km} onChange={(event) => set("costo_por_km", toNumber(event.target.value))} /></div>
         </div>
         <p className="text-xs text-muted-foreground">Ejemplo: con envío base de {money(values.costo_envio)} y {money(values.costo_por_km)} por km, a 3 km el envío cuesta {money(Math.round((values.costo_envio + values.costo_por_km * 3) / 10) * 10)}.</p>
+        </>}
       </fieldset>
-      <fieldset className="grid gap-4 sm:grid-cols-3">
-        <legend className="mb-3 text-base font-extrabold">Entrega</legend>
+      {values.pedidos_online ? <fieldset className="grid gap-4 sm:grid-cols-3">
+        <legend className="mb-3 text-base font-extrabold">{values.en_market ? "Entrega" : "Pedidos"}</legend>
+        {values.en_market && <>
         <div className="space-y-1.5"><Label htmlFor="s-tmin">Tiempo mínimo (min)</Label><Input id="s-tmin" type="number" min={5} max={180} value={values.tiempo_min} onChange={(event) => set("tiempo_min", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-tmax">Tiempo máximo (min)</Label><Input id="s-tmax" type="number" min={5} max={240} value={values.tiempo_max} onChange={(event) => set("tiempo_max", toNumber(event.target.value))} /></div>
         <div className="space-y-1.5"><Label htmlFor="s-envio">Envío base ($)</Label><Input id="s-envio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
+        </>}
         <div className="space-y-1.5"><Label htmlFor="s-minimo">Pedido mínimo ($)</Label><Input id="s-minimo" type="number" min={0} value={values.pedido_minimo} onChange={(event) => set("pedido_minimo", toNumber(event.target.value))} /></div>
-        <div className="space-y-1.5"><Label htmlFor="s-gratis">Envío gratis desde ($)</Label><Input id="s-gratis" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>
+        {values.en_market && <div className="space-y-1.5"><Label htmlFor="s-gratis">Envío gratis desde ($)</Label><Input id="s-gratis" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>}
         <div className="space-y-1.5"><Label htmlFor="s-promo">Promoción destacada</Label><Input id="s-promo" maxLength={40} value={values.promo_texto || ""} onChange={(event) => set("promo_texto", event.target.value)} placeholder="Ej.: 20% OFF en combos" /></div>
-      </fieldset>
+      </fieldset> : <p className="rounded-xl bg-muted/60 p-3 text-sm text-muted-foreground">Sin pedidos en línea tu página muestra la carta o el catálogo con precios, sin carrito. Activá "Tomar pedidos en línea" para configurar pedido mínimo y entrega.</p>}
       </>)}
       {show("operacion") && (<>
       <fieldset className="space-y-3">

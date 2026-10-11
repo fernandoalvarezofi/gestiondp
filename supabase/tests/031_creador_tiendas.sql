@@ -27,7 +27,16 @@ begin
   begin perform negocio_crear(gen_random_uuid(), 'sitio', '{"nombre":"QA Sitio","slug":"qa-031-sitio"}', tema, '[]', '[{"nombre":"x","precio":1}]'); fallos := fallos || E'- sitio con productos aceptado\n'; exception when others then null; end;
   perform set_config('role', 'postgres', true);
 
-  if (select count(*) from delivery_comercios where propietario_id = dueno and aprobado = false and en_market = false) <> 3 then fallos := fallos || E'- los negocios no nacieron en revisión y fuera del Market\n'; end if;
+  if (select count(*) from delivery_comercios where propietario_id = dueno and en_market = false and not verificado) <> 3 then fallos := fallos || E'- los negocios no nacieron fuera del Market y sin verificar\n'; end if;
+  -- La tienda que vende queda en revisión; la carta sin pedidos y la agenda (no cobran por Woref) son públicas.
+  if (select aprobado from delivery_comercios where id = t) or not (select aprobado from delivery_comercios where id = k) or not (select aprobado from delivery_comercios where id = s) then fallos := fallos || E'- publicación sin verificación incorrecta\n'; end if;
+  -- Si la carta activa pedidos sin estar verificada, vuelve a revisión.
+  perform set_config('request.jwt.claims', json_build_object('sub', dueno, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+  update delivery_comercios set pedidos_online = true where id = k;
+  perform set_config('role', 'postgres', true);
+  if (select aprobado from delivery_comercios where id = k) then fallos := fallos || E'- una carta con pedidos y sin verificar quedó pública\n'; end if;
+  update delivery_comercios set pedidos_online = false where id = k;
   if (select tipo_sitio from delivery_comercios where id = t) <> 'tienda' or (select tipo_sitio from delivery_comercios where id = s) <> 'sitio' then fallos := fallos || E'- tipos incorrectos\n'; end if;
   if (select count(*) from delivery_productos where comercio_id = t) <> 2 or (select count(*) from delivery_productos where comercio_id = k and descripcion = 'Con papas') <> 1 then fallos := fallos || E'- productos no creados\n'; end if;
   if (select count(*) from servicios where comercio_id = s) <> 2 or (select count(*) from disponibilidad d join profesionales p on p.id = d.profesional_id where p.comercio_id = s) <> 5 then fallos := fallos || E'- agenda no armada\n'; end if;

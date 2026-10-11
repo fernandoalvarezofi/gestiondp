@@ -41,15 +41,16 @@ export function StoreVerification({ store, onSaved }: { store: DeliveryStore; on
     onSaved?.();
   };
 
-  const state = store.aprobado ? "ok" : store.motivo_rechazo ? "rechazado" : "revision";
+  // Un negocio informativo (página, carta sin pedidos, agenda) es público sin verificar; para vender hace falta la verificación.
+  const state = store.aprobado ? (store.verificado === false ? "publico" : "ok") : store.motivo_rechazo ? "rechazado" : "revision";
 
   return (
     <div className="space-y-6">
-      <div className={cn("flex items-start gap-3 rounded-2xl border p-4", state === "ok" ? "border-success/40 bg-success/5" : state === "rechazado" ? "border-destructive/40 bg-destructive/5" : "border-warning/40 bg-warning/10")}>
-        {state === "ok" ? <BadgeCheck className="mt-0.5 h-5 w-5 text-success" /> : state === "rechazado" ? <ShieldAlert className="mt-0.5 h-5 w-5 text-destructive" /> : <Clock3 className="mt-0.5 h-5 w-5" />}
+      <div className={cn("flex items-start gap-3 rounded-2xl border p-4", state === "ok" || state === "publico" ? "border-success/40 bg-success/5" : state === "rechazado" ? "border-destructive/40 bg-destructive/5" : "border-warning/40 bg-warning/10")}>
+        {state === "ok" || state === "publico" ? <BadgeCheck className="mt-0.5 h-5 w-5 text-success" /> : state === "rechazado" ? <ShieldAlert className="mt-0.5 h-5 w-5 text-destructive" /> : <Clock3 className="mt-0.5 h-5 w-5" />}
         <div>
-          <p className="font-extrabold">{state === "ok" ? "Comercio verificado" : state === "rechazado" ? "Tu comercio no fue aprobado" : legal ? "En revisión" : "Cargá tus datos legales para que podamos aprobarte"}</p>
-          <p className="text-sm text-muted-foreground">{state === "ok" ? "Ya aparecés para los clientes." : state === "rechazado" ? `Motivo: ${store.motivo_rechazo}. Corregí lo que falte y escribinos para revisarlo de nuevo.` : legal ? "Administración revisa tus datos. Te avisamos cuando estés aprobado." : "Sin CUIT y razón social no podemos aprobar el comercio ni facturarte la comisión."}</p>
+          <p className="font-extrabold">{state === "ok" ? "Comercio verificado" : state === "publico" ? "Publicado, sin verificar" : state === "rechazado" ? "Tu comercio no fue aprobado" : legal ? "En revisión" : "Cargá tus datos legales para que podamos aprobarte"}</p>
+          <p className="text-sm text-muted-foreground">{state === "ok" ? "Ya aparecés para los clientes." : state === "publico" ? (legal ? "Tu negocio ya es público. Administración revisa tus datos para que puedas vender en línea." : "Tu negocio ya es público porque no cobra por Woref. Para tomar pedidos en línea o estar en la app de delivery, cargá tus datos legales.") : state === "rechazado" ? `Motivo: ${store.motivo_rechazo}. Corregí lo que falte y escribinos para revisarlo de nuevo.` : legal ? "Administración revisa tus datos. Te avisamos cuando estés aprobado." : "Sin CUIT y razón social no podemos aprobar el comercio ni facturarte la comisión."}</p>
         </div>
       </div>
 

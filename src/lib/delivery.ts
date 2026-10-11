@@ -6,7 +6,7 @@ import { Beer, Cake, Coffee, Cross, Flame, IceCream, Pizza, Salad, ShoppingBaske
 export const db = supabase as any;
 
 /** Columnas públicas de un comercio: todas menos las internas (comisión y frecuencia de liquidación), que ya no puede leer la API. Cada columna nueva y pública de `delivery_comercios` debe agregarse acá y con GRANT SELECT. */
-export const COMERCIO_COLS = "id,propietario_id,nombre,slug,categoria,descripcion,direccion,imagen_url,logo_url,rating,tiempo_min,tiempo_max,costo_envio,pedido_minimo,esta_abierto,destacado,created_at,updated_at,rubro,telefono,horario,promo_texto,envio_gratis_desde,total_resenas,activo,horarios,aprobado,motivo_rechazo,latitud,longitud,radio_entrega_km,costo_por_km,acepta_retiro,acepta_programados,pausado_hasta,tiempo_preparacion_min,tienda_tema,tipo_sitio,en_market,envio_propio,envio_detalle,pedidos_online";
+export const COMERCIO_COLS = "id,propietario_id,nombre,slug,categoria,descripcion,direccion,imagen_url,logo_url,rating,tiempo_min,tiempo_max,costo_envio,pedido_minimo,esta_abierto,destacado,created_at,updated_at,rubro,telefono,horario,promo_texto,envio_gratis_desde,total_resenas,activo,horarios,aprobado,motivo_rechazo,latitud,longitud,radio_entrega_km,costo_por_km,acepta_retiro,acepta_programados,pausado_hasta,tiempo_preparacion_min,tienda_tema,tipo_sitio,en_market,envio_propio,envio_detalle,pedidos_online,verificado";
 
 export type Categoria = "comida" | "supermercado" | "farmacia" | "tiendas";
 export type EstadoPedido = "pendiente" | "confirmado" | "preparando" | "listo" | "en_camino" | "entregado" | "cancelado";
@@ -53,6 +53,8 @@ export type DeliveryStore = {
   radio_entrega_km?: number | null;
   costo_por_km?: number | null;
   aprobado?: boolean;
+  /** Verificado por administración con los datos legales. Un negocio informativo puede ser público sin estarlo; para vender, no. */
+  verificado?: boolean;
   /** Fecha de baja (solo la ven administración y el servidor; una tienda dada de baja no aparece en ningún lado). */
   eliminado_at?: string | null;
   motivo_rechazo?: string | null;

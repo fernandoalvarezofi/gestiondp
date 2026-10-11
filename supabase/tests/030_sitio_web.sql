@@ -1,6 +1,6 @@
 -- CREADOR DE SITIOS WEB. Transacción que se deshace sola (termina con una excepción a propósito).
--- Verifica: alta atómica e idempotente (sin duplicados por reintento), que nace "en revisión" aunque se pida otra cosa,
--- que el visitante no lo ve hasta la aprobación, que no recibe pedidos, que no fuerza el catálogo, que las consultas del
+-- Verifica: alta atómica e idempotente (sin duplicados por reintento), que nace público pero sin verificar (es informativo)
+-- aunque se pida otra cosa, que al activar la tienda vuelve a revisión, que un rechazo lo oculta, que no recibe pedidos, que no fuerza el catálogo, que las consultas del
 -- formulario entran al CRM, que otra persona no puede tomar el id, que el visitante no puede crear sitios y que
 -- las tiendas existentes no cambian.
 do $t$
@@ -40,7 +40,8 @@ begin
   if n <> 1 then fallos := fallos || '- comercios del dueño: ' || n || E'\n'; end if;
   select tipo_sitio, aprobado into v_tipo, v_aprob from delivery_comercios where id = sid;
   if v_tipo <> 'sitio' then fallos := fallos || E'- no quedó como sitio\n'; end if;
-  if v_aprob is distinct from false then fallos := fallos || E'- no nació en revisión\n'; end if;
+  if v_aprob is distinct from true then fallos := fallos || E'- un sitio informativo no nació público\n'; end if;
+  if (select verificado from delivery_comercios where id = sid) then fallos := fallos || E'- el dueño se marcó verificado\n'; end if;
   if exists (select 1 from delivery_comercios c, jsonb_array_elements(c.tienda_tema->'bloques') b where c.id = sid and b->>'tipo' = 'catalogo') then fallos := fallos || E'- el servidor agregó el catálogo a un sitio\n'; end if;
   select count(*) into n from delivery_tienda_paginas where comercio_id = sid and estado = 'publicada' and publicada_at is not null;
   if n <> 2 then fallos := fallos || '- páginas publicadas: ' || n || E'\n'; end if;
@@ -55,15 +56,8 @@ begin
   perform set_config('role', 'postgres', true);
   if (select tipo_sitio from delivery_comercios where id = sid) <> 'sitio' then fallos := fallos || E'- otro usuario cambió el tipo\n'; end if;
 
-  -- 7. Mientras está en revisión, el visitante no lo ve (ni sus páginas).
+  -- 7-8. Sin verificación (no cobra nada por Woref): el visitante lo ve y puede enviar una consulta, que entra al CRM.
   perform set_config('request.jwt.claims', '', true);
-  perform set_config('role', 'anon', true);
-  if exists (select 1 from delivery_comercios where id = sid) then fallos := fallos || E'- anon ve el sitio en revisión\n'; end if;
-  if exists (select 1 from delivery_tienda_paginas where comercio_id = sid) then fallos := fallos || E'- anon ve páginas del sitio en revisión\n'; end if;
-  perform set_config('role', 'postgres', true);
-
-  -- 8. Aprobado: el visitante lo ve y puede enviar una consulta, que entra al CRM.
-  update delivery_comercios set aprobado = true where id = sid;
   perform set_config('role', 'anon', true);
   if not exists (select 1 from delivery_comercios where id = sid and tipo_sitio = 'sitio') then fallos := fallos || E'- anon no ve el sitio aprobado\n'; end if;
   select count(*) into n from delivery_tienda_paginas where comercio_id = sid;
@@ -87,6 +81,20 @@ begin
   perform delivery_guardar_tienda_tema(sid, tema);
   perform set_config('role', 'postgres', true);
   if (select tipo_sitio from delivery_comercios where id = sid) <> 'tienda' then fallos := fallos || E'- el dueño no pudo activar la tienda\n'; end if;
+  if (select aprobado from delivery_comercios where id = sid) then fallos := fallos || E'- una tienda sin verificar quedó pública\n'; end if;
+  -- Volver a sitio lo publica de nuevo; un rechazo de administración lo oculta aunque sea informativo.
+  perform set_config('role', 'authenticated', true);
+  update delivery_comercios set tipo_sitio = 'sitio' where id = sid;
+  perform set_config('role', 'postgres', true);
+  if not (select aprobado from delivery_comercios where id = sid) then fallos := fallos || E'- volver a sitio no lo publicó\n'; end if;
+  update delivery_comercios set aprobado = false, motivo_rechazo = 'QA' where id = sid;
+  perform set_config('role', 'authenticated', true);
+  update delivery_comercios set descripcion = 'cambio' where id = sid;
+  perform set_config('role', 'postgres', true);
+  if (select aprobado from delivery_comercios where id = sid) then fallos := fallos || E'- un sitio rechazado se volvió a publicar solo\n'; end if;
+  perform set_config('role', 'authenticated', true);
+  update delivery_comercios set tipo_sitio = 'tienda' where id = sid;
+  perform set_config('role', 'postgres', true);
   if not exists (select 1 from delivery_comercios c, jsonb_array_elements(c.tienda_tema->'bloques') b where c.id = sid and b->>'tipo' = 'catalogo') then fallos := fallos || E'- la tienda activada no tiene catálogo\n'; end if;
 
   raise exception '%', case when fallos = '' then 'SITIO WEB: TODAS PASARON' else E'FALLAS:\n' || fallos end;

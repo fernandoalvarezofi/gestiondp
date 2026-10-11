@@ -59,7 +59,7 @@ export default function MerchantSettings() {
         ) : current.id === "verificacion" ? (
           <StoreVerification store={store} onSaved={loadStore} />
         ) : (
-          <StoreSettingsForm key={`${store.id}-${current.id}-${store.nombre}`} section={current.id as SettingsSection} sitio={sitio} initial={storeToFormValues(store)} submitLabel="Guardar cambios" onSubmit={saveSettings} />
+          <StoreSettingsForm key={`${store.id}-${current.id}-${store.nombre}`} section={current.id as SettingsSection} sitio={sitio} verificado={store.verificado !== false} initial={storeToFormValues(store)} submitLabel="Guardar cambios" onSubmit={saveSettings} />
         )}
       </section>
     </div>

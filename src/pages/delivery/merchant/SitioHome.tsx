@@ -61,7 +61,9 @@ export default function SitioHome() {
   const activarTienda = async () => {
     const ok = await confirmar({
       titulo: "¿Activar la tienda online?",
-      descripcion: "Tu sitio, sus páginas y su diseño se conservan. Se suman catálogo, carrito, pedidos, envíos y finanzas al panel, y tu negocio pasa a aparecer en el listado de locales de Woref. Después cargás productos y completás ubicación y entrega en Configuración.",
+      descripcion: store.verificado
+        ? "Tu sitio, sus páginas y su diseño se conservan. Se suman catálogo, carrito, pedidos, envíos y finanzas al panel. Después cargás productos y elegís cómo entregás en Configuración."
+        : "Tu sitio, sus páginas y su diseño se conservan y se suman catálogo, carrito, pedidos y envíos. Para vender, Woref verifica al titular: hasta que te aprobemos, el sitio deja de ser público. Cargá el CUIT en Configuración → Verificación.",
       confirmar: "Activar tienda online",
     });
     if (!ok) return;
@@ -69,7 +71,7 @@ export default function SitioHome() {
     const { error } = await db.from("delivery_comercios").update({ tipo_sitio: "tienda" }).eq("id", store.id);
     setActivando(false);
     if (error) { toast.error(errorMessage(error)); return; }
-    toast.success("Tienda online activada. Ya podés cargar tus productos.");
+    toast.success(store.verificado ? "Tienda online activada. Ya podés cargar tus productos." : "Tienda online activada. Cargá tus productos y el CUIT para que la aprobemos.");
     await loadStore();
   };
 

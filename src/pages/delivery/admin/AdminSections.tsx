@@ -237,6 +237,7 @@ function StoresSection() {
                 <div className="mt-1 flex flex-wrap gap-1">
                   {store.tipo_sitio === "sitio" && <StatusPill tone="info">Sitio web</StatusPill>}
                   {store.tipo_sitio !== "sitio" && store.en_market === false && <StatusPill tone="info">{store.pedidos_online === false ? "Carta digital" : "Tienda independiente"}</StatusPill>}
+                  {store.aprobado !== false && store.verificado === false && !baja(store) && <StatusPill>Sin verificar</StatusPill>}
                   {baja(store) ? <StatusPill tone="danger">Dada de baja · {formatDateTime(store.eliminado_at)}</StatusPill> : store.aprobado === false ? <StatusPill tone="warning">Por aprobar</StatusPill> : store.activo === false ? <StatusPill tone="danger">Oculto</StatusPill> : isOpenNow(store) ? <StatusPill tone="success" dot>Abierto</StatusPill> : <StatusPill>Cerrado</StatusPill>}
                 </div>
               </div>

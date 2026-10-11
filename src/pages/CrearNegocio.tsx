@@ -61,7 +61,7 @@ export default function CrearNegocio() {
   const [slugEstado, setSlugEstado] = useState<"idle" | "checking" | "free" | "taken" | "invalid">("idle");
   const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [creado, setCreado] = useState<{ id: string; slug: string; tipo: TipoNegocio; nombre: string } | null>(null);
+  const [creado, setCreado] = useState<{ id: string; slug: string; tipo: TipoNegocio; nombre: string; publico?: boolean } | null>(null);
   const enCurso = useRef(false);
   const arriba = useRef<HTMLDivElement>(null);
   const { negocios, recargar } = useMisNegocios();
@@ -78,7 +78,7 @@ export default function CrearNegocio() {
   // Si el negocio de este borrador ya existe (se creó y la respuesta no llegó, o se recargó), se muestra como creado.
   useEffect(() => {
     const ya = negocios.find((n) => n.id === b.id);
-    if (ya && !creado && b.tipo) { setCreado({ id: ya.id, slug: ya.slug ?? b.slug, tipo: b.tipo, nombre: ya.nombre }); try { window.localStorage.removeItem(BORRADOR); } catch { /* sin almacenamiento */ } }
+    if (ya && !creado && b.tipo) { setCreado({ id: ya.id, slug: ya.slug ?? b.slug, tipo: b.tipo, nombre: ya.nombre, publico: Boolean(ya.aprobado) }); try { window.localStorage.removeItem(BORRADOR); } catch { /* sin almacenamiento */ } }
   }, [negocios, b.id, b.slug, b.tipo, creado]);
   useEffect(() => {
     if (actual !== "Dirección y diseño") return;
@@ -147,7 +147,9 @@ export default function CrearNegocio() {
     }
     const r = data as { id: string; slug: string; creado: boolean };
     try { window.localStorage.removeItem(BORRADOR); } catch { /* sin almacenamiento */ }
-    setCreado({ id: r.id, slug: r.slug, tipo: b.tipo, nombre: b.nombre.trim() });
+    // Lo que dice la pantalla sale del servidor: una página, una agenda o una carta sin pedidos ya son públicas; una tienda que vende espera la verificación.
+    const { data: estado } = await db.from("delivery_comercios").select("aprobado").eq("id", r.id).maybeSingle();
+    setCreado({ id: r.id, slug: r.slug, tipo: b.tipo, nombre: b.nombre.trim(), publico: Boolean((estado as { aprobado?: boolean } | null)?.aprobado) });
     toast.success(r.creado ? "¡Listo! Tu negocio quedó creado." : "Tu negocio ya estaba creado: lo abrimos.");
     void recargar(); void roles.refresh();
   };
@@ -162,7 +164,9 @@ export default function CrearNegocio() {
             <span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-success/10 text-success"><CheckCircle2 className="h-8 w-8" /></span>
             <h1 className="mt-4 text-2xl font-black sm:text-3xl">{creado.tipo === "tienda" ? "Tu tienda online quedó creada" : creado.tipo === "carta" ? "Tu carta digital quedó creada" : creado.tipo === "servicios" ? "Tu agenda en línea quedó creada" : "Tu página web quedó creada"}</h1>
             <p className="mx-auto mt-2 max-w-xl text-muted-foreground">Se administra desde <span className="font-bold text-foreground">Mi tienda</span>: editor de páginas, temas, {creado.tipo === "servicios" ? "agenda, " : creado.tipo === "sitio" ? "" : "productos, pedidos, "}clientes y estadísticas.</p>
-            <p className="mx-auto mt-4 max-w-lg rounded-2xl border border-warning/40 bg-warning/10 p-3 text-sm"><span className="font-bold">Todavía no es público.</span> Woref revisa cada negocio antes de mostrarlo; mientras tanto podés editarlo y verlo vos. Para la aprobación vas a necesitar completar la verificación del titular.</p>
+            {creado.publico
+              ? <p className="mx-auto mt-4 max-w-lg rounded-xl border border-success/40 bg-success/10 p-3 text-sm"><span className="font-bold">Ya está publicado.</span> Cualquiera puede verlo en tu dirección. Si más adelante querés vender en línea, te vamos a pedir la verificación del titular (CUIT).</p>
+              : <p className="mx-auto mt-4 max-w-lg rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm"><span className="font-bold">Todavía no es público.</span> Para vender, Woref verifica al titular antes de mostrar la tienda; mientras tanto podés editarla y verla vos. Cargá el CUIT en Configuración → Verificación.</p>}
             <p className="mt-4 truncate text-sm font-semibold text-muted-foreground">{url.replace(/^https?:\/\//, "")}</p>
             <div className="mt-6 flex flex-wrap justify-center gap-2">
               <Button type="button" className="rounded-full px-6 font-bold" onClick={() => abrir(creado.id, "tienda/editor")}>Abrir Mi tienda</Button>
@@ -342,7 +346,7 @@ export default function CrearNegocio() {
               </div>
               <div><p className="mb-2 text-sm font-bold">Diseño</p><TemplateGrid value={b.plantilla ?? rubro.plantilla} color={b.color ?? rubro.color} onChange={(id) => set("plantilla", id)} /></div>
               <div><p className="mb-2 text-sm font-bold">Color de tu marca</p><ColorSwatches value={b.color ?? rubro.color} onChange={(c) => set("color", c)} /></div>
-              <p className="text-xs text-muted-foreground">Al crear aceptás los <Link to="/terminos" target="_blank" className="font-semibold underline">Términos y condiciones</Link> y la <Link to="/privacidad" target="_blank" className="font-semibold underline">Política de privacidad</Link>. Woref revisa cada negocio antes de hacerlo público.</p>
+              <p className="text-xs text-muted-foreground">Al crear aceptás los <Link to="/terminos" target="_blank" className="font-semibold underline">Términos y condiciones</Link> y la <Link to="/privacidad" target="_blank" className="font-semibold underline">Política de privacidad</Link>. Las tiendas que venden se publican después de verificar al titular.</p>
               {error && <p role="alert" className="rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-destructive">{error}</p>}
             </div>
             <div className="min-w-0 lg:sticky lg:top-20 lg:self-start">

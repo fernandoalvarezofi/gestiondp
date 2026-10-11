@@ -80,7 +80,7 @@ export default function SitioWebInfo() {
           {[
             ["Elegí y completá", "Qué querés crear, tu rubro, tus primeros productos o servicios y la dirección web. Unos minutos."],
             ["Editalo a tu gusto", "Arrancás con un sitio armado para tu rubro y lo cambiás en Mi tienda: textos, fotos, colores, páginas y catálogo."],
-            ["Publicá y vendé", "Woref revisa cada negocio antes de que sea público. Después recibís pedidos, reservas y consultas en tu panel."],
+            ["Publicá y vendé", "Tu página, tu carta o tu agenda quedan en línea al crearlas. Para vender, Woref verifica al titular. Pedidos, reservas y consultas llegan a tu panel."],
           ].map(([t, x], i) => (
             <li key={t} className="rounded-3xl border bg-card p-5">
               <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-yellow text-sm font-black text-brand-yellow-foreground">{i + 1}</span>
