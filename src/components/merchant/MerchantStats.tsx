@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
-import { Globe, Loader2, Banknote, ShoppingBag, Receipt, Star } from "lucide-react";
+import { Download, Globe, Loader2, Banknote, ShoppingBag, Receipt, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { downloadCsv, toCsv } from "@/lib/csv";
 import { EmptyState, ErrorState } from "@/components/delivery/Common";
 import { BarSeries, Delta, Metric, MetricStrip, PageIntro, Section, Surface } from "@/components/panel/kit";
 import { db, errorMessage, metodoPagoLabel, money } from "@/lib/delivery";
@@ -49,13 +51,17 @@ export function MerchantStats({ storeId, rating, reviews }: { storeId: string; r
   }, [storeId, days, reintento]);
 
   const period = (
-    <div className="inline-flex rounded-full border bg-card p-0.5" role="tablist" aria-label="Período">
+    <div className="flex flex-wrap items-center gap-2">
+    <div className="inline-flex rounded-lg border bg-card p-0.5" role="tablist" aria-label="Período">
       {PERIODS.map((value) => (
-        <button key={value} type="button" role="tab" aria-selected={days === value} onClick={() => setDays(value)} className={cn("rounded-full px-3.5 py-1.5 text-[13px] font-bold transition-colors", days === value ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}>{value} días</button>
+        <button key={value} type="button" role="tab" aria-selected={days === value} onClick={() => setDays(value)} className={cn("rounded-md px-3.5 py-1.5 text-[13px] font-semibold transition-colors", days === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>{value} días</button>
       ))}
     </div>
+    {/* Exporta lo mismo que muestra el gráfico: ventas y pedidos por día del período elegido. */}
+    <Button type="button" variant="outline" size="sm" className="h-9" disabled={!stats?.por_dia.length} onClick={() => stats && downloadCsv(`estadisticas-${days}-dias.csv`, toCsv(["Día", "Pedidos", "Ventas (sin envío ni propinas)"], stats.por_dia.map((d) => [d.dia, d.pedidos, Number(d.ventas)])))}><Download className="h-4 w-4" />Exportar CSV</Button>
+    </div>
   );
-  const intro = <PageIntro description="Cómo le va a tu local, comparado con el período anterior." actions={period} />;
+  const intro = <PageIntro title="Estadísticas" description="Ventas, productos y horarios con tus pedidos reales, comparados con el período anterior." actions={period} />;
 
   if (error) return <div className="space-y-5">{intro}<ErrorState title="No pudimos cargar las estadísticas" error={new Error(error)} onRetry={() => { setError(null); setDays((d) => d); setReintento((n) => n + 1); }} /></div>;
   if (!stats) return <div className="space-y-5">{intro}<div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div></div>;

@@ -23,11 +23,11 @@
     --accent-foreground: 222 56% 23%;
     --destructive: 354 72% 48%;
     --destructive-foreground: 0 0% 100%;
-    --success: 152 58% 34%;
+    --success: 152 60% 28%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 48%;
     --warning-foreground: 30 60% 15%;
-    --info: 214 80% 48%;
+    --info: 214 80% 42%;
     --brand-deep: 222 50% 14%;
     --brand-cream: 222 30% 97%;
     /* Amarillo Woref #F0B900 (acentos). Sobre amarillo siempre va texto oscuro: el blanco no se lee. */
@@ -223,6 +223,16 @@ html.woref-glass:not(.dark) .bg-foreground.text-background { background-color: h
 /* Opciones elegidas (radio en tarjeta, presionado, pestaña activa) con borde de marca: halo suave. */
 html.woref-glass :is([aria-checked="true"], [aria-pressed="true"], [aria-selected="true"]):is(.border-primary, [class*="ring-primary"]) { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12); }
 html.woref-glass:not(.dark) [role="radio"][aria-checked="true"].border { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12); }
+/* Forma de los controles: botones, enlaces-botón, campos y buscadores con texto tienen esquinas de 8 px aunque la
+   pantalla les haya puesto "rounded-full". Quedan redondos los de solo ícono, los vacíos (puntos de carrusel) y los
+   interruptores; los indicadores de estado (span) siguen siendo píldoras. Las tiendas públicas (/t/…) no llevan esta clase. */
+html.woref-glass :is(button, a, [role="tab"], select, input).rounded-full:not(:empty):not([role="switch"]):not(:has(> svg:only-child)):not(:has(> img:only-child)),
+html.woref-glass input.rounded-full, html.woref-glass select.rounded-full,
+html.woref-glass label.rounded-full:has(> input) { border-radius: 0.5rem; }
+html.woref-glass [role="tablist"].rounded-full, html.woref-glass [role="group"].rounded-full { border-radius: 0.625rem; }
+html.woref-glass [role="tablist"].rounded-full > .rounded-full:not(:empty), html.woref-glass [role="group"].rounded-full > .rounded-full:not(:empty) { border-radius: 0.375rem; }
+/* …salvo los cuadrados de tamaño fijo (avatares con iniciales, botones de + y −): esos siguen siendo círculos. */
+html.woref-glass :is(button, a, [role="tab"]).rounded-full:is(.h-4.w-4, .h-5.w-5, .h-6.w-6, .h-7.w-7, .h-8.w-8, .h-9.w-9, .h-10.w-10, .h-11.w-11, .h-12.w-12, .h-14.w-14, .h-16.w-16, .aspect-square) { border-radius: 9999px !important; }
 /* Botones y enlaces armados a mano con el color de marca: planos, con un leve cambio al pasar. */
 html.woref-glass :is(button, a).bg-primary { transition: background-color .15s, filter .15s; }
 html.woref-glass :is(button, a).bg-brand-yellow:not(:disabled):hover { filter: brightness(0.95); }

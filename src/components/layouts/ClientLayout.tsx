@@ -103,8 +103,8 @@ export function ClientLayout() {
             }
           />
 
-          <NavLink to="/app/buscar" className="hidden h-11 flex-1 items-center gap-2 rounded-full border bg-background px-4 text-sm font-semibold text-muted-foreground transition-colors hover:border-primary/40 md:flex lg:max-w-md">
-            <Search className="h-4 w-4 text-foreground" />Buscar locales, platos y productos
+          <NavLink to="/app/buscar" aria-label="Buscar locales, platos y productos" className="hidden h-11 min-w-0 flex-1 items-center gap-2 whitespace-nowrap rounded-lg border border-input bg-card px-3.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 md:flex lg:max-w-md">
+            <Search className="h-4 w-4 shrink-0 text-foreground" /><span className="truncate xl:hidden">Buscar</span><span className="hidden truncate xl:inline">Buscar locales, platos y productos</span>
           </NavLink>
 
           <nav className="ml-auto hidden items-center gap-1 md:flex" aria-label="Principal">

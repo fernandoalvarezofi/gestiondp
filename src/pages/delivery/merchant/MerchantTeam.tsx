@@ -9,6 +9,7 @@ import { db, errorMessage } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
 import { roleLabel, roleSummary, TeamRole, useMerchant } from "./context";
 import { confirmar } from "@/components/ui/dialogos";
+import { PageIntro } from "@/components/panel/kit";
 
 type Member = { id: string; email: string; rol: Exclude<TeamRole, "dueno">; estado: "invitado" | "activo"; nombre: string | null };
 const roles = ["encargado", "operador"] as const;
@@ -54,6 +55,7 @@ export default function MerchantTeam() {
 
   return (
     <div className="space-y-6">
+      <PageIntro title="Equipo" description="Quiénes te ayudan a administrar y qué puede hacer cada persona." />
       <section className="rounded-3xl border bg-card p-4 sm:p-5">
         <h2 className="flex items-center gap-2 font-extrabold"><UserPlus className="h-5 w-5 text-primary" />Sumar a alguien al equipo</h2>
         <p className="mt-1 text-sm text-muted-foreground">La persona tiene que tener cuenta en Woref (o crearla) con ese email. Al entrar ve la invitación y decide si la acepta.</p>

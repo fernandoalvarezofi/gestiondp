@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { db, errorMessage, money } from "@/lib/delivery";
 import type { AddressSuggestion } from "@/lib/geo";
 import { cn } from "@/lib/utils";
+import { PageIntro } from "@/components/panel/kit";
 import { useMerchant } from "./context";
 
 type NegocioResumen = { id: string; nombre: string; rol: string; tiendas: Summary[] };
@@ -54,6 +55,7 @@ export default function MerchantBranches() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
+      <PageIntro title="Mis comercios" />
       <div className="flex flex-wrap items-start justify-between gap-3">
         <p className="max-w-xl text-sm text-muted-foreground">Cada sucursal tiene su propio menú, horarios, equipo, pedidos y finanzas. Cambiás de una a otra desde el selector de arriba a la izquierda. Los clientes ven cada local por separado.</p>
         <div className="flex flex-wrap gap-2">

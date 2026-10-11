@@ -8,7 +8,6 @@ import { SitioWebCluster } from "@/components/sitio/SitioWebCluster";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { COMERCIO_COLS, db, DeliveryStore, money, verticals } from "@/lib/delivery";
-import { tono, tonoDe } from "@/lib/tonos";
 import { cn } from "@/lib/utils";
 
 const photo = (id: string, width = 900) => `https://images.unsplash.com/photo-${id}?w=${width}&q=75&auto=format&fit=crop`;
@@ -90,10 +89,10 @@ export default function Landing() {
       </section>
 
       <section className="relative z-10 mx-auto -mt-10 max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid gap-px overflow-hidden rounded-3xl border-2 border-brand-yellow bg-border shadow-pop sm:grid-cols-3">
+        <div className="grid gap-px overflow-hidden rounded-2xl border bg-border shadow-soft sm:grid-cols-3">
           {trust.map(({ icon: Icon, title, text }) => (
             <div key={title} className="flex items-start gap-3 bg-card p-5">
-              <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl", tono(tonoDe(title)))}><Icon className="h-5 w-5" /></span>
+              <span className={cn("flex h-11 w-11 shrink-0 items-center justify-center rounded-xl", "bg-primary/[0.08] text-primary")}><Icon className="h-5 w-5" /></span>
               <div><p className="font-extrabold">{title}</p><p className="text-sm text-muted-foreground">{text}</p></div>
             </div>
           ))}
@@ -105,7 +104,7 @@ export default function Landing() {
         <p className="mt-2 text-muted-foreground">Elegí qué querés pedir y te mostramos lo que hay cerca.</p>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
           {verticals.slice(0, 8).map(({ id, label, image }) => (
-            <Link key={id} to="/auth?registro=1" className="group relative aspect-[4/3] overflow-hidden rounded-3xl border-2 border-transparent bg-muted transition-colors hover:border-brand-yellow">
+            <Link key={id} to="/auth?registro=1" className="group relative aspect-[4/3] overflow-hidden rounded-2xl border-2 border-transparent bg-muted transition-colors hover:border-primary/40">
               <img src={image} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <span aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
               <span className="absolute inset-x-0 bottom-0 p-4 text-lg font-extrabold text-white">{label}</span>
@@ -124,7 +123,7 @@ export default function Landing() {
             <ul className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
               {stores.data.slice(0, 8).map((store, index) => (
                 <li key={store.id} className={index >= 4 ? "hidden sm:block" : undefined}>
-                  <Link to={`/app/tienda/${store.slug}`} className="group block overflow-hidden rounded-3xl border-2 bg-card shadow-soft transition-all hover:border-brand-yellow hover:shadow-pop">
+                  <Link to={`/app/tienda/${store.slug}`} className="group block overflow-hidden rounded-2xl border bg-card shadow-soft transition-all hover:border-primary/40 hover:shadow-pop">
                     <div className="relative aspect-[16/9] overflow-hidden bg-muted">
                       <SmartImage src={store.imagen_url} width={480} className="transition-transform duration-500 group-hover:scale-105" />
                       <StoreLogo store={store} className="absolute bottom-2 left-3 h-12 w-12 border-2 border-white text-sm" />
@@ -151,8 +150,8 @@ export default function Landing() {
           <h2 className="text-2xl font-extrabold sm:text-4xl">Así de fácil</h2>
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {steps.map(({ icon: Icon, title, text }, index) => (
-              <div key={title} className="relative rounded-3xl border-t-4 border-brand-yellow bg-card p-6 shadow-soft">
-                <span className="absolute right-5 top-4 font-display text-5xl font-black text-brand-yellow/20">{index + 1}</span>
+              <div key={title} className="relative rounded-2xl border bg-card p-6 shadow-soft">
+                <span className="absolute right-5 top-4 font-display text-5xl font-black text-primary/10">{index + 1}</span>
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-white"><Icon className="h-6 w-6" /></span>
                 <h3 className="mt-4 text-xl font-extrabold">{title}</h3>
                 <p className="mt-1 text-muted-foreground">{text}</p>
@@ -165,7 +164,7 @@ export default function Landing() {
       <div id="sitio-web" className="mx-auto max-w-7xl scroll-mt-24 px-4 pt-14 sm:px-6 lg:px-8 lg:pt-20"><SitioWebCluster /></div>
 
       <section className="mx-auto grid max-w-7xl gap-4 px-4 py-14 sm:px-6 md:grid-cols-2 lg:px-8 lg:py-20">
-        <div id="negocios" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-2 border-brand-yellow bg-brand-deep p-8 text-white lg:p-10">
+        <div id="negocios" className="relative scroll-mt-24 overflow-hidden rounded-2xl bg-brand-deep p-8 text-white lg:p-10">
           <img src={photo("1555396273-367ea4eb4db5", 900)} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-25" />
           <div className="relative">
             <Store className="h-9 w-9" />
@@ -193,7 +192,7 @@ export default function Landing() {
         </div>
       </section>
 
-      <footer className="border-t-4 border-brand-yellow bg-card">
+      <footer className="border-t bg-card">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 text-sm sm:px-6 md:grid-cols-[1.4fr_1fr_1fr] lg:px-8">
           <div className="space-y-3">
             <DeliveryBrand />

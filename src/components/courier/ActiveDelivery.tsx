@@ -82,7 +82,7 @@ export function ActiveDelivery({ order, position, sharing, onChange }: { order: 
   const change = order.efectivo_paga_con != null ? Number(order.efectivo_paga_con) - Number(order.total) : null;
 
   return (
-    <section className="mt-6 rounded-3xl border-2 border-brand-yellow bg-card p-4 sm:p-6">
+    <section className="mt-6 rounded-2xl border-2 border-primary/40 bg-card p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-bold uppercase text-primary">Entrega en curso · {shortId(order.id)}</p>

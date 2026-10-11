@@ -110,12 +110,12 @@ export function Sparkline({ values, className }: { values: number[]; className?:
   return (
     <svg viewBox="0 0 100 100" preserveAspectRatio="none" className={className} aria-hidden>
       <polyline points={points.join(" ")} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
-      <circle cx={100} cy={Number(points[points.length - 1].split(",")[1])} r="3.2" className="fill-brand-yellow" vectorEffect="non-scaling-stroke" />
+      <circle cx={100} cy={Number(points[points.length - 1].split(",")[1])} r="3.2" className="fill-current" vectorEffect="non-scaling-stroke" />
     </svg>
   );
 }
 
-/** Barras simples y legibles. La más alta lleva el color de marca; el resto, un gris suave. */
+/** Barras simples y legibles. La más alta lleva el azul de marca; el resto, el mismo azul más suave. */
 export function BarSeries({ data, label, format, height = 168 }: { data: { key: string; value: number; label: string; hint?: string }[]; label: string; format?: (n: number) => string; height?: number }) {
   const max = Math.max(...data.map((d) => d.value), 1);
   const top = data.reduce((best, d) => (d.value > best.value ? d : best), data[0] ?? { value: 0, key: "" });
@@ -125,7 +125,7 @@ export function BarSeries({ data, label, format, height = 168 }: { data: { key: 
       <div className="flex items-end gap-[3px]" style={{ height }}>
         {data.map((d) => (
           <div key={d.key} className="group relative flex h-full min-w-0 flex-1 items-end justify-center" title={`${d.label}${format ? ` · ${format(d.value)}` : ` · ${d.value}`}${d.hint ? ` · ${d.hint}` : ""}`}>
-            <div className={cn("w-full max-w-[44px] rounded-t-[3px] transition-colors", d.value === 0 ? "bg-muted" : d.key === top.key ? "bg-brand-yellow" : "bg-ink/15 group-hover:bg-ink/35 dark:bg-foreground/15")} style={{ height: `${Math.max(d.value ? 4 : 1.5, (d.value / max) * 100)}%` }} />
+            <div className={cn("w-full max-w-[44px] rounded-t-[3px] transition-colors", d.value === 0 ? "bg-muted" : d.key === top.key ? "bg-primary" : "bg-primary/25 group-hover:bg-primary/45")} style={{ height: `${Math.max(d.value ? 4 : 1.5, (d.value / max) * 100)}%` }} />
           </div>
         ))}
       </div>

@@ -260,7 +260,7 @@ export default function MerchantStorefront() {
     contenido = (
       <div className="space-y-3">
         <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">Solo los productos publicados aparecen en tu tienda. Las colecciones (grupos para promociones o temporadas) se arman en <Link to="/app/comercio/colecciones" className="font-bold text-primary hover:underline">Colecciones</Link>.</p>
-        <ProductosLista storeId={store.id} products={products} onChange={loadProducts} />
+        <ProductosLista storeId={store.id} products={products} onChange={loadProducts} enMarket={store.en_market !== false} />
       </div>
     );
   } else if (seccion === "seo") {

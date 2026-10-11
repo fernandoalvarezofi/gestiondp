@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { db, errorMessage } from "@/lib/delivery";
 import { cn } from "@/lib/utils";
+import { PageIntro } from "@/components/panel/kit";
 import { useMerchant } from "./context";
 
 type Row = { id: string; producto_id: string; producto: string; pregunta: string; respuesta: string | null; respondida_at: string | null; visible: boolean; created_at: string; autor: string };
@@ -59,6 +60,7 @@ export default function MerchantQuestions() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      <PageIntro title="Preguntas" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-lg text-sm text-muted-foreground">Responder rápido mejora tu reputación y ayuda a vender: tus respuestas se ven en la ficha del producto, para todos.</p>
         <Button type="button" variant="outline" size="sm" className="rounded-full" onClick={() => { setRows(null); load(); }}><RefreshCw className="h-4 w-4" />Actualizar</Button>

@@ -357,7 +357,9 @@ export default function ProductoEditor() {
           <Tarjeta titulo="Canales de venta">
             <div className="space-y-2.5">
               <label className="flex items-center justify-between gap-2 text-sm font-semibold">Mi tienda online<Switch checked={valores.en_tienda} onCheckedChange={(v) => set("en_tienda", v)} /></label>
-              <label className="flex items-center justify-between gap-2 text-sm font-semibold">Marketplace de Woref<Switch checked={valores.en_market} onCheckedChange={(v) => set("en_market", v)} /></label>
+              {store.en_market !== false
+                ? <label className="flex items-center justify-between gap-2 text-sm font-semibold">Marketplace de Woref<Switch checked={valores.en_market} onCheckedChange={(v) => set("en_market", v)} /></label>
+                : <p className="text-xs text-muted-foreground">Tu negocio no está en la app de delivery de Woref. Si querés sumarlo, activalo en <Link to="/app/comercio/configuracion/entrega" className="font-semibold underline">Configuración → Entrega y zona</Link>.</p>}
               {err("en_tienda") && <p className="text-xs font-semibold text-destructive" role="alert">{err("en_tienda")}</p>}
             </div>
           </Tarjeta>

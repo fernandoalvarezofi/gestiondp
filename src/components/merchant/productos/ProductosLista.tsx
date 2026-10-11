@@ -37,7 +37,7 @@ function precios(p: DeliveryProduct): [number, number] {
  * combinan (sección, inventario, canal, ofertas…), orden por columnas, ventas de los últimos 30 días, paginación y acciones sobre
  * la selección (también sobre todos los filtrados). Además: edición rápida en planilla y orden por secciones.
  */
-export function ProductosLista({ storeId, products, onChange }: { storeId: string; products: DeliveryProduct[]; onChange: () => void }) {
+export function ProductosLista({ storeId, products, onChange, enMarket = true }: { storeId: string; products: DeliveryProduct[]; onChange: () => void; /** Si el negocio está en la app de delivery: si no, el canal Market no aplica. */ enMarket?: boolean }) {
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const vista = (["lista", "rapida", "secciones"].includes(params.get("vista") ?? "") ? params.get("vista") : "lista") as Vista;
@@ -194,7 +194,7 @@ export function ProductosLista({ storeId, products, onChange }: { storeId: strin
             </label>
             <select aria-label="Sección" value={seccion} onChange={(e) => setSeccion(e.target.value)} className={select}><option value="">Todas las secciones</option>{secciones.map((s) => <option key={s} value={s}>{s}</option>)}</select>
             <select aria-label="Inventario" value={inventario} onChange={(e) => setInventario(e.target.value as Inventario)} className={select}><option value="">Todo el inventario</option><option value="con_stock">Con stock</option><option value="bajo">Stock bajo</option><option value="agotado">Agotados</option><option value="sin_control">Sin control de stock</option></select>
-            <select aria-label="Canal" value={canal} onChange={(e) => setCanal(e.target.value as typeof canal)} className={select}><option value="">Todos los canales</option><option value="tienda">Tienda online</option><option value="market">Marketplace</option></select>
+            <select aria-label="Canal" value={canal} onChange={(e) => setCanal(e.target.value as typeof canal)} className={select}><option value="">Todos los canales</option><option value="tienda">Tienda online</option>{enMarket && <option value="market">Marketplace</option>}</select>
             <select aria-label="Otros filtros" value={extra} onChange={(e) => setExtra(e.target.value as Extra)} className={select}><option value="">Más filtros</option><option value="oferta">Con rebaja u oferta</option><option value="destacado">Destacados</option><option value="pausado">Pausados</option><option value="con_variantes">Con variantes</option><option value="sin_foto">Sin foto</option></select>
             <select aria-label="Ordenar" value={orden} onChange={(e) => setOrden(e.target.value as Orden)} className={cn(select, "lg:hidden")}><option value="recientes">Más recientes</option><option value="nombre">Nombre A–Z</option><option value="precio_asc">Menor precio</option><option value="precio_desc">Mayor precio</option><option value="stock">Menos stock</option><option value="ventas">Más vendidos (30 días)</option></select>
           </div>
@@ -284,7 +284,7 @@ export function ProductosLista({ storeId, products, onChange }: { storeId: strin
                           </td>
                           <td className="hidden px-3 py-2 text-right tabular-nums lg:table-cell">{v ? <><span className="font-semibold">{v.unidades} u</span><span className="block text-xs text-muted-foreground">{money(v.ingresos)}</span></> : <span className="text-muted-foreground">—</span>}</td>
                           <td className="hidden max-w-[10rem] truncate px-3 py-2 text-muted-foreground xl:table-cell">{p.categoria}</td>
-                          <td className="hidden px-3 py-2 xl:table-cell"><span className="flex gap-1">{p.en_tienda !== false && <span className="rounded border px-1.5 text-[11px] font-semibold">Tienda</span>}{p.en_market !== false && <span className="rounded border px-1.5 text-[11px] font-semibold">Market</span>}</span></td>
+                          <td className="hidden px-3 py-2 xl:table-cell"><span className="flex gap-1">{p.en_tienda !== false && <span className="rounded border px-1.5 text-[11px] font-semibold">Tienda</span>}{enMarket && p.en_market !== false && <span className="rounded border px-1.5 text-[11px] font-semibold">Market</span>}</span></td>
                         </tr>
                       );
                     })}

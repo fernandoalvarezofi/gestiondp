@@ -3,7 +3,7 @@ import { DeliveryOrder, EstadoPedido, estadoCorto, estadoTone, formatTime, pasos
 import { cn } from "@/lib/utils";
 
 export function StatusBadge({ estado, className }: { estado: EstadoPedido; className?: string }) {
-  return <span className={cn("inline-flex items-center rounded-full px-2.5 py-1 text-xs font-bold", estadoTone[estado], className)}>{estadoCorto[estado]}</span>;
+  return <span className={cn("inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold", estadoTone[estado], className)}>{estadoCorto[estado]}</span>;
 }
 
 const stepIcons = { pendiente: Receipt, confirmado: ClipboardCheck, preparando: ChefHat, listo: ShoppingBag, en_camino: Bike, entregado: Home } as const;

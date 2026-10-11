@@ -118,7 +118,7 @@ export default function Auth() {
         <p className="mt-2 max-w-xs text-[15px] font-medium text-white/85">Comida, súper, farmacia y más, con seguimiento en tiempo real.</p>
       </div>
       {/* Left panel */}
-      <div className={`hidden overflow-hidden border-r-4 border-brand-yellow bg-primary lg:flex lg:w-1/2 ${leftPanelClasses}`}>
+      <div className={`hidden overflow-hidden bg-primary lg:flex lg:w-1/2 ${leftPanelClasses}`}>
         {isPhoto && (
           <>
             <div

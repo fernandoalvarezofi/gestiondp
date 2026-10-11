@@ -2,7 +2,8 @@ import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, HelpCircle, MessageSquareReply, PackageX, Plus, QrCode, Star, Banknote, Clock, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Delta, ListRow, Metric, MetricStrip, PageIntro, ProgressRing, RowList, Section, SectionLink, StatusPill, type Tone } from "@/components/panel/kit";
+import { BarSeries, Delta, ListRow, Metric, MetricStrip, PageIntro, ProgressRing, RowList, Section, SectionLink, StatusPill, type Tone } from "@/components/panel/kit";
+import { merchantNav } from "@/navigation/menus";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { estadoCorto, img, money, shortId, estadoOperativo } from "@/lib/delivery";
 import { Permission, useMerchant } from "./context";
@@ -16,6 +17,17 @@ const greeting = () => { const h = hourNow(); return h < 6 ? "Buenas noches" : h
 const minutesAgo = (value: string) => Math.max(0, Math.round((Date.now() - new Date(value).getTime()) / 60000));
 const ago = (value: string) => { const m = minutesAgo(value); return m < 1 ? "recién" : m < 60 ? `hace ${m} min` : m < 1440 ? `hace ${Math.floor(m / 60)} h` : `hace ${Math.floor(m / 1440)} d`; };
 const ESTADO_TONE: Record<string, Tone> = { pendiente: "warning", confirmado: "info", preparando: "info", listo: "success", en_camino: "brand" };
+/** Accesos del inicio: los módulos que más se usan, con una línea de qué hay en cada uno. */
+const ACCESOS: Record<string, string> = {
+  "/app/comercio/pedidos": "Seguimiento de la compra a la entrega",
+  "/app/comercio/productos": "Catálogo, precios y fotos",
+  "/app/comercio/inventario": "Stock y variantes",
+  "/app/comercio/clientes": "Contactos, compras y seguimientos",
+  "/app/comercio/tienda": "Editor, páginas y temas",
+  "/app/comercio/promociones": "Cupones y descuentos",
+  "/app/comercio/estadisticas": "Ventas, productos y horarios",
+  "/app/comercio/configuracion": "Datos, horarios, entrega y pagos",
+};
 
 /** Inicio del panel: un sitio web (sin venta en línea) tiene su propio resumen; una tienda, el de pedidos y ventas. */
 export default function MerchantHome() {
@@ -38,7 +50,16 @@ function TiendaHome() {
     // Ayer hasta esta misma hora: comparar el día entero contra uno a medias engaña.
     const sameTime = valid.filter((order) => dayKey(order.created_at) === dayKey(Date.now() - 86400000) && new Date(order.created_at).getTime() <= Date.now() - 86400000);
     const yesterday = { total: sameTime.reduce((t, order) => t + Number(order.subtotal), 0), count: sameTime.length };
-    return { today, yesterday, last7 };
+    // El panel trae hasta 300 pedidos de 30 días: si llegó al tope, los días anteriores al pedido más viejo cargado
+    // estarían incompletos y no se muestran (el período largo está en Estadísticas).
+    const truncado = orders.length >= 300 ? dayKey(orders[orders.length - 1].created_at) : null;
+    const last14 = Array.from({ length: 14 }, (_, i) => {
+      const t = Date.now() - (13 - i) * 86400000;
+      const key = dayKey(t);
+      const d = byDay.get(key);
+      return { key, value: d?.total ?? 0, label: new Date(t).toLocaleDateString("es-AR", { timeZone: TZ, day: "numeric", month: "numeric" }), hint: `${d?.count ?? 0} ${d?.count === 1 ? "pedido" : "pedidos"}` };
+    }).filter((d) => !truncado || d.key > truncado);
+    return { today, yesterday, last7, last14, total14: last14.reduce((t, d) => t + d.value, 0) };
   }, [orders]);
 
   const live = useMemo(() => orders.filter((order) => ["pendiente", "confirmado", "preparando", "listo", "en_camino"].includes(order.estado)).sort((a, b) => (a.estado === "pendiente" ? -1 : 0) - (b.estado === "pendiente" ? -1 : 0) || new Date(a.created_at).getTime() - new Date(b.created_at).getTime()), [orders]);
@@ -74,6 +95,7 @@ function TiendaHome() {
     can("opiniones") && preguntasPendientes > 0 && { key: "preguntas", icon: <HelpCircle className="h-4 w-4" />, tone: "info" as Tone, title: `${preguntasPendientes} ${preguntasPendientes === 1 ? "pregunta" : "preguntas"} de clientes`, meta: "Respondé antes de que compren en otro lado", to: "/app/comercio/preguntas" },
   ].filter(Boolean) as { key: string; icon: React.ReactNode; tone: Tone; title: string; meta: string; to: string }[];
 
+  const accesos = merchantNav(can, { pedidos: 0, preguntas: 0 }, "tienda").flatMap((group) => group.items).filter((item) => item.to in ACCESOS);
   const first = roles.nombre.split(" ")[0];
   const dateText = new Date().toLocaleDateString("es-AR", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
 
@@ -103,6 +125,16 @@ function TiendaHome() {
         {can("estadisticas") && <Metric icon={<Receipt />} tone="info" label="Ticket promedio" value={sales.today.count ? money(sales.today.total / sales.today.count) : "—"} hint="Hoy, sin envío" />}
         <Metric icon={<Star />} tone="accent" label="Calificación" value={store.total_resenas ? Number(store.rating).toFixed(1) : "—"} hint={`${store.total_resenas} ${store.total_resenas === 1 ? "opinión" : "opiniones"}`} />
       </MetricStrip>
+
+      {can("estadisticas") && (
+        <Section title="Ventas de los últimos 14 días" description={`${money(sales.total14)} en productos, sin envío ni cancelados`} action={<SectionLink to="/app/comercio/estadisticas">Ver estadísticas</SectionLink>}>
+          <div className="rounded-xl border bg-card p-4 sm:p-5">
+            {sales.total14 > 0
+              ? <BarSeries data={sales.last14} label="Ventas por día de los últimos 14 días" format={money} height={180} />
+              : <p className="py-10 text-center text-sm text-muted-foreground">Todavía no hay ventas en estos días. Cuando entren pedidos, vas a ver cómo evolucionan acá.</p>}
+          </div>
+        </Section>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Section title="Pedidos en curso" description="Lo que está pasando ahora mismo" action={<SectionLink to="/app/comercio/pedidos">Ir a pedidos</SectionLink>}>
@@ -167,6 +199,23 @@ function TiendaHome() {
           )}
         </div>
       ) : null}
+
+      {accesos.length > 0 && (
+        <Section title="Accesos rápidos" description="Todo lo que necesitás para administrar tu negocio">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+            {accesos.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link key={item.to} to={item.to} className="group rounded-xl border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/[0.03]">
+                  <span className="grid h-9 w-9 place-items-center rounded-lg bg-primary/[0.08] text-primary"><Icon className="h-[18px] w-[18px]" /></span>
+                  <span className="mt-3 block text-sm font-bold">{item.label}</span>
+                  <span className="mt-0.5 block text-[12.5px] leading-snug text-muted-foreground">{ACCESOS[item.to]}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </Section>
+      )}
     </div>
   );
 }

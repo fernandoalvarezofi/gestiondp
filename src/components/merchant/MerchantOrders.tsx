@@ -105,13 +105,13 @@ export function MerchantOrders({ orders, store, onChange }: { orders: DeliveryOr
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="inline-flex rounded-full border bg-card p-0.5" role="tablist" aria-label="Vista de pedidos">
+        <div className="inline-flex rounded-lg border bg-card p-0.5" role="tablist" aria-label="Vista de pedidos">
           {(["tablero", "cocina", "historial"] as const).map((item) => (
-            <button key={item} type="button" role="tab" aria-selected={view === item} onClick={() => setView(item)} className={cn("rounded-full px-4 py-1.5 text-[13px] font-bold transition-colors", view === item ? "bg-foreground text-background" : "text-muted-foreground hover:text-foreground")}>{item === "tablero" ? "En curso" : item === "cocina" ? "Cocina" : "Historial"}</button>
+            <button key={item} type="button" role="tab" aria-selected={view === item} onClick={() => setView(item)} className={cn("rounded-md px-4 py-1.5 text-[13px] font-semibold transition-colors", view === item ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>{item === "tablero" ? "En curso" : item === "cocina" ? "Cocina" : "Todos los pedidos"}</button>
           ))}
         </div>
         <div className="ml-auto flex items-center gap-1.5">
-          <button type="button" onClick={alarm.toggleMute} className="flex h-9 items-center gap-1.5 rounded-full border bg-card px-3 text-[13px] font-bold transition-colors hover:bg-muted" aria-pressed={alarm.muted} aria-label={alarm.muted ? "Activar el sonido" : "Silenciar el sonido"}>
+          <button type="button" onClick={alarm.toggleMute} className="flex h-9 items-center gap-1.5 rounded-lg border bg-card px-3 text-[13px] font-semibold transition-colors hover:bg-muted" aria-pressed={alarm.muted} aria-label={alarm.muted ? "Activar el sonido" : "Silenciar el sonido"}>
             {alarm.muted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}<span className="hidden sm:inline">{alarm.muted ? "Sonido apagado" : "Sonido"}</span>
           </button>
           <OrderTools />
