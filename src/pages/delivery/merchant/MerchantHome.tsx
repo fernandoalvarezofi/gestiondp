@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, HelpCircle, MessageSquareReply, PackageX, Plus, Star, Banknote, Clock, Receipt } from "lucide-react";
+import { AlertTriangle, ArrowRight, CheckCircle2, ExternalLink, HelpCircle, MessageSquareReply, PackageX, Plus, QrCode, Star, Banknote, Clock, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Delta, ListRow, Metric, MetricStrip, PageIntro, ProgressRing, RowList, Section, SectionLink, StatusPill, type Tone } from "@/components/panel/kit";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
@@ -49,8 +49,8 @@ function TiendaHome() {
     { label: "Subí una foto de portada", done: Boolean(store.imagen_url), to: "/app/comercio/configuracion/general" },
     { label: "Contá qué vendés en la descripción", done: Boolean(store.descripcion?.trim()), to: "/app/comercio/configuracion/general" },
     { label: "Cargá el teléfono del local", done: Boolean(store.telefono?.trim()), to: "/app/comercio/configuracion/general" },
-    { label: "Marcá tu local en el mapa", done: store.latitud != null && store.longitud != null, to: "/app/comercio/configuracion/entrega" },
-    { label: "Cargá al menos 5 productos", done: products.length >= 5, to: "/app/comercio/productos" },
+    ...(store.en_market !== false ? [{ label: "Marcá tu local en el mapa", done: store.latitud != null && store.longitud != null, to: "/app/comercio/configuracion/entrega" }] : []),
+    { label: store.pedidos_online === false ? "Cargá tu carta (al menos 5 platos)" : "Cargá al menos 5 productos", done: products.length >= 5, to: "/app/comercio/productos" },
     { label: "Poné foto a todos tus productos", done: products.length > 0 && products.every((product) => Boolean(product.imagen_url)), to: "/app/comercio/productos" },
     { label: "Personalizá tu tienda online y compartí el enlace", done: Boolean(store.tienda_tema && typeof store.tienda_tema === "object" && Object.keys(store.tienda_tema as object).length > 0), to: "/app/comercio/tienda" },
   ], [store, products]);
@@ -83,6 +83,7 @@ function TiendaHome() {
         title={`${greeting()}${first ? `, ${first}` : ""}`}
         description={<span className="first-letter:capitalize">{dateText} · {estadoOperativo(store).detalle}</span>}
         actions={<>
+          {store.pedidos_online === false && <Button asChild variant="outline" size="sm" className="rounded-full"><Link to="/app/comercio/tienda/compartir"><QrCode className="h-4 w-4" />QR de la carta</Link></Button>}
           <Button asChild variant="outline" size="sm" className="rounded-full"><Link to={`/app/tienda/${store.slug}`}>Ver como cliente<ExternalLink className="h-3.5 w-3.5" /></Link></Button>
           {can("catalogo") && <Button asChild size="sm" className="rounded-full"><Link to="/app/comercio/productos/nuevo"><Plus className="h-4 w-4" />Nuevo producto</Link></Button>}
         </>}

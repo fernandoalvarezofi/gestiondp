@@ -91,3 +91,20 @@ E2E Playwright (visitante, alta con doble clic, editor, publicar, panel, web pú
 
 Pendiente: decidir si un sitio informativo debería poder publicarse sin la verificación con CUIT; plantillas con fotos propias del rubro;
 volver de tienda a sitio; sitios en el directorio de la ciudad.
+
+### 5.1 Creador unificado (2026-10-10, segunda etapa)
+
+Un solo alta (`/app/crear`, `pages/CrearNegocio.tsx`, RPC `negocio_crear`) para cuatro tipos, todos sobre Mi tienda:
+tienda online, carta digital con QR, servicios con turnos y página web (`lib/creador.ts`: rubros, puntos de partida y datos de alta).
+
+- Tienda independiente (`delivery_comercios.en_market = false`): no aparece en la app de delivery salvo que el dueño lo active
+  (Configuración → Entrega y zona → Canales de venta, exige ubicación), vende a cualquier hora y despacha ella.
+- Entrega `envio` (`delivery_pedidos.tipo_entrega`): costo fijo de la tienda, sin radio, zonas, propina ni repartidores; el comercio
+  despacha con seguimiento (`pedido_despachar`, `envio_seguimiento`) y marca entregado. Libro: el envío es del comercio (`envio_propio`),
+  sin margen de Woref, y el cobro es directo del comercio.
+- Carta digital: `pedidos_online = false` muestra platos y precios sin carrito; el servidor rechaza pedidos. QR con textos de carta.
+- Servicios: el alta crea profesional, disponibilidad semanal y servicios; la reserva usa la agenda existente.
+- Configuración: la ubicación en el mapa ya no es obligatoria para guardar (solo para estar en la app de delivery).
+
+Pruebas: `src/lib/creador.test.ts` (29), SQL `031_creador_tiendas.sql`; E2E: alta de los tres tipos, compra con envío de la tienda,
+despacho con seguimiento, entrega, carta pública sin pedidos y reserva con horarios libres.

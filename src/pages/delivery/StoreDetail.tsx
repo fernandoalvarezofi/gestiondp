@@ -49,8 +49,8 @@ export default function StoreDetail() {
       const { data: found, error: falla } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("slug", slug).maybeSingle();
       if (falla) { setLoadError(new Error(errorMessage(falla))); return; }
       if (!found) { setNotFound(true); return; }
-      // Un sitio web no tiene menú ni carrito: su lugar es la página pública del negocio.
-      if (found.tipo_sitio === "sitio") { navigate(`/t/${found.slug}`, { replace: true }); return; }
+      // Un sitio web o una tienda independiente no están en el Market: su lugar es su página pública.
+      if (found.tipo_sitio === "sitio" || found.en_market === false) { navigate(`/t/${found.slug}`, { replace: true }); return; }
       setStore(found);
       const [{ data: catalog }, { data: opinions }, { data: storeCoupons }, { data: configured }] = await Promise.all([
         db.from("delivery_productos").select(productSelect).eq("comercio_id", found.id).eq("en_market", true).order("orden").order("nombre"),

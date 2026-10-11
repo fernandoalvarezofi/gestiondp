@@ -77,7 +77,7 @@ export default function Search() {
       // Comercios: solo por texto (nombre, descripción, rubro).
       if (filtros.q.trim().length >= 2) {
         const like = `%${filtros.q.trim().replace(/[%_,()\\]/g, " ")}%`;
-        const { data } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").or(`nombre.ilike.${like},descripcion.ilike.${like},rubro.ilike.${like}`).limit(12);
+        const { data } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").eq("en_market", true).or(`nombre.ilike.${like},descripcion.ilike.${like},rubro.ilike.${like}`).limit(12);
         if (mio === seq.current) setStores((data ?? []) as DeliveryStore[]);
       } else if (mio === seq.current) setStores([]);
     })();

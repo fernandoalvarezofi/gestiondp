@@ -301,7 +301,7 @@ export default function MerchantStorefront() {
         <section className="rounded-2xl border bg-card p-4 sm:p-5">
           <h3 className="font-extrabold">Cartel con QR</h3>
           <p className="mb-4 mt-1 text-sm text-muted-foreground">Llevá a tus clientes del local a tu tienda online.</p>
-          <QrPoster store={store} url={url} color={sitio.tema.color} title={sitio.tema.titulo || store.nombre} />
+          <QrPoster store={store} url={url} color={sitio.tema.color} title={sitio.tema.titulo || store.nombre} carta={store.pedidos_online === false} />
         </section>
         <SubscribersPanel storeId={store.id} storeSlug={store.slug} />
       </div>

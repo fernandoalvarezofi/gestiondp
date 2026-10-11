@@ -2,7 +2,7 @@ import { vinoDeTienda } from "@/lib/canal";
 import { fetchMyProfile } from "@/services/profile";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Banknote, Bike, CalendarClock, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Plus, ShoppingBag, Store as StoreIcon, Tag, Trash2, Wallet, X, Zap } from "lucide-react";
+import { Banknote, Bike, CalendarClock, Check, CreditCard, Landmark, Loader2, MapPin, Minus, Package, Plus, ShoppingBag, Store as StoreIcon, Tag, Trash2, Wallet, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { AddressForm, AddressList, SavedAddress, toCartAddress, useSavedAddresses } from "@/components/delivery/AddressDialog";
 import { EmptyState, PageHeader } from "@/components/delivery/Common";
@@ -165,8 +165,17 @@ export default function Cart() {
   const aplicado = coupon?.valido ? coupon : auto;
 
   const pickup = mode === "retiro";
+  // Envío de la tienda (tiendas independientes): costo fijo, sin radio ni repartidores, y se puede comprar a cualquier hora.
+  const envioPropio = mode === "envio";
   const canPickup = storeInfo?.acepta_retiro !== false;
-  const openNow = storeInfo ? isOpenNow(storeInfo) : true;
+  const modos = ([
+    ["delivery", "Envío a domicilio", Bike], ["envio", "Envío de la tienda", Package], ["retiro", "Retiro en el local", StoreIcon],
+  ] as const).filter(([value]) => (value === "delivery" ? storeInfo?.en_market !== false : value === "envio" ? Boolean(storeInfo?.envio_propio) : canPickup));
+  const openNow = envioPropio || (storeInfo ? isOpenNow(storeInfo) : true);
+  // Si el modo elegido no existe en este comercio (por ejemplo, una tienda sin repartidores de Woref), se pasa al primero disponible.
+  useEffect(() => {
+    if (storeInfo && modos.length && !modos.some(([value]) => value === mode)) setMode(modos[0][0]);
+  }, [storeInfo, mode]); // eslint-disable-line react-hooks/exhaustive-deps
   const canSchedule = slots.length > 0;
 
   // Si el local está cerrado pero acepta programados, el pedido sale programado por defecto.
@@ -192,18 +201,19 @@ export default function Cart() {
     if (!store) return null;
     const freeByStore = store.envio_gratis_desde !== null && store.envio_gratis_desde !== undefined && subtotal >= Number(store.envio_gratis_desde);
     const reach = storeReach(storeInfo || store, point, road?.km, tariff);
-    const shipping = pickup ? 0 : freeByStore || (aplicado?.valido && aplicado.envio_gratis) ? 0 : reach.fee;
+    const tarifaPropia = Math.round(Number(storeInfo?.costo_envio ?? store.costo_envio ?? 0) / 10) * 10;
+    const shipping = pickup ? 0 : freeByStore || (aplicado?.valido && aplicado.envio_gratis) ? 0 : envioPropio ? tarifaPropia : reach.fee;
     const service = Math.round(subtotal * servicePct / 100);
     const discount = aplicado?.valido ? Number(aplicado.descuento || 0) : 0;
-    const tipValue = pickup ? 0 : tip;
+    const tipValue = pickup || envioPropio ? 0 : tip;
     return {
       shipping, service, discount, tip: tipValue,
       total: Math.max(subtotal + shipping + service + tipValue - discount, 0),
       missing: Math.max(Number(store.pedido_minimo || 0) - subtotal, 0),
       reach,
-      needsPin: !pickup && Boolean(storeInfo?.latitud != null && !point),
+      needsPin: mode === "delivery" && Boolean(storeInfo?.latitud != null && !point),
     };
-  }, [store, storeInfo, point, subtotal, aplicado, tip, pickup, servicePct, road?.km, tariff]);
+  }, [store, storeInfo, point, subtotal, aplicado, tip, pickup, envioPropio, mode, servicePct, road?.km, tariff]);
   // El saldo de la billetera cubre parte del total (no aplica al pago online, que cobra Mercado Pago).
   const walletUsed = user && useWallet && payment !== "mercadopago" && summary ? walletApplied(walletBalance, summary.total) : 0;
   const payable = summary ? summary.total - walletUsed : 0;
@@ -241,7 +251,7 @@ export default function Cart() {
     if (data?.valido) toast.success("Cupón aplicado"); else toast.error(data?.mensaje || "Cupón inválido");
   };
 
-  const needsSlot = scheduled || (!openNow && canSchedule);
+  const needsSlot = !envioPropio && (scheduled || (!openNow && canSchedule));
   const waitingSlot = needsSlot && !slot;
   const closedWithoutSchedule = !openNow && !canSchedule;
 
@@ -312,7 +322,7 @@ export default function Cart() {
     addItem(product, store);
     toast.success(`${product.nombre} agregado`);
   };
-  const submitDisabled = submitting || summary.missing > 0 || waitingSlot || closedWithoutSchedule || (!pickup && (!address?.direccion || !summary.reach.inZone || summary.needsPin));
+  const submitDisabled = submitting || summary.missing > 0 || waitingSlot || closedWithoutSchedule || (!pickup && (!address?.direccion || (mode === "delivery" && (!summary.reach.inZone || summary.needsPin))));
   const times = slotDays.get(slotDayKey ?? "") ?? [];
   const cashChoices = cashOptions(payable);
   const change = cashWith ? cashWith - payable : 0;
@@ -341,9 +351,9 @@ export default function Cart() {
 
       <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="space-y-6">
-          {canPickup && (
-            <div role="radiogroup" aria-label="Cómo querés recibir tu pedido" className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1">
-              {([["delivery", "Envío a domicilio", Bike], ["retiro", "Retiro en el local", StoreIcon]] as const).map(([value, label, Icon]) => (
+          {modos.length > 1 && (
+            <div role="radiogroup" aria-label="Cómo querés recibir tu pedido" className={cn("grid gap-1 rounded-full bg-muted p-1", modos.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
+              {modos.map(([value, label, Icon]) => (
                 <button key={value} type="button" role="radio" aria-checked={mode === value} onClick={() => setMode(value)} className={cn("flex h-11 items-center justify-center gap-2 rounded-full text-sm font-extrabold transition-all", mode === value ? "bg-card shadow-soft" : "text-muted-foreground")}>
                   <Icon className="h-4 w-4" />{label}
                 </button>
@@ -393,6 +403,12 @@ export default function Cart() {
             </section>
           )}
 
+          {envioPropio ? (
+            <section className="rounded-3xl border bg-card p-4 sm:p-5">
+              <h2 className="flex items-center gap-2 text-lg font-extrabold"><Package className="h-5 w-5 text-primary" />Envío de {storeInfo?.nombre ?? store.nombre}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{storeInfo?.envio_detalle || "La tienda prepara tu pedido y te lo envía. Cuando lo despache, vas a ver el seguimiento en tu pedido."}</p>
+            </section>
+          ) : (
           <section className="rounded-3xl border bg-card p-4 sm:p-5">
             <h2 className="flex items-center gap-2 text-lg font-extrabold"><CalendarClock className="h-5 w-5 text-primary" />¿Cuándo {pickup ? "lo retirás" : "lo querés"}?</h2>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
@@ -426,6 +442,7 @@ export default function Cart() {
             )}
             {closedWithoutSchedule && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">{store.nombre} está cerrado y no acepta pedidos programados por ahora.</p>}
           </section>
+          )}
 
           {pickup ? (
             <section className="rounded-3xl border bg-card p-4 sm:p-5">
@@ -449,7 +466,7 @@ export default function Cart() {
                 )}
               </div>
               <label htmlFor="order-phone" className="mt-5 block text-sm font-bold">Teléfono de contacto</label>
-              <p className="text-xs text-muted-foreground">Solo lo ven el comercio y el repartidor de este pedido.</p>
+              <p className="text-xs text-muted-foreground">{mode === "delivery" ? "Solo lo ven el comercio y el repartidor de este pedido." : "Solo lo ve el comercio para coordinar la entrega."}</p>
               <Input id="order-phone" type="tel" inputMode="tel" autoComplete="tel" value={phone} maxLength={30} onChange={(event) => setPhone(event.target.value)} placeholder="11 5555-5555" className="mt-2 max-w-xs" />
             </section>
           )}
@@ -469,7 +486,7 @@ export default function Cart() {
             {payment === "efectivo" && (
               <div className="mt-4 rounded-2xl bg-muted/60 p-3">
                 <p className="text-sm font-bold">¿Con cuánto vas a pagar?</p>
-                <p className="text-xs text-muted-foreground">Así {pickup ? "el local" : "el repartidor"} lleva el vuelto justo.</p>
+                <p className="text-xs text-muted-foreground">Así {pickup ? "el local" : envioPropio ? "la tienda" : "el repartidor"} lleva el vuelto justo.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <button type="button" onClick={() => { setCashWith(null); setCustomCash(""); }} className={cn("rounded-full border px-4 py-2 text-sm font-bold", cashWith === null ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-muted")}>Con el monto justo</button>
                   {cashChoices.map((value) => (
@@ -488,7 +505,7 @@ export default function Cart() {
             )}
           </section>
 
-          {!pickup && (
+          {mode === "delivery" && (
             <section className="rounded-3xl border bg-card p-4 sm:p-5">
               <h2 className="text-lg font-extrabold">Propina para quien te lo lleva</h2>
               <p className="text-sm text-muted-foreground">El 100% es para el repartidor.</p>
@@ -533,8 +550,8 @@ export default function Cart() {
             <h2 className="text-lg font-extrabold">Resumen</h2>
             <dl className="mt-3 space-y-2 text-sm">
               <div className="flex justify-between"><dt className="text-muted-foreground">Productos</dt><dd>{money(subtotal)}</dd></div>
-              {!pickup && <div className="flex justify-between"><dt className="text-muted-foreground">Envío{summary.reach.km != null && ` (${formatKm(summary.reach.km)})`}</dt><dd className={cn(summary.shipping === 0 && "font-bold text-success")}>{summary.shipping === 0 ? "Gratis" : money(summary.shipping)}</dd></div>}
-              {!pickup && summary.reach.surge && summary.shipping > 0 && <p className="-mt-1 text-xs text-muted-foreground">Tarifa dinámica: {summary.reach.surge.join(" · ")}</p>}
+              {!pickup && <div className="flex justify-between"><dt className="text-muted-foreground">Envío{mode === "delivery" && summary.reach.km != null && ` (${formatKm(summary.reach.km)})`}</dt><dd className={cn(summary.shipping === 0 && "font-bold text-success")}>{summary.shipping === 0 ? "Gratis" : money(summary.shipping)}</dd></div>}
+              {mode === "delivery" && summary.reach.surge && summary.shipping > 0 && <p className="-mt-1 text-xs text-muted-foreground">Tarifa dinámica: {summary.reach.surge.join(" · ")}</p>}
               <div className="flex justify-between"><dt className="text-muted-foreground">Tarifa de servicio</dt><dd>{money(summary.service)}</dd></div>
               {summary.tip > 0 && <div className="flex justify-between"><dt className="text-muted-foreground">Propina</dt><dd>{money(summary.tip)}</dd></div>}
               {summary.discount > 0 && <div className="flex justify-between font-bold text-success"><dt>{coupon?.valido ? "Descuento" : "Descuento automático"}</dt><dd>-{money(summary.discount)}</dd></div>}
@@ -550,8 +567,8 @@ export default function Cart() {
             )}
             <p className="mt-3 truncate text-sm text-muted-foreground">{pickup ? "Retirás en" : "Entrega en"} <span className="font-bold text-foreground">{pickup ? storeInfo?.direccion || store.nombre : address?.direccion || "—"}</span>{slot && needsSlot && <> · <span className="font-bold text-foreground">{slotDay(slot)} {slotTime(slot)}</span></>}</p>
             {summary.needsPin && <p className="mt-3 rounded-xl bg-warning/15 p-3 text-sm font-semibold">Esta dirección no tiene ubicación en el mapa. Agregá una nueva dirección para calcular el envío.</p>}
-            {!pickup && !summary.needsPin && summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Por ahora no entregamos en tu zona. Probá más tarde, elegí otra dirección o retirá en el local.</p>}
-            {!pickup && !summary.needsPin && !summary.reach.inZone && !summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección, retirá en el local o pedí en un comercio más cercano.</p>}
+            {mode === "delivery" && !summary.needsPin && summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">Por ahora no entregamos en tu zona. Probá más tarde, elegí otra dirección o retirá en el local.</p>}
+            {mode === "delivery" && !summary.needsPin && !summary.reach.inZone && !summary.reach.zoneClosed && <p className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm font-semibold text-destructive">{store.nombre} no llega a esta dirección (está a {formatKm(summary.reach.km || 0)}). Elegí otra dirección, retirá en el local o pedí en un comercio más cercano.</p>}
             <Button className="mt-4 h-12 w-full rounded-full text-base font-bold max-lg:hidden" onClick={checkout} disabled={submitDisabled}>
               {submitting ? <><Loader2 className="h-5 w-5 animate-spin" />Confirmando…</> : `${!user ? "Ingresar para pedir" : payment === "mercadopago" ? "Pagar" : needsSlot ? "Programar pedido" : "Hacer pedido"} · ${money(payable)}`}
             </Button>

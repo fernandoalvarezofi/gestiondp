@@ -74,7 +74,7 @@ export default function DeliveryHome() {
   const [filters, setFilters] = useState<Filters>(() => ({ retiro: readPickupPreference(), gratis: false, promos: false, abiertos: false, top: false }));
 
   useEffect(() => {
-    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
+    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").eq("en_market", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false })
       .then(({ data }: { data: DeliveryStore[] | null }) => { setStores(data || []); setLoading(false); });
   }, []);
 

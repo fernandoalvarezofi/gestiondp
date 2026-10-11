@@ -183,11 +183,3 @@ export function sitioInicial(actividad: Actividad, datos: DatosSitio): { tema: T
   return { tema, paginas };
 }
 
-/** Datos que se mandan a `sitio_crear` (mismo contrato que valida el servidor). */
-export function datosParaCrear(actividad: Actividad, datos: DatosSitio & { slug: string; rubro?: string }) {
-  const info = actividadInfo(actividad);
-  return {
-    nombre: datos.nombre.trim(), slug: datos.slug, categoria: info.categoria, rubro: (datos.rubro?.trim() || info.rubro).slice(0, 40),
-    descripcion: datos.descripcion?.trim().slice(0, 300) || null, telefono: datos.telefono?.trim().slice(0, 40) || null, direccion: datos.direccion?.trim().slice(0, 200) || "",
-  };
-}

@@ -13,7 +13,7 @@ export default function Promotions() {
     db.from("delivery_cupones").select("*, comercio:delivery_comercios(nombre)").eq("activo", true).order("created_at").then(({ data }: { data: (Coupon & { comercio?: { nombre: string } | null })[] | null }) => {
       setCoupons((data || []).filter((coupon) => !coupon.vence_at || new Date(coupon.vence_at) > new Date()));
     });
-    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").not("promo_texto", "is", null).then(({ data }: { data: DeliveryStore[] | null }) => setStores(data || []));
+    db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").eq("en_market", true).not("promo_texto", "is", null).then(({ data }: { data: DeliveryStore[] | null }) => setStores(data || []));
   }, []);
 
   const copy = async (code: string) => {

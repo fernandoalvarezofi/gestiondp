@@ -20,6 +20,8 @@ export type StoreFormValues = Pick<DeliveryStore,
   "tiempo_min" | "tiempo_max" | "costo_envio" | "pedido_minimo" | "envio_gratis_desde" | "promo_texto" | "esta_abierto"> & {
   acepta_retiro: boolean; acepta_programados: boolean; tiempo_preparacion_min: number;
   horarios: Horarios; latitud: number | null; longitud: number | null; radio_entrega_km: number; costo_por_km: number;
+  /** Canales de venta: app de delivery de Woref (con sus repartidores), envío propio de la tienda y pedidos en línea (off = carta digital). */
+  en_market: boolean; envio_propio: boolean; envio_detalle: string | null; pedidos_online: boolean;
 };
 
 export const emptyStore: StoreFormValues = {
@@ -27,6 +29,7 @@ export const emptyStore: StoreFormValues = {
   imagen_url: "", logo_url: "", tiempo_min: 20, tiempo_max: 35, costo_envio: 990, pedido_minimo: 0, envio_gratis_desde: null, promo_texto: "", esta_abierto: true,
   acepta_retiro: true, acepta_programados: true, tiempo_preparacion_min: 20,
   horarios: defaultSchedule, latitud: null, longitud: null, radio_entrega_km: 5, costo_por_km: 200,
+  en_market: true, envio_propio: false, envio_detalle: "", pedidos_online: true,
 };
 
 export function storeToFormValues(store: DeliveryStore): StoreFormValues {
@@ -38,6 +41,7 @@ export function storeToFormValues(store: DeliveryStore): StoreFormValues {
     acepta_retiro: store.acepta_retiro ?? true, acepta_programados: store.acepta_programados ?? true, tiempo_preparacion_min: store.tiempo_preparacion_min ?? 20,
     latitud: store.latitud != null ? Number(store.latitud) : null, longitud: store.longitud != null ? Number(store.longitud) : null,
     radio_entrega_km: Number(store.radio_entrega_km ?? 5), costo_por_km: Number(store.costo_por_km ?? 0),
+    en_market: store.en_market !== false, envio_propio: Boolean(store.envio_propio), envio_detalle: store.envio_detalle ?? "", pedidos_online: store.pedidos_online !== false,
   };
 }
 
@@ -60,8 +64,9 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sit
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (values.latitud == null || values.longitud == null) {
-      toast.error("Marcá la ubicación del local en el mapa (sección Ubicación y zona de entrega)");
+    // La ubicación en el mapa solo es obligatoria para estar en la app de delivery (sus repartidores calculan desde ahí).
+    if (values.en_market && (values.latitud == null || values.longitud == null)) {
+      toast.error("Para aparecer en la app de delivery de Woref, marcá la ubicación del local en el mapa (Entrega y zona)");
       document.getElementById("store-location")?.scrollIntoView({ behavior: "smooth", block: "center" });
       return;
     }
@@ -77,6 +82,7 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sit
       imagen_url: values.imagen_url?.trim() || null,
       logo_url: values.logo_url?.trim() || null,
       promo_texto: values.promo_texto?.trim() || null,
+      envio_detalle: values.envio_detalle?.trim() || null,
       tiempo_max: Math.max(values.tiempo_max, values.tiempo_min),
       horario: scheduleSummary(values.horarios),
     });
@@ -121,6 +127,29 @@ export function StoreSettingsForm({ initial, submitLabel, onSubmit, section, sit
       </fieldset>
       </>)}
       {show("entrega") && (<>
+      <fieldset className="space-y-3">
+        <legend className="mb-1 text-base font-extrabold">Canales de venta</legend>
+        <p className="text-sm text-muted-foreground">Elegí cómo vendés. Podés usar varios a la vez.</p>
+        <label className="flex items-center justify-between gap-3 rounded-xl border p-3">
+          <span><span className="block text-sm font-bold">Tomar pedidos en línea</span><span className="block text-xs text-muted-foreground">Apagalo si solo querés mostrar tu carta o catálogo con precios (por ejemplo, la carta con QR de un restaurante).</span></span>
+          <Switch checked={values.pedidos_online} onCheckedChange={(checked) => set("pedidos_online", checked)} />
+        </label>
+        <label className="flex items-center justify-between gap-3 rounded-xl border p-3">
+          <span><span className="block text-sm font-bold">Envío de la tienda</span><span className="block text-xs text-muted-foreground">Vos despachás (moto propia, correo o mensajería) con un costo fijo y cargás el seguimiento. Vendés a cualquier hora.</span></span>
+          <Switch checked={values.envio_propio} onCheckedChange={(checked) => set("envio_propio", checked)} />
+        </label>
+        {values.envio_propio && (
+          <div className="grid gap-4 rounded-xl bg-muted/50 p-3 sm:grid-cols-3">
+            <div className="space-y-1.5"><Label htmlFor="s-envio-propio">Costo del envío (197609</Label><Input id="s-envio-propio" type="number" min={0} value={values.costo_envio} onChange={(event) => set("costo_envio", toNumber(event.target.value))} /></div>
+            <div className="space-y-1.5"><Label htmlFor="s-gratis-propio">Gratis desde (197609</Label><Input id="s-gratis-propio" type="number" min={0} value={values.envio_gratis_desde ?? ""} onChange={(event) => set("envio_gratis_desde", event.target.value === "" ? null : Number(event.target.value))} placeholder="Opcional" /></div>
+            <div className="space-y-1.5"><Label htmlFor="s-envio-detalle">Qué ve el cliente</Label><Input id="s-envio-detalle" maxLength={140} value={values.envio_detalle ?? ""} onChange={(event) => set("envio_detalle", event.target.value)} placeholder="Ej.: Correo Argentino, 3 a 5 días" /></div>
+          </div>
+        )}
+        <label className="flex items-center justify-between gap-3 rounded-xl border p-3">
+          <span><span className="block text-sm font-bold">Aparecer en la app de delivery de Woref</span><span className="block text-xs text-muted-foreground">Tu negocio se suma al listado de locales y los repartidores de Woref llevan tus pedidos dentro de tu zona. Necesita la ubicación del local.</span></span>
+          <Switch checked={values.en_market} onCheckedChange={(checked) => set("en_market", checked)} />
+        </label>
+      </fieldset>
       <fieldset id="store-location" className="space-y-3">
         <legend className="mb-3 text-base font-extrabold">Ubicación y zona de entrega</legend>
         <AddressSearch placeholder="Buscá la dirección del local" onPick={(found) => setValues((current) => ({ ...current, latitud: found.lat, longitud: found.lng, direccion: current.direccion || found.label }))} />

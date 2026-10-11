@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Bike, CalendarClock, CheckCircle2, KeyRound, Loader2, MapPin, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
+import { ArrowLeft, Bike, CalendarClock, CheckCircle2, KeyRound, Loader2, MapPin, Package, Receipt, RotateCcw, Star, Store, Wallet, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { BackBar, EmptyState, PageHeader, ErrorState } from "@/components/delivery/Common";
 import { OrderTimeline, StatusBadge } from "@/components/delivery/OrderStatus";
@@ -122,6 +122,8 @@ export default function OrderDetail() {
 
   const active = pedidoActivo(order.estado);
   const retiro = order.tipo_entrega === "retiro";
+  // Envío de la tienda: lo despacha el comercio (sin repartidor, mapa en vivo ni código de entrega).
+  const envioTienda = order.tipo_entrega === "envio";
   const canCancel = order.estado === "pendiente" || (order.estado === "confirmado" && Boolean(order.programado_para) && new Date(order.programado_para as string).getTime() > Date.now() + 3600000);
   const awaitingPayment = order.metodo_pago === "mercadopago" && order.estado === "pendiente" && (order.pago_estado === "pendiente" || order.pago_estado === "rechazado");
   const markers: MapMarker[] = [
@@ -131,7 +133,7 @@ export default function OrderDetail() {
   ];
 
   // Seguimiento tipo app de delivery: el mapa ocupa la parte de arriba y los datos del pedido se apoyan debajo como una hoja.
-  const showMap = active && !retiro && markers.length > 1;
+  const showMap = active && order.tipo_entrega === "delivery" && markers.length > 1;
 
   return (
     <div className="mx-auto max-w-3xl pb-16 sm:px-6">
@@ -149,7 +151,7 @@ export default function OrderDetail() {
       <PageHeader
         eyebrow={`Pedido ${shortId(order.id)}`}
         title={awaitingPayment ? (confirmandoHasta && Date.now() < confirmandoHasta && order.pago_estado === "pendiente" ? "Confirmando tu pago" : "Falta completar el pago") : estadoTitulo(order)}
-        subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : order.estado === "en_camino" && retiro ? statusCopy.listo : statusCopy[order.estado]}
+        subtitle={awaitingPayment ? "El comercio recibe tu pedido apenas Mercado Pago confirma el pago." : envioTienda && order.estado === "en_camino" ? "La tienda despachó tu pedido. Seguí el envío con el código de seguimiento." : envioTienda && order.estado === "entregado" ? "La tienda marcó tu pedido como entregado." : order.estado === "en_camino" && retiro ? statusCopy.listo : statusCopy[order.estado]}
         actions={<StatusBadge estado={order.estado} />}
       />
 
@@ -158,7 +160,17 @@ export default function OrderDetail() {
 
       {order.estado !== "cancelado" && (
         <section className="mt-6 rounded-3xl border border-t-4 border-t-brand-yellow bg-card p-4 sm:p-6">
-          {active && order.entrega_estimada && (
+          {active && envioTienda && (
+            <div className="mb-5 flex items-center gap-3">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-tile"><Package className="h-6 w-6" /></span>
+              <div className="min-w-0">
+                <p className="text-sm text-muted-foreground">Envío de {order.comercio?.nombre ?? "la tienda"}</p>
+                <p className="font-display text-xl font-extrabold">{order.estado === "en_camino" ? "Tu pedido fue despachado" : "La tienda está preparando tu envío"}</p>
+                {order.envio_seguimiento && <p className="mt-1 break-all text-sm">Seguimiento: {order.envio_seguimiento.toLowerCase().startsWith("https://") ? <a href={order.envio_seguimiento} target="_blank" rel="noopener noreferrer" className="font-bold text-primary underline-offset-4 hover:underline">ver el envío</a> : <span className="font-bold">{order.envio_seguimiento}</span>}</p>}
+              </div>
+            </div>
+          )}
+          {active && !envioTienda && order.entrega_estimada && (
             <div className="mb-5 flex items-center gap-3">
               <span className="flex h-12 w-12 items-center justify-center rounded-2xl brand-tile">{order.programado_para ? <CalendarClock className="h-6 w-6" /> : retiro ? <Store className="h-6 w-6" /> : <Bike className="h-6 w-6 animate-ride" />}</span>
               <div>
@@ -168,7 +180,7 @@ export default function OrderDetail() {
               </div>
             </div>
           )}
-          {active && serverEta && !order.programado_para && <EtaBreakdown eta={serverEta} retiro={retiro} className="mb-5" />}
+          {active && !envioTienda && serverEta && !order.programado_para && <EtaBreakdown eta={serverEta} retiro={retiro} className="mb-5" />}
           <OrderTimeline order={order} />
         </section>
       )}
@@ -184,7 +196,7 @@ export default function OrderDetail() {
 
       {active && !retiro && order.llegada_cliente_at && <p className="mt-4 flex items-center gap-2 rounded-2xl bg-success/10 p-4 font-bold text-success"><Bike className="h-5 w-5" />¡Tu repartidor llegó! Salí a recibir tu pedido y dale el código de entrega.</p>}
 
-      {active && code && (
+      {active && code && !envioTienda && (
         <section className="mt-4 flex items-center justify-between gap-4 rounded-3xl bg-brand-deep p-5 text-white">
           <div className="flex items-center gap-3"><KeyRound className="h-6 w-6" /><div><p className="font-bold">{retiro ? "Código de retiro" : "Código de entrega"}</p><p className="text-sm text-white/70">{retiro ? "Mostralo en el local cuando vayas a retirar." : "Dáselo al repartidor solo cuando recibas tu pedido."}</p></div></div>
           <span className="font-display text-3xl font-extrabold tracking-[0.3em]">{code}</span>

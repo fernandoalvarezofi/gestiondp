@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AlarmClock, BellRing, Globe, Settings2, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, PackageCheck, Phone, Printer, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
+import { AlarmClock, BellRing, Globe, Settings2, Bike, CalendarClock, Check, ChefHat, Clock3, MapPin, Package, PackageCheck, Phone, Printer, ShoppingBag, Store, Volume2, VolumeX, X } from "lucide-react";
 import { toast } from "sonner";
 import { ChatButton } from "@/components/delivery/OrderChat";
 import { StatusPill } from "@/components/panel/kit";
@@ -192,6 +192,17 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
     setBusy(false);
     if (ok) { toast.success("Pedido actualizado"); onChange(); }
   };
+  // Envío de la tienda: el comercio despacha y carga el seguimiento (correo o mensajería), que el cliente ve en su pedido.
+  const despachar = async () => {
+    const seguimiento = await pedirTexto({ titulo: "Despachar pedido", descripcion: "Si lo mandás por correo o mensajería, cargá el código o el enlace de seguimiento: el cliente lo ve en su pedido.", etiqueta: "Seguimiento (opcional)", placeholder: "Ej.: CA123456789AR o https://…", confirmar: "Despachar", obligatorio: false, maximo: 200 });
+    if (seguimiento === null) return;
+    setBusy(true);
+    const { error } = await db.rpc("pedido_despachar", { p_pedido: order.id, p_seguimiento: seguimiento.trim() || null });
+    setBusy(false);
+    if (error) { toast.error(errorMessage(error)); return; }
+    toast.success("Pedido despachado. El cliente ya lo ve.");
+    onChange();
+  };
   const deliverPickup = async () => {
     const codigo = await pedirTexto({ titulo: "Entregar pedido para retirar", descripcion: "Pedile al cliente el código de retiro que ve en su pedido.", etiqueta: "Código de 4 dígitos", modoTeclado: "numeric", maximo: 4, confirmar: "Entregar", validar: (v) => (/^\d{4}$/.test(v) ? null : "El código tiene 4 números") });
     if (!codigo) return;
@@ -238,7 +249,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
       </div>
 
       <div className="mt-2 flex flex-wrap gap-1.5">
-        <StatusPill tone={retiro ? "info" : "neutral"}>{retiro ? <Store className="h-3 w-3" /> : <Bike className="h-3 w-3" />}{retiro ? "Retira en el local" : "Envío"}</StatusPill>
+        <StatusPill tone={retiro ? "info" : "neutral"}>{retiro ? <Store className="h-3 w-3" /> : order.tipo_entrega === "envio" ? <Package className="h-3 w-3" /> : <Bike className="h-3 w-3" />}{retiro ? "Retira en el local" : order.tipo_entrega === "envio" ? "Envío de la tienda" : "Envío"}</StatusPill>
         {order.canal === "tienda" && <StatusPill tone="neutral"><Globe className="h-3 w-3" />Tienda online</StatusPill>}
         {order.programado_para && <StatusPill tone="warning"><CalendarClock className="h-3 w-3" />Programado · {formatSlot(order.programado_para)}</StatusPill>}
         {(order.demora_extra_min ?? 0) > 0 && <StatusPill>+{order.demora_extra_min} min de demora</StatusPill>}
@@ -263,6 +274,7 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
         <p className="flex items-start gap-1.5"><MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" /><span>{metodoPagoLabel[order.metodo_pago]}{!retiro && ` · ${order.direccion_entrega}`}{order.distancia_km != null && !retiro && ` · ${order.distancia_km} km`}</span></p>
         {order.telefono_contacto && <a href={`tel:${order.telefono_contacto.replace(/\s/g, "")}`} className="flex items-center gap-1.5 font-bold text-foreground hover:underline"><Phone className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />{order.telefono_contacto}</a>}
         {!retiro && order.repartidor_id && order.estado !== "en_camino" && <CourierProximity order={order} store={store} />}
+        {order.envio_seguimiento && <p className="flex items-center gap-1.5"><Package className="h-3.5 w-3.5 shrink-0" />Seguimiento: <span className="font-bold text-foreground">{order.envio_seguimiento}</span></p>}
         {promised !== null && order.estado !== "pendiente" && (
           <p className={cn("flex items-center gap-1.5 font-semibold", late ? "text-destructive" : "")}>
             <Clock3 className="h-3.5 w-3.5 shrink-0" />
@@ -279,7 +291,9 @@ function OrderCard({ order, store, now, onChange }: { order: DeliveryOrder; stor
           {order.estado === "listo" && <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={deliverPickup}><PackageCheck className="h-4 w-4" />Entregar al cliente</Button>}
           {order.estado === "preparando" && !retiro && (order.repartidor_id
             ? <p className="flex-1 rounded-full bg-muted px-3 py-2 text-center text-[12.5px] font-semibold">El repartidor lo retira y lo marca en camino</p>
-            : <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => run("en_camino")}><Bike className="h-4 w-4" />Despachar con envío propio</Button>)}
+            : order.tipo_entrega === "envio"
+              ? <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={despachar}><Package className="h-4 w-4" />Despachar</Button>
+              : <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => run("en_camino")}><Bike className="h-4 w-4" />Despachar con envío propio</Button>)}
           {order.estado === "en_camino" && !retiro && (order.repartidor_id
             ? <p className="flex-1 rounded-full bg-muted px-3 py-2 text-center text-[12.5px] font-semibold">En manos del repartidor</p>
             : <Button size="sm" className="h-9 flex-1 rounded-full" disabled={busy} onClick={() => run("entregado")}><PackageCheck className="h-4 w-4" />Marcar entregado</Button>)}

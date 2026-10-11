@@ -63,7 +63,9 @@ export function ProductoDetalle({ store, product, others, vendedor, theme, previ
   const { accent, headingStyle, radiusButton, width, tituloClase } = style;
   const open = isOpenNow(store);
   const reach = storeReach(store, point, undefined, tariff);
-  const unavailable = !open || !reach.inZone;
+  // Igual que la tienda: una tienda independiente vende siempre (salvo pausa) y una carta digital no toma pedidos.
+  const soloCarta = store.pedidos_online === false;
+  const unavailable = soloCarta || (store.en_market === false ? !store.esta_abierto : (!open || !reach.inZone));
   const fee = deliveryFeeLabel(store, reach.fee);
   const conVariantes = Boolean(product.usa_variantes);
   const outOfStock = !product.disponible || product.stock === 0 || (conVariantes && variantesDisponibles(product).length === 0);
@@ -172,7 +174,7 @@ export function ProductoDetalle({ store, product, others, vendedor, theme, previ
 
             {unavailable && !outOfStock && (
               <p className="mt-3 rounded-2xl bg-muted p-3 text-sm text-foreground">
-                {!open ? <><span className="font-extrabold">Cerrado ahora.</span> {store.esta_abierto ? nextOpening(store.horarios) || "" : "El local pausó los pedidos por un rato."}</> : <><span className="font-extrabold">No llega a tu dirección.</span> Elegí otra dirección para pedir.</>}
+                {soloCarta ? <>Consultá por este plato en el local.</> : store.en_market === false ? <><span className="font-extrabold">Pausamos las compras por un rato.</span> Volvé más tarde.</> : !open ? <><span className="font-extrabold">Cerrado ahora.</span> {store.esta_abierto ? nextOpening(store.horarios) || "" : "El local pausó los pedidos por un rato."}</> : <><span className="font-extrabold">No llega a tu dirección.</span> Elegí otra dirección para pedir.</>}
               </p>
             )}
 

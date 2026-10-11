@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, Outlet, useLocation } from "react-router-dom";
-import { Building2, ChevronsUpDown, Globe, Loader2, Plus } from "lucide-react";
+import { ArrowRight, Building2, ChevronsUpDown, Globe, Loader2, Plus, Store } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { PushPrompt } from "@/components/delivery/PushPrompt";
@@ -26,7 +26,7 @@ import { NEGOCIO_ACTIVO_KEY } from "@/hooks/useMisNegocios";
 import { roleLabel, type Branch, type MerchantContext, type Permission, type StoreAccess } from "./context";
 
 const ACTIVE_KEY = NEGOCIO_ACTIVO_KEY;
-const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY); } catch { return null; } };
+const readActive = () => { try { return window.localStorage.getItem(ACTIVE_KEY) || null; } catch { return null; } };
 
 /** Carga y mantiene al día los datos del comercio; cada sección del panel los recibe por contexto. */
 export default function MerchantLayout() {
@@ -203,6 +203,15 @@ export default function MerchantLayout() {
     return (
       <>
         <div className="mx-auto max-w-5xl px-4 pt-5 sm:px-6"><TeamInvitations className="mb-2" onAccepted={() => { setLoading(true); loadStore(); }} /></div>
+        {/* Sin negocio: primero el creador (tienda online, carta, turnos o web); abajo, el alta de un local para la app de delivery. */}
+        <div className="mx-auto max-w-5xl px-4 pt-3 sm:px-6">
+          <Link to="/app/crear" className="group flex flex-col gap-3 rounded-3xl border bg-card p-5 shadow-soft transition-colors hover:border-primary/40 sm:flex-row sm:items-center">
+            <span className="tono tono-verde grid h-12 w-12 shrink-0 place-items-center rounded-2xl"><Store className="h-6 w-6" /></span>
+            <span className="min-w-0 flex-1"><span className="block text-lg font-extrabold">Creá tu tienda online, tu carta, tu agenda de turnos o tu página web</span><span className="block text-sm text-muted-foreground">Con el editor de Mi tienda, en unos minutos. Si además querés estar en la app de delivery de Woref, completá el alta de abajo.</span></span>
+            <span className="inline-flex shrink-0 items-center gap-1 font-extrabold text-primary">Empezar<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" /></span>
+          </Link>
+          <p className="mt-6 text-center text-xs font-extrabold uppercase tracking-wider text-muted-foreground">O sumá tu local a la app de delivery</p>
+        </div>
         {user && <StoreOnboarding userId={user.id} onDone={async () => { await loadStore(); }} />}
       </>
     );
@@ -252,8 +261,8 @@ export default function MerchantLayout() {
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild><Link to="/app/comercio/sucursales">Ver todas las sucursales</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/app/comercio/nuevo" className="font-bold"><Plus className="h-4 w-4" />Crear otro comercio</Link></DropdownMenuItem>
-            <DropdownMenuItem asChild><Link to="/app/sitio-web/nuevo" className="font-bold"><Globe className="h-4 w-4" />Crear un sitio web</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/app/crear" className="font-bold"><Plus className="h-4 w-4" />Crear otro negocio</Link></DropdownMenuItem>
+            <DropdownMenuItem asChild><Link to="/app/comercio/nuevo"><Globe className="h-4 w-4" />Sumar un local a la app de delivery</Link></DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (

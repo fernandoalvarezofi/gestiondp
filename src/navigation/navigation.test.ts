@@ -106,6 +106,6 @@ describe("sitio web (negocio sin venta en línea)", () => {
 
   it("la presentación del creador es pública; el alta pide iniciar sesión", () => {
     expect(isPublicClientPath("/app/sitio-web")).toBe(true);
-    expect(isPublicClientPath("/app/sitio-web/nuevo")).toBe(false);
+    expect(isPublicClientPath("/app/crear")).toBe(false);
   });
 });

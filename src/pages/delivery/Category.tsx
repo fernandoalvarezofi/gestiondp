@@ -28,7 +28,7 @@ export default function Category() {
     if (!vertical) return;
     setLoading(true);
     setRubro(null);
-    let query = db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda");
+    let query = db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").eq("en_market", true);
     if (vertical.categoria) query = query.eq("categoria", vertical.categoria);
     if (vertical.rubro) query = query.eq("rubro", vertical.rubro);
     query.order("destacado", { ascending: false }).then(({ data }: { data: DeliveryStore[] | null }) => {

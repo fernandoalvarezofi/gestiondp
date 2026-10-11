@@ -1,104 +1,91 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Globe, ShoppingBag } from "lucide-react";
-import { SitioPreview } from "@/components/sitio/SitioPreview";
+import { ArrowRight, BarChart3, CalendarCheck, Check, CreditCard, Globe, LayoutTemplate, QrCode, Search, ShoppingBag, Users, UtensilsCrossed, type LucideIcon } from "lucide-react";
+import { NegocioPreview } from "@/components/sitio/SitioPreview";
 import { SitioWebAcciones } from "@/components/sitio/SitioWebCluster";
 import { Button } from "@/components/ui/button";
-import { useMisNegocios } from "@/hooks/useMisNegocios";
-import { ACTIVIDADES, type Actividad } from "@/lib/sitioWeb";
+import { RUBROS, TIPOS_NEGOCIO, TONO_TIPO, type TipoNegocio } from "@/lib/creador";
 import { cn } from "@/lib/utils";
 
-const SITIO = [
-  "Inicio y páginas propias (Servicios, Nosotros, Contacto y las que sumes)",
-  "Editor visual: secciones, textos con formato, fotos, botones, menú, encabezado y pie",
-  "Temas completos: tipografías, colores, estilo de botones y tarjetas",
-  "Formulario de consultas que crea el contacto y una tarea en tu CRM",
-  "Agenda de turnos en línea, si ofrecés servicios con reserva",
-  "Borrador, versiones y publicación cuando vos decidas",
-  "SEO por página, imagen para redes y solicitud de dominio propio",
-];
-const TIENDA = [
-  "Todo lo del sitio web",
-  "Catálogo con variantes, stock, colecciones y precios de oferta",
-  "Carrito, checkout y pedidos con seguimiento",
-  "Envíos y retiro en el local, cupones y descuentos",
-  "Finanzas y liquidaciones, y tu local en el listado de Woref",
-];
-const PASOS = [
-  { n: "1", t: "Elegí tu actividad", x: "Nombre, datos de contacto y la dirección web de tu sitio. Lleva un par de minutos." },
-  { n: "2", t: "Editalo a tu gusto", x: "Arrancás con un sitio armado para tu rubro y lo cambiás con el editor visual: textos, fotos, colores y páginas." },
-  { n: "3", t: "Publicá y recibí consultas", x: "Woref revisa cada negocio antes de que su sitio sea público. Después, cada consulta te llega al CRM." },
+const ICONO: Record<TipoNegocio, LucideIcon> = { tienda: ShoppingBag, carta: UtensilsCrossed, servicios: CalendarCheck, sitio: Globe };
+const NOMBRE_EJEMPLO: Record<TipoNegocio, string> = { tienda: "Tu tienda", carta: "Tu restaurante", servicios: "Tu estudio", sitio: "Tu negocio" };
+const MI_TIENDA: { icon: LucideIcon; titulo: string; texto: string }[] = [
+  { icon: LayoutTemplate, titulo: "Editor visual tipo WordPress", texto: "Páginas, secciones, menú, encabezado y pie. Borradores, versiones y publicación cuando decidas." },
+  { icon: ShoppingBag, titulo: "Catálogo completo", texto: "Productos con variantes, stock, colecciones, ofertas e importación desde archivo." },
+  { icon: CreditCard, titulo: "Pedidos y cobros", texto: "Carrito, cupones, envío propio o retiro, y seguimiento para el cliente." },
+  { icon: CalendarCheck, titulo: "Agenda y turnos", texto: "Reservas en línea, recordatorios, lista de espera y varios profesionales." },
+  { icon: Users, titulo: "Clientes (CRM)", texto: "Fichas con historial, etiquetas, seguimientos y consultas del formulario." },
+  { icon: Search, titulo: "SEO, dominio y QR", texto: "Títulos para Google, imagen para redes, dominio propio y cartel con QR." },
+  { icon: BarChart3, titulo: "Estadísticas", texto: "Visitas, ventas por canal, productos más vendidos y horas pico." },
+  { icon: QrCode, titulo: "Carta con QR para mesas", texto: "Tu menú con fotos, sin imprimir cartas nuevas cada vez que cambia un precio." },
 ];
 
-/** Presentación del creador de sitios: qué incluye, en qué se diferencia de una tienda online y cómo queda cada punto de partida. */
+/** Presentación del creador: qué se puede crear, cómo se ve cada punto de partida (vista previa real) y qué incluye Mi tienda. */
 export default function SitioWebInfo() {
-  const [actividad, setActividad] = useState<Actividad>("profesional");
-  const { negocios } = useMisNegocios();
-  const info = ACTIVIDADES.find((a) => a.id === actividad)!;
+  const [tipo, setTipo] = useState<TipoNegocio>("tienda");
+  const info = TIPOS_NEGOCIO.find((t) => t.id === tipo)!;
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-4 pb-20 pt-5 sm:px-6 lg:px-8">
-      <section className="rounded-3xl border bg-card p-6 shadow-soft sm:p-10">
-        <p className="flex items-center gap-2 text-[12px] font-extrabold uppercase tracking-wider text-muted-foreground"><span className="tono tono-azul grid h-7 w-7 place-items-center rounded-lg"><Globe className="h-4 w-4" /></span>Creador de sitios web</p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-5xl">La página web de tu negocio, hecha y administrada desde Woref</h1>
-        <p className="mt-3 max-w-2xl text-base text-muted-foreground sm:text-lg">Presentá tus servicios, contá quién sos y recibí consultas que quedan guardadas en tu CRM. Sin catálogo ni carrito, salvo que quieras vender.</p>
-        <SitioWebAcciones explorar={false} className="mt-6" />
+    <div className="mx-auto max-w-6xl space-y-10 px-4 pb-20 pt-5 sm:px-6 lg:px-8">
+      <section className="relative overflow-hidden rounded-[28px] bg-[linear-gradient(120deg,hsl(var(--ink))_0%,hsl(var(--ink)/0.92)_45%,hsl(var(--primary))_120%)] p-6 text-white shadow-soft sm:p-10">
+        <span aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-brand-yellow/20 blur-3xl" />
+        <p className="relative inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-white/85 ring-1 ring-white/15">Mi tienda · Woref para negocios</p>
+        <h1 className="relative mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight sm:text-5xl">Tu negocio en línea, hecho y administrado desde Woref</h1>
+        <p className="relative mt-3 max-w-2xl text-base text-white/75 sm:text-lg">Elegí qué querés armar: una tienda online, la carta de tu restaurante con QR, tus servicios con turnos o una página web. Todo con el mismo editor y el mismo panel.</p>
+        <SitioWebAcciones explorar={false} claro className="relative mt-6" />
       </section>
 
-      <section aria-labelledby="comparar" className="space-y-4">
-        <h2 id="comparar" className="text-xl font-black sm:text-2xl">Sitio web o tienda online</h2>
-        <div className="grid gap-4 md:grid-cols-2">
-          <article className="flex flex-col rounded-3xl border-2 border-primary/40 bg-card p-6">
-            <span className="tono tono-azul grid h-11 w-11 place-items-center rounded-xl"><Globe className="h-5 w-5" /></span>
-            <h3 className="mt-3 text-lg font-extrabold">Sitio web</h3>
-            <p className="text-sm text-muted-foreground">Para profesionales, estudios, consultorios, empresas de servicios, comercios y portfolios que quieren presencia y consultas.</p>
-            <ul className="mt-4 flex-1 space-y-2 text-sm">{SITIO.map((x) => <li key={x} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{x}</li>)}</ul>
-            <Button asChild className="mt-5 w-fit rounded-full font-bold"><Link to="/app/sitio-web/nuevo">Crear sitio web<ArrowRight className="h-4 w-4" /></Link></Button>
-          </article>
-          <article className="flex flex-col rounded-3xl border bg-card p-6">
-            <span className="tono tono-amarillo grid h-11 w-11 place-items-center rounded-xl"><ShoppingBag className="h-5 w-5" /></span>
-            <h3 className="mt-3 text-lg font-extrabold">Tienda online</h3>
-            <p className="text-sm text-muted-foreground">Para negocios que venden productos en línea, con o sin envío. Usa el mismo editor, temas y páginas.</p>
-            <ul className="mt-4 flex-1 space-y-2 text-sm">{TIENDA.map((x) => <li key={x} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{x}</li>)}</ul>
-            <Button asChild variant="outline" className="mt-5 w-fit rounded-full font-bold"><Link to={negocios.length ? "/app/comercio/nuevo" : "/app/comercio"}>Crear tienda online</Link></Button>
-          </article>
-        </div>
-        <p className="text-sm text-muted-foreground">¿Empezás con un sitio y después querés vender? Desde el panel activás la tienda online sobre el mismo sitio, sin perder páginas ni diseño.</p>
-      </section>
-
-      <section aria-labelledby="modelos" className="space-y-4">
-        <div>
-          <h2 id="modelos" className="text-xl font-black sm:text-2xl">Elegí un punto de partida</h2>
-          <p className="text-sm text-muted-foreground">Es el sitio que se crea para tu actividad, con secciones y páginas reales que después editás. No incluye fotos ni opiniones inventadas: las pone tu negocio.</p>
-        </div>
-        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="Actividades">
-          {ACTIVIDADES.map((a) => (
-            <button key={a.id} type="button" role="tab" aria-selected={actividad === a.id} onClick={() => setActividad(a.id)}
-              className={cn("shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", actividad === a.id ? "border-transparent bg-[hsl(var(--ink))] text-white" : "bg-card hover:bg-muted")}>
-              {a.nombre}
-            </button>
-          ))}
+      <section aria-labelledby="tipos" className="space-y-4">
+        <h2 id="tipos" className="text-xl font-black sm:text-2xl">¿Qué querés crear?</h2>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" role="tablist" aria-label="Tipos de negocio">
+          {TIPOS_NEGOCIO.map((t) => {
+            const Icon = ICONO[t.id];
+            const activo = tipo === t.id;
+            return (
+              <button key={t.id} type="button" role="tab" aria-selected={activo} onClick={() => setTipo(t.id)}
+                className={cn("rounded-2xl border-2 bg-card p-4 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", activo ? "border-primary shadow-pop" : "border-transparent hover:border-border")}>
+                <span className={cn("tono grid h-10 w-10 place-items-center rounded-xl", TONO_TIPO[t.id])}><Icon className="h-5 w-5" /></span>
+                <span className="mt-3 block font-extrabold">{t.nombre}</span>
+                <span className="mt-1 block text-[13px] text-muted-foreground">{t.bajada}</span>
+              </button>
+            );
+          })}
         </div>
         <div className="grid gap-5 lg:grid-cols-[1fr_300px]">
-          <SitioPreview actividad={actividad} datos={{ nombre: info.nombre }} slug="tu-negocio" alto={1500} />
+          <NegocioPreview tipo={tipo} rubro={RUBROS[tipo][0].id} datos={{ nombre: NOMBRE_EJEMPLO[tipo] }} slug="tu-negocio" alto={1500} />
           <aside className="space-y-3 rounded-3xl border bg-card p-5 lg:self-start">
             <p className="font-extrabold">{info.nombre}</p>
-            <p className="text-sm text-muted-foreground">{info.detalle}.</p>
-            <ul className="space-y-1.5 text-sm">
-              {["Inicio con presentación, servicios, preguntas y formulario", "Páginas Servicios, Nosotros y Contacto", "Menú armado y tema a juego"].map((x) => <li key={x} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{x}</li>)}
-            </ul>
-            <Button asChild className="w-full rounded-full font-bold"><Link to={`/app/sitio-web/nuevo?actividad=${actividad}`}>Empezar con este modelo</Link></Button>
+            <ul className="space-y-1.5 text-sm">{info.incluye.map((x) => <li key={x} className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />{x}</li>)}</ul>
+            <p className="text-xs text-muted-foreground">La vista previa es el punto de partida real que se crea. Los productos y textos son de ejemplo: los cambiás por los tuyos.</p>
+            <Button asChild className="w-full rounded-full font-bold"><Link to={`/app/crear?tipo=${tipo}`}>Empezar<ArrowRight className="h-4 w-4" /></Link></Button>
           </aside>
         </div>
+      </section>
+
+      <section aria-labelledby="incluye" className="space-y-4">
+        <div><h2 id="incluye" className="text-xl font-black sm:text-2xl">Todo lo que incluye Mi tienda</h2><p className="text-sm text-muted-foreground">Las mismas herramientas para los cuatro tipos; el panel muestra solo lo que corresponde a tu negocio.</p></div>
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {MI_TIENDA.map(({ icon: I, titulo, texto }) => (
+            <li key={titulo} className="rounded-2xl border bg-card p-4">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary"><I className="h-[18px] w-[18px]" /></span>
+              <p className="mt-3 font-extrabold">{titulo}</p>
+              <p className="mt-1 text-[13px] text-muted-foreground">{texto}</p>
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section aria-labelledby="pasos" className="space-y-4">
         <h2 id="pasos" className="text-xl font-black sm:text-2xl">Cómo funciona</h2>
         <ol className="grid gap-4 md:grid-cols-3">
-          {PASOS.map((p) => (
-            <li key={p.n} className="rounded-3xl border bg-card p-5">
-              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-yellow text-sm font-black text-brand-yellow-foreground">{p.n}</span>
-              <p className="mt-3 font-extrabold">{p.t}</p>
-              <p className="mt-1 text-sm text-muted-foreground">{p.x}</p>
+          {[
+            ["Elegí y completá", "Qué querés crear, tu rubro, tus primeros productos o servicios y la dirección web. Unos minutos."],
+            ["Editalo a tu gusto", "Arrancás con un sitio armado para tu rubro y lo cambiás en Mi tienda: textos, fotos, colores, páginas y catálogo."],
+            ["Publicá y vendé", "Woref revisa cada negocio antes de que sea público. Después recibís pedidos, reservas y consultas en tu panel."],
+          ].map(([t, x], i) => (
+            <li key={t} className="rounded-3xl border bg-card p-5">
+              <span className="grid h-9 w-9 place-items-center rounded-full bg-brand-yellow text-sm font-black text-brand-yellow-foreground">{i + 1}</span>
+              <p className="mt-3 font-extrabold">{t}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{x}</p>
             </li>
           ))}
         </ol>

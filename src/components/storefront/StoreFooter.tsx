@@ -28,6 +28,7 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie, c
   const horario = scheduleSummary(store.horarios);
   // Un sitio web no vende: sin medios de pago ni retiro, y la columna de datos solo si hay dirección u horario.
   const sitio = esSitio(store);
+  const carta = store.pedidos_online === false;
   const hayDatos = Boolean(store.direccion?.trim() || horario || (!sitio && store.acepta_retiro));
 
   return (
@@ -62,7 +63,7 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie, c
 
         {auto && enlaces.length > 0 && (
           <nav aria-label="Navegación de la tienda">
-            <h2 className="text-sm font-extrabold uppercase tracking-wide">{sitio ? "Sitio" : "Tienda"}</h2>
+            <h2 className="text-sm font-extrabold uppercase tracking-wide">{sitio ? "Sitio" : carta ? "Carta" : "Tienda"}</h2>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               {enlaces.filter((e, i) => enlaces.findIndex((x) => x.label === e.label) === i).map((e, i) => <li key={`${e.label}-${i}`}><button type="button" onClick={e.onClick} className="text-left hover:text-foreground">{e.label}</button></li>)}
             </ul>
@@ -78,7 +79,7 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie, c
           </ul>
         </div>}
 
-        {!sitio && <div>
+        {!sitio && !carta && <div>
           <h2 className="text-sm font-extrabold uppercase tracking-wide">Medios de pago</h2>
           <ul className="mt-3 flex flex-wrap gap-2">
             {medios.map((m) => <li key={m.label} className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-bold text-muted-foreground">{m.icon}{m.label}</li>)}
@@ -89,8 +90,8 @@ export function StoreFooter({ store, enlaces, redes, preview, widthClass, pie, c
       <div className="border-t">
         <div className={`mx-auto flex flex-col items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:flex-row sm:px-6 ${widthClass}`}>
           <p>© {new Date().getFullYear()} {store.nombre}</p>
-          <p className="inline-flex items-center gap-1.5"><StoreIcon className="h-3.5 w-3.5" />{sitio ? "Sitio web creado con Woref" : "Tienda online creada en Woref"}</p>
-          {!preview && !sitio && <Link to={`/app/tienda/${store.slug}`} className="font-semibold hover:text-foreground">Ver en la app de Woref</Link>}
+          <p className="inline-flex items-center gap-1.5"><StoreIcon className="h-3.5 w-3.5" />{sitio ? "Sitio web creado con Woref" : carta ? "Carta digital creada en Woref" : "Tienda online creada en Woref"}</p>
+          {!preview && !sitio && store.en_market !== false && <Link to={`/app/tienda/${store.slug}`} className="font-semibold hover:text-foreground">Ver en la app de Woref</Link>}
           {!preview && <button type="button" onClick={abrirPreferenciasCookies} className="font-semibold hover:text-foreground">Cookies</button>}
         </div>
       </div>

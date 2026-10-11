@@ -128,7 +128,10 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
 
   const open = isOpenNow(store);
   const reach = storeReach(store, point, undefined, tariff);
-  const unavailable = !sitio && (!open || !reach.inZone);
+  // Tienda independiente: vende siempre (despacha ella) salvo pausa; carta digital: muestra precios pero no toma pedidos.
+  const independiente = store.en_market === false;
+  const soloCarta = store.pedidos_online === false;
+  const unavailable = !sitio && (soloCarta || (independiente ? !store.esta_abierto : (!open || !reach.inZone)));
   const fee = deliveryFeeLabel(store, reach.fee);
   const cartStore: CartStore = { id: store.id, nombre: store.nombre, slug: store.slug, costo_envio: store.costo_envio, pedido_minimo: store.pedido_minimo, envio_gratis_desde: store.envio_gratis_desde, imagen_url: store.imagen_url };
 
@@ -204,10 +207,14 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   const Titulo = ({ children, id }: { children: ReactNode; id?: string }) => (
     <h2 id={id} className={cn("mb-6 scroll-mt-24 font-extrabold", tituloClase, centered && "text-center")} style={headingStyle}>{children}</h2>
   );
-  const statusChip = sitio ? null : (
+  const statusChip = sitio || soloCarta || independiente ? null : (
     <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider"><span className={cn("h-2 w-2 rounded-full", open ? "bg-emerald-400" : "bg-red-400")} />{open ? "Abierto ahora" : "Cerrado"}</span>
   );
-  const info = sitio ? [] : [
+  const info = sitio || soloCarta ? [] : independiente ? [
+    ...(store.envio_propio ? [{ icon: Bike, label: "Envío", value: Number(store.costo_envio) > 0 ? money(store.costo_envio) : "Gratis" }] : []),
+    ...(store.acepta_retiro ? [{ icon: StoreIcon, label: "Retiro", value: "En el local" }] : []),
+    ...(Number(store.pedido_minimo) > 0 ? [{ icon: ShoppingBag, label: "Pedido mínimo", value: money(store.pedido_minimo) }] : []),
+  ] : [
     { icon: Clock3, label: "Entrega", value: `${store.tiempo_min}-${store.tiempo_max} min` },
     { icon: Bike, label: "Envío", value: fee.replace("Envío ", "") },
     { icon: ShoppingBag, label: "Pedido mínimo", value: Number(store.pedido_minimo) > 0 ? money(store.pedido_minimo) : "Sin mínimo" },
@@ -793,7 +800,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         return (
           <section id="contacto" className={cn("mx-auto scroll-mt-24 px-4 sm:px-6", width, space)}>
             <Titulo>{b.titulo || "Contacto y horarios"}</Titulo>
-            {vendedor && !sitio && <SellerCard store={store} vendedor={vendedor} className="mb-4" />}
+            {vendedor && !sitio && !soloCarta && <SellerCard store={store} vendedor={vendedor} className="mb-4" />}
             <div className={cn("grid gap-4", store.direccion?.trim() ? "md:grid-cols-3" : "md:grid-cols-2")}>
               {store.direccion?.trim() && <div className="border bg-card p-5 text-card-foreground" style={{ borderRadius: "var(--sf-radius)" }}>
                 <p className="flex items-center gap-2 font-extrabold"><MapPin className="h-5 w-5" style={{ color: "var(--sf-accent)" }} />Dónde estamos</p>
@@ -1117,7 +1124,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
   );
   const searchBox = sitio || theme.mostrar_busqueda === false ? null : <StoreSearch key={claveVista} slug={store.slug} products={available} categorias={categorias} preview={preview} radius={radiusButton} initial={vistaActual.tipo === "buscar" ? vistaActual.q : ""} className="hidden w-64 xl:block" />;
   const cartClass = "inline-flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-2 text-sm font-bold";
-  const cart = sitio ? null : preview
+  const cart = sitio || soloCarta ? null : preview
     ? <span className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</span>
     : <MiniCart storeId={store.id} envioGratisDesde={store.envio_gratis_desde} pedidoMinimo={store.pedido_minimo} scope={pageStyle} style={{ ...accent, ...radiusButton }} trigger={<button type="button" className={cartClass} style={{ ...accent, ...radiusButton }}><ShoppingBag className="h-4 w-4" />{cartLabel}</button>} />;
 
@@ -1236,9 +1243,9 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
         <div className="border-b bg-card/80 text-card-foreground"><div className={cn("mx-auto flex items-center justify-between gap-3 px-4 py-2.5 text-sm sm:px-6", width)}><span className="font-semibold">¿Querés un turno? Reservá en línea.</span><Link to={reservaHref} className="shrink-0 px-4 py-1.5 font-bold" style={{ ...accent, ...radiusButton }}>Reservar turno</Link></div></div>
       )}
 
-      {unavailable && (
+      {unavailable && !soloCarta && (
         <p className={cn("mx-auto mt-6 rounded-2xl bg-muted px-4 py-3 text-sm text-foreground sm:mx-6 lg:mx-auto", width)}>
-          {!open ? <><span className="font-extrabold">Cerrado ahora.</span> {store.esta_abierto ? nextOpening(store.horarios) || "" : "El local pausó los pedidos por un rato."} Podés mirar los productos igual.</> : <><span className="font-extrabold">No llega a tu dirección.</span> Elegí otra dirección para pedir.</>}
+          {independiente ? <><span className="font-extrabold">Pausamos las compras por un rato.</span> Podés mirar los productos igual.</> : !open ? <><span className="font-extrabold">Cerrado ahora.</span> {store.esta_abierto ? nextOpening(store.horarios) || "" : "El local pausó los pedidos por un rato."} Podés mirar los productos igual.</> : <><span className="font-extrabold">No llega a tu dirección.</span> Elegí otra dirección para pedir.</>}
         </p>
       )}
 
@@ -1254,7 +1261,7 @@ export function StorefrontView({ store, tema, products: allProducts, sections: s
           ...(esInicio ? [] : [{ label: "Inicio", onClick: () => navigate(storePath(store.slug)) }]),
           ...categorias.slice(0, 6).map((c) => ({ label: c, onClick: () => navigate(collectionPath(store.slug, c)) })),
           ...(hayOfertas ? [{ label: "Ofertas", onClick: () => navigate(offersPath(store.slug)) }] : []),
-          ...(sitio ? [] : [{ label: "Todos los productos", onClick: () => (esInicio ? go("catalogo") : navigate(searchPath(store.slug, ""))) }]),
+          ...(sitio ? [] : [{ label: soloCarta ? "Toda la carta" : "Todos los productos", onClick: () => (esInicio ? go("catalogo") : navigate(searchPath(store.slug, ""))) }]),
           ...(hayAcerca ? [{ label: "Nosotros", onClick: () => (esInicio ? go("acerca") : navigate(aSeccion("acerca"))) }] : []),
           ...(hayContacto ? [{ label: "Contacto", onClick: () => (esInicio ? go("contacto") : navigate(aSeccion("contacto"))) }] : []),
           ...(bloques.some((b) => b.tipo === "politicas") && !paginas.some((p) => p.clase === "envios" || p.clase === "cambios") ? [{ label: "Envíos y cambios", onClick: () => (esInicio ? go("politicas") : navigate(aSeccion("politicas"))) }] : []),

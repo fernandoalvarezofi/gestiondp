@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACTIVIDADES, BLOQUES_SOLO_TIENDA, bloquePermitido, datosParaCrear, esSitio, sitioInicial } from "./sitioWeb";
+import { ACTIVIDADES, BLOQUES_SOLO_TIENDA, bloquePermitido, esSitio, sitioInicial } from "./sitioWeb";
 import { normalizeBloque, normalizeTheme } from "./storefront";
 
 const SLUG = /^[a-z0-9]+(-[a-z0-9]+)*$/;
@@ -50,9 +50,6 @@ describe("punto de partida de un sitio web", () => {
     expect(sitioInicial("salud", { nombre: "Consultorio", whatsapp: "123" }).tema.whatsapp).toBeUndefined();
   });
 
-  it("arma los datos de alta con la categoría y el rubro de la actividad", () => {
-    expect(datosParaCrear("gastronomia", { nombre: "  La Casona ", slug: "la-casona" })).toEqual({ nombre: "La Casona", slug: "la-casona", categoria: "comida", rubro: "Gastronomía", descripcion: null, telefono: null, direccion: "" });
-  });
 });
 
 describe("tipo de negocio", () => {

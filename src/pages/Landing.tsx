@@ -30,7 +30,7 @@ function useLandingStores() {
     queryKey: ["landing-stores"],
     staleTime: 5 * 60_000,
     queryFn: async () => {
-      const { data } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").order("destacado", { ascending: false }).order("total_resenas", { ascending: false }).limit(8);
+      const { data } = await db.from("delivery_comercios").select(COMERCIO_COLS).eq("activo", true).eq("tipo_sitio", "tienda").eq("en_market", true).order("destacado", { ascending: false }).order("total_resenas", { ascending: false }).limit(8);
       return (data ?? []) as DeliveryStore[];
     },
   });
