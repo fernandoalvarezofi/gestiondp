@@ -159,7 +159,7 @@ export default function OrderDetail() {
       <OrderAdjustments orderId={order.id} onChange={load} />
 
       {order.estado !== "cancelado" && (
-        <section className="mt-6 rounded-3xl border border-t-4 border-t-brand-yellow bg-card p-4 sm:p-6">
+        <section className="mt-6 rounded-3xl border bg-card p-4 sm:p-6">
           {active && envioTienda && (
             <div className="mb-5 flex items-center gap-3">
               <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl brand-tile"><Package className="h-6 w-6" /></span>

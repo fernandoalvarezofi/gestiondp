@@ -58,7 +58,7 @@ export default function Landing() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden border-b-4 border-brand-yellow bg-primary text-white">
+      <section className="relative overflow-hidden bg-primary text-white">
         <div aria-hidden className="pointer-events-none absolute -right-32 -top-32 h-[520px] w-[520px] rounded-full bg-white/10 blur-2xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-40 left-1/4 h-[420px] w-[420px] rounded-full bg-black/10 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 pb-24 pt-24 sm:px-6 sm:pb-28 lg:grid-cols-[1.1fr_1fr] lg:gap-14 lg:px-8 lg:pb-32 lg:pt-32">
@@ -178,7 +178,7 @@ export default function Landing() {
             <Button asChild className="mt-6 rounded-full bg-none bg-white font-bold text-foreground hover:bg-white/90"><Link to="/auth?registro=1">Sumar mi comercio</Link></Button>
           </div>
         </div>
-        <div id="repartir" className="relative scroll-mt-24 overflow-hidden rounded-3xl border-b-4 border-brand-yellow bg-primary p-8 text-white lg:p-10">
+        <div id="repartir" className="relative scroll-mt-24 overflow-hidden rounded-3xl bg-primary p-8 text-white lg:p-10">
           <Bike className="absolute -bottom-10 -right-6 h-56 w-56 opacity-10" />
           <div className="relative">
             <Bike className="h-9 w-9" />

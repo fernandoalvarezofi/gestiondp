@@ -13,7 +13,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryRoles } from "@/hooks/useDeliveryRoles";
 import { isRootPath, useGoBack } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
-import { tonoSeccion, tonoSuave } from "@/lib/tonos";
 import { ContextMenuItems } from "@/navigation/ContextSwitcher";
 import { contextById, contextFromPath, rememberContext } from "@/navigation/contexts";
 
@@ -51,11 +50,11 @@ function SidebarNav({ groups }: { groups: PanelNavGroup[] }) {
                   <NavLink to={item.to} end={item.end} onClick={() => setOpenMobile(false)} className="block">
                     {({ isActive }) => (
                       <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="nav-item h-11 font-semibold">
-                        <span><span className={cn("nav-tile", tonoSuave(tonoSeccion(item.to)))}><item.icon className="h-[18px] w-[18px]" /></span><span className="truncate">{item.label}</span></span>
+                        <span><span className="nav-tile"><item.icon className="h-[18px] w-[18px]" /></span><span className="truncate">{item.label}</span></span>
                       </SidebarMenuButton>
                     )}
                   </NavLink>
-                  {item.badge !== undefined && item.badge !== 0 && <SidebarMenuBadge className="top-2.5 bg-brand-yellow text-brand-yellow-foreground">{item.badge}</SidebarMenuBadge>}
+                  {item.badge !== undefined && item.badge !== 0 && <SidebarMenuBadge className="top-2.5 rounded-md bg-primary text-[11px] font-semibold text-primary-foreground">{item.badge}</SidebarMenuBadge>}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
@@ -99,7 +98,7 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton asChild tooltip="Comprar como cliente" className="nav-item h-11 font-semibold">
-                <Link to="/app"><span className={cn("nav-tile", tonoSuave("menta"))}><Home className="h-[18px] w-[18px]" /></span><span>Comprar como cliente</span></Link>
+                <Link to="/app"><span className="nav-tile"><Home className="h-[18px] w-[18px]" /></span><span>Comprar como cliente</span></Link>
               </SidebarMenuButton>
             </SidebarMenuItem>
             <SidebarMenuItem>
@@ -114,8 +113,8 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
                 <DropdownMenuContent side="top" align="start" className="w-64">
                   <ContextMenuItems />
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/app/perfil")}><span className="tono-suave tono-violeta grid h-7 w-7 shrink-0 place-items-center rounded-lg"><UserCircle className="h-4 w-4" /></span>Mi cuenta y direcciones</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => signOut()}><span className="tono-suave tono-coral grid h-7 w-7 shrink-0 place-items-center rounded-lg"><LogOut className="h-4 w-4" /></span>Cerrar sesión</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate("/app/perfil")}><UserCircle className="h-4 w-4" />Mi cuenta y direcciones</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => signOut()}><LogOut className="h-4 w-4" />Cerrar sesión</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </SidebarMenuItem>
@@ -136,12 +135,12 @@ export function PanelShell({ panel, identity, groups, actions, quickLink, bottom
           {actions}
           <NotificationBell />
         </header>
-        <div className="glass mx-2 mb-3 mt-3 min-h-[calc(100svh-6rem)] rounded-[1.75rem] md:mr-3"><div className="mx-auto w-full max-w-7xl px-3 py-5 sm:px-6 lg:px-8">{children}</div></div>
+        <div className={cn("mx-2 mt-3 min-h-[calc(100svh-6rem)] md:mr-3", bottomTabs ? "pb-20 md:pb-3" : "mb-3")}><div className="mx-auto w-full max-w-7xl px-2 py-4 sm:px-4 lg:px-6">{children}</div></div>
 
         {bottomTabs && (
-          <nav className="glass glass-strong fixed inset-x-3 bottom-[max(0.75rem,env(safe-area-inset-bottom))] z-40 grid rounded-full p-1 md:hidden" style={{ gridTemplateColumns: `repeat(${tabItems.length}, minmax(0, 1fr))` }} aria-label="Secciones">
+          <nav className="fixed inset-x-0 bottom-0 z-40 grid border-t bg-card pb-[env(safe-area-inset-bottom)] md:hidden" style={{ gridTemplateColumns: `repeat(${tabItems.length}, minmax(0, 1fr))` }} aria-label="Secciones">
             {tabItems.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn("relative flex min-h-[54px] flex-col items-center justify-center gap-0.5 rounded-full text-[11px] font-extrabold transition-colors", `tono-${tonoSeccion(item.to)}`, isActive ? "tono" : "text-muted-foreground [&>svg]:text-[hsl(var(--tc))]")}>
+              <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => cn("relative flex min-h-[56px] flex-col items-center justify-center gap-0.5 text-[11px] font-semibold transition-colors", isActive ? "text-primary" : "text-muted-foreground hover:text-foreground")}>
                 <item.icon className="h-5 w-5" />
                 <span className="max-w-full truncate px-1 text-[10.5px] leading-tight">{item.short ?? item.label}</span>
                 {item.badge !== undefined && item.badge !== 0 && <span className="absolute right-[22%] top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">{item.badge}</span>}

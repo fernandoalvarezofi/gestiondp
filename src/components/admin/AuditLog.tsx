@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
  */
 export function AuditLog() {
   return (
-    <div className="mx-auto max-w-xl rounded-3xl border border-l-4 border-l-brand-yellow bg-card p-6 sm:p-8">
+    <div className="mx-auto max-w-xl rounded-3xl border bg-card p-6 sm:p-8">
       <span className="flex h-12 w-12 items-center justify-center rounded-2xl brand-tile"><ShieldCheck className="h-6 w-6" /></span>
       <h2 className="mt-4 text-xl font-extrabold">La auditoría está en la Consola</h2>
       <p className="mt-2 text-sm text-muted-foreground">Por seguridad, el registro de acciones de administración se guarda en una base de datos aparte, que no comparte nada con las cuentas de la app. Nadie puede modificarlo ni borrarlo, y cada registro está encadenado al anterior para detectar cualquier alteración.</p>

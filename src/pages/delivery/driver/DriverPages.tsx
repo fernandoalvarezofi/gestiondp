@@ -36,7 +36,7 @@ export function DriverMapPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-3">
       <WorkMap position={position} connected={connected} markers={markers}
-        legend={[{ color: "hsl(214 84% 52%)", label: "Vos" }, { color: "hsl(163 44% 14%)", label: "Pasajero" }, { color: "hsl(46 100% 47%)", label: "Destino" }]} />
+        legend={[{ color: "hsl(214 84% 52%)", label: "Vos" }, { color: "hsl(222 40% 14%)", label: "Pasajero" }, { color: "hsl(46 100% 47%)", label: "Destino" }]} />
       {!currentViaje && viajeOffers.length > 0 && (
         <ul className="divide-y overflow-hidden rounded-3xl border bg-card" aria-label="Viajes disponibles cerca">
           {viajeOffers.map((offer) => (

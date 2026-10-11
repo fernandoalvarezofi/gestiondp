@@ -19,7 +19,7 @@ import type { SlotValue } from "./SlotPicker";
 type Prof = Profesional & { servicios: string[] };
 type Vista = "dia" | "semana" | "mes" | "lista";
 type Columna = { clave: string; titulo: string; sub?: string; fecha: string; profesional?: string; items: TurnoAgenda[]; tramos: [number, number][]; cerrado?: string | null };
-const PALETA = ["#2B9778", "#2563EB", "#BE185D", "#B45309", "#7C3AED", "#0F766E", "#DC2626", "#4B5563"];
+const PALETA = ["#1A2E5C", "#2563EB", "#BE185D", "#B45309", "#7C3AED", "#0F766E", "#DC2626", "#4B5563"];
 const HORA_PX = 64; // alto de una hora en la grilla
 const ACTIVOS: EstadoTurno[] = ["pendiente", "confirmado", "en_curso"];
 const DIAS_CORTOS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];

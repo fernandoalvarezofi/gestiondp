@@ -38,7 +38,7 @@ function AccesoCard({ to, titulo, texto, icon: Icon, color }: Acceso) {
 function Grupo({ id, titulo, subtitulo, children }: { id: string; titulo: string; subtitulo: string; children: React.ReactNode }) {
   return (
     <section aria-labelledby={id}>
-      <h2 id={id} className="flex items-center gap-2 text-lg font-extrabold"><span className="h-5 w-1 rounded-full bg-brand-yellow" />{titulo}</h2>
+      <h2 id={id} className="flex items-center gap-2 text-lg font-extrabold">{titulo}</h2>
       <p className="mt-0.5 text-sm text-muted-foreground">{subtitulo}</p>
       <div className="mt-3">{children}</div>
     </section>

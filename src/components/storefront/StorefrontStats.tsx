@@ -34,7 +34,7 @@ export function StorefrontStats({ storeId }: { storeId: string }) {
     <div>
       <div className="grid grid-cols-3 gap-3">
         {[["Hoy", today], ["7 días", week], ["30 días", month]].map(([label, value]) => (
-          <div key={label as string} className="rounded-2xl border border-l-4 border-l-brand-yellow bg-card p-3">
+          <div key={label as string} className="rounded-2xl border bg-card p-3">
             <p className="text-xs font-semibold text-muted-foreground">{label}</p>
             <p className="font-display text-2xl font-extrabold tabular-nums">{(value as number).toLocaleString("es-AR")}</p>
           </div>

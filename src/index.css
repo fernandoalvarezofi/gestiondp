@@ -4,52 +4,54 @@
 
 @layer base {
   :root {
-    --background: 240 9% 97%;
-    --foreground: 250 20% 11%;
+    /* Sistema de diseño Woref (2026-10): superficies blancas, bordes finos y azul marino de marca (#1A2E5C).
+       El amarillo Woref (#F0B900) destaca; el verde queda solo como color semántico de éxito. */
+    --background: 220 20% 97%;
+    --foreground: 222 30% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 250 20% 11%;
+    --card-foreground: 222 30% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 250 20% 11%;
-    /* Verde Woref #2B9778 (color principal) */
-    --primary: 163 56% 38%;
+    --popover-foreground: 222 30% 12%;
+    /* Azul marino Woref #1A2E5C (color principal: acciones, selección, enlaces) */
+    --primary: 222 56% 23%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 160 33% 95%;
-    --secondary-foreground: 163 56% 22%;
-    --muted: 240 7% 94%;
-    --muted-foreground: 245 6% 42%;
-    --accent: 160 33% 94%;
-    --accent-foreground: 163 56% 22%;
-    --destructive: 354 78% 50%;
+    --secondary: 222 40% 95%;
+    --secondary-foreground: 222 56% 23%;
+    --muted: 220 16% 95%;
+    --muted-foreground: 220 9% 42%;
+    --accent: 222 40% 95%;
+    --accent-foreground: 222 56% 23%;
+    --destructive: 354 72% 48%;
     --destructive-foreground: 0 0% 100%;
-    --success: 152 60% 36%;
+    --success: 152 58% 34%;
     --success-foreground: 0 0% 100%;
-    --warning: 40 96% 50%;
+    --warning: 38 92% 48%;
     --warning-foreground: 30 60% 15%;
-    --info: 214 84% 52%;
-    --brand-deep: 164 52% 13%;
-    --brand-cream: 158 30% 96%;
+    --info: 214 80% 48%;
+    --brand-deep: 222 50% 14%;
+    --brand-cream: 222 30% 97%;
     /* Amarillo Woref #F0B900 (acentos). Sobre amarillo siempre va texto oscuro: el blanco no se lee. */
     --brand-yellow: 46 100% 47%;
     --brand-yellow-foreground: 40 60% 10%;
-    /* Azul tinta: tercer color de la marca (acciones secundarias fuertes, cifras y gráficos). */
-    --ink: 222 47% 16%;
+    /* Tinta: casi negro azulado para superficies oscuras y acciones secundarias fuertes. */
+    --ink: 222 40% 11%;
     --ink-foreground: 0 0% 100%;
-    --border: 240 8% 90%;
-    --input: 240 8% 86%;
-    --ring: 163 56% 38%;
-    --radius: 1rem;
+    --border: 220 14% 90%;
+    --input: 220 13% 85%;
+    --ring: 220 72% 50%;
+    --radius: 0.5rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 12%;
-    --sidebar-primary: 163 56% 38%;
+    --sidebar-foreground: 222 30% 14%;
+    --sidebar-primary: 222 56% 23%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 160 33% 94%;
-    --sidebar-accent-foreground: 163 56% 20%;
-    --sidebar-border: 220 13% 90%;
-    --sidebar-ring: 163 56% 38%;
+    --sidebar-accent: 222 45% 96%;
+    --sidebar-accent-foreground: 222 56% 23%;
+    --sidebar-border: 220 14% 91%;
+    --sidebar-ring: 220 72% 50%;
 
-    --shadow-soft: 0 1px 2px hsl(220 20% 12% / 0.05), 0 6px 20px -10px hsl(220 20% 12% / 0.12);
-    --shadow-pop: 0 2px 6px hsl(220 20% 12% / 0.06), 0 20px 44px -16px hsl(220 20% 12% / 0.28);
+    --shadow-soft: 0 1px 2px hsl(220 30% 12% / 0.05);
+    --shadow-pop: 0 4px 10px -2px hsl(220 30% 12% / 0.08), 0 16px 32px -12px hsl(220 30% 12% / 0.16);
   }
 
   .dark {
@@ -59,8 +61,8 @@
     --card-foreground: 0 0% 95%;
     --popover: 220 16% 12%;
     --popover-foreground: 0 0% 95%;
-    --primary: 163 52% 44%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 217 76% 64%;
+    --primary-foreground: 222 50% 10%;
     --secondary: 220 14% 20%;
     --secondary-foreground: 220 12% 90%;
     --muted: 220 14% 17%;
@@ -74,8 +76,8 @@
     --warning: 40 96% 56%;
     --warning-foreground: 30 60% 12%;
     --info: 214 84% 62%;
-    --brand-deep: 164 40% 18%;
-    --brand-cream: 164 20% 13%;
+    --brand-deep: 222 40% 16%;
+    --brand-cream: 222 20% 13%;
     --brand-yellow: 46 100% 50%;
     --brand-yellow-foreground: 40 60% 10%;
     /* Azul tinta: tercer color de la marca (acciones secundarias fuertes, cifras y gráficos). */
@@ -83,16 +85,16 @@
     --ink-foreground: 0 0% 100%;
     --border: 220 13% 20%;
     --input: 220 13% 24%;
-    --ring: 163 52% 50%;
+    --ring: 217 76% 64%;
 
     --sidebar-background: 220 16% 12%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 163 52% 44%;
+    --sidebar-primary: 217 76% 64%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 14% 20%;
     --sidebar-accent-foreground: 0 0% 95%;
     --sidebar-border: 220 13% 20%;
-    --sidebar-ring: 163 52% 50%;
+    --sidebar-ring: 217 76% 64%;
 
     --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.4), 0 6px 20px -10px hsl(0 0% 0% / 0.5);
     --shadow-pop: 0 2px 6px hsl(0 0% 0% / 0.4), 0 18px 40px -14px hsl(0 0% 0% / 0.6);
@@ -129,7 +131,7 @@
   .scrollbar-none::-webkit-scrollbar { display: none; }
   .bg-hero-overlay { background: linear-gradient(180deg, hsl(0 0% 0% / 0.05) 20%, hsl(0 0% 0% / 0.72) 100%); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-  /* Cuadro de ícono de marca: verde con ícono blanco (el amarillo sobre verde no tiene contraste suficiente). */
+  /* Cuadro de ícono de marca: azul marino con ícono blanco. */
   .brand-tile { background-color: hsl(var(--primary)); color: hsl(var(--primary-foreground)); }
 }
 
@@ -173,196 +175,80 @@ html.reduce-motion *, html.reduce-motion *::before, html.reduce-motion *::after 
 .sf-carrusel::-webkit-scrollbar { display: none; }
 .sf-carrusel > * { scroll-snap-align: start; }
 
-/* ---- Tema "vidrio" de la app (estilo visionOS, versión clara) ----------------------------------------------------------
-   Fondo gris claro esmerilado con toques suaves de la marca (verde #2B9778 y amarillo #F0B900), paneles de vidrio esmerilado
-   blanco translúcido, tarjetas blancas encima y texto oscuro (máxima legibilidad).
-   Se activa con html.woref-glass en toda la app salvo las tiendas públicas (/t/…), que usan el tema de cada comercio. */
-html.woref-glass:not(.dark) {
-  --background: 220 14% 97%;
-  --muted: 220 13% 94%;
-  --border: 220 13% 88%;
-  --input: 220 12% 84%;
-  --sidebar-background: 0 0% 100%;
-  --sidebar-accent: 220 14% 93%;
-  --sidebar-border: 220 13% 88%;
-  --shadow-soft: 0 1px 2px hsl(222 30% 20% / 0.06), 0 12px 32px -14px hsl(222 30% 20% / 0.16);
-  --shadow-pop: 0 2px 8px hsl(222 30% 20% / 0.08), 0 24px 50px -18px hsl(222 30% 20% / 0.22);
-}
-html.woref-glass body { background-color: hsl(220 14% 95%); min-height: 100dvh; }
-/* Escena difuminada detrás del vidrio (luces de marca), fija: es lo que hace visible la transparencia de los paneles. */
-html.woref-glass body::before {
-  content: ""; position: fixed; inset: -12%; z-index: -1; pointer-events: none;
-  background:
-    radial-gradient(34rem 34rem at 8% 10%, hsl(163 40% 70% / 0.28), transparent 70%),
-    radial-gradient(26rem 26rem at 94% 6%, hsl(46 80% 72% / 0.2), transparent 70%),
-    radial-gradient(38rem 28rem at 78% 92%, hsl(215 25% 72% / 0.45), transparent 70%),
-    radial-gradient(30rem 26rem at 12% 90%, hsl(220 15% 78% / 0.5), transparent 70%),
-    radial-gradient(44rem 34rem at 50% 42%, hsl(0 0% 100% / 0.85), transparent 70%),
-    linear-gradient(135deg, hsl(210 16% 93%), hsl(220 14% 96%) 50%, hsl(225 12% 91%));
-  filter: blur(48px);
-}
-html.dark.woref-glass body { background-color: hsl(220 18% 8%); }
-html.dark.woref-glass body::before { opacity: 0.25; }
-/* Las páginas a pantalla completa dejan ver el fondo. */
-html.woref-glass .min-h-screen.bg-background, html.woref-glass .min-h-dvh.bg-background, html.woref-glass .min-h-svh.bg-background { background-color: transparent; }
-/* Tarjetas: borde blanco suave y sombra que las despega del vidrio. */
-html.woref-glass:not(.dark) .bg-card.border:not([role="dialog"]) { border-color: hsl(0 0% 100% / 0.9); box-shadow: var(--shadow-soft); }
+/* ---- Sistema de diseño de la app (2026-10) --------------------------------------------------------------------------
+   Plano y sobrio, en la línea de los productos SaaS de referencia: fondo gris muy claro, superficies blancas con borde fino,
+   sombras mínimas, azul marino de marca para lo activo y la acción principal. Se aplica con html.woref-glass (nombre histórico
+   de la clase) en toda la app salvo las tiendas públicas (/t/…), que usan el tema de cada comercio. */
+html.woref-glass body { background-color: hsl(var(--background)); min-height: 100dvh; }
 
 @layer utilities {
-  /* Vidrio esmerilado: paneles, barras y menús de la estructura. */
-  .glass {
-    background-color: hsl(0 0% 100% / 0.3);
-    background-image: linear-gradient(160deg, hsl(0 0% 100% / 0.55), hsl(0 0% 100% / 0.12) 45%, hsl(0 0% 100% / 0.28));
-    -webkit-backdrop-filter: blur(40px) saturate(140%);
-    backdrop-filter: blur(40px) saturate(140%);
-    border: 1px solid hsl(0 0% 100% / 0.85);
-    box-shadow: inset 0 1px 0 hsl(0 0% 100%), inset 0 0 0 1px hsl(0 0% 100% / 0.25), 0 20px 50px -28px hsl(222 30% 20% / 0.18);
-  }
-  .glass-strong { background-color: hsl(0 0% 100% / 0.45); }
-  .icon-tile { display: inline-grid; place-items: center; border-radius: 0.9rem; background: hsl(0 0% 100% / 0.6); border: 1px solid hsl(0 0% 100% / 0.8); }
-}
-html.dark.woref-glass .glass { background-image: none; background-color: hsl(220 18% 10% / 0.6); border-color: hsl(0 0% 100% / 0.08); box-shadow: none; }
-
-/* Barra lateral de vidrio: botón activo verde con brillo. */
-html.woref-glass:not(.dark) [data-sidebar="sidebar"] { background-color: hsl(0 0% 100% / 0.32); background-image: linear-gradient(170deg, hsl(0 0% 100% / 0.5), hsl(0 0% 100% / 0.12) 50%, hsl(0 0% 100% / 0.25)); -webkit-backdrop-filter: blur(30px) saturate(140%); backdrop-filter: blur(30px) saturate(140%); }
-html.woref-glass:not(.dark) [data-variant="floating"] [data-sidebar="sidebar"] { border-color: hsl(0 0% 100% / 0.75); border-radius: 1.5rem; box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.85), 0 24px 60px -30px hsl(222 30% 20% / 0.22); }
-html.woref-glass:not(.dark) [data-sidebar="sidebar"][data-mobile="true"] { background-color: hsl(0 0% 100% / 0.78); }
-html.woref-glass [data-sidebar="menu-button"] { border-radius: 0.85rem; }
-html.woref-glass [data-sidebar="menu-button"][data-active="true"] {
-  background: hsl(var(--primary)); color: hsl(0 0% 100%);
-  box-shadow: 0 8px 22px -8px hsl(163 56% 38% / 0.6), inset 0 1px 0 hsl(0 0% 100% / 0.2);
+  /* Estructura (barras, encabezados, paneles): superficie blanca con borde fino. Antes era vidrio translúcido. */
+  .glass { background-color: hsl(var(--card)); border: 1px solid hsl(var(--border)); box-shadow: 0 1px 2px hsl(220 30% 12% / 0.04); }
+  .glass-strong { background-color: hsl(var(--card)); }
+  .icon-tile { display: inline-grid; place-items: center; border-radius: 0.5rem; background: hsl(var(--muted)); border: 1px solid hsl(var(--border)); }
 }
 
-/* Pastillas de filtro y pestañas sobre el vidrio (fuera de tarjetas): la activa es verde y las demás, vidrio. */
-html.woref-glass:not(.dark) .bg-foreground.text-background:not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
-  background-image: linear-gradient(180deg, hsl(222 40% 24%), hsl(222 47% 15%)); color: hsl(0 0% 100%); border-color: transparent;
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 6px 16px -8px hsl(222 47% 12% / 0.55);
-}
-html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *) {
-  background-color: hsl(0 0% 100% / 0.55); border-color: hsl(0 0% 100% / 0.85); box-shadow: none;
-  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-}
-html.woref-glass:not(.dark) :is(button, a, [role="tab"]).bg-card:is(.rounded-full, .rounded-xl):not(:is(.bg-card, .bg-white, [role="dialog"], [role="menu"]) *):hover { background-color: hsl(0 0% 100% / 0.8); }
+/* Tarjetas: borde fino y casi sin sombra. Las que se pueden tocar marcan el borde al pasar. */
+html.woref-glass:not(.dark) .bg-card.border:not([role="dialog"]):not([role="alertdialog"]) { box-shadow: 0 1px 2px hsl(220 30% 12% / 0.04); }
+html.woref-glass :is(a, button).bg-card.border { transition: border-color .15s ease, box-shadow .15s ease, background-color .15s ease; }
+html.woref-glass :is(a, button).bg-card.border:hover:not(:disabled) { border-color: hsl(var(--primary) / 0.35); box-shadow: 0 4px 12px -6px hsl(220 30% 12% / 0.14); }
 
-/* Menús desplegables, listas de opciones y popovers: vidrio esmerilado claro con texto oscuro. */
-html.woref-glass:not(.dark) :is([role="menu"], [role="listbox"], [data-radix-popper-content-wrapper] > .bg-popover) {
-  background-color: hsl(0 0% 100% / 0.78);
-  -webkit-backdrop-filter: blur(28px) saturate(140%); backdrop-filter: blur(28px) saturate(140%);
-  border-color: hsl(0 0% 100% / 0.9);
-  box-shadow: inset 0 1px 0 hsl(0 0% 100%), 0 24px 50px -20px hsl(222 30% 20% / 0.2);
-}
+/* Barra lateral: blanca, con la sección activa en azul claro y texto azul marino. */
+html.woref-glass [data-sidebar="sidebar"] { background-color: hsl(var(--sidebar-background)); }
+html.woref-glass [data-variant="floating"] [data-sidebar="sidebar"] { border: 1px solid hsl(var(--sidebar-border)); border-radius: 0.75rem; box-shadow: 0 1px 2px hsl(220 30% 12% / 0.04); }
+html.woref-glass [data-sidebar="menu-button"] { border-radius: 0.5rem; }
+html.woref-glass [data-sidebar="menu-button"][data-active="true"] { background: hsl(var(--sidebar-accent)); color: hsl(var(--sidebar-accent-foreground)); font-weight: 600; box-shadow: none; }
+html.woref-glass [data-sidebar="group-label"] { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
 
-/* ---- Menú lateral con íconos en cuadros (como la barra del ejemplo) ---------------------------------------------------- */
-.nav-tile {
-  display: inline-grid; place-items: center; flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 0.7rem;
-  background: hsl(0 0% 100% / 0.7); border: 1px solid hsl(220 13% 87%); color: hsl(163 50% 30%);
-  box-shadow: 0 1px 2px hsl(222 30% 20% / 0.06);
-  transition: background-color .2s, color .2s, box-shadow .2s, transform .2s;
-}
-.dark .nav-tile { background: hsl(0 0% 100% / 0.06); border-color: hsl(0 0% 100% / 0.08); color: hsl(163 52% 60%); }
-.nav-item { gap: 0.7rem !important; padding-left: 0.4rem !important; border-radius: 0.95rem !important; transition: background-color .2s, box-shadow .2s; }
-.nav-item:hover .nav-tile { transform: translateY(-1px); box-shadow: 0 6px 14px -6px hsl(163 56% 30% / 0.35); }
-html.woref-glass .nav-item[data-active="true"] {
-  background: hsl(0 0% 100% / 0.85) !important; color: hsl(222 47% 16%) !important; font-weight: 800;
-  box-shadow: 0 10px 24px -14px hsl(222 30% 20% / 0.3), inset 0 1px 0 hsl(0 0% 100%);
-}
-.dark .nav-item[data-active="true"], html.dark.woref-glass .nav-item[data-active="true"] { background: hsl(0 0% 100% / 0.08) !important; color: hsl(0 0% 100%) !important; }
-.nav-item[data-active="true"] .nav-tile {
-  background: linear-gradient(145deg, hsl(var(--t1, 163 52% 48%)), hsl(var(--t2, 163 60% 32%))); border-color: transparent; color: #fff;
-  box-shadow: 0 8px 18px -6px hsl(var(--t2, 163 60% 32%) / 0.6), inset 0 1px 0 hsl(0 0% 100% / 0.3);
-}
-/* Barra lateral colapsada: solo el cuadro del ícono, centrado. */
-[data-collapsible="icon"] .nav-item { padding: 0 !important; justify-content: center; background: transparent !important; box-shadow: none !important; }
-[data-collapsible="icon"] .nav-item .nav-tile { width: 2rem; height: 2rem; }
-html.woref-glass [data-sidebar="group-label"] { font-size: 0.68rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+/* Menú lateral: íconos lineales sin cuadros de color (la jerarquía la dan el texto y el resaltado de la fila activa). */
+.nav-tile { display: inline-grid; place-items: center; flex-shrink: 0; width: 1.5rem; height: 1.5rem; color: hsl(var(--muted-foreground)); transition: color .15s; }
+.nav-item { gap: 0.6rem !important; border-radius: 0.5rem !important; transition: background-color .15s, color .15s; }
+.nav-item:hover .nav-tile { color: hsl(var(--foreground)); }
+html.woref-glass .nav-item[data-active="true"] { background: hsl(var(--sidebar-accent)) !important; color: hsl(var(--sidebar-accent-foreground)) !important; font-weight: 600; }
+.nav-item[data-active="true"] .nav-tile { color: hsl(var(--primary)); }
+.dark .nav-item[data-active="true"] { background: hsl(0 0% 100% / 0.08) !important; color: hsl(0 0% 100%) !important; }
+[data-collapsible="icon"] .nav-item { padding: 0 !important; justify-content: center; }
 
-/* ---- Menús desplegables: ítems redondeados con el ícono en un cuadro de color ----------------------------------------- */
-html.woref-glass [role="menu"] { padding: 0.4rem; border-radius: 1.1rem; }
-html.woref-glass [role="menu"] [role="menuitem"], html.woref-glass [role="menu"] [role="menuitemradio"], html.woref-glass [role="menu"] [role="menuitemcheckbox"] {
-  border-radius: 0.75rem; padding-top: 0.5rem; padding-bottom: 0.5rem; font-weight: 600; gap: 0.65rem;
-}
-html.woref-glass [role="menu"] [role^="menuitem"] > svg:first-child {
-  box-sizing: content-box; padding: 0.4rem; border-radius: 0.6rem; flex-shrink: 0;
-  background: hsl(220 14% 93%); color: hsl(163 56% 30%);
-}
-html.dark.woref-glass [role="menu"] [role^="menuitem"] > svg:first-child { background: hsl(0 0% 100% / 0.08); color: hsl(163 52% 60%); }
-html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] { background: hsl(220 14% 95%); }
-html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] > svg:first-child { background: hsl(var(--primary)); color: #fff; }
-/* Velo detrás de menús y ventanas: claro y difuminado en lugar de negro. */
-html.woref-glass:not(.dark) .bg-black\/80 { background-color: hsl(222 15% 30% / 0.18); -webkit-backdrop-filter: blur(8px) saturate(140%); backdrop-filter: blur(8px) saturate(140%); }
+/* Menús desplegables y popovers: blancos, borde fino, sombra suave, ítems con esquinas de 6 px. */
+html.woref-glass [role="menu"] { padding: 0.3rem; border-radius: 0.625rem; }
+html.woref-glass [role="menu"] [role^="menuitem"] { border-radius: 0.375rem; font-weight: 500; gap: 0.6rem; }
+html.woref-glass [role="menu"] [role^="menuitem"] > svg:first-child { color: hsl(var(--muted-foreground)); }
+html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] { background: hsl(var(--muted)); }
+html.woref-glass [role="menu"] [role^="menuitem"][data-highlighted] > svg:first-child { color: hsl(var(--foreground)); }
+/* Velo detrás de ventanas y paneles: gris azulado translúcido, sin difuminar. */
+html.woref-glass:not(.dark) .bg-black\/80 { background-color: hsl(222 30% 12% / 0.45); }
 
-/* ---- Sistema de componentes: tarjetas, pastillas y estados ------------------------------------------------------------ */
-/* Pastillas y botones oscuros (bg-foreground) dentro de tarjetas: azul tinta con relieve, en vez de negro plano. */
-html.woref-glass:not(.dark) :is(.bg-card, .bg-white) .bg-foreground.text-background {
-  background-image: linear-gradient(180deg, hsl(222 40% 24%), hsl(222 47% 15%)); border-color: transparent;
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 4px 12px -6px hsl(222 47% 12% / 0.5);
-}
-/* Tarjetas que se pueden tocar: se elevan y marcan el borde al pasar el mouse. */
-html.woref-glass:not(.dark) :is(a, button).bg-card.border, html.woref-glass:not(.dark) :is(a, button)[class*="rounded-2xl"].border.bg-card {
-  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
-}
-html.woref-glass:not(.dark) :is(a, button).bg-card.border:hover:not(:disabled) {
-  transform: translateY(-2px); border-color: hsl(var(--primary) / 0.35);
-  box-shadow: 0 2px 4px hsl(222 30% 20% / 0.05), 0 16px 32px -14px hsl(222 30% 20% / 0.22);
-}
-/* Opciones elegibles (radio en tarjeta) marcadas: borde verde, halo suave y check visible. */
-html.woref-glass:not(.dark) [role="radio"][aria-checked="true"].border { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.14), 0 6px 16px -10px hsl(var(--primary) / 0.5); }
-/* Tablas: encabezado prolijo y filas con resaltado al pasar. */
-html.woref-glass:not(.dark) .bg-card table thead { background: linear-gradient(180deg, hsl(220 16% 98%), hsl(220 14% 96%)); }
-html.woref-glass:not(.dark) .bg-card table thead th { font-size: 11.5px; letter-spacing: 0.05em; text-transform: uppercase; color: hsl(220 9% 46%); }
-html.woref-glass:not(.dark) .bg-card table tbody tr { transition: background-color .15s; }
+/* Pastillas oscuras (filtros activos, pestañas): tinta lisa. */
+html.woref-glass:not(.dark) .bg-foreground.text-background { background-color: hsl(var(--ink)); color: hsl(var(--ink-foreground)); border-color: transparent; }
+/* Opciones elegidas (radio en tarjeta, presionado, pestaña activa) con borde de marca: halo suave. */
+html.woref-glass :is([aria-checked="true"], [aria-pressed="true"], [aria-selected="true"]):is(.border-primary, [class*="ring-primary"]) { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12); }
+html.woref-glass:not(.dark) [role="radio"][aria-checked="true"].border { box-shadow: 0 0 0 3px hsl(var(--primary) / 0.12); }
+/* Botones y enlaces armados a mano con el color de marca: planos, con un leve cambio al pasar. */
+html.woref-glass :is(button, a).bg-primary { transition: background-color .15s, filter .15s; }
+html.woref-glass :is(button, a).bg-brand-yellow:not(:disabled):hover { filter: brightness(0.95); }
+html.woref-glass:not(.dark) :is(button, a).bg-primary:not(:disabled):hover { filter: brightness(1.18); }
 
-/* ---- El sistema aplicado a toda la app (botones y opciones armados a mano) -------------------------------------------- */
-/* Cualquier botón/enlace verde de marca: degradé, brillo arriba, sombra de color y elevación al pasar. */
-html.woref-glass :is(button, a, label, [role="radio"], [role="tab"], [role="button"]).bg-primary {
-  background-image: linear-gradient(180deg, hsl(163 50% 45%), hsl(163 58% 35%));
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.22), 0 1px 2px hsl(163 60% 18% / 0.28), 0 6px 16px -8px hsl(163 56% 30% / 0.55);
-  border-color: transparent;
-  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
-}
-/* Botón amarillo de marca. */
-html.woref-glass :is(button, a, label, [role="radio"], [role="tab"], [role="button"]).bg-brand-yellow {
-  background-image: linear-gradient(180deg, hsl(46 100% 56%), hsl(43 100% 47%));
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.45), 0 1px 2px hsl(40 80% 25% / 0.22), 0 6px 16px -8px hsl(43 100% 40% / 0.5);
-  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
-}
-/* Oscuro (bg-foreground) en cualquier lugar: azul tinta con relieve en vez de negro plano. */
-html.woref-glass:not(.dark) .bg-foreground.text-background {
-  background-image: linear-gradient(180deg, hsl(222 40% 24%), hsl(222 47% 15%)); border-color: transparent;
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.14), 0 6px 16px -8px hsl(222 47% 12% / 0.5);
-}
-html.woref-glass :is(button, a).bg-primary:not(:disabled):hover,
-html.woref-glass :is(button, a).bg-brand-yellow:not(:disabled):hover,
-html.woref-glass :is(button, a).bg-foreground.text-background:not(:disabled):hover { filter: brightness(1.06); transform: translateY(-1px); }
-html.woref-glass :is(button, a).bg-primary:not(:disabled):active,
-html.woref-glass :is(button, a).bg-brand-yellow:not(:disabled):active { transform: translateY(0) scale(0.985); }
-/* Opciones elegidas (radio, presionado, pestaña activa) con borde verde: halo suave. */
-html.woref-glass :is([aria-checked="true"], [aria-pressed="true"], [aria-selected="true"]):is(.border-primary, [class*="ring-primary"]) {
-  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.14), 0 6px 16px -10px hsl(var(--primary) / 0.5);
-}
-/* Opciones sin elegir (chips con borde): se marcan al pasar el mouse. */
-html.woref-glass :is(button, [role="radio"]).border.rounded-full:not(.bg-primary):not(.bg-foreground):not(:disabled):hover { border-color: hsl(var(--primary) / 0.45); }
-/* Campos nativos (desplegables y textos armados a mano): foco verde con halo, igual que los componentes. */
-html.woref-glass :is(select, input, textarea).border:focus-visible {
-  outline: none; border-color: hsl(var(--primary)); box-shadow: 0 0 0 3px hsl(var(--primary) / 0.2);
-}
+/* Tablas: encabezado gris claro, títulos en versalitas pequeñas y filas que se resaltan al pasar. */
+html.woref-glass .bg-card table thead { background: hsl(var(--muted) / 0.6); }
+html.woref-glass .bg-card table thead th, html.woref-glass .bg-card table thead th :is(button, a, span) { font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: hsl(var(--muted-foreground)); }
+html.woref-glass .bg-card table tbody tr { transition: background-color .12s; }
+html.woref-glass .bg-card table tbody tr:hover { background: hsl(var(--muted) / 0.5); }
+
+/* Campos nativos (desplegables y textos armados a mano): foco con borde y halo azul. */
+html.woref-glass :is(select, input, textarea).border:focus-visible { outline: none; border-color: hsl(var(--ring)); box-shadow: 0 0 0 3px hsl(var(--ring) / 0.18); }
 html.woref-glass select.border { transition: border-color .15s, box-shadow .15s; }
-/* Casillas, radios y deslizadores nativos con el verde de marca. */
 html.woref-glass { accent-color: hsl(var(--primary)); }
 /* Barra de desplazamiento fina y discreta. */
-html.woref-glass * { scrollbar-width: thin; scrollbar-color: hsl(220 10% 75%) transparent; }
+html.woref-glass * { scrollbar-width: thin; scrollbar-color: hsl(220 10% 78%) transparent; }
 html.woref-glass ::-webkit-scrollbar { width: 10px; height: 10px; }
-html.woref-glass ::-webkit-scrollbar-thumb { background: hsl(220 10% 78%); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
-html.woref-glass ::-webkit-scrollbar-thumb:hover { background-color: hsl(220 10% 62%); }
-/* Selección de texto con el verde de marca. */
-html.woref-glass ::selection { background: hsl(var(--primary) / 0.22); }
-/* Dentro de tarjetas, ventanas y menús el "fondo" de los campos es blanco puro (campos nítidos sobre la tarjeta). */
-html.woref-glass:not(.dark) :is(.bg-card, .bg-white, [role="dialog"], [role="alertdialog"]) { --background: 0 0% 100%; }
+html.woref-glass ::-webkit-scrollbar-thumb { background: hsl(220 10% 80%); border-radius: 999px; border: 3px solid transparent; background-clip: content-box; }
+html.woref-glass ::-webkit-scrollbar-thumb:hover { background-color: hsl(220 10% 64%); }
+html.woref-glass ::selection { background: hsl(var(--primary) / 0.16); }
 
 /* ---- Paleta de íconos por sección --------------------------------------------------------------------------------------
    Cada tono define su degradé (--t1 → --t2) y su color de texto suave (--tc). `.tono` = cuadro fuerte (degradé + ícono
-   blanco + brillo); `.tono-suave` = cuadro claro teñido con el ícono del color. Verde y amarillo de marca + tonos armónicos. */
-.tono-verde    { --t1: 163 52% 48%; --t2: 163 60% 32%; --tc: 163 60% 30%; }
+   blanco + brillo); `.tono-suave` = cuadro claro teñido con el ícono del color. Azul marino y amarillo de marca + tonos armónicos (`tono-verde` es el azul de marca: se conserva el nombre por compatibilidad). */
+.tono-verde    { --t1: 222 56% 40%; --t2: 222 56% 23%; --tc: 222 56% 30%; }
 .tono-amarillo { --t1: 46 100% 58%; --t2: 38 100% 46%; --tc: 36 90% 34%; }
 .tono-coral    { --t1: 12 88% 64%;  --t2: 4 72% 50%;   --tc: 6 70% 46%; }
 .tono-naranja  { --t1: 30 96% 60%;  --t2: 20 88% 48%;  --tc: 22 85% 42%; }
@@ -372,10 +258,10 @@ html.woref-glass:not(.dark) :is(.bg-card, .bg-white, [role="dialog"], [role="ale
 .tono-rosa     { --t1: 330 76% 66%; --t2: 336 62% 50%; --tc: 336 60% 46%; }
 .tono-tinta    { --t1: 222 38% 34%; --t2: 222 47% 16%; --tc: 222 45% 26%; }
 .tono-menta    { --t1: 152 55% 52%; --t2: 158 58% 36%; --tc: 158 60% 30%; }
-.tono {
-  background-image: linear-gradient(145deg, hsl(var(--t1)), hsl(var(--t2))); color: #fff; border-color: transparent;
-  box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.28), 0 8px 18px -8px hsl(var(--t2) / 0.6);
-}
+.tono { background-color: hsl(var(--t2)); color: #fff; border-color: transparent; }
 .tono.tono-amarillo { color: hsl(40 60% 12%); }
 .tono-suave { background: hsl(var(--t1) / 0.14); color: hsl(var(--tc)); border-color: hsl(var(--t1) / 0.28); }
 .dark .tono-suave { background: hsl(var(--t1) / 0.16); color: hsl(var(--t1)); }
+
+/* Dentro de tarjetas, ventanas y menús el "fondo" de los campos armados a mano es blanco (campos nítidos sobre la tarjeta). */
+html.woref-glass:not(.dark) :is(.bg-card, .bg-white, [role="dialog"], [role="alertdialog"], [role="menu"]) { --background: 0 0% 100%; }

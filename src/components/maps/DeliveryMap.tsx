@@ -17,7 +17,7 @@ const glyph = {
   courier: '<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-7h5l3 7M10 10l-2-3H5" />',
 };
 // El destino va en amarillo de marca con ícono oscuro (blanco sobre amarillo no se distingue).
-const colors = { store: "hsl(163 44% 14%)", home: "hsl(46 100% 47%)", courier: "hsl(214 84% 52%)", offer: "hsl(262 83% 58%)" };
+const colors = { store: "hsl(222 40% 14%)", home: "hsl(46 100% 47%)", courier: "hsl(214 84% 52%)", offer: "hsl(262 83% 58%)" };
 const strokes = { store: "#fff", home: "hsl(40 60% 10%)", courier: "#fff", offer: "#fff" };
 
 const icon = (kind: MapMarker["kind"]) => divIcon({

@@ -80,7 +80,7 @@ export function BusinessMetrics() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tarjetas.map((t) => (
-          <div key={t.titulo} className="rounded-3xl border border-l-4 border-l-brand-yellow bg-card p-5">
+          <div key={t.titulo} className="rounded-3xl border bg-card p-5">
             <p className="text-sm font-semibold text-muted-foreground">{t.titulo}</p>
             <p className="mt-1 font-display text-3xl font-black tabular-nums">{t.valor}</p>
             <p className="mt-1 text-xs text-muted-foreground">{t.nota}</p>

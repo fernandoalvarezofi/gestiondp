@@ -96,10 +96,19 @@ export default {
         "teal-data": "hsl(var(--teal-data))",
         "teal-dark": "hsl(var(--teal-dark))",
       },
+      // Esquinas sobrias (sistema de diseño 2026-10): controles 8 px, tarjetas 12 px, paneles grandes 16 px.
       borderRadius: {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+        xl: "0.625rem",
+        "2xl": "0.75rem",
+        "3xl": "1rem",
+      },
+      // Títulos firmes pero no pesados: "extrabold" y "black" se leen como en un producto SaaS, no como un afiche.
+      fontWeight: {
+        extrabold: "700",
+        black: "800",
       },
       keyframes: {
         "marquee": { from: { transform: "translateX(0)" }, to: { transform: "translateX(-50%)" } },

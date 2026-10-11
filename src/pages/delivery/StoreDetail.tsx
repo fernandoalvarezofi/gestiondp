@@ -135,7 +135,7 @@ export default function StoreDetail() {
         <button type="button" aria-label="Compartir" onClick={share} className="flex h-10 w-10 items-center justify-center rounded-full border bg-card hover:bg-muted"><Share2 className="h-[18px] w-[18px]" /></button>
         <FavoriteButton storeId={store.id} className="h-10 w-10 border" />
       </div>
-      <div className="relative h-48 w-full overflow-hidden border-b-4 border-brand-yellow bg-muted sm:hidden">
+      <div className="relative h-48 w-full overflow-hidden bg-muted sm:hidden">
         <SmartImage src={store.imagen_url} width={1400} loading="eager" className={cn(!open && "grayscale")} />
         <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/10" />
         <div className="absolute inset-x-3 top-3 flex items-center gap-2">

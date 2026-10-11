@@ -13,7 +13,7 @@ export function SmartImage({ src, width = 640, alt = "", className, loading = "l
   const [loaded, setLoaded] = useState(false);
   const missing = !src || failed;
   return (
-    <span className={cn("absolute inset-0 block overflow-hidden", color ? tono(color) : "bg-gradient-to-br from-[hsl(163_50%_42%)] to-[hsl(164_52%_22%)]")}>
+    <span className={cn("absolute inset-0 block overflow-hidden", color ? tono(color) : "bg-gradient-to-br from-[hsl(222_45%_38%)] to-[hsl(164_52%_22%)]")}>
       <span aria-hidden className="absolute inset-0 flex items-center justify-center"><LogoMark className="h-1/3 w-auto max-h-16 opacity-25" /></span>
       {!missing && (
         <img

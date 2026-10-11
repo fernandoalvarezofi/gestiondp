@@ -112,7 +112,7 @@ export default function Auth() {
   return (
     <div className="flex min-h-screen max-lg:flex-col">
       {/* Portada de marca en el celular */}
-      <div className="border-b-4 border-brand-yellow bg-primary px-6 pb-14 pt-8 text-white max-lg:rounded-b-[32px] lg:hidden">
+      <div className="bg-primary px-6 pb-14 pt-8 text-white max-lg:rounded-b-[32px] lg:hidden">
         <DeliveryBrand inverted />
         <h1 className="mt-7 text-[32px] font-extrabold leading-[1.05] tracking-tight">Lo que necesitás,<br />llega hoy.</h1>
         <p className="mt-2 max-w-xs text-[15px] font-medium text-white/85">Comida, súper, farmacia y más, con seguimiento en tiempo real.</p>
@@ -129,7 +129,7 @@ export default function Auth() {
                 backgroundPosition: "center",
               }}
             />
-            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(164 52% 16% / 0.92), hsl(163 56% 30% / 0.82) 55%, rgb(0 0 0 / 0.7))" }} />
+            <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, hsl(164 52% 16% / 0.92), hsl(222 56% 18% / 0.82) 55%, rgb(0 0 0 / 0.7))" }} />
           </>
         )}
 

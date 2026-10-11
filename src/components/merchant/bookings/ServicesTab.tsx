@@ -17,7 +17,7 @@ type Draft = {
   buffer_antes_min: string; buffer_despues_min: string; intervalo_min: string; reserva_max_dias: string; capacidad: string; requiere_confirmacion: boolean; recurso_id: string; color: string;
 };
 const INTERVALOS = [5, 10, 15, 20, 30, 45, 60, 90, 120];
-const COLORES = ["", "#2B9778", "#2563EB", "#BE185D", "#B45309", "#7C3AED", "#0F766E", "#DC2626"];
+const COLORES = ["", "#1A2E5C", "#2563EB", "#BE185D", "#B45309", "#7C3AED", "#0F766E", "#DC2626"];
 const VACIO: Draft = {
   nombre: "", descripcion: "", duracion_min: "30", precio: "", modalidad: "en_local", anticipacion_horas: "2", cancelar_hasta_horas: "12", activo: true,
   buffer_antes_min: "0", buffer_despues_min: "0", intervalo_min: "15", reserva_max_dias: "60", capacidad: "1", requiere_confirmacion: false, recurso_id: "", color: "",

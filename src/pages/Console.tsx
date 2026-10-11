@@ -25,7 +25,7 @@ const hace = (iso: string | null) => {
 function Marco({ children, titulo, detalle }: { children: React.ReactNode; titulo: string; detalle?: string }) {
   return (
     <div className="mx-auto w-full max-w-md px-4 py-10">
-      <div className="rounded-3xl border border-t-4 border-t-brand-yellow bg-card p-6 shadow-pop sm:p-8">
+      <div className="rounded-3xl border bg-card p-6 shadow-pop sm:p-8">
         <h1 className="text-2xl font-extrabold">{titulo}</h1>
         {detalle && <p className="mt-1 text-sm text-muted-foreground">{detalle}</p>}
         <div className="mt-6">{children}</div>
@@ -257,7 +257,7 @@ function Resumen() {
     <div className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         {tarjetas.map((item) => (
-          <div key={item.titulo} className="rounded-3xl border border-l-4 border-l-brand-yellow bg-card p-5"><p className="text-sm font-semibold text-muted-foreground">{item.titulo}</p><p className="mt-1 font-display text-4xl font-extrabold tabular-nums">{item.valor}</p><p className="mt-1 text-xs text-muted-foreground">{item.nota}</p></div>
+          <div key={item.titulo} className="rounded-3xl border bg-card p-5"><p className="text-sm font-semibold text-muted-foreground">{item.titulo}</p><p className="mt-1 font-display text-4xl font-extrabold tabular-nums">{item.valor}</p><p className="mt-1 text-xs text-muted-foreground">{item.nota}</p></div>
         ))}
       </div>
       <section className="rounded-3xl border bg-card p-5 sm:p-6">

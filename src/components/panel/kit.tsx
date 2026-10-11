@@ -36,7 +36,7 @@ export function Section({ title, description, action, children, className }: { t
     <section className={cn("min-w-0", className)}>
       <div className="mb-2.5 flex items-end justify-between gap-3 px-0.5">
         <div className="min-w-0">
-          <h3 className="flex items-center gap-2 text-[15px] font-extrabold leading-tight"><span aria-hidden className="h-3.5 w-1 shrink-0 rounded-full bg-brand-yellow" />{title}</h3>
+          <h3 className="text-[15px] font-semibold leading-tight">{title}</h3>
           {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
         </div>
         {action && <div className="shrink-0 text-[13px] font-bold">{action}</div>}
@@ -70,7 +70,7 @@ export function MetricStrip({ children, className, cols }: { children: ReactNode
   const n = cols ?? Math.min(6, Math.max(2, count));
   const lg = { 2: "lg:grid-cols-2", 3: "lg:grid-cols-3", 4: "lg:grid-cols-4", 5: "lg:grid-cols-5", 6: "lg:grid-cols-6" }[n];
   return (
-    <div className={cn("overflow-hidden rounded-2xl border bg-card shadow-soft", className)}>
+    <div className={cn("overflow-hidden rounded-xl border bg-card", className)}>
       <div className={cn("-m-px grid grid-cols-2", lg)}>{children}</div>
     </div>
   );
@@ -84,13 +84,12 @@ const metricTones = {
   danger: "bg-destructive/10 text-destructive ring-destructive/15",
 } as const;
 
-/** Métrica. `icon` agrega un ícono en un cuadro de color (`tone`); `featured` la destaca con el amarillo de marca. */
+/** Métrica. `icon` agrega un ícono en un cuadro de color (`tone`); `featured` la hace más grande (ocupa dos columnas). */
 export function Metric({ label, value, hint, delta, spark, featured, icon, tone = "brand", className }: { label: ReactNode; value: ReactNode; hint?: ReactNode; delta?: ReactNode; spark?: number[]; featured?: boolean; icon?: ReactNode; tone?: keyof typeof metricTones; className?: string }) {
   return (
-    <div className={cn("group/metric relative border-l border-t p-4 transition-colors hover:bg-muted/40 sm:p-5", featured && "col-span-2 bg-[linear-gradient(135deg,hsl(46_100%_47%/0.12),transparent_55%)]", className)}>
-      {featured && <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-[linear-gradient(90deg,hsl(var(--brand-yellow)),hsl(var(--primary)))]" />}
+    <div className={cn("group/metric relative border-l border-t p-4 transition-colors hover:bg-muted/40 sm:p-5", featured && "col-span-2", className)}>
       <div className="flex items-center gap-2">
-        {icon && <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg ring-1 ring-inset [&_svg]:h-4 [&_svg]:w-4", metricTones[featured ? "accent" : tone])}>{icon}</span>}
+        {icon && <span className={cn("grid h-7 w-7 shrink-0 place-items-center rounded-lg ring-1 ring-inset [&_svg]:h-4 [&_svg]:w-4", metricTones[tone])}>{icon}</span>}
         <p className="text-[11.5px] font-bold uppercase tracking-[0.06em] text-muted-foreground">{label}</p>
       </div>
       <p className={cn("mt-2 font-display font-extrabold leading-none tracking-tight text-ink tabular-nums dark:text-foreground", featured ? "text-[34px] sm:text-[40px]" : "text-[26px] sm:text-[28px]")}>{value}</p>

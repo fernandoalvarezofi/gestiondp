@@ -358,7 +358,7 @@ export function StoreOnboarding({ userId, onDone, onCancel }: { userId: string; 
                   </div>
                 ))}
               </dl>
-              <div className="rounded-2xl border border-l-4 border-l-brand-yellow bg-muted/40 p-4 text-sm">
+              <div className="rounded-2xl border bg-muted/40 p-4 text-sm">
                 <p className="font-extrabold">Qué pasa después de crear</p>
                 <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
                   <li>Revisamos tu comercio antes de mostrarlo a los clientes (suele ser rápido).</li>
